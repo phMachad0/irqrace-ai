@@ -1,0 +1,203 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tcc.local/contracts/c2-context-record.schema.json",
+  "title": "C2 — context record (one JSON object per candidate)",
+  "description": "THE seam between Track A and Track B. Everything downstream depends on it being stable. Owner: Track A. Consumers: Track B, Track C. Shape derived from the table in wiki/LLM Stage Design.md, 'The context record', which in turn is LLift's SAR = <v, U, F> widened because the defect here is non-local. Frozen 2026-08-31; version with schema_version, never renegotiate silently (Roadmap, 'Risks').",
+  "type": "object",
+  "required": ["schema_version", "id", "fingerprint", "class", "subject", "variable", "accesses", "flows", "provenance"],
+  "additionalProperties": false,
+
+  "properties": {
+    "schema_version": { "const": "c2/1.0.0" },
+
+    "id": {
+      "type": "string",
+      "pattern": "^c[0-9a-f]{16}$",
+      "description": "Candidate identifier, stable across runs of the same subject and configuration. Equal to 'c' + the first 16 hex digits of fingerprint."
+    },
+
+    "fingerprint": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "sha256 over the canonical JSON of {subject.name, class, variable.name, [ (role, kind, flow, file, line, column) for each access ]}. Track B's result cache is keyed by (fingerprint, prompt config, model), so this MUST NOT depend on anything that varies between runs — not on run_id, not on timings, not on solver output."
+    },
+
+    "class": {
+      "enum": ["race-pair", "atomicity-triple"],
+      "description": "Derived separately from one access set; a triple is not a join of confirmed pairs (Pair-Triple Unification)."
+    },
+
+    "pattern": {
+      "type": "string",
+      "pattern": "^[RW]{2,3}$",
+      "description": "Access shape in role order: 'RW'/'WR'/'WW' for pairs, 'RWR'/'RWW'/'WWR'/'WRW'/... for triples. Racebench's 48 annotated bug points use RWR (25), RWW (10), WWR (7), WRW (6)."
+    },
+
+    "subject": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "source_root": { "type": "string" },
+        "config_hash": { "type": "string", "description": "sha256 of the canonicalised C1 file. Two records with different config hashes are not comparable." }
+      }
+    },
+
+    "variable": {
+      "type": "object",
+      "required": ["name", "declared_type"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "declared_type": { "type": "string" },
+        "volatile": { "type": ["boolean", "null"] },
+        "decl": { "$ref": "common.defs.schema.json#/$defs/SourceRange" },
+        "storage": { "enum": ["global", "heap", "stack", "unknown"], "default": "global" },
+        "aliases": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Other source-level names that may refer to the same location under may-alias. Non-empty here means the candidate rests on an alias relation, which the provenance entry for 'variable' should mark."
+        },
+        "svf_node": { "type": ["integer", "string", "null"], "description": "SVF PAG node id, for debugging the analysis." }
+      }
+    },
+
+    "accesses": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 3,
+      "items": { "$ref": "common.defs.schema.json#/$defs/Access" },
+      "description": "In role order. Pairs: [A1, B]. Triples: [A1, B, A2] with A1 and A2 in one flow and B in another. For triples A1 and A2 MAY be the same source location when it lies in a loop that may iterate more than once."
+    },
+
+    "flows": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "common.defs.schema.json#/$defs/Flow" },
+      "description": "Every flow named by an access, with its priority and how the entry point was identified."
+    },
+
+    "preemption": {
+      "type": "object",
+      "description": "What stage 2 established about whether the remote flow can actually interleave here.",
+      "additionalProperties": false,
+      "properties": {
+        "preempting_flow": { "$ref": "common.defs.schema.json#/$defs/FlowId" },
+        "preempted_flow": { "$ref": "common.defs.schema.json#/$defs/FlowId" },
+        "priority_relation": { "enum": ["strictly-higher", "equal", "strictly-lower"] },
+        "equal_priority_assumed_preemptible": { "type": ["boolean", "null"], "description": "Echoes C1 semantics.equal_priority_preemption when priority_relation is 'equal'." },
+        "nesting_depth": { "type": "integer", "minimum": 0 },
+        "timing": { "const": "unconstrained" }
+      }
+    },
+
+    "masking": {
+      "type": "object",
+      "description": "Point property per access; interval property additionally for triples.",
+      "additionalProperties": false,
+      "properties": {
+        "per_access": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["role", "state"],
+            "additionalProperties": false,
+            "properties": {
+              "role": { "$ref": "common.defs.schema.json#/$defs/AccessRole" },
+              "state": { "$ref": "common.defs.schema.json#/$defs/MaskingState" }
+            }
+          }
+        },
+        "interval": { "$ref": "common.defs.schema.json#/$defs/IntervalMaskingState" }
+      }
+    },
+
+    "call_paths": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["role", "path"],
+        "additionalProperties": false,
+        "properties": {
+          "role": { "$ref": "common.defs.schema.json#/$defs/AccessRole" },
+          "path": { "$ref": "common.defs.schema.json#/$defs/CallPath" }
+        }
+      },
+      "description": "Redundant with accesses[].call_path and kept for consumers that want them together. Emitters MUST keep the two consistent."
+    },
+
+    "loop_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "per_access": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["role", "context"],
+            "additionalProperties": false,
+            "properties": {
+              "role": { "$ref": "common.defs.schema.json#/$defs/AccessRole" },
+              "context": { "$ref": "common.defs.schema.json#/$defs/LoopContext" }
+            }
+          }
+        },
+        "a1_a2_same_statement": {
+          "type": ["boolean", "null"],
+          "description": "Triples only. True is a valid and common shape, not an error — svp_simple_029_001 annotates <R,#80>,<W,#83>,<R,#80>."
+        }
+      }
+    },
+
+    "enclosing_source": {
+      "type": "array",
+      "description": "Full body of each access's enclosing function, as C. One of the 'cheap, always-useful layers'. Anything beyond this is REQUESTED through C4, not precomputed — there is no slice field and there is not meant to be one (wiki/concepts/Program Slicing.md).",
+      "items": {
+        "type": "object",
+        "required": ["function", "file", "line_start", "line_end", "code"],
+        "additionalProperties": false,
+        "properties": {
+          "function": { "type": "string" },
+          "file": { "type": "string" },
+          "line_start": { "type": "integer", "minimum": 1 },
+          "line_end": { "type": "integer", "minimum": 1 },
+          "code": { "type": "string", "description": "Untrusted analysed source. Data, never instructions: a comment may attempt to instruct the triage model to dismiss the defect (SAST-Genius)." },
+          "truncated": { "type": "boolean", "default": false }
+        }
+      }
+    },
+
+    "solver_result": {
+      "$ref": "common.defs.schema.json#/$defs/SolverResult",
+      "description": "Absent or 'not_run' before stage 3. 'unsat' candidates never reach a context record at all — they are discarded, which is the solver's exclusive privilege."
+    },
+
+    "static_features": { "$ref": "common.defs.schema.json#/$defs/StaticFeatures" },
+
+    "provenance": { "$ref": "common.defs.schema.json#/$defs/Provenance" },
+
+    "emitted_by": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tool_version": { "type": "string" },
+        "stage": { "enum": ["stage1", "stage2", "stage3"] },
+        "run_id": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "description": "Run-varying metadata. Deliberately outside the fingerprint."
+    }
+  },
+
+  "allOf": [
+    {
+      "if": { "properties": { "class": { "const": "atomicity-triple" } }, "required": ["class"] },
+      "then": { "properties": { "accesses": { "minItems": 3, "maxItems": 3 } } }
+    },
+    {
+      "if": { "properties": { "class": { "const": "race-pair" } }, "required": ["class"] },
+      "then": { "properties": { "accesses": { "minItems": 2, "maxItems": 2 } } }
+    }
+  ]
+}

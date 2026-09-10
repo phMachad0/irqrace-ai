@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tcc.local/contracts/c3-log-event.schema.json",
+  "title": "C3 — one line of runs/<id>/log.ndjson",
+  "description": "NDJSON so the UI can poll a growing file while a job is still running (Dashboard Design).",
+  "type": "object",
+  "required": ["ts", "level", "stage", "event"],
+  "additionalProperties": true,
+  "properties": {
+    "ts": { "type": "string", "format": "date-time" },
+    "level": { "enum": ["debug", "info", "warn", "error"] },
+    "stage": { "type": "string" },
+    "event": { "type": "string" },
+    "message": { "type": "string" },
+    "candidate_id": { "type": "string" },
+    "data": { "type": "object", "additionalProperties": true }
+  }
+}

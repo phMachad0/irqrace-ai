@@ -1,0 +1,233 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tcc.local/contracts/c1-config.schema.json",
+  "title": "C1 — analysis configuration (the interrupt model)",
+  "description": "The hand-written configuration file. It is the tool's specification of the interrupt model and it BOUNDS the analysis: cost follows code reachable from the declared entry points, not repository size (wiki/Pipeline Design.md). Owner: Track A. Consumers: Track A, Track C. Deciding to hand-write this rather than infer it is recorded in wiki/concepts/Specification Inference.md.",
+  "type": "object",
+  "required": ["schema_version", "subject", "flows", "masking", "semantics"],
+  "additionalProperties": false,
+
+  "properties": {
+    "schema_version": { "const": "c1/1.0.0" },
+
+    "subject": {
+      "type": "object",
+      "required": ["name", "sources"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "source_root": { "type": "string", "description": "Paths in context records are made relative to this." },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" },
+          "description": "Files or directories. A single file is the benchmark mode; a directory is the whole-repository mode (Pipeline Design, 'Two input modes')."
+        },
+        "build": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mode": {
+              "enum": ["single-tu", "link", "intercept"],
+              "default": "single-tu",
+              "description": "'link' = per-TU clang -emit-llvm then llvm-link. 'intercept' = wllvm/gllvm around the project's own build. Never merge at the C source level: it destroys source ranges and collides static symbols (Pipeline Design)."
+            },
+            "cc": { "type": "string", "default": "clang-14" },
+            "linker": { "type": "string", "default": "llvm-link-14" },
+            "flags": {
+              "type": "array",
+              "items": { "type": "string" },
+              "default": ["-g", "-O0", "-Xclang", "-disable-O0-optnone"],
+              "description": "-g is mandatory: DILocation is what makes the source mapping possible. -O0 alone marks functions optnone and the pass manager skips them, hence -disable-O0-optnone."
+            },
+            "include_dirs": { "type": "array", "items": { "type": "string" } },
+            "defines": { "type": "array", "items": { "type": "string" } },
+            "extra_bitcode": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Additional .bc to llvm-link in — e.g. the benchmark's common.c."
+            }
+          }
+        }
+      }
+    },
+
+    "priority_convention": {
+      "const": "larger-is-higher",
+      "default": "larger-is-higher",
+      "description": "Fixed by decree and stated explicitly because the published papers disagree with the benchmarks (Contradictions #3). Present in the file so that every run manifest records it."
+    },
+
+    "flows": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "common.defs.schema.json#/$defs/Flow" },
+      "description": "Every flow is a root of its own reachability analysis. A handler missing from this list contributes no accesses and its defects become invisible — the single most recall-critical field in the file."
+    },
+
+    "masking": {
+      "type": "object",
+      "required": ["primitives"],
+      "additionalProperties": false,
+      "properties": {
+        "primitives": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["function", "effect"],
+            "additionalProperties": false,
+            "properties": {
+              "function": { "type": "string" },
+              "effect": { "enum": ["disable", "enable"] },
+              "irq_arg": {
+                "type": ["integer", "null"],
+                "default": 0,
+                "description": "Zero-based index of the argument naming the interrupt. null means the primitive affects all interrupts unconditionally (e.g. a bare cli()/sti())."
+              },
+              "all_value": {
+                "type": ["integer", "null"],
+                "default": -1,
+                "description": "Argument value meaning 'all interrupts'. Racebench uses -1."
+              },
+              "non_constant_arg": {
+                "enum": ["unknown", "all", "none"],
+                "default": "unknown",
+                "description": "What to assume when the argument is not a compile-time constant. 'unknown' is the recall-safe choice for 'disable' (nothing is proven masked) and is the default."
+              }
+            }
+          }
+        },
+        "initial_state": {
+          "enum": ["all-enabled", "all-disabled", "unknown"],
+          "default": "all-enabled",
+          "description": "Masking state at the entry of each flow. Racebench's init() calls enable_isr(-1), so all-enabled matches. 'unknown' is the safe default for unfamiliar platforms."
+        },
+        "isr_entry_masks_self": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether hardware masks an interrupt while its own handler runs. Affects re-entrancy; recorded in the manifest because it changes the candidate set."
+        }
+      }
+    },
+
+    "semantics": {
+      "type": "object",
+      "description": "The two open semantic decisions are exposed here as explicit, defaulted, labelled settings rather than buried (Dashboard Design R10; wiki/Open Questions.md).",
+      "additionalProperties": false,
+      "properties": {
+        "equal_priority_preemption": {
+          "type": "boolean",
+          "default": true,
+          "description": "May two flows of equal priority preempt each other? Default true = recall-safe. svp_real_002 has two ISRs sharing priority 1 and no tool in the corpus models this."
+        },
+        "isr_arrival": {
+          "enum": ["unbounded", "once-per-interval"],
+          "default": "unbounded",
+          "description": "Racebench's README states interrupts are non-periodic and may fire an unspecified number of times at unspecified points. 'unbounded' matches; anything narrower is an unsound filter."
+        },
+        "isr_reentrant": {
+          "type": "boolean",
+          "default": false,
+          "description": "May a handler preempt itself?"
+        },
+        "nesting": {
+          "type": "boolean",
+          "default": true,
+          "description": "May an ISR be preempted by a strictly higher-priority ISR? (wiki/concepts/Interrupt Nesting.md)"
+        },
+        "timing_model": {
+          "const": "unconstrained",
+          "default": "unconstrained",
+          "description": "IntRace's S component encodes periodicity. Racebench guarantees none, so S is left unconstrained. Assuming a timing model the subject does not guarantee is an unsound filter (Pipeline Design, stage 2, 'Timing')."
+        }
+      }
+    },
+
+    "externals": {
+      "type": "object",
+      "description": "Functions with no body in the module — library calls, vendor blobs, inline assembly. LLift's 'inherent knowledge boundary'.",
+      "additionalProperties": false,
+      "properties": {
+        "default": {
+          "enum": ["may-read-write-reachable", "none"],
+          "default": "may-read-write-reachable",
+          "description": "The sound default: an unmodelled external may read and write any shared location reachable from its arguments, and any global. 'none' is unsound and is only for experiments — the manifest records it so results using it are identifiable."
+        },
+        "models": {
+          "type": "array",
+          "description": "Hand-modelled externals, the same closed-set argument that settled Specification Inference. Which functions were modelled and which were left opaque belongs in the assumption list.",
+          "items": {
+            "type": "object",
+            "required": ["function", "effect"],
+            "additionalProperties": false,
+            "properties": {
+              "function": { "type": "string" },
+              "effect": { "enum": ["none", "reads-args", "writes-args", "reads-writes-args"] },
+              "note": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+
+    "analysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "alias": {
+          "const": "may",
+          "default": "may",
+          "description": "MUST be may-alias. A must-alias shortcut here silently deletes candidates (Pipeline Design, stage 1.2)."
+        },
+        "indirect_calls": {
+          "enum": ["signature-matched-address-taken", "points-to-only"],
+          "default": "signature-matched-address-taken",
+          "description": "An indirect call whose targets cannot be resolved is treated as potentially calling every address-taken function with a matching signature. 'points-to-only' trusts SVF's target set and is unsound when it resolves to nothing."
+        },
+        "candidate_classes": {
+          "type": "array",
+          "items": { "enum": ["race-pair", "atomicity-triple"] },
+          "default": ["race-pair", "atomicity-triple"],
+          "description": "Pairs and triples are derived separately from ONE access set. Do not derive triples by joining confirmed pairs (wiki/concepts/Pair-Triple Unification.md)."
+        },
+        "allow_same_statement_a1_a2": {
+          "type": "boolean",
+          "default": true,
+          "description": "Allow A1 == A2 when the statement lies in a loop that may iterate more than once. Turning this off loses a substantial share of the ground truth (svp_simple_029_001)."
+        },
+        "solver": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean", "default": true },
+            "timeout_ms": { "type": "integer", "default": 10000, "minimum": 0 },
+            "on_timeout": {
+              "const": "inconclusive",
+              "default": "inconclusive",
+              "description": "A timeout is never SAT and never a drop. Fixed by decree (Roadmap W6–W7)."
+            }
+          }
+        }
+      }
+    },
+
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "run_root": { "type": "string", "default": "runs" },
+        "run_id": { "type": ["string", "null"], "default": null, "description": "Null means generate one." }
+      }
+    },
+
+    "ground_truth": {
+      "type": "object",
+      "description": "Optional. Points the evaluation harness at annotated ground truth for this subject (W2).",
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "enum": ["racebench-remarks", "violation-info", "none"] },
+        "path": { "type": "string" }
+      }
+    }
+  }
+}

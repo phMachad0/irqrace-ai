@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "irqrace"
+version = "0.1.0"
+description = "Sound detection of data races and atomicity violations in interrupt-driven embedded C, with LLM triage and repair"
+requires-python = ">=3.10"
+dependencies = [
+  "pyyaml>=5.4",
+  "jsonschema>=4.18",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=6"]
+
+[project.scripts]
+irqrace = "irqrace.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+
+testpaths = ["tests"]

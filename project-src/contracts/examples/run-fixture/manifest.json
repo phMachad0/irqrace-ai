@@ -1,0 +1,102 @@
+{
+  "schema_version": "c3/1.0.0",
+  "run_id": "run-fixture",
+  "created": "2026-08-31T12:00:00Z",
+  "tool_version": "0.1.0",
+  "git_revision": null,
+  "subject": {
+    "name": "svp_simple_001_001",
+    "source_root": "/home/pedro/Documentos/tcc/racebench/2.1_remarks",
+    "sources": [
+      "svp_simple_001/svp_simple_001_001.c"
+    ]
+  },
+  "config_hash": "4f96624c5e3e104961374068a3744e353949f6a4b86420ea636f7592c60071cb",
+  "semantics": {
+    "priority_convention": "larger-is-higher",
+    "equal_priority_preemption": true,
+    "isr_arrival": "unbounded",
+    "isr_reentrant": false,
+    "nesting": true,
+    "timing_model": "unconstrained",
+    "externals_default": "may-read-write-reachable",
+    "indirect_calls": "signature-matched-address-taken",
+    "allow_same_statement_a1_a2": true,
+    "counting_unit": null,
+    "match_rule": null
+  },
+  "solver": {
+    "enabled": true,
+    "engine_version": "4.8.12",
+    "timeout_ms": 10000
+  },
+  "llm": null,
+  "stages": [
+    {
+      "name": "build",
+      "status": "ok",
+      "wall_ms": 120
+    },
+    {
+      "name": "stage1",
+      "status": "ok",
+      "wall_ms": 340,
+      "candidates_in": null,
+      "candidates_out": 2,
+      "dropped_with_proof": 0
+    },
+    {
+      "name": "stage2",
+      "status": "ok",
+      "wall_ms": 55,
+      "candidates_in": 2,
+      "candidates_out": 2,
+      "dropped_with_proof": 0
+    },
+    {
+      "name": "solver",
+      "status": "ok",
+      "wall_ms": 10042,
+      "candidates_in": 2,
+      "candidates_out": 1,
+      "dropped_with_proof": 1
+    },
+    {
+      "name": "context",
+      "status": "ok",
+      "candidates_in": 1,
+      "candidates_out": 1
+    },
+    {
+      "name": "triage",
+      "status": "pending"
+    },
+    {
+      "name": "repair",
+      "status": "pending"
+    },
+    {
+      "name": "reverify",
+      "status": "pending"
+    }
+  ],
+  "build": {
+    "cc": "clang-14",
+    "cc_version": "Ubuntu clang version 14.0.0-1ubuntu1.1",
+    "linker": "llvm-link-14",
+    "flags": [
+      "-g",
+      "-O0",
+      "-Xclang",
+      "-disable-O0-optnone"
+    ],
+    "translation_units": 2,
+    "functions_with_bodies": 5,
+    "functions_declared_only": [
+      "disable_isr",
+      "enable_isr"
+    ],
+    "bitcode": "build/whole.bc",
+    "bitcode_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  }
+}

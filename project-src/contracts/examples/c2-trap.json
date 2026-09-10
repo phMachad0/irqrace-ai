@@ -1,0 +1,380 @@
+{
+  "schema_version": "c2/1.0.0",
+  "id": "c14ac4fbd506db23d",
+  "fingerprint": "14ac4fbd506db23def206ab2ef4b1689601ae7299eaf55af2ec47a3139e52a4d",
+  "class": "atomicity-triple",
+  "subject": {
+    "name": "svp_simple_001_001",
+    "source_root": "/home/pedro/Documentos/tcc/racebench/2.1_remarks",
+    "config_hash": "4f96624c5e3e104961374068a3744e353949f6a4b86420ea636f7592c60071cb"
+  },
+  "variable": {
+    "name": "svp_simple_001_001_global_var",
+    "declared_type": "volatile int",
+    "volatile": true,
+    "decl": {
+      "file": "svp_simple_001/svp_simple_001_001.c",
+      "line": 19,
+      "column": 0,
+      "end_line": 19,
+      "snippet": "volatile int svp_simple_001_001_global_var;"
+    },
+    "storage": "global",
+    "aliases": [],
+    "svf_node": 15
+  },
+  "accesses": [
+    {
+      "role": "A1",
+      "kind": "write",
+      "flow": "isr_1",
+      "function": "svp_simple_001_001_isr_1",
+      "source": {
+        "file": "svp_simple_001/svp_simple_001_001.c",
+        "line": 43,
+        "column": 0,
+        "end_line": 43,
+        "snippet": "svp_simple_001_001_global_var = 0;"
+      },
+      "loop_context": {
+        "in_loop": false,
+        "nest": []
+      },
+      "call_path": {
+        "flow": "isr_1",
+        "frames": [
+          {
+            "function": "svp_simple_001_001_isr_1"
+          }
+        ],
+        "is_one_of_many": false
+      },
+      "masking": {
+        "disabled": [
+          2
+        ],
+        "enabled": [
+          1
+        ],
+        "unknown": []
+      }
+    },
+    {
+      "role": "B",
+      "kind": "read",
+      "flow": "isr_2",
+      "function": "svp_simple_001_001_isr_2",
+      "source": {
+        "file": "svp_simple_001/svp_simple_001_001.c",
+        "line": 64,
+        "column": 0,
+        "end_line": 64,
+        "snippet": "reader2 = svp_simple_001_001_global_var;"
+      },
+      "loop_context": {
+        "in_loop": false,
+        "nest": []
+      },
+      "call_path": {
+        "flow": "isr_2",
+        "frames": [
+          {
+            "function": "svp_simple_001_001_isr_2"
+          }
+        ],
+        "is_one_of_many": false
+      },
+      "masking": {
+        "disabled": [],
+        "enabled": [
+          1,
+          2
+        ],
+        "unknown": []
+      }
+    },
+    {
+      "role": "A2",
+      "kind": "write",
+      "flow": "isr_1",
+      "function": "svp_simple_001_001_isr_1",
+      "source": {
+        "file": "svp_simple_001/svp_simple_001_001.c",
+        "line": 44,
+        "column": 0,
+        "end_line": 44,
+        "snippet": "svp_simple_001_001_global_var = 1;"
+      },
+      "loop_context": {
+        "in_loop": false,
+        "nest": []
+      },
+      "call_path": {
+        "flow": "isr_1",
+        "frames": [
+          {
+            "function": "svp_simple_001_001_isr_1"
+          }
+        ],
+        "is_one_of_many": false
+      },
+      "masking": {
+        "disabled": [
+          2
+        ],
+        "enabled": [
+          1
+        ],
+        "unknown": []
+      }
+    }
+  ],
+  "flows": [
+    {
+      "id": "main",
+      "kind": "task",
+      "entry": "svp_simple_001_001_main",
+      "irq": null,
+      "priority": 0,
+      "identified_by": "config"
+    },
+    {
+      "id": "isr_1",
+      "kind": "isr",
+      "entry": "svp_simple_001_001_isr_1",
+      "irq": 1,
+      "priority": 1,
+      "identified_by": "config"
+    },
+    {
+      "id": "isr_2",
+      "kind": "isr",
+      "entry": "svp_simple_001_001_isr_2",
+      "irq": 2,
+      "priority": 2,
+      "identified_by": "config"
+    }
+  ],
+  "preemption": {
+    "preempting_flow": "isr_2",
+    "preempted_flow": "isr_1",
+    "priority_relation": "strictly-higher",
+    "equal_priority_assumed_preemptible": null,
+    "nesting_depth": 2,
+    "timing": "unconstrained"
+  },
+  "masking": {
+    "per_access": [
+      {
+        "role": "A1",
+        "state": {
+          "disabled": [
+            2
+          ],
+          "enabled": [
+            1
+          ],
+          "unknown": []
+        }
+      },
+      {
+        "role": "B",
+        "state": {
+          "disabled": [],
+          "enabled": [
+            1,
+            2
+          ],
+          "unknown": []
+        }
+      },
+      {
+        "role": "A2",
+        "state": {
+          "disabled": [
+            2
+          ],
+          "enabled": [
+            1
+          ],
+          "unknown": []
+        }
+      }
+    ],
+    "interval": {
+      "from_role": "A1",
+      "to_role": "A2",
+      "disabled_throughout": [
+        2
+      ],
+      "enabled_somewhere": [
+        1
+      ],
+      "unknown": [],
+      "reenabled_within_interval_by": [],
+      "critical_sections": [
+        {
+          "irqs": [
+            2
+          ],
+          "begin": {
+            "file": "svp_simple_001/svp_simple_001_001.c",
+            "line": 28,
+            "column": 0,
+            "end_line": 28,
+            "snippet": "disable_isr(2);"
+          },
+          "end": {
+            "file": "svp_simple_001/svp_simple_001_001.c",
+            "line": 46,
+            "column": 0,
+            "end_line": 46,
+            "snippet": "enable_isr(2);"
+          },
+          "covers_interval": true
+        }
+      ]
+    }
+  },
+  "call_paths": [
+    {
+      "role": "A1",
+      "path": {
+        "flow": "isr_1",
+        "frames": [
+          {
+            "function": "svp_simple_001_001_isr_1"
+          }
+        ],
+        "is_one_of_many": false
+      }
+    },
+    {
+      "role": "B",
+      "path": {
+        "flow": "isr_2",
+        "frames": [
+          {
+            "function": "svp_simple_001_001_isr_2"
+          }
+        ],
+        "is_one_of_many": false
+      }
+    },
+    {
+      "role": "A2",
+      "path": {
+        "flow": "isr_1",
+        "frames": [
+          {
+            "function": "svp_simple_001_001_isr_1"
+          }
+        ],
+        "is_one_of_many": false
+      }
+    }
+  ],
+  "loop_context": {
+    "per_access": [
+      {
+        "role": "A1",
+        "context": {
+          "in_loop": false,
+          "nest": []
+        }
+      },
+      {
+        "role": "B",
+        "context": {
+          "in_loop": false,
+          "nest": []
+        }
+      },
+      {
+        "role": "A2",
+        "context": {
+          "in_loop": false,
+          "nest": []
+        }
+      }
+    ],
+    "a1_a2_same_statement": false
+  },
+  "enclosing_source": [
+    {
+      "function": "svp_simple_001_001_isr_1",
+      "file": "svp_simple_001/svp_simple_001_001.c",
+      "line_start": 39,
+      "line_end": 49,
+      "code": "void svp_simple_001_001_isr_1() {\n  idlerun();\n  svp_simple_001_001_global_flag = 1;\n\n  svp_simple_001_001_global_var = 0;\n  svp_simple_001_001_global_var = 1;\n    \n  enable_isr(2);\n\n  idlerun();\n}",
+      "truncated": false
+    },
+    {
+      "function": "svp_simple_001_001_isr_2",
+      "file": "svp_simple_001/svp_simple_001_001.c",
+      "line_start": 51,
+      "line_end": 65,
+      "code": "void svp_simple_001_001_isr_2() {\n  int reader1, reader3;\n  if (svp_simple_001_001_global_flag ==\n      1)\n    reader1 = svp_simple_001_001_global_array[TRIGGER];\n  else {\n    reader1 =\n        svp_simple_001_001_global_array[0];    }\n\n  reader3 = svp_simple_001_001_global_array\n      [1000];\n\n  int reader2;\n  reader2 = svp_simple_001_001_global_var;\n}",
+      "truncated": false
+    },
+    {
+      "function": "svp_simple_001_001_main",
+      "file": "svp_simple_001/svp_simple_001_001.c",
+      "line_start": 25,
+      "line_end": 37,
+      "code": "void svp_simple_001_001_main() {\n  init();\n\n  disable_isr(2);\n\n  idlerun();\n\n  for (int i = 0; i < 10000; i++) svp_simple_001_001_global_array[i] = 0;\n\n  for (int i = 0; i < 10000; i++) {\n    if (i == TRIGGER) svp_simple_001_001_global_array[i] = 1;\n  }\n}",
+      "truncated": false
+    }
+  ],
+  "solver_result": {
+    "verdict": "not_run",
+    "engine": "z3"
+  },
+  "static_features": {
+    "feeds_branch": false,
+    "used_as_index": false,
+    "call_path_depth_max": 1,
+    "same_statement_a1_a2": false,
+    "priority_gap": 1,
+    "any_masking_present": true
+  },
+  "provenance": {
+    "entries": [
+      {
+        "fact": "flows",
+        "status": "assumed_from_config",
+        "note": "entry points, interrupt numbers and priorities from the C1 file"
+      },
+      {
+        "fact": "variable.shared",
+        "status": "proven",
+        "note": "module-level global"
+      },
+      {
+        "fact": "masking.interval.disabled_throughout",
+        "status": "proven",
+        "note": "main disables irq 2 at line 28 and isr_1 re-enables it at line 46, after both writes; no flow that may run inside [43, 44] re-enables it, so irq 2 is masked throughout. This is the planted-trap shape: ONE critical section covering the whole interval."
+      },
+      {
+        "fact": "solver_result",
+        "status": "unknown",
+        "note": "stage 3 has not run"
+      }
+    ],
+    "completeness": {
+      "unresolved_indirect_calls": 0,
+      "opaque_external_calls": [
+        "disable_isr",
+        "enable_isr"
+      ],
+      "truncated_fields": []
+    }
+  },
+  "emitted_by": {
+    "tool_version": "0.1.0",
+    "stage": "stage2",
+    "run_id": "svp_simple_001_001-fixture",
+    "timestamp": "2026-08-31T00:00:00Z"
+  },
+  "pattern": "WRW"
+}

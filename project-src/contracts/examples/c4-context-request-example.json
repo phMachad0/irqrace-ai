@@ -1,0 +1,11 @@
+{
+  "schema_version": "c4/1.0.0",
+  "request_id": "r-0003",
+  "candidate_id": "cf8fd11d0783ef732",
+  "turn": 2,
+  "kind": "masking_state_at",
+  "args": {
+    "file": "svp_simple_001/svp_simple_001_001.c",
+    "line": 46
+  }
+}

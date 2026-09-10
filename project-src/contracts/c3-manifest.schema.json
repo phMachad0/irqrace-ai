@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tcc.local/contracts/c3-manifest.schema.json",
+  "title": "C3 — run manifest",
+  "description": "A result without its manifest is not quotable (Dashboard Design R42; wiki/concepts/Precision Metrics.md). One per run directory.",
+  "type": "object",
+  "required": ["schema_version", "run_id", "created", "tool_version", "config_hash", "semantics"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": "c3/1.0.0" },
+    "run_id": { "type": "string" },
+    "created": { "type": "string", "format": "date-time" },
+    "tool_version": { "type": "string" },
+    "git_revision": { "type": ["string", "null"] },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "source_root": { "type": "string" },
+        "sources": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "config_hash": { "type": "string", "description": "sha256 of the canonicalised C1 file, which is copied verbatim into the run as config.yaml." },
+    "build": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cc": { "type": "string" },
+        "cc_version": { "type": "string" },
+        "linker": { "type": "string" },
+        "flags": { "type": "array", "items": { "type": "string" } },
+        "translation_units": { "type": "integer" },
+        "functions_with_bodies": { "type": "integer" },
+        "functions_declared_only": { "type": "array", "items": { "type": "string" }, "description": "Directly the external-function problem. The user needs to see its size before trusting a result (Dashboard Design R4)." },
+        "bitcode": { "type": "string" },
+        "bitcode_sha256": { "type": "string" }
+      }
+    },
+    "semantics": {
+      "type": "object",
+      "description": "Echo of the C1 decisions that change the candidate set. Recorded here so two runs can be compared honestly.",
+      "additionalProperties": true,
+      "properties": {
+        "priority_convention": { "const": "larger-is-higher" },
+        "equal_priority_preemption": { "type": "boolean" },
+        "isr_arrival": { "type": "string" },
+        "isr_reentrant": { "type": "boolean" },
+        "nesting": { "type": "boolean" },
+        "timing_model": { "type": "string" },
+        "externals_default": { "type": "string" },
+        "indirect_calls": { "type": "string" },
+        "allow_same_statement_a1_a2": { "type": "boolean" },
+        "counting_unit": { "type": ["string", "null"], "description": "W2 blocker. Recommended: 'per-triple-instance', declared explicitly (Open Questions)." },
+        "match_rule": { "type": ["string", "null"], "description": "W2 blocker. How a reported candidate is matched against an annotated bug point." }
+      }
+    },
+    "solver": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "engine_version": { "type": "string" },
+        "timeout_ms": { "type": "integer" }
+      }
+    },
+    "llm": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "properties": {
+        "model": { "type": "string", "description": "Report the model and date with every number; every model comparison in this corpus is already stale." },
+        "prompt_config": { "type": "string" },
+        "date": { "type": "string" },
+        "votes": { "type": "integer" },
+        "seed": { "type": ["integer", "null"] }
+      }
+    },
+    "stages": {
+      "type": "array",
+      "description": "The funnel. stage1 -> stage2 -> solver -> llm, with per-stage counts and timings (Roadmap W6-W7 done-when).",
+      "items": {
+        "type": "object",
+        "required": ["name", "status"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "enum": ["build", "stage1", "stage2", "solver", "context", "triage", "repair", "reverify"] },
+          "status": { "enum": ["pending", "running", "ok", "failed", "skipped"] },
+          "started": { "type": ["string", "null"] },
+          "finished": { "type": ["string", "null"] },
+          "wall_ms": { "type": ["integer", "null"] },
+          "candidates_in": { "type": ["integer", "null"] },
+          "candidates_out": { "type": ["integer", "null"] },
+          "dropped_with_proof": { "type": ["integer", "null"], "description": "Only the solver may be non-zero here." },
+          "error": { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}

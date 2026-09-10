@@ -1,0 +1,23 @@
+{
+  "schema_version": "c4/1.0.0",
+  "request_id": "r-0004",
+  "status": "not_found",
+  "payload": {},
+  "provenance": {
+    "entries": [
+      {
+        "fact": "payload.code",
+        "status": "unknown",
+        "note": "disable_isr has no body in the module; it is a declared-only external and the analysis models it rather than descending into it"
+      }
+    ],
+    "completeness": {
+      "unresolved_indirect_calls": 0,
+      "opaque_external_calls": ["disable_isr"],
+      "truncated_fields": []
+    }
+  },
+  "recall_rule": "When you cannot obtain a function's definition, assume it may access the shared variable.",
+  "served_by": "mock",
+  "wall_ms": 1
+}

@@ -1,0 +1,66 @@
+schema_version: c1/1.0.0
+subject:
+  name: svp_simple_024_001
+  source_root: /home/pedro/Documentos/tcc/racebench/2.1_remarks
+  sources:
+  - svp_simple_024/svp_simple_024_001.c
+  build:
+    mode: single-tu
+    cc: clang-14
+    linker: llvm-link-14
+    flags:
+    - -g
+    - -O0
+    - -Xclang
+    - -disable-O0-optnone
+    extra_bitcode:
+    - common.c
+priority_convention: larger-is-higher
+flows:
+- id: main
+  kind: task
+  entry: svp_simple_024_001_main
+  irq: null
+  priority: 0
+  identified_by: config
+- id: isr_1
+  kind: isr
+  entry: svp_simple_024_001_isr_1
+  irq: 1
+  priority: 1
+  identified_by: config
+masking:
+  primitives:
+  - function: disable_isr
+    effect: disable
+    irq_arg: 0
+    all_value: -1
+    non_constant_arg: unknown
+  - function: enable_isr
+    effect: enable
+    irq_arg: 0
+    all_value: -1
+    non_constant_arg: unknown
+  initial_state: all-enabled
+  isr_entry_masks_self: false
+semantics:
+  equal_priority_preemption: true
+  isr_arrival: unbounded
+  isr_reentrant: false
+  nesting: true
+  timing_model: unconstrained
+externals:
+  default: may-read-write-reachable
+  models:
+  - function: idlerun
+    effect: none
+    note: 'common.c: an empty spin loop'
+  - function: init
+    effect: none
+    note: 'common.c: calls enable_isr(-1) only'
+  - function: rand
+    effect: none
+    note: libc, no shared state in these subjects
+ground_truth:
+  kind: racebench-remarks
+  path: svp_simple_024/svp_simple_024_001.c

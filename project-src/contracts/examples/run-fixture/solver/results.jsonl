@@ -1,0 +1,2 @@
+{"candidate_id":"cf8fd11d0783ef732","engine":"z3","engine_version":"4.8.12","reason":"timeout","timeout_ms":10000,"unconstrained":["timing"],"verdict":"inconclusive","wall_ms":10000}
+{"candidate_id":"c14ac4fbd506db23d","engine":"z3","engine_version":"4.8.12","reason":null,"timeout_ms":10000,"verdict":"unsat","wall_ms":42}

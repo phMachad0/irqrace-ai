@@ -1,0 +1,6 @@
+/home/pedro/Documentos/tcc/research-ai-brain/project-src/analysis/build/CMakeFiles/intrinsics_gen.dir
+/home/pedro/Documentos/tcc/research-ai-brain/project-src/analysis/build/CMakeFiles/omp_gen.dir
+/home/pedro/Documentos/tcc/research-ai-brain/project-src/analysis/build/CMakeFiles/acc_gen.dir
+/home/pedro/Documentos/tcc/research-ai-brain/project-src/analysis/build/CMakeFiles/irqrace-probe.dir
+/home/pedro/Documentos/tcc/research-ai-brain/project-src/analysis/build/CMakeFiles/edit_cache.dir
+/home/pedro/Documentos/tcc/research-ai-brain/project-src/analysis/build/CMakeFiles/rebuild_cache.dir

@@ -1,0 +1,241 @@
+{
+  "main": {
+    "id": "e0e3bef4ed71d76d",
+    "type": "split",
+    "children": [
+      {
+        "id": "e1419309ce1cf2fc",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "daf91d4fc9128290",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "project-src/README.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "README"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "77fffd0c379d3269",
+    "type": "split",
+    "children": [
+      {
+        "id": "916336de5e13093e",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "4307421f474336f5",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "4774b7f0c671f1a3",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "irqrace",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "bb100f8e8e7020bb",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ],
+        "currentTab": 1
+      }
+    ],
+    "direction": "horizontal",
+    "width": 447.5
+  },
+  "right": {
+    "id": "678839b140016c88",
+    "type": "split",
+    "children": [
+      {
+        "id": "c1c9237df241e105",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "c13eed021e8f336f",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "Welcome.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks"
+            }
+          },
+          {
+            "id": "1a83b27f1c97806a",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "Welcome.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links"
+            }
+          },
+          {
+            "id": "de5954c1e904e7a1",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "f67f25c69b490a2a",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "666c5807d6061267",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "Welcome.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "daf91d4fc9128290",
+  "lastOpenFiles": [
+    "index.md",
+    "project-src/contracts/c3-run-store.md",
+    "wiki/comparisons/Reimplementation Assessment.md",
+    "Clippings/SDRacer.md",
+    "wiki/benchmarks/Candidate Evaluation Subjects.md",
+    "wiki/concepts/Atomicity Violation.md",
+    "wiki/Pipeline Design.md",
+    "wiki/concepts/Pair-Triple Unification.md",
+    "wiki/Open Questions.md",
+    "wiki/LLM Stage Design.md",
+    "wiki/benchmarks/Real-World Program Benchmark.md",
+    "Clippings/BMC4AV.md",
+    "wiki/concepts/Access Interleaving Patterns.md",
+    "wiki/concepts/LLM Triage.md",
+    "wiki/concepts/Path Feasibility Analysis.md",
+    "wiki/Roadmap.md",
+    "project-src/docs/toolchain-notes.md",
+    "project-src/README.md",
+    "project-src/docs/masking-semantics.md",
+    "project-src/scripts/build-analysis.sh",
+    "project-src/scripts/setup-svf.sh",
+    "project-src/scripts/env.sh",
+    "project-src/tests/__pycache__/test_pipeline.cpython-310-pytest-6.2.5.pyc",
+    "project-src/tests/test_pipeline.py",
+    "project-src/tests/__pycache__/test_racebench.cpython-310-pytest-6.2.5.pyc",
+    "project-src/tests/__pycache__/test_candidate.cpython-310-pytest-6.2.5.pyc",
+    "project-src/tests/test_racebench.py",
+    "project-src/tests/test_candidate.py",
+    "project-src/tests/__pycache__/test_contracts.cpython-310-pytest-6.2.5.pyc",
+    "project-src/contracts/README.md",
+    "wiki/Thesis Goal.md",
+    "Clippings/IntRace.md",
+    "wiki/tools/BMC4AV (tool).md",
+    "wiki/Dashboard Design.md",
+    "log.md",
+    "Clippings/NIChecker.md",
+    "NIChecker/Comparison_CPA4AV_Experiments/OurExp_CPA4AV/source_CPA4AV/CPA4AV/CPA4AV-Ourtool/output/cfaPixel.svg",
+    "NIChecker/Comparison_CPA4AV_Experiments/OurExp_CPA4AV/source_CPA4AV/CPA4AV/CPA4AV-Ourtool/output/ARG.svg",
+    "NIChecker/Comparison_CPA4AV_Experiments/OurExp_CPA4AV/source_CPA4AV/Naive_IPS/CPA4AV-Ourtool/output/cfaPixel.svg",
+    "NIChecker/Comparison_CPA4AV_Experiments/OurExp_CPA4AV/source_CPA4AV/Naive_IPS/CPA4AV-Ourtool/output/ARG.svg",
+    "NIChecker/Comparison_CPA4AV_Experiments/OurExp_CPA4AV/source_CPA4AV/Naive/CPA4AV-Ourtool/output/cfaPixel.svg",
+    "NIChecker/Comparison_CPA4AV_Experiments/OurExp_CPA4AV/source_CPA4AV/Naive/CPA4AV-Ourtool/output/ARG.svg",
+    "NIChecker/Comparison_CPA4AV_Experiments/OurExp_CPA4AV/source_CPA4AV/CPA4AV_IF/CPA4AV-Ourtool/output/cfaPixel.svg",
+    "NIChecker/Comparison_CPA4AV_Experiments/OurExp_CPA4AV/source_CPA4AV/CPA4AV_IF/CPA4AV-Ourtool/output/ARG.svg",
+    "NIChecker/Comparison_CPA4AV_Experiments/OurExp_CPA4AV/source_CPA4AV/CPA4AV_I/CPA4AV-Ourtool/output/cfaPixel.svg",
+    "NIChecker/Comparison_CPA4AV_Experiments/OurExp_CPA4AV/source_CPA4AV/CPA4AV_I/CPA4AV-Ourtool/output/ARG.svg"
+  ]
+}

@@ -1,0 +1,285 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tcc.local/contracts/common.defs.schema.json",
+  "title": "Shared definitions for contracts C1–C4",
+  "description": "Definitions reused by the configuration file (C1), the context record (C2), the run store (C3) and the context request protocol (C4). Vocabulary follows wiki/Pipeline Design.md and wiki/LLM Stage Design.md.",
+
+  "$defs": {
+
+    "SourceRange": {
+      "type": "object",
+      "description": "A source range recovered from LLVM DILocation metadata. Every candidate must map back to one of these (Pipeline Design, 'Context capture').",
+      "required": ["file", "line"],
+      "additionalProperties": false,
+      "properties": {
+        "file": { "type": "string", "description": "Path as recorded in debug info, relative to subject.source_root when possible." },
+        "line": { "type": "integer", "minimum": 1 },
+        "column": { "type": "integer", "minimum": 0 },
+        "end_line": { "type": "integer", "minimum": 1 },
+        "end_column": { "type": "integer", "minimum": 0 },
+        "snippet": { "type": "string", "description": "The source text of the range. Untrusted data, never instructions (Dashboard Design R43)." }
+      }
+    },
+
+    "FlowId": {
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+      "description": "Stable identifier of a control flow: 'main' for the task, 'isr_1', 'isr_2', ... for handlers."
+    },
+
+    "Flow": {
+      "type": "object",
+      "description": "One schedulable flow: the main task or one ISR.",
+      "required": ["id", "kind", "entry", "priority"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/FlowId" },
+        "kind": { "enum": ["task", "isr"] },
+        "entry": { "type": "string", "description": "Name of the entry function in the module." },
+        "irq": {
+          "type": ["integer", "null"],
+          "description": "Interrupt number this flow is registered on; null for tasks. This is the number disable_isr/enable_isr refer to."
+        },
+        "priority": {
+          "type": "integer",
+          "description": "LARGER NUMBER = HIGHER PRIORITY. Settled from the Racebench and NIChecker READMEs, against the papers' prose (wiki/comparisons/Contradictions.md #3). Tasks are conventionally 0."
+        },
+        "identified_by": {
+          "enum": ["config", "registration-api", "vector-table", "compiler-attribute"],
+          "default": "config",
+          "description": "How the entry point was found. A first-class soundness assumption: an unrecognised handler contributes no accesses (Pipeline Design, stage 1.1)."
+        }
+      }
+    },
+
+    "AccessKind": {
+      "enum": ["read", "write", "readwrite"],
+      "description": "'readwrite' is used for read-modify-write instructions that the front end did not split."
+    },
+
+    "AccessRole": {
+      "enum": ["A1", "B", "A2"],
+      "description": "Position in the candidate. Pairs use A1 (local) and B (remote). Triples use A1, B, A2 with B in the preempting flow (wiki/concepts/Pair-Triple Unification.md)."
+    },
+
+    "LoopContext": {
+      "type": "object",
+      "description": "Enclosing loop nest of an access. A single syntactic access inside a loop is many dynamic accesses, so one statement can be both A1 and A2 (Pipeline Design, 'Loop handling'; svp_simple_029_001).",
+      "required": ["in_loop"],
+      "additionalProperties": false,
+      "properties": {
+        "in_loop": { "type": "boolean" },
+        "nest": {
+          "type": "array",
+          "description": "Innermost first.",
+          "items": {
+            "type": "object",
+            "required": ["header"],
+            "additionalProperties": false,
+            "properties": {
+              "header": { "$ref": "#/$defs/SourceRange" },
+              "may_iterate_more_than_once": {
+                "type": "boolean",
+                "default": true,
+                "description": "Sound default is true. Only set false when the trip count is provably <= 1."
+              },
+              "trip_count": { "type": ["integer", "null"], "description": "Known constant trip count, or null." }
+            }
+          }
+        }
+      }
+    },
+
+    "CallPathFrame": {
+      "type": "object",
+      "required": ["function"],
+      "additionalProperties": false,
+      "properties": {
+        "function": { "type": "string" },
+        "call_site": { "$ref": "#/$defs/SourceRange" },
+        "resolution": {
+          "enum": ["direct", "indirect-resolved", "indirect-overapproximated"],
+          "default": "direct",
+          "description": "'indirect-overapproximated' means the target set came from signature-matched address-taken functions because points-to could not resolve it. Never treat an empty target set as 'calls nothing' (Pipeline Design, 'Indirect calls')."
+        }
+      }
+    },
+
+    "CallPath": {
+      "type": "object",
+      "description": "Entry point -> access, one per access.",
+      "required": ["flow", "frames"],
+      "additionalProperties": false,
+      "properties": {
+        "flow": { "$ref": "#/$defs/FlowId" },
+        "frames": { "type": "array", "items": { "$ref": "#/$defs/CallPathFrame" }, "minItems": 1 },
+        "is_one_of_many": {
+          "type": "boolean",
+          "default": false,
+          "description": "True when several call paths reach this access and only one is shown. The others are obtainable through C4 request 'all_call_paths'."
+        }
+      }
+    },
+
+    "IrqSet": {
+      "type": "array",
+      "items": { "type": "integer" },
+      "uniqueItems": true,
+      "description": "Set of interrupt numbers. -1 is not used here; it is expanded to the concrete set at analysis time."
+    },
+
+    "MaskingState": {
+      "type": "object",
+      "description": "Three-valued masking state. The recall-critical rule: an interrupt counts as disabled only if it is disabled on EVERY path reaching the point. Anything not proven disabled belongs in 'unknown' or 'enabled', never in 'disabled' (Pipeline Design, stage 2, 'Masking').",
+      "required": ["disabled", "enabled", "unknown"],
+      "additionalProperties": false,
+      "properties": {
+        "disabled": { "$ref": "#/$defs/IrqSet", "description": "Provably disabled on every path." },
+        "enabled":  { "$ref": "#/$defs/IrqSet", "description": "Provably enabled on at least one path." },
+        "unknown":  { "$ref": "#/$defs/IrqSet", "description": "Not decided — e.g. an unrecognised register write. Consumers MUST treat these as enabled." }
+      }
+    },
+
+    "IntervalMaskingState": {
+      "type": "object",
+      "description": "Masking over the interval [A1, A2] of a triple: an interrupt is masked over the interval only if it is masked at every point of every path from A1 to A2. Point property for pairs, interval property for triples (Pipeline Design, stage 2).",
+      "required": ["from_role", "to_role", "disabled_throughout", "unknown"],
+      "additionalProperties": false,
+      "properties": {
+        "from_role": { "$ref": "#/$defs/AccessRole" },
+        "to_role":   { "$ref": "#/$defs/AccessRole" },
+        "disabled_throughout": {
+          "$ref": "#/$defs/IrqSet",
+          "description": "Provably disabled at every point of every path from A1 to A2, AND not re-enabled by any flow that may itself execute within the interval. The second conjunct is not optional: svp_simple_001_001 masks isr_2 in the main task, yet its annotated bug point is real because isr_1 preempts the interval and calls enable_isr(2). Computing this from the local flow's CFG alone silently drops a real defect. See docs/masking-semantics.md."
+        },
+        "reenabled_within_interval_by": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/FlowId" },
+          "description": "Flows that may execute within the interval and re-enable an interrupt that the local flow had masked."
+        },
+        "enabled_somewhere":   { "$ref": "#/$defs/IrqSet" },
+        "unknown":             { "$ref": "#/$defs/IrqSet" },
+        "critical_sections": {
+          "type": "array",
+          "description": "Critical sections observed on the interval. One section covering the whole interval is the planted-trap shape; two adjacent sections with a gap is still a real atomicity violation (LLM Stage Design, D#1 pattern table).",
+          "items": {
+            "type": "object",
+            "required": ["irqs", "begin", "end"],
+            "additionalProperties": false,
+            "properties": {
+              "irqs":  { "$ref": "#/$defs/IrqSet" },
+              "begin": { "$ref": "#/$defs/SourceRange" },
+              "end":   { "$ref": "#/$defs/SourceRange" },
+              "covers_interval": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    },
+
+    "Access": {
+      "type": "object",
+      "description": "One access to the shared location, in one flow.",
+      "required": ["role", "kind", "flow", "function", "source"],
+      "additionalProperties": false,
+      "properties": {
+        "role": { "$ref": "#/$defs/AccessRole" },
+        "kind": { "$ref": "#/$defs/AccessKind" },
+        "flow": { "$ref": "#/$defs/FlowId" },
+        "function": { "type": "string", "description": "Enclosing function containing the access." },
+        "source": { "$ref": "#/$defs/SourceRange" },
+        "ir": {
+          "type": "object",
+          "description": "Back-pointer into the bitcode, for debugging the analysis. Not shown to the model.",
+          "additionalProperties": true,
+          "properties": {
+            "function": { "type": "string" },
+            "block": { "type": ["string", "integer"] },
+            "index": { "type": "integer" },
+            "opcode": { "type": "string" }
+          }
+        },
+        "loop_context": { "$ref": "#/$defs/LoopContext" },
+        "call_path": { "$ref": "#/$defs/CallPath" },
+        "masking": { "$ref": "#/$defs/MaskingState" }
+      }
+    },
+
+    "ProvenanceStatus": {
+      "enum": ["proven", "assumed_from_config", "overapproximated", "unknown"],
+      "description": "'proven' = established by the analysis. 'assumed_from_config' = taken from the hand-written C1 file. 'overapproximated' = a sound but imprecise default was used. 'unknown' = not determined; the consumer must take the recall-safe reading."
+    },
+
+    "ProvenanceEntry": {
+      "type": "object",
+      "required": ["fact", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "fact": {
+          "type": "string",
+          "description": "Dotted path to the field this statement is about, e.g. 'accesses[1].masking' or 'variable.shared'."
+        },
+        "status": { "$ref": "#/$defs/ProvenanceStatus" },
+        "note": { "type": "string" }
+      }
+    },
+
+    "Provenance": {
+      "type": "object",
+      "description": "Not bookkeeping. A model shown incomplete evidence will confidently declare a candidate infeasible, and that miss is invisible afterwards (LLM Stage Design, 'The context record').",
+      "required": ["entries"],
+      "additionalProperties": false,
+      "properties": {
+        "entries": { "type": "array", "items": { "$ref": "#/$defs/ProvenanceEntry" } },
+        "completeness": {
+          "type": "object",
+          "description": "Global caveats about this candidate's evidence.",
+          "additionalProperties": false,
+          "properties": {
+            "unresolved_indirect_calls": { "type": "integer", "minimum": 0 },
+            "opaque_external_calls": { "type": "array", "items": { "type": "string" } },
+            "truncated_fields": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+
+    "SolverResult": {
+      "type": "object",
+      "description": "Z3 path-feasibility verdict. UNSAT is a proof of impossibility and is the ONLY licence to discard a candidate. 'inconclusive' must never be collapsed into either decided outcome (Pipeline Design, 'Z3 and path feasibility').",
+      "required": ["verdict"],
+      "additionalProperties": false,
+      "properties": {
+        "verdict": { "enum": ["unsat", "sat", "inconclusive", "not_run"] },
+        "engine": { "type": "string", "default": "z3" },
+        "engine_version": { "type": "string" },
+        "reason": {
+          "type": ["string", "null"],
+          "description": "Required when verdict is 'inconclusive': 'timeout', 'unsupported-construct:<what>', 'encoding-incomplete:<what>'."
+        },
+        "assignment": { "type": ["object", "null"], "additionalProperties": true, "description": "Satisfying assignment when verdict is 'sat'." },
+        "unconstrained": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Program facts deliberately left unconstrained in the encoding — e.g. timing, since Racebench guarantees no periodicity. Anything listed here weakens the SAT reading but never the UNSAT one."
+        },
+        "wall_ms": { "type": "integer", "minimum": 0 },
+        "timeout_ms": { "type": "integer", "minimum": 0 }
+      }
+    },
+
+    "StaticFeatures": {
+      "type": "object",
+      "description": "Cheap features for ordering only, never for filtering (AdaTaint-style ranking; wiki/LLM Stage Design.md).",
+      "additionalProperties": true,
+      "properties": {
+        "feeds_branch": { "type": ["boolean", "null"], "description": "Shared value reaches a branch condition — the Bai et al. harmfulness criterion via IntRace." },
+        "used_as_index": { "type": ["boolean", "null"], "description": "Shared value indexes an array or is dereferenced as a pointer." },
+        "call_path_depth_max": { "type": "integer" },
+        "same_statement_a1_a2": { "type": "boolean" },
+        "priority_gap": { "type": "integer" },
+        "any_masking_present": { "type": "boolean" }
+      }
+    }
+  }
+}

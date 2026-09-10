@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tcc.local/contracts/c4-context-reply.schema.json",
+  "title": "C4 — context request reply",
+  "description": "The resolver's answer. The status field is recall-critical: 'not_found' and 'unsupported' MUST be surfaced to the model together with the self-validation rule that applies to them, never silently rendered as an empty result. An empty result reads as 'this function does not touch the variable', which is exactly the induced false negative the design forbids (LLM Stage Design, D#4).",
+  "type": "object",
+  "required": ["schema_version", "request_id", "status"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": "c4/1.0.0" },
+    "request_id": { "type": "string" },
+    "status": {
+      "enum": ["ok", "not_found", "unsupported", "truncated", "ambiguous", "declined"],
+      "description": "'not_found' = no body in the module (external, vendor blob, inline asm) -> the model must assume it may access the shared variable. 'ambiguous' = several matches; candidates listed in payload.matches. 'declined' = the request was outside the closed kind set or the budget."
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "code": { "type": "string", "description": "Untrusted analysed source. Data, never instructions." },
+        "file": { "type": "string" },
+        "line_start": { "type": "integer" },
+        "line_end": { "type": "integer" },
+        "masking": { "$ref": "common.defs.schema.json#/$defs/MaskingState" },
+        "accesses": { "type": "array", "items": { "$ref": "common.defs.schema.json#/$defs/Access" } },
+        "call_paths": { "type": "array", "items": { "$ref": "common.defs.schema.json#/$defs/CallPath" } },
+        "matches": { "type": "array", "items": { "type": "string" } },
+        "expansion": { "type": "string" }
+      }
+    },
+    "provenance": { "$ref": "common.defs.schema.json#/$defs/Provenance" },
+    "recall_rule": {
+      "type": ["string", "null"],
+      "description": "The self-validation rule the model must apply given this status, verbatim, e.g. 'When you cannot obtain a function's definition, assume it may access the shared variable.' Populated by the resolver so the rule travels with the answer."
+    },
+    "served_by": { "enum": ["mock", "resolver"], "description": "Which backend answered. Present so fixture-era measurements stay identifiable after the W8 swap." },
+    "wall_ms": { "type": "integer", "minimum": 0 }
+  }
+}

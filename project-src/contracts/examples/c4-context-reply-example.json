@@ -1,0 +1,33 @@
+{
+  "schema_version": "c4/1.0.0",
+  "request_id": "r-0003",
+  "status": "ok",
+  "payload": {
+    "file": "svp_simple_001/svp_simple_001_001.c",
+    "line_start": 46,
+    "line_end": 46,
+    "code": "  enable_isr(2);",
+    "masking": {
+      "disabled": [],
+      "enabled": [1, 2],
+      "unknown": []
+    }
+  },
+  "provenance": {
+    "entries": [
+      {
+        "fact": "payload.masking",
+        "status": "proven",
+        "note": "immediately after enable_isr(2) in svp_simple_001_001_isr_1, irq 2 is enabled on every path; this is the line that makes the annotated bug point reachable despite main's disable_isr(2)"
+      }
+    ],
+    "completeness": {
+      "unresolved_indirect_calls": 0,
+      "opaque_external_calls": ["enable_isr"],
+      "truncated_fields": []
+    }
+  },
+  "recall_rule": null,
+  "served_by": "mock",
+  "wall_ms": 3
+}

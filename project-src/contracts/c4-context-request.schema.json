@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tcc.local/contracts/c4-context-request.schema.json",
+  "title": "C4 — context request protocol (progressive prompting)",
+  "description": "Owned by Track B, because the CONSUMER should specify what it needs to ask for; Track A implements the resolver behind it (Roadmap, 'The idea that makes parallel work possible'). This is the context-retrieval mechanism and it replaces precomputed slicing (wiki/concepts/Program Slicing.md). Instrument it from day one: logging what the model asks for, how often and how deep is the cheapest experiment in the project, and the request distribution IS the specification of what the context record should contain (LLM Stage Design, D#2). Until Track A's resolver exists (W8), Track B serves these from a mock backed by static files; swapping the two must change nothing else.",
+  "type": "object",
+  "required": ["schema_version", "request_id", "candidate_id", "kind"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": "c4/1.0.0" },
+    "request_id": { "type": "string" },
+    "candidate_id": { "type": "string", "pattern": "^c[0-9a-f]{16}$" },
+    "turn": { "type": "integer", "minimum": 0, "description": "Which conversation turn issued this. Part of the 'how deep' measurement." },
+    "kind": {
+      "enum": [
+        "function_definition",
+        "isr_body",
+        "masking_state_at",
+        "macro_expansion",
+        "all_accesses_to",
+        "all_call_paths",
+        "type_definition",
+        "global_declaration"
+      ],
+      "description": "The closed set Track B decided the model may ask for. Extending it is a C4 version bump, not an ad-hoc addition."
+    },
+    "args": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "function": { "type": "string" },
+        "flow": { "type": "string" },
+        "variable": { "type": "string" },
+        "macro": { "type": "string" },
+        "type_name": { "type": "string" },
+        "file": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 }
+      }
+    }
+  },
+
+  "$comment": "Per-kind required arguments: function_definition -> function; isr_body -> flow; masking_state_at -> file+line; macro_expansion -> macro (file/line optional, to pick the expansion site); all_accesses_to -> variable; all_call_paths -> function; type_definition -> type_name; global_declaration -> variable."
+}
