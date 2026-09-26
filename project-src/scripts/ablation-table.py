@@ -39,6 +39,16 @@ def pct(x: float | None) -> str:
     return "—" if x is None else f"{x:.1%}"
 
 
+def _coverage(row: dict) -> tuple[int, int]:
+    """(scored, expected) for a row, derived from older files if need be."""
+    if "n_expected" in row:
+        return row.get("n_scored", 0), row["n_expected"]
+    # Results written before coverage was recorded still carry the exclusions.
+    excluded = len(row.get("excluded", []))
+    counted = sum(row.get("buckets", {}).values())
+    return counted, counted + excluded
+
+
 def load(paths: list[Path]) -> dict[str, dict[str, dict]]:
     """backend spec -> row name -> result."""
     out: dict[str, dict[str, dict]] = {}
@@ -65,6 +75,14 @@ def render(by_backend: dict[str, dict[str, dict]]) -> str:
             r = by_backend[spec].get(name)
             if r is None:
                 cells += ["—", "—", "—"]
+                continue
+            # An incomplete row's figures describe whichever candidates
+            # survived, which is not a sample of anything. Showing them as
+            # ordinary cells is how "100% / 100% / 100%" over three of twenty
+            # candidates ends up quoted, so they are struck out instead.
+            scored, expected = _coverage(r)
+            if expected and scored < expected:
+                cells += [f"_{scored}/{expected} scored_", "—", "—"]
                 continue
             gate = "" if r.get("gate_passed", r["recall"] == 1.0) else " ⚠"
             cells += [

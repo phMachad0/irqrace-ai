@@ -1,0 +1,101 @@
+[
+  {
+    "row": "+progressive",
+    "config_hash": "57aef3edb4f3efaa",
+    "backend": "openai:openai/gpt-oss-120b",
+    "recall": 1.0,
+    "gate_passed": true,
+    "trap_rejection": 1.0,
+    "inspection_ratio": 1.0,
+    "buckets": {
+      "likely_real": 1,
+      "uncertain": 1,
+      "likely_benign": 1
+    },
+    "blocking_element_groups": {},
+    "request_distribution": null,
+    "missed": [],
+    "protocol_violations": {
+      "cb612ba9bbc8a08a2": [
+        "benign verdict with no criterion named; the prompt states that is not acceptable"
+      ]
+    },
+    "bug_points_bucketed_benign": [
+      "cb612ba9bbc8a08a2"
+    ],
+    "excluded": [
+      {
+        "candidate": "c6756411eeb134a3c",
+        "reason": "backend error: rate limited by https://api.groq.com/openai/v1; gave up after 4 attempt(s) within a 300s budget: {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m3etpjrxewb814zrqfhktahp` service tier `on_demand` on tokens per "
+      },
+      {
+        "candidate": "cef3508615ce3bc5e",
+        "reason": "backend error: rate limited by https://api.groq.com/openai/v1; gave up after 4 attempt(s) within a 300s budget: {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m3etpjrxewb814zrqfhktahp` service tier `on_demand` on tokens per "
+      },
+      {
+        "candidate": "c8972847f02fab758",
+        "reason": "backend error: rate limited by https://api.groq.com/openai/v1; gave up after 4 attempt(s) within a 300s budget: {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m3etpjrxewb814zrqfhktahp` service tier `on_demand` on tokens per "
+      },
+      {
+        "candidate": "cb834643cadd32d9f",
+        "reason": "backend error: rate limited by https://api.groq.com/openai/v1; gave up after 4 attempt(s) within a 300s budget: {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m3etpjrxewb814zrqfhktahp` service tier `on_demand` on tokens per "
+      },
+      {
+        "candidate": "ca64e04c11e3ed989",
+        "reason": "backend error: rate limited by https://api.groq.com/openai/v1; gave up after 4 attempt(s) within a 300s budget: {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m3etpjrxewb814zrqfhktahp` service tier `on_demand` on tokens per "
+      },
+      {
+        "candidate": "c868c421dea8fd180",
+        "reason": "backend error: rate limited by https://api.groq.com/openai/v1; gave up after 4 attempt(s) within a 300s budget: {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m3etpjrxewb814zrqfhktahp` service tier `on_demand` on tokens per "
+      },
+      {
+        "candidate": "c75612f8fc914ddca",
+        "reason": "backend error: rate limited by https://api.groq.com/openai/v1; gave up after 4 attempt(s) within a 300s budget: {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m3etpjrxewb814zrqfhktahp` service tier `on_demand` on tokens per "
+      },
+      {
+        "candidate": "cf50d0839d6574b1d",
+        "reason": "backend error: rate limited by https://api.groq.com/openai/v1; gave up after 4 attempt(s) within a 300s budget: {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m3etpjrxewb814zrqfhktahp` service tier `on_demand` on tokens per "
+      },
+      {
+        "candidate": "ce658122e5e4f3a0b",
+        "reason": "backend error: rate limited by https://api.groq.com/openai/v1; gave up after 4 attempt(s) within a 300s budget: {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m3etpjrxewb814zrqfhktahp` service tier `on_demand` on tokens per "
+      },
+      {
+        "candidate": "cbb56e2d74f880e27",
+        "reason": "backend error: rate limited by https://api.groq.com/openai/v1; gave up after 4 attempt(s) within a 300s budget: {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m3etpjrxewb814zrqfhktahp` service tier `on_demand` on tokens per "
+      },
+      {
+        "candidate": "cc6c467b22a5ca986",
+        "reason": "backend error: rate limited by https://api.groq.com/openai/v1; gave up after 4 attempt(s) within a 300s budget: {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m3etpjrxewb814zrqfhktahp` service tier `on_demand` on tokens per "
+      },
+      {
+        "candidate": "c0bd8754e3bafb908",
+        "reason": "backend error: cannot reach https://api.groq.com/openai/v1: [Errno 11001] getaddrinfo failed"
+      },
+      {
+        "candidate": "c8d257c3f01ffa94b",
+        "reason": "backend error: cannot reach https://api.groq.com/openai/v1: [Errno 11001] getaddrinfo failed"
+      },
+      {
+        "candidate": "c6b790e4c36b2c0fe",
+        "reason": "backend error: cannot reach https://api.groq.com/openai/v1: [Errno 11001] getaddrinfo failed"
+      },
+      {
+        "candidate": "c6a5018219b08d229",
+        "reason": "backend error: cannot reach https://api.groq.com/openai/v1: [Errno 11001] getaddrinfo failed"
+      },
+      {
+        "candidate": "cb69d0ad818902365",
+        "reason": "backend error: cannot reach https://api.groq.com/openai/v1: [Errno 11001] getaddrinfo failed"
+      },
+      {
+        "candidate": "cb4c2c39de0689063",
+        "reason": "backend error: cannot reach https://api.groq.com/openai/v1: [Errno 11001] getaddrinfo failed"
+      }
+    ],
+    "cost_usd": null,
+    "caveats": [
+      "no prompt caching - cost is not comparable with a cached backend"
+    ]
+  }
+]

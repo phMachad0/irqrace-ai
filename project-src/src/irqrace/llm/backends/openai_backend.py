@@ -222,12 +222,12 @@ class OpenAICompatibleBackend(Backend):
         for attempt in range(self.max_retries + 1):
             try:
                 return self._post_once(body)
-            except _RateLimited as e:
+            except (_RateLimited, _Transient) as e:
                 wait = min(e.retry_after, self.max_backoff_s)
                 if attempt == self.max_retries or time.monotonic() + wait > deadline:
                     raise BackendError(
-                        f"rate limited by {self.base_url}; gave up after "
-                        f"{attempt + 1} attempt(s) within a "
+                        f"{type(e).__name__[1:].lower()} from {self.base_url}; "
+                        f"gave up after {attempt + 1} attempt(s) within a "
                         f"{self.request_budget_s:.0f}s budget: {e.detail[:160]}"
                     ) from None
                 time.sleep(wait)
@@ -264,7 +264,12 @@ class OpenAICompatibleBackend(Backend):
                 ) from None
             raise BackendError(f"{self.base_url} returned {e.code}: {detail}") from None
         except urllib.error.URLError as e:
-            raise BackendError(f"cannot reach {self.base_url}: {e.reason}") from None
+            # DNS and connection failures are usually transient -- a blip cost
+            # six candidates on one run -- so they retry on the same budget as
+            # a rate limit rather than excluding the candidate outright.
+            raise _Transient(
+                f"cannot reach {self.base_url}: {e.reason}", 5.0
+            ) from None
         except TimeoutError:
             # A read timeout raises TimeoutError directly rather than through
             # URLError, so it was not caught here and escaped the retry logic
@@ -303,13 +308,21 @@ class _StrictUnsupported(BackendError):
     """This endpoint rejected ``response_format``; fall back to prompted JSON."""
 
 
-class _RateLimited(BackendError):
-    """429. Carries how long the endpoint asked us to wait."""
+class _Retryable(BackendError):
+    """A failure worth another attempt. Carries how long to wait first."""
 
     def __init__(self, detail: str, retry_after: float):
         super().__init__(detail)
         self.detail = detail
         self.retry_after = retry_after
+
+
+class _RateLimited(_Retryable):
+    """429. The wait comes from the endpoint rather than from us."""
+
+
+class _Transient(_Retryable):
+    """DNS or connection failure. Usually a blip; retried on the same budget."""
 
 
 #: "Please try again in 25.5s" / "in 1m30s", as providers phrase it in the body

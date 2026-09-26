@@ -327,3 +327,24 @@ def test_retries_stop_at_the_wall_clock_budget(monkeypatch):
     with pytest.raises(BackendError, match="budget"):
         backend.chat(_request())
     assert len(slept) == 0, "a 90s wait does not fit a 60s budget; none should be taken"
+
+
+def test_a_dns_blip_is_retried_not_an_exclusion(monkeypatch):
+    """A transient network failure cost six candidates on one run."""
+    import irqrace.llm.backends.openai_backend as mod
+    import urllib.error
+
+    monkeypatch.setattr(mod.time, "sleep", lambda s: None)
+    calls = {"n": 0}
+
+    def flaky(*a, **k):
+        calls["n"] += 1
+        if calls["n"] < 3:
+            raise urllib.error.URLError("[Errno 11001] getaddrinfo failed")
+        raise mod._RateLimited("stop here", 0.0)
+
+    backend = OpenAICompatibleBackend("m", max_retries=5)
+    monkeypatch.setattr("urllib.request.urlopen", flaky)
+    with pytest.raises(BackendError):
+        backend.chat(_request())
+    assert calls["n"] > 2, "the DNS failure was not retried"

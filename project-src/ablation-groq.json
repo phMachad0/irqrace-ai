@@ -1,0 +1,111 @@
+[
+  {
+    "row": "simple",
+    "config_hash": "4922b8d587d293bf",
+    "backend": "openai:openai/gpt-oss-120b",
+    "recall": 1.0,
+    "gate_passed": true,
+    "coverage": 1.0,
+    "n_scored": 20,
+    "n_expected": 20,
+    "trap_rejection": 0.8,
+    "inspection_ratio": 0.65,
+    "buckets": {
+      "likely_real": 7,
+      "uncertain": 2,
+      "likely_benign": 4,
+      "likely_infeasible": 7
+    },
+    "blocking_element_groups": {},
+    "request_distribution": null,
+    "missed": [],
+    "protocol_violations": {
+      "c7975f29119c6a273": [
+        "blocking element named on a verdict that is not infeasible"
+      ],
+      "cb612ba9bbc8a08a2": [
+        "benign verdict with no criterion named; the prompt states that is not acceptable"
+      ],
+      "c6756411eeb134a3c": [
+        "benign verdict with no criterion named; the prompt states that is not acceptable"
+      ],
+      "c8972847f02fab758": [
+        "benign verdict with no criterion named; the prompt states that is not acceptable"
+      ],
+      "c6a5018219b08d229": [
+        "benign verdict with no criterion named; the prompt states that is not acceptable"
+      ]
+    },
+    "bug_points_bucketed_benign": [
+      "cb612ba9bbc8a08a2",
+      "c6756411eeb134a3c",
+      "c8972847f02fab758"
+    ],
+    "excluded": [],
+    "cost_usd": null,
+    "caveats": [
+      "no prompt caching - cost is not comparable with a cached backend"
+    ]
+  },
+  {
+    "row": "+domain",
+    "config_hash": "8207a7510bf53e85",
+    "backend": "openai:openai/gpt-oss-120b",
+    "recall": 1.0,
+    "gate_passed": true,
+    "coverage": 1.0,
+    "n_scored": 20,
+    "n_expected": 20,
+    "trap_rejection": 0.8,
+    "inspection_ratio": 0.75,
+    "buckets": {
+      "likely_real": 6,
+      "likely_benign": 7,
+      "uncertain": 2,
+      "likely_infeasible": 5
+    },
+    "blocking_element_groups": {},
+    "request_distribution": null,
+    "missed": [],
+    "protocol_violations": {
+      "c7975f29119c6a273": [
+        "blocking element named on a verdict that is not infeasible"
+      ],
+      "c1a015d2f1d307ead": [
+        "benign verdict with no criterion named; the prompt states that is not acceptable"
+      ],
+      "cb612ba9bbc8a08a2": [
+        "benign verdict with no criterion named; the prompt states that is not acceptable"
+      ],
+      "c6756411eeb134a3c": [
+        "benign verdict with no criterion named; the prompt states that is not acceptable"
+      ],
+      "c8972847f02fab758": [
+        "benign verdict with no criterion named; the prompt states that is not acceptable"
+      ],
+      "ce658122e5e4f3a0b": [
+        "benign verdict with no criterion named; the prompt states that is not acceptable"
+      ],
+      "cc6c467b22a5ca986": [
+        "benign verdict with no criterion named; the prompt states that is not acceptable"
+      ],
+      "c6a5018219b08d229": [
+        "benign verdict with no criterion named; the prompt states that is not acceptable"
+      ],
+      "cb69d0ad818902365": [
+        "infeasible verdict with no blocking element named; nothing can be propagated to other candidates and the claim is uncheckable"
+      ]
+    },
+    "bug_points_bucketed_benign": [
+      "c1a015d2f1d307ead",
+      "cb612ba9bbc8a08a2",
+      "c6756411eeb134a3c",
+      "c8972847f02fab758"
+    ],
+    "excluded": [],
+    "cost_usd": null,
+    "caveats": [
+      "no prompt caching - cost is not comparable with a cached backend"
+    ]
+  }
+]

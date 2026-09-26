@@ -52,27 +52,60 @@ class Score:
     traps_kept_high: tuple[str, ...]
     inspection_ratio: float
     bucket_counts: dict[str, int]
+    #: Candidates the row was supposed to cover, including any the backend
+    #: refused or failed on. ``n_candidates`` counts only those actually
+    #: scored, so the two differ exactly when something was excluded.
+    n_expected: int = 0
+
+    @property
+    def coverage(self) -> float:
+        """Share of the intended candidate set that was actually scored."""
+        return self.n_candidates / self.n_expected if self.n_expected else 1.0
+
+    @property
+    def complete(self) -> bool:
+        return self.coverage >= 1.0
 
     @property
     def gate_passed(self) -> bool:
-        """Passing requires bug points to have been scored, not merely no misses.
+        """Passing requires a **complete** row, not merely no misses.
 
-        Recall over an empty set is 1.0, so a row where every candidate was
-        excluded -- an unreachable backend, a systematic refusal -- would
-        otherwise report a green gate having measured nothing. That is the
-        silent-success failure this project exists to avoid, and it was
-        reached in practice before this guard existed.
+        Two ways this reported green having measured almost nothing, both
+        reached in practice rather than imagined:
+
+        * Recall over an empty set is 1.0, so a row where every candidate was
+          excluded looked like a pass. Requiring ``n_bug_points > 0`` fixed
+          that — and was not enough.
+        * A row that scored 3 of 20 after the endpoint rate-limited eleven
+          candidates and DNS dropped six then reported "PASS, 3/3 bug points"
+          and "trap rejection 100% (0/0)". Three bug points satisfy the first
+          guard, and trap rejection over zero traps is vacuously perfect.
+
+        So a partial row does not pass. Its numbers are real but they describe
+        whichever candidates happened to survive, which is not a sample of
+        anything.
         """
-        return self.n_bug_points > 0 and self.recall == 1.0
+        return self.n_bug_points > 0 and self.recall == 1.0 and self.complete
 
     def report(self) -> str:
         gate = "PASS" if self.gate_passed else "FAIL"
-        lines = [
+        lines = []
+        if not self.complete:
+            lines.append(
+                f"INCOMPLETE — {self.n_candidates}/{self.n_expected} candidates "
+                f"scored ({self.coverage:.0%}). The figures below describe the "
+                f"survivors, not the set; this row is not a measurement."
+            )
+        lines += [
             f"recall gate:      {gate} — {self.recall:.1%} "
             f"({self.n_bug_points - len(self.missed)}/{self.n_bug_points} bug points "
             f"survived triage)",
-            f"trap rejection:   {self.trap_rejection:.1%} "
-            f"({self.n_traps - len(self.traps_kept_high)}/{self.n_traps} traps bucketed low)",
+            (
+                "trap rejection:   n/a — no traps were scored"
+                if self.n_traps == 0
+                else f"trap rejection:   {self.trap_rejection:.1%} "
+                f"({self.n_traps - len(self.traps_kept_high)}/{self.n_traps} traps bucketed low)"
+            ),
             f"inspection ratio: {self.inspection_ratio:.1%} "
             f"({self._to_read()}/{self.n_candidates} candidates read to find them all)",
             "buckets:          "
@@ -91,8 +124,16 @@ class Score:
         return round(self.inspection_ratio * self.n_candidates)
 
 
-def score(fixtures: list[Fixture], triages: list[Triage]) -> Score:
+def score(
+    fixtures: list[Fixture],
+    triages: list[Triage],
+    n_expected: int | None = None,
+) -> Score:
     """Score one row of the ablation.
+
+    :param n_expected: how many candidates the row was meant to cover. Pass
+        the full fixture count when some were excluded, so the result knows it
+        is partial; omitting it assumes ``fixtures`` is the whole set.
 
     :raises ValueError: if the triaged set is not exactly the input set. This
         is the no-drop invariant, checked rather than assumed.
@@ -136,6 +177,7 @@ def score(fixtures: list[Fixture], triages: list[Triage]) -> Score:
 
     return Score(
         n_candidates=len(fixtures),
+        n_expected=len(fixtures) if n_expected is None else n_expected,
         n_bug_points=len(bug_points),
         n_traps=len(traps),
         recall=recall,

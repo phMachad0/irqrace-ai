@@ -136,7 +136,7 @@ def main() -> int:
         # With several samples the reported verdict is the vote, not run 0:
         # ties resolve toward the higher bucket, so voting cannot lose recall.
         final = vote(runs) if len(runs) > 1 else runs[0]
-        s = score(scored, final)
+        s = score(scored, final, n_expected=len(fixtures))
 
         print(f"--- {config.name}  ({config.hash()})")
         print("    " + s.report().replace("\n", "\n    "))
@@ -200,6 +200,9 @@ def main() -> int:
                 "backend": backend.spec,
                 "recall": s.recall,
                 "gate_passed": s.gate_passed,
+                "coverage": s.coverage,
+                "n_scored": s.n_candidates,
+                "n_expected": s.n_expected,
                 "trap_rejection": s.trap_rejection,
                 "inspection_ratio": s.inspection_ratio,
                 "buckets": s.bucket_counts,

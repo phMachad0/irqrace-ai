@@ -100,3 +100,25 @@ def test_env_file_is_read_but_never_overrides_an_export(tmp_path, monkeypatch):
 
 def test_a_missing_env_file_is_not_an_error(tmp_path):
     assert _runner().load_env(tmp_path / "nope") == []
+
+
+def test_an_incomplete_row_shows_coverage_instead_of_figures(tmp_path):
+    """'100% / 100% / 100%' over three of twenty candidates is how a number
+    that means nothing ends up quoted."""
+    p = tmp_path / "r.json"
+    p.write_text(json.dumps([
+        _row("+progressive", "a:b", recall=1.0, trap=1.0, insp=1.0,
+             n_scored=3, n_expected=20)
+    ]))
+    out = table.render(table.load([p]))
+    assert "3/20 scored" in out
+    assert "100.0%" not in out
+
+
+def test_coverage_is_derived_for_results_written_before_it_was_recorded(tmp_path):
+    p = tmp_path / "r.json"
+    p.write_text(json.dumps([
+        _row("simple", "a:b", buckets={"likely_real": 3},
+             excluded=[{"candidate": "c", "reason": "r"}] * 17)
+    ]))
+    assert "3/20 scored" in table.render(table.load([p]))

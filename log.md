@@ -879,3 +879,46 @@ that would have produced a tidy "48 true violations" and a false parallel betwee
 benchmarks. Checking whether the named variables exist in the named program is what killed it.
 Two benchmarks, two different corruptions that a strict reader mis-handles in two different
 directions.
+
+## [2026-09-26] result | the +progressive row failed, and its failure found a third silent success
+
+Ran `+progressive` alone after the stall fix. It **failed as a measurement**: 3 of 20
+candidates scored, 11 lost to the rate limiter giving up inside its new budget and 6 to a DNS
+blip mid-run. The row is discarded.
+
+**What it reported before being discarded is the finding.** With three candidates scored it
+printed `recall gate: PASS — 100.0% (3/3 bug points survived)` and
+`trap rejection: 100.0% (0/0 traps bucketed low)`. Both guards added earlier held and both were
+insufficient: `gate_passed` required that bug points were scored, and three satisfy it; trap
+rejection over zero traps is vacuously perfect. **A row that measured 15% of the set reported
+three green numbers.**
+
+This is the third variant of the same failure in one day — recall over an empty set, then a
+row with no candidates at all, now a row with a handful. The pattern is that every ratio in
+this harness is well-behaved on the empty and near-empty case and says nothing about coverage.
+So `Score` now carries `n_expected`, a partial row **cannot pass the gate whatever its
+figures**, the report opens with `INCOMPLETE — 3/20 candidates scored`, trap rejection over no
+traps prints `n/a` instead of 100%, and the M3 table renders an incomplete row's cells as
+`3/20 scored` rather than as percentages. That last one matters most: the table is the artifact
+someone quotes from.
+
+Transient network failures are now retried on the same budget as rate limits, since a DNS blip
+excluding six candidates is not a measurement decision.
+
+**The two complete rows, re-scored from cache in 0.88s with zero requests** — which is the
+cache doing exactly what it was built for:
+
+| row | recall | trap rejection | Inspection Ratio | bug points called benign | protocol violations |
+| --- | --- | --- | --- | --- | --- |
+| `simple` | 100% (10/10) | 80% | **65.0%** | 3 | 5 |
+| `+domain` | 100% (10/10) | 80% | **75.0%** | 4 | 9 |
+
+The protocol violations nearly doubling, 5 to 9, is the same mechanism as the Inspection Ratio
+getting worse: `domain_rules.md` states the harmfulness criterion explicitly, the model applies
+it with more conviction to Racebench's dead readers, and more candidates come back benign —
+several without naming the criterion clause the prompt requires. Two rows is not an ablation,
+but the direction is consistent across three separate measures.
+
+`+progressive`, `+decomposition` and `+self-validation` remain unmeasured. They are not
+affordable on this tier: the two decomposition rows issue four to five requests per candidate
+against an 8,000 token-per-minute ceiling.

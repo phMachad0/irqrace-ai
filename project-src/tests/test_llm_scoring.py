@@ -233,3 +233,33 @@ def test_candidates_without_a_blocking_element_are_not_grouped():
     assert blocking_element_groups(
         [_triage("a", Feasibility.feasible, Harmfulness.harmful)]
     ) == {}
+
+
+# -- coverage --------------------------------------------------------------
+
+
+def test_a_partial_row_does_not_pass_the_gate():
+    """Reached in practice: 3 of 20 scored after rate limits and a DNS blip,
+    and the row reported 'PASS, 3/3 bug points'."""
+    fx = [_fixture("a", REAL)]
+    s = score(fx, [_triage("a", Feasibility.feasible, Harmfulness.harmful)], n_expected=20)
+    assert s.recall == 1.0
+    assert not s.gate_passed
+    assert s.coverage == 0.05
+    assert "INCOMPLETE" in s.report()
+
+
+def test_a_complete_row_still_passes():
+    fx = [_fixture("a", REAL), _fixture("t", TRAP)]
+    s = score(fx, [
+        _triage("a", Feasibility.feasible, Harmfulness.harmful),
+        _triage("t", Feasibility.infeasible),
+    ], n_expected=2)
+    assert s.gate_passed and s.complete
+
+
+def test_trap_rejection_over_no_traps_is_not_reported_as_perfect():
+    """0/0 read as 100% in a real run and looked like a result."""
+    fx = [_fixture("a", REAL)]
+    s = score(fx, [_triage("a", Feasibility.feasible, Harmfulness.harmful)])
+    assert "n/a" in s.report()
