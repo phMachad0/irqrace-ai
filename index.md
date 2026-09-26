@@ -1,7 +1,7 @@
 ---
 type: index
 tags: [wiki, index]
-updated: 2026-08-31
+updated: 2026-09-26
 ---
 
 # Index
@@ -28,13 +28,16 @@ the LLM per `CLAUDE.md` — update on every ingest.
 
 ## Implementation (`project-src/`)
 
-The tool itself, outside the wiki layer. Started 2026-08-31 (W1 of [[Roadmap]]).
+The tool itself, outside the wiki layer. Started 2026-08-31 (W1 of [[Roadmap]]). Track B started 2026-09-26 on branch
+`track-b/llm-integration`; **M1 answered GO** the same day (see `log.md`).
 
 | Path | What it is |
 | --- | --- |
 | `project-src/README.md` | status against the Roadmap, layout, how to build and run |
 | `project-src/contracts/` | **C1–C4 frozen as JSON Schema**, with a worked example of each and a synthetic C3 run directory |
 | `project-src/src/irqrace/` | Python: contract validation, C1 parser, bitcode build, SVF probe, run store |
+| `project-src/src/irqrace/llm/` | **Track B**: the triage and repair stage. Provider-neutral backends, the five ablation rows, C4 resolver, scoring, the tolerant annotation reader |
+| `project-src/fixtures/` | the 20 labelled context records — 10 bug points, 10 traps, six adversarial pairs |
 | `project-src/analysis/` | C++ over SVF; currently `irqrace-probe` ([[Dashboard Design]] R4, R7) |
 | `project-src/bench/configs/` | one generated C1 file per [[Racebench]] simple case (31) |
 | `project-src/docs/masking-semantics.md` | why per-flow interval masking drops a real bug point |
