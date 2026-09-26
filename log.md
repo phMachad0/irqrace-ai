@@ -790,3 +790,51 @@ adding a field to the verdict changes the experiment as much as editing a prompt
 stale hit would have hidden it. Fixed, with a test.
 
 State: 221 passing. First measured numbers in the project.
+
+## [2026-09-26] build | Track B — two ablation rows measured; the harness stalled and was fixed
+
+**Two rows measured, and the second is a negative result.**
+
+| row | recall | trap rejection | Inspection Ratio |
+| --- | --- | --- | --- |
+| `simple` | 100% (10/10) | 80% | **65.0%** |
+| `+domain` | 100% (10/10) | 80% | **75.0%** |
+
+Adding D#1's domain rules **worsened** Inspection Ratio by 10 points and moved neither recall
+nor trap rejection. The mechanism is visible in the bucket changes: three bug points moved down
+(002 `uncertain`→`likely_benign`, 007 and 016 `likely_real`→`uncertain`), one trap moved up, and
+`likely_benign` went from 4 to 7. `domain_rules.md` is where the Bai et al. harmfulness clause
+is stated explicitly, so **making the rule explicit made the model apply it with more conviction
+to Racebench's dead readers — and on this benchmark the rule is wrong**. The baseline scored
+better partly by not having it. That is the harmfulness conflict recorded above, now with a
+measured cost attached.
+
+Strength of evidence, stated plainly: **n=20, single sample, one model.** Inspection Ratio is
+driven by the worst-ranked bug point, so 65%→75% is the last bug point moving from position 13
+to 15 — two candidates, inside the noise for a single sample. Confirming it needs n=3 and the
+consistency measurement, which is what W6 exists for. The direction is suggestive; the number
+is not yet a claim.
+
+**The harness stalled for 66 minutes and reported nothing.** Two compounding causes, neither
+findable against a fake backend:
+
+- `TimeoutError` does not subclass `URLError`, so a read timeout escaped both the error handler
+  and the retry logic. With urllib's socket timeout left at its 600s default that is ten silent
+  minutes per stalled request.
+- Retries had a count limit but no clock. Six retries of up to 90s is nine minutes for one
+  request, and the progressive rows issue up to five requests per candidate across four
+  context-request rounds — so one candidate could absorb most of an hour while the run looked
+  hung rather than slow.
+
+Both fixed, with tests: 120s socket timeout, `TimeoutError` handled, and a wall-clock budget
+per request that gives up inside it.
+
+**The free tier cannot carry M3.** Measured: the full five-row ablation is ~960k tokens against
+Groq's 8,000 tokens/minute, so **two hours of pure quota** and four to six hours in practice
+once retry overshoot is counted. Rows 1 and 2 are done; the three with progressive prompting
+and decomposition are not affordable in time here. On Claude Opus 5 the same work is ~15 minutes
+and $10.25. Groq answered M1 and gives one column of the comparison; it is not where M3 gets
+measured.
+
+Credentials now load from a gitignored `.env`, so runs do not depend on remembering an export
+and keys stay out of shell history.
