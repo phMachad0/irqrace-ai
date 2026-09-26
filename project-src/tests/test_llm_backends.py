@@ -297,5 +297,33 @@ def test_an_exhausted_quota_ends_the_run_rather_than_hanging(monkeypatch):
     backend._post_once = lambda body: (_ for _ in ()).throw(
         mod._RateLimited("quota gone", 0.01)
     )
-    with pytest.raises(BackendError, match="after 2 retries"):
+    with pytest.raises(BackendError, match="gave up after 3 attempt"):
         backend.chat(_request())
+
+
+def test_a_read_timeout_is_a_backend_error_not_an_escape(monkeypatch):
+    """TimeoutError does not subclass URLError, so it was escaping the handler
+    and the retry logic entirely -- ten silent minutes per stalled request."""
+    backend = OpenAICompatibleBackend("m")
+    monkeypatch.setattr(
+        "urllib.request.urlopen",
+        lambda *a, **k: (_ for _ in ()).throw(TimeoutError()),
+    )
+    with pytest.raises(BackendError, match="did not respond within"):
+        backend.chat(_request())
+
+
+def test_retries_stop_at_the_wall_clock_budget(monkeypatch):
+    """Retries compound with the progressive loop's rounds: four rounds times
+    six retries is most of an hour on one candidate, and the run looks hung."""
+    import irqrace.llm.backends.openai_backend as mod
+
+    slept = []
+    monkeypatch.setattr(mod.time, "sleep", slept.append)
+    backend = OpenAICompatibleBackend("m", max_retries=100, request_budget_s=60)
+    backend._post_once = lambda body: (_ for _ in ()).throw(
+        mod._RateLimited("tpm", 90.0)
+    )
+    with pytest.raises(BackendError, match="budget"):
+        backend.chat(_request())
+    assert len(slept) == 0, "a 90s wait does not fit a 60s budget; none should be taken"

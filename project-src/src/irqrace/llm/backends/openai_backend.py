@@ -95,6 +95,8 @@ class OpenAICompatibleBackend(Backend):
         api_key: str | None = None,
         transport: Any = None,
         max_retries: int = 6,
+        timeout_s: float = 120.0,
+        request_budget_s: float = 300.0,
     ):
         super().__init__(model)
         self.base_url = (
@@ -113,6 +115,15 @@ class OpenAICompatibleBackend(Backend):
         #: thousand-token records hits that within a few candidates.
         self.max_retries = max_retries
         self.max_backoff_s = 90.0
+        #: Per-request socket timeout. The 600s default meant a single stalled
+        #: request cost ten minutes of silence; a chat completion that has not
+        #: answered in two minutes is not going to.
+        self.timeout_s = timeout_s
+        #: Wall-clock budget for one request including every retry. Without
+        #: it, retries compound with the progressive loop's rounds -- four
+        #: rounds times six retries is most of an hour on one candidate, and
+        #: the run looks hung rather than slow.
+        self.request_budget_s = request_budget_s
         self._strict_supported = True
 
     @property
@@ -207,16 +218,19 @@ class OpenAICompatibleBackend(Backend):
         fixed fallback. Retries are capped so a genuinely exhausted quota ends
         the run instead of hanging it.
         """
+        deadline = time.monotonic() + self.request_budget_s
         for attempt in range(self.max_retries + 1):
             try:
                 return self._post_once(body)
             except _RateLimited as e:
-                if attempt == self.max_retries:
+                wait = min(e.retry_after, self.max_backoff_s)
+                if attempt == self.max_retries or time.monotonic() + wait > deadline:
                     raise BackendError(
-                        f"rate limited by {self.base_url} after "
-                        f"{self.max_retries} retries: {e.detail[:200]}"
+                        f"rate limited by {self.base_url}; gave up after "
+                        f"{attempt + 1} attempt(s) within a "
+                        f"{self.request_budget_s:.0f}s budget: {e.detail[:160]}"
                     ) from None
-                time.sleep(min(e.retry_after, self.max_backoff_s))
+                time.sleep(wait)
         raise AssertionError("unreachable")
 
     def _post_once(self, body: dict[str, Any]) -> dict[str, Any]:
@@ -238,7 +252,7 @@ class OpenAICompatibleBackend(Backend):
             method="POST",
         )
         try:
-            with urllib.request.urlopen(req, timeout=600) as fh:
+            with urllib.request.urlopen(req, timeout=self.timeout_s) as fh:
                 return json.loads(fh.read().decode("utf-8"))
         except urllib.error.HTTPError as e:
             detail = e.read().decode("utf-8", "replace")[:500]
@@ -251,6 +265,14 @@ class OpenAICompatibleBackend(Backend):
             raise BackendError(f"{self.base_url} returned {e.code}: {detail}") from None
         except urllib.error.URLError as e:
             raise BackendError(f"cannot reach {self.base_url}: {e.reason}") from None
+        except TimeoutError:
+            # A read timeout raises TimeoutError directly rather than through
+            # URLError, so it was not caught here and escaped the retry logic
+            # entirely. With a 600s socket timeout that is ten silent minutes
+            # per stalled request, which is how a run appears to hang.
+            raise BackendError(
+                f"{self.base_url} did not respond within {self.timeout_s:.0f}s"
+            ) from None
 
     # -- response parsing ---------------------------------------------------
 
