@@ -1,0 +1,326 @@
+{
+  "schema_version": "c2/1.0.0",
+  "id": "c8972847f02fab758",
+  "fingerprint": "8972847f02fab7583e44283cb5044756bec3c5ddfee57c1a0597b910b7fd700e",
+  "class": "atomicity-triple",
+  "pattern": "WRW",
+  "subject": {
+    "name": "svp_simple_009_001",
+    "source_root": "C:\\Users\\luoma\\Desktop\\racebench\\2.1_remarks"
+  },
+  "variable": {
+    "name": "svp_simple_009_001_p",
+    "declared_type": "volatile int *",
+    "volatile": true,
+    "decl": {
+      "file": "svp_simple_009/svp_simple_009_001.c",
+      "line": 19,
+      "column": 0,
+      "end_line": 19,
+      "snippet": "volatile int *svp_simple_009_001_p;"
+    },
+    "storage": "global",
+    "aliases": [
+      "svp_simple_009_001_q"
+    ],
+    "svf_node": null
+  },
+  "accesses": [
+    {
+      "role": "A1",
+      "kind": "write",
+      "flow": "main",
+      "function": "svp_simple_009_001_main",
+      "source": {
+        "file": "svp_simple_009/svp_simple_009_001.c",
+        "line": 32,
+        "column": 2,
+        "end_line": 32,
+        "snippet": "*svp_simple_009_001_p = 0x02;"
+      },
+      "loop_context": {
+        "in_loop": false,
+        "nest": []
+      },
+      "call_path": {
+        "flow": "main",
+        "frames": [
+          {
+            "function": "svp_simple_009_001_main"
+          }
+        ]
+      },
+      "masking": {
+        "disabled": [],
+        "enabled": [
+          1
+        ],
+        "unknown": []
+      }
+    },
+    {
+      "role": "B",
+      "kind": "read",
+      "flow": "isr_1",
+      "function": "svp_simple_009_001_isr_1",
+      "source": {
+        "file": "svp_simple_009/svp_simple_009_001.c",
+        "line": 44,
+        "column": 2,
+        "end_line": 44,
+        "snippet": "reader1 = *svp_simple_009_001_p;"
+      },
+      "loop_context": {
+        "in_loop": false,
+        "nest": []
+      },
+      "call_path": {
+        "flow": "isr_1",
+        "frames": [
+          {
+            "function": "svp_simple_009_001_isr_1"
+          }
+        ]
+      },
+      "masking": {
+        "disabled": [],
+        "enabled": [
+          1
+        ],
+        "unknown": []
+      }
+    },
+    {
+      "role": "A2",
+      "kind": "write",
+      "flow": "main",
+      "function": "svp_simple_009_001_main",
+      "source": {
+        "file": "svp_simple_009/svp_simple_009_001.c",
+        "line": 33,
+        "column": 2,
+        "end_line": 33,
+        "snippet": "*svp_simple_009_001_q = 0x03;"
+      },
+      "loop_context": {
+        "in_loop": false,
+        "nest": []
+      },
+      "call_path": {
+        "flow": "main",
+        "frames": [
+          {
+            "function": "svp_simple_009_001_main"
+          }
+        ]
+      },
+      "masking": {
+        "disabled": [],
+        "enabled": [
+          1
+        ],
+        "unknown": []
+      }
+    }
+  ],
+  "flows": [
+    {
+      "id": "main",
+      "kind": "task",
+      "entry": "svp_simple_009_001_main",
+      "irq": null,
+      "priority": 0,
+      "identified_by": "config"
+    },
+    {
+      "id": "isr_1",
+      "kind": "isr",
+      "entry": "svp_simple_009_001_isr_1",
+      "irq": 1,
+      "priority": 1,
+      "identified_by": "config"
+    }
+  ],
+  "preemption": {
+    "preempting_flow": "isr_1",
+    "preempted_flow": "main",
+    "priority_relation": "strictly-higher",
+    "equal_priority_assumed_preemptible": null,
+    "nesting_depth": 1,
+    "timing": "unconstrained"
+  },
+  "masking": {
+    "per_access": [
+      {
+        "role": "A1",
+        "state": {
+          "disabled": [],
+          "enabled": [
+            1
+          ],
+          "unknown": []
+        }
+      },
+      {
+        "role": "B",
+        "state": {
+          "disabled": [],
+          "enabled": [
+            1
+          ],
+          "unknown": []
+        }
+      },
+      {
+        "role": "A2",
+        "state": {
+          "disabled": [],
+          "enabled": [
+            1
+          ],
+          "unknown": []
+        }
+      }
+    ],
+    "interval": {
+      "from_role": "A1",
+      "to_role": "A2",
+      "disabled_throughout": [],
+      "enabled_somewhere": [
+        1
+      ],
+      "unknown": [],
+      "reenabled_within_interval_by": [],
+      "critical_sections": []
+    }
+  },
+  "call_paths": [
+    {
+      "role": "A1",
+      "path": {
+        "flow": "main",
+        "frames": [
+          {
+            "function": "svp_simple_009_001_main"
+          }
+        ]
+      }
+    },
+    {
+      "role": "B",
+      "path": {
+        "flow": "isr_1",
+        "frames": [
+          {
+            "function": "svp_simple_009_001_isr_1"
+          }
+        ]
+      }
+    },
+    {
+      "role": "A2",
+      "path": {
+        "flow": "main",
+        "frames": [
+          {
+            "function": "svp_simple_009_001_main"
+          }
+        ]
+      }
+    }
+  ],
+  "loop_context": {
+    "per_access": [
+      {
+        "role": "A1",
+        "context": {
+          "in_loop": false,
+          "nest": []
+        }
+      },
+      {
+        "role": "B",
+        "context": {
+          "in_loop": false,
+          "nest": []
+        }
+      },
+      {
+        "role": "A2",
+        "context": {
+          "in_loop": false,
+          "nest": []
+        }
+      }
+    ],
+    "a1_a2_same_statement": false
+  },
+  "enclosing_source": [
+    {
+      "function": "svp_simple_009_001_main",
+      "file": "svp_simple_009/svp_simple_009_001.c",
+      "line_start": 24,
+      "line_end": 39,
+      "code": "void svp_simple_009_001_main() {\n  init();\n  int svp_simple_009_001_local_var1 = 0x01;\n  int svp_simple_009_001_local_var2 = 0x09;\n\n  svp_simple_009_001_p = &svp_simple_009_001_local_var1;\n  svp_simple_009_001_q = &svp_simple_009_001_local_var1;\n\n  *svp_simple_009_001_p = 0x02;\n  *svp_simple_009_001_q = 0x03;\n\n  svp_simple_009_001_m = &svp_simple_009_001_local_var2;\n\n  *svp_simple_009_001_m = 0x06;\n  *svp_simple_009_001_m = 0x06;\n}",
+      "truncated": false
+    },
+    {
+      "function": "svp_simple_009_001_isr_1",
+      "file": "svp_simple_009/svp_simple_009_001.c",
+      "line_start": 41,
+      "line_end": 48,
+      "code": "void svp_simple_009_001_isr_1() {\n  int reader1, reader2;\n  idlerun();\n  reader1 = *svp_simple_009_001_p;\n  int svp_simple_009_001_local_var3 = 0x08;\n  svp_simple_009_001_m = &svp_simple_009_001_local_var3;\n  reader2 = *svp_simple_009_001_m;\n}",
+      "truncated": false
+    }
+  ],
+  "solver_result": {
+    "verdict": "not_run",
+    "engine": "z3"
+  },
+  "static_features": {
+    "feeds_branch": false,
+    "used_as_index": false,
+    "call_path_depth_max": 1,
+    "same_statement_a1_a2": false,
+    "priority_gap": 1,
+    "any_masking_present": false
+  },
+  "provenance": {
+    "entries": [
+      {
+        "fact": "flows",
+        "status": "assumed_from_config",
+        "note": "entry points, interrupt numbers and priorities come from the suite README table, which also states the convention that a larger number is a higher priority"
+      },
+      {
+        "fact": "solver_result",
+        "status": "unknown",
+        "note": "stage 3 has not run; this is a stage-2 record"
+      },
+      {
+        "fact": "accesses[2].source",
+        "status": "proven",
+        "note": "corrected against the source: line 33 writes through svp_simple_009_001_q, which line 30 assigns &local_var1 -- the same object line 29 assigns to svp_simple_009_001_p. The annotation names *p; the access is through its alias"
+      },
+      {
+        "fact": "variable",
+        "status": "proven",
+        "note": "the shared object is main's local_var1, whose address escapes into the globals p and q; storage is recorded as global because the annotation names the pointer, and the aliasing is what the candidate turns on"
+      }
+    ],
+    "completeness": {
+      "unresolved_indirect_calls": 0,
+      "opaque_external_calls": [
+        "init",
+        "idlerun"
+      ],
+      "truncated_fields": []
+    }
+  },
+  "emitted_by": {
+    "tool_version": "0.1.0",
+    "stage": "stage2",
+    "run_id": "svp_simple_009_001-fixture",
+    "timestamp": "2026-09-26T00:00:00Z"
+  }
+}

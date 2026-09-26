@@ -1,0 +1,359 @@
+{
+  "schema_version": "c2/1.0.0",
+  "id": "cc6c467b22a5ca986",
+  "fingerprint": "c6c467b22a5ca986b86e20725afc6ccc81639090757a693fb536a890d9eb479b",
+  "class": "atomicity-triple",
+  "pattern": "RWR",
+  "subject": {
+    "name": "svp_simple_003_001",
+    "source_root": "C:\\Users\\luoma\\Desktop\\racebench\\2.1_remarks"
+  },
+  "variable": {
+    "name": "svp_simple_003_001_global_var1",
+    "declared_type": "volatile int",
+    "volatile": true,
+    "decl": {
+      "file": "svp_simple_003/svp_simple_003_001.c",
+      "line": 22,
+      "column": 0,
+      "end_line": 22,
+      "snippet": "volatile int svp_simple_003_001_global_var1;"
+    },
+    "storage": "global",
+    "aliases": [],
+    "svf_node": null
+  },
+  "accesses": [
+    {
+      "role": "A1",
+      "kind": "read",
+      "flow": "main",
+      "function": "svp_simple_003_001_main",
+      "source": {
+        "file": "svp_simple_003/svp_simple_003_001.c",
+        "line": 50,
+        "column": 6,
+        "end_line": 50,
+        "snippet": "reader1 = svp_simple_003_001_global_var1;"
+      },
+      "loop_context": {
+        "in_loop": true,
+        "nest": [
+          {
+            "header": {
+              "file": "svp_simple_003/svp_simple_003_001.c",
+              "line": 48,
+              "column": 2,
+              "snippet": "for (int i = 0; i < MAX_LENGTH; i++) {"
+            }
+          }
+        ]
+      },
+      "call_path": {
+        "flow": "main",
+        "frames": [
+          {
+            "function": "svp_simple_003_001_main"
+          }
+        ]
+      },
+      "masking": {
+        "disabled": [],
+        "enabled": [
+          1
+        ],
+        "unknown": []
+      }
+    },
+    {
+      "role": "B",
+      "kind": "write",
+      "flow": "isr_1",
+      "function": "svp_simple_003_001_isr_1",
+      "source": {
+        "file": "svp_simple_003/svp_simple_003_001.c",
+        "line": 67,
+        "column": 4,
+        "end_line": 67,
+        "snippet": "svp_simple_003_001_global_var1 = 888;"
+      },
+      "loop_context": {
+        "in_loop": false,
+        "nest": []
+      },
+      "call_path": {
+        "flow": "isr_1",
+        "frames": [
+          {
+            "function": "svp_simple_003_001_isr_1"
+          }
+        ]
+      },
+      "masking": {
+        "disabled": [],
+        "enabled": [
+          1
+        ],
+        "unknown": []
+      }
+    },
+    {
+      "role": "A2",
+      "kind": "read",
+      "flow": "main",
+      "function": "svp_simple_003_001_main",
+      "source": {
+        "file": "svp_simple_003/svp_simple_003_001.c",
+        "line": 55,
+        "column": 6,
+        "end_line": 55,
+        "snippet": "reader2 = svp_simple_003_001_global_var1;"
+      },
+      "loop_context": {
+        "in_loop": true,
+        "nest": [
+          {
+            "header": {
+              "file": "svp_simple_003/svp_simple_003_001.c",
+              "line": 53,
+              "column": 2,
+              "snippet": "for (int j = MAX_LENGTH; j > 0; j--) {"
+            }
+          }
+        ]
+      },
+      "call_path": {
+        "flow": "main",
+        "frames": [
+          {
+            "function": "svp_simple_003_001_main"
+          }
+        ]
+      },
+      "masking": {
+        "disabled": [],
+        "enabled": [
+          1
+        ],
+        "unknown": []
+      }
+    }
+  ],
+  "flows": [
+    {
+      "id": "main",
+      "kind": "task",
+      "entry": "svp_simple_003_001_main",
+      "irq": null,
+      "priority": 0,
+      "identified_by": "config"
+    },
+    {
+      "id": "isr_1",
+      "kind": "isr",
+      "entry": "svp_simple_003_001_isr_1",
+      "irq": 1,
+      "priority": 1,
+      "identified_by": "config"
+    }
+  ],
+  "preemption": {
+    "preempting_flow": "isr_1",
+    "preempted_flow": "main",
+    "priority_relation": "strictly-higher",
+    "equal_priority_assumed_preemptible": null,
+    "nesting_depth": 1,
+    "timing": "unconstrained"
+  },
+  "masking": {
+    "per_access": [
+      {
+        "role": "A1",
+        "state": {
+          "disabled": [],
+          "enabled": [
+            1
+          ],
+          "unknown": []
+        }
+      },
+      {
+        "role": "B",
+        "state": {
+          "disabled": [],
+          "enabled": [
+            1
+          ],
+          "unknown": []
+        }
+      },
+      {
+        "role": "A2",
+        "state": {
+          "disabled": [],
+          "enabled": [
+            1
+          ],
+          "unknown": []
+        }
+      }
+    ],
+    "interval": {
+      "from_role": "A1",
+      "to_role": "A2",
+      "disabled_throughout": [],
+      "enabled_somewhere": [
+        1
+      ],
+      "unknown": [
+        2
+      ],
+      "reenabled_within_interval_by": [
+        "isr_1"
+      ],
+      "critical_sections": []
+    }
+  },
+  "call_paths": [
+    {
+      "role": "A1",
+      "path": {
+        "flow": "main",
+        "frames": [
+          {
+            "function": "svp_simple_003_001_main"
+          }
+        ]
+      }
+    },
+    {
+      "role": "B",
+      "path": {
+        "flow": "isr_1",
+        "frames": [
+          {
+            "function": "svp_simple_003_001_isr_1"
+          }
+        ]
+      }
+    },
+    {
+      "role": "A2",
+      "path": {
+        "flow": "main",
+        "frames": [
+          {
+            "function": "svp_simple_003_001_main"
+          }
+        ]
+      }
+    }
+  ],
+  "loop_context": {
+    "per_access": [
+      {
+        "role": "A1",
+        "context": {
+          "in_loop": true,
+          "nest": [
+            {
+              "header": {
+                "file": "svp_simple_003/svp_simple_003_001.c",
+                "line": 48,
+                "column": 2,
+                "snippet": "for (int i = 0; i < MAX_LENGTH; i++) {"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "role": "B",
+        "context": {
+          "in_loop": false,
+          "nest": []
+        }
+      },
+      {
+        "role": "A2",
+        "context": {
+          "in_loop": true,
+          "nest": [
+            {
+              "header": {
+                "file": "svp_simple_003/svp_simple_003_001.c",
+                "line": 53,
+                "column": 2,
+                "snippet": "for (int j = MAX_LENGTH; j > 0; j--) {"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "a1_a2_same_statement": false
+  },
+  "enclosing_source": [
+    {
+      "function": "svp_simple_003_001_main",
+      "file": "svp_simple_003/svp_simple_003_001.c",
+      "line_start": 27,
+      "line_end": 58,
+      "code": "void svp_simple_003_001_main() {\n  init();\n  int reader1, reader2;\n  int reader3, reader4;\n  idlerun();\n\n  disable_isr(1);\n  disable_isr(2);\n\n  for (int i = 0; i < MAX_LENGTH; i++) {\n    if (i == TRIGGER) {\n      reader3 = svp_simple_003_001_global_var2;\n    }\n  }\n  for (int j = MAX_LENGTH; j > 0; j--) {\n    if (j == TRIGGER) {\n      reader4 = svp_simple_003_001_global_var2;\n    }\n  }\n  \n  enable_isr(1);\n  for (int i = 0; i < MAX_LENGTH; i++) {\n    if (i == TRIGGER) {\n      reader1 = svp_simple_003_001_global_var1;\n    }\n  }\n  for (int j = MAX_LENGTH; j > 0; j--) {\n    if (j == TRIGGER) {\n      reader2 = svp_simple_003_001_global_var1;\n    }\n  }\n}",
+      "truncated": false
+    },
+    {
+      "function": "svp_simple_003_001_isr_1",
+      "file": "svp_simple_003/svp_simple_003_001.c",
+      "line_start": 60,
+      "line_end": 69,
+      "code": "void svp_simple_003_001_isr_1() {\n  enable_isr(2);\n  svp_simple_003_001_global_var2 = 999;\n\n  if (svp_simple_003_001_global_flag == 1) {\n    svp_simple_003_001_global_var1 = 999;\n  } else if (svp_simple_003_001_global_flag1 == 2) {\n    svp_simple_003_001_global_var1 = 888;\n  }\n}",
+      "truncated": false
+    }
+  ],
+  "solver_result": {
+    "verdict": "not_run",
+    "engine": "z3"
+  },
+  "static_features": {
+    "feeds_branch": false,
+    "used_as_index": false,
+    "call_path_depth_max": 1,
+    "same_statement_a1_a2": false,
+    "priority_gap": 1,
+    "any_masking_present": false
+  },
+  "provenance": {
+    "entries": [
+      {
+        "fact": "flows",
+        "status": "assumed_from_config",
+        "note": "entry points, interrupt numbers and priorities come from the suite README table, which also states the convention that a larger number is a higher priority"
+      },
+      {
+        "fact": "solver_result",
+        "status": "unknown",
+        "note": "stage 3 has not run; this is a stage-2 record"
+      },
+      {
+        "fact": "accesses[1].source",
+        "status": "proven",
+        "note": "global_flag1 is declared and initialised to 0 at line 26 and never written on any path, so the else-if at line 66 is unsatisfiable and the write at line 67 is dead. The masking state is the same as the annotated bug point's"
+      }
+    ],
+    "completeness": {
+      "unresolved_indirect_calls": 0,
+      "opaque_external_calls": [
+        "init",
+        "idlerun"
+      ],
+      "truncated_fields": []
+    }
+  },
+  "emitted_by": {
+    "tool_version": "0.1.0",
+    "stage": "stage2",
+    "run_id": "svp_simple_003_001-fixture",
+    "timestamp": "2026-09-26T00:00:00Z"
+  }
+}

@@ -1,0 +1,27 @@
+# Credentials. Never committed, under any name.
+.env
+.env.*
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+# NOTE: 16 .pyc files are already tracked from the first commit. They are left
+# alone rather than untracked here, so this branch does not create deletions
+# Track A would have to merge. Worth cleaning up at the next realignment.
+
+# Track B: the per-candidate result cache. Derived and keyed by
+# (fingerprint, prompt config, backend, response schema) -- regenerating it
+# costs API calls, but committing it would version answers that go stale the
+# moment a prompt or the verdict schema changes. The *results* worth keeping
+# are the run JSON files, which are committed.
+.llm-cache/
+
+# Run store (contract C3): runs are reproducible from the config and the
+# manifest, and a run directory carries whole-program bitcode.
+runs/
+
+# In-progress run logs. Finished results are committed deliberately, by name.
+*.log

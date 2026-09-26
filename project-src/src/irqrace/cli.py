@@ -275,6 +275,96 @@ def cmd_bench_build_all(args: argparse.Namespace) -> int:
 # -- parser ---------------------------------------------------------------
 
 
+# -- LLM stage (Track B) --------------------------------------------------
+
+
+def cmd_llm_fixtures(args: argparse.Namespace) -> int:
+    """Report the labelled set. Non-zero while it is short of W1's 10 + 10.
+
+    Exiting non-zero on an incomplete set is deliberate: the fixtures are the
+    input to every measured row, and a row scored against a partial set is a
+    number that will be quoted later without the caveat.
+    """
+    from .llm.fixtures import FixtureError, coverage, load_all
+
+    try:
+        fixtures = load_all()
+    except FixtureError as e:
+        return _err(str(e))
+
+    cov = coverage(fixtures)
+    print(cov.report())
+    for f in fixtures:
+        print(f"  [{f.label:10}] {f.candidate_id}  {f.subject}  {f.annotation}")
+    if not cov.complete:
+        print(
+            f"\nshort of Roadmap W1: need {10 - cov.bug_points} more bug point(s) "
+            f"and {10 - cov.traps} more trap(s)"
+        )
+    return 0 if cov.complete else 1
+
+
+def cmd_llm_prompts(args: argparse.Namespace) -> int:
+    from .llm.prompts import ABLATION, BY_NAME
+
+    if args.row is None:
+        for c in ABLATION:
+            on = [
+                n
+                for n, v in (
+                    ("domain", c.domain_rules),
+                    ("progressive", c.progressive),
+                    ("decomposition", c.decomposition),
+                    ("self-validation", c.self_validation),
+                )
+                if v
+            ]
+            print(f"{c.name:18} {c.hash()}  {', '.join(on) or 'baseline'}")
+        return 0
+
+    if args.row not in BY_NAME:
+        return _err(f"unknown row {args.row!r}; known: {', '.join(BY_NAME)}")
+    print(BY_NAME[args.row].system_prompt())
+    return 0
+
+
+def cmd_llm_backends(args: argparse.Namespace) -> int:
+    """List the providers, or report one spec's capabilities and caveats.
+
+    The caveats are the point. Structured-output tier and prompt caching differ
+    per provider and both land in the ablation's cost and comparability, so
+    they are printed next to the spec rather than discovered in a footnote.
+    """
+    from .llm.backends import REGISTRY, BackendError, from_spec
+
+    if not args.spec:
+        print("providers:")
+        for name in sorted(REGISTRY):
+            print(f"  {name}")
+        print(
+            "\nspec form: provider:model  (e.g. anthropic:claude-opus-5, "
+            "openai:gpt-4o, ollama:qwen2.5-coder:32b)\n"
+            "any OpenAI-compatible endpoint - Groq, Together, OpenRouter, "
+            "LiteLLM, vLLM, LM Studio —\nis reachable as 'openai:<model>' with "
+            "IRQRACE_OPENAI_BASE_URL set."
+        )
+        return 0
+
+    try:
+        backend = from_spec(args.spec)
+    except BackendError as e:
+        return _err(str(e))
+
+    caps = backend.capabilities
+    print(f"{backend.spec}")
+    print(f"  structured output: {caps.structured.value}")
+    print(f"  prompt caching:    {caps.prompt_caching}")
+    print(f"  temperature:       {caps.temperature}")
+    for caveat in caps.caveats():
+        print(f"  [!] {caveat}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="irqrace", description=__doc__)
     p.add_argument("--version", action="version", version=f"irqrace {TOOL_VERSION}")
@@ -328,6 +418,17 @@ def build_parser() -> argparse.ArgumentParser:
     ba.add_argument("--run-root", default="runs")
     ba.add_argument("--probe", action="store_true")
     ba.set_defaults(func=cmd_bench_build_all)
+
+    m = sub.add_parser("llm", help="Track B — the triage and repair stage")
+    ms = m.add_subparsers(dest="sub", required=True)
+    mf = ms.add_parser("fixtures", help="report the labelled fixture set")
+    mf.set_defaults(func=cmd_llm_fixtures)
+    mp = ms.add_parser("prompts", help="list the ablation rows, or print one")
+    mp.add_argument("row", nargs="?", help="row name, e.g. '+self-validation'")
+    mp.set_defaults(func=cmd_llm_prompts)
+    mb = ms.add_parser("backends", help="list providers, or inspect one spec")
+    mb.add_argument("spec", nargs="?", help="provider:model, e.g. ollama:llama3")
+    mb.set_defaults(func=cmd_llm_backends)
 
     return p
 

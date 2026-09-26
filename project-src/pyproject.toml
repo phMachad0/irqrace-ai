@@ -14,6 +14,15 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=6"]
+# Track B. `pydantic` is the only hard requirement -- it defines the verdict
+# schema. Provider SDKs are per-backend extras, because the point of the
+# backend seam is that no single vendor is mandatory: the OpenAI-compatible
+# and Ollama adapters speak plain HTTP from the standard library, so a reviewer
+# can run the whole ablation against a local model with nothing extra
+# installed. `llm` is the minimum; `llm-anthropic` adds the one adapter that
+# uses a vendor SDK.
+llm = ["pydantic>=2.0"]
+llm-anthropic = ["pydantic>=2.0", "anthropic>=1.0"]
 
 [project.scripts]
 irqrace = "irqrace.cli:main"

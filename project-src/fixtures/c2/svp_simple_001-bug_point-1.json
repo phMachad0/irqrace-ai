@@ -1,0 +1,372 @@
+{
+  "schema_version": "c2/1.0.0",
+  "id": "c7975f29119c6a273",
+  "fingerprint": "7975f29119c6a273c063a6bd90e5fad0b3fd7715126a921a29cedec17eff3a4e",
+  "class": "atomicity-triple",
+  "pattern": "WRW",
+  "subject": {
+    "name": "svp_simple_001_001",
+    "source_root": "C:\\Users\\luoma\\Desktop\\racebench\\2.1_remarks"
+  },
+  "variable": {
+    "name": "svp_simple_001_001_global_array",
+    "declared_type": "volatile int[]",
+    "volatile": true,
+    "decl": {
+      "file": "svp_simple_001/svp_simple_001_001.c",
+      "line": 20,
+      "column": 0,
+      "end_line": 20,
+      "snippet": "volatile int svp_simple_001_001_global_array[10000];"
+    },
+    "storage": "global",
+    "aliases": [],
+    "svf_node": null
+  },
+  "accesses": [
+    {
+      "role": "A1",
+      "kind": "write",
+      "flow": "main",
+      "function": "svp_simple_001_001_main",
+      "source": {
+        "file": "svp_simple_001/svp_simple_001_001.c",
+        "line": 32,
+        "column": 2,
+        "end_line": 32,
+        "snippet": "for (int i = 0; i < 10000; i++) svp_simple_001_001_global_array[i] = 0;"
+      },
+      "loop_context": {
+        "in_loop": false,
+        "nest": []
+      },
+      "call_path": {
+        "flow": "main",
+        "frames": [
+          {
+            "function": "svp_simple_001_001_main"
+          }
+        ]
+      },
+      "masking": {
+        "disabled": [
+          2
+        ],
+        "enabled": [
+          1
+        ],
+        "unknown": []
+      }
+    },
+    {
+      "role": "B",
+      "kind": "read",
+      "flow": "isr_2",
+      "function": "svp_simple_001_001_isr_2",
+      "source": {
+        "file": "svp_simple_001/svp_simple_001_001.c",
+        "line": 55,
+        "column": 4,
+        "end_line": 55,
+        "snippet": "reader1 = svp_simple_001_001_global_array[TRIGGER];"
+      },
+      "loop_context": {
+        "in_loop": false,
+        "nest": []
+      },
+      "call_path": {
+        "flow": "isr_2",
+        "frames": [
+          {
+            "function": "svp_simple_001_001_isr_2"
+          }
+        ]
+      },
+      "masking": {
+        "disabled": [],
+        "enabled": [
+          2
+        ],
+        "unknown": [
+          1
+        ]
+      }
+    },
+    {
+      "role": "A2",
+      "kind": "write",
+      "flow": "main",
+      "function": "svp_simple_001_001_main",
+      "source": {
+        "file": "svp_simple_001/svp_simple_001_001.c",
+        "line": 35,
+        "column": 4,
+        "end_line": 35,
+        "snippet": "if (i == TRIGGER) svp_simple_001_001_global_array[i] = 1;"
+      },
+      "loop_context": {
+        "in_loop": true,
+        "nest": [
+          {
+            "header": {
+              "file": "svp_simple_001/svp_simple_001_001.c",
+              "line": 34,
+              "column": 2,
+              "snippet": "for (int i = 0; i < 10000; i++) {"
+            }
+          }
+        ]
+      },
+      "call_path": {
+        "flow": "main",
+        "frames": [
+          {
+            "function": "svp_simple_001_001_main"
+          }
+        ]
+      },
+      "masking": {
+        "disabled": [
+          2
+        ],
+        "enabled": [
+          1
+        ],
+        "unknown": []
+      }
+    }
+  ],
+  "flows": [
+    {
+      "id": "main",
+      "kind": "task",
+      "entry": "svp_simple_001_001_main",
+      "irq": null,
+      "priority": 0,
+      "identified_by": "config"
+    },
+    {
+      "id": "isr_2",
+      "kind": "isr",
+      "entry": "svp_simple_001_001_isr_2",
+      "irq": 2,
+      "priority": 2,
+      "identified_by": "config"
+    }
+  ],
+  "preemption": {
+    "preempting_flow": "isr_2",
+    "preempted_flow": "main",
+    "priority_relation": "strictly-higher",
+    "equal_priority_assumed_preemptible": null,
+    "nesting_depth": 1,
+    "timing": "unconstrained"
+  },
+  "masking": {
+    "per_access": [
+      {
+        "role": "A1",
+        "state": {
+          "disabled": [
+            2
+          ],
+          "enabled": [
+            1
+          ],
+          "unknown": []
+        }
+      },
+      {
+        "role": "B",
+        "state": {
+          "disabled": [],
+          "enabled": [
+            2
+          ],
+          "unknown": [
+            1
+          ]
+        }
+      },
+      {
+        "role": "A2",
+        "state": {
+          "disabled": [
+            2
+          ],
+          "enabled": [
+            1
+          ],
+          "unknown": []
+        }
+      }
+    ],
+    "interval": {
+      "from_role": "A1",
+      "to_role": "A2",
+      "disabled_throughout": [],
+      "enabled_somewhere": [
+        1,
+        2
+      ],
+      "unknown": [],
+      "reenabled_within_interval_by": [
+        "isr_1"
+      ],
+      "critical_sections": [
+        {
+          "irqs": [
+            2
+          ],
+          "begin": {
+            "file": "svp_simple_001/svp_simple_001_001.c",
+            "line": 28
+          },
+          "end": {
+            "file": "svp_simple_001/svp_simple_001_001.c",
+            "line": 46
+          },
+          "covers_interval": false
+        }
+      ]
+    }
+  },
+  "call_paths": [
+    {
+      "role": "A1",
+      "path": {
+        "flow": "main",
+        "frames": [
+          {
+            "function": "svp_simple_001_001_main"
+          }
+        ]
+      }
+    },
+    {
+      "role": "B",
+      "path": {
+        "flow": "isr_2",
+        "frames": [
+          {
+            "function": "svp_simple_001_001_isr_2"
+          }
+        ]
+      }
+    },
+    {
+      "role": "A2",
+      "path": {
+        "flow": "main",
+        "frames": [
+          {
+            "function": "svp_simple_001_001_main"
+          }
+        ]
+      }
+    }
+  ],
+  "loop_context": {
+    "per_access": [
+      {
+        "role": "A1",
+        "context": {
+          "in_loop": false,
+          "nest": []
+        }
+      },
+      {
+        "role": "B",
+        "context": {
+          "in_loop": false,
+          "nest": []
+        }
+      },
+      {
+        "role": "A2",
+        "context": {
+          "in_loop": true,
+          "nest": [
+            {
+              "header": {
+                "file": "svp_simple_001/svp_simple_001_001.c",
+                "line": 34,
+                "column": 2,
+                "snippet": "for (int i = 0; i < 10000; i++) {"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "a1_a2_same_statement": false
+  },
+  "enclosing_source": [
+    {
+      "function": "svp_simple_001_001_main",
+      "file": "svp_simple_001/svp_simple_001_001.c",
+      "line_start": 25,
+      "line_end": 37,
+      "code": "void svp_simple_001_001_main() {\n  init();\n\n  disable_isr(2);\n\n  idlerun();\n\n  for (int i = 0; i < 10000; i++) svp_simple_001_001_global_array[i] = 0;\n\n  for (int i = 0; i < 10000; i++) {\n    if (i == TRIGGER) svp_simple_001_001_global_array[i] = 1;\n  }\n}",
+      "truncated": false
+    },
+    {
+      "function": "svp_simple_001_001_isr_2",
+      "file": "svp_simple_001/svp_simple_001_001.c",
+      "line_start": 51,
+      "line_end": 65,
+      "code": "void svp_simple_001_001_isr_2() {\n  int reader1, reader3;\n  if (svp_simple_001_001_global_flag ==\n      1)\n    reader1 = svp_simple_001_001_global_array[TRIGGER];\n  else {\n    reader1 =\n        svp_simple_001_001_global_array[0];    }\n\n  reader3 = svp_simple_001_001_global_array\n      [1000];\n\n  int reader2;\n  reader2 = svp_simple_001_001_global_var;\n}",
+      "truncated": false
+    }
+  ],
+  "solver_result": {
+    "verdict": "not_run",
+    "engine": "z3"
+  },
+  "static_features": {
+    "feeds_branch": false,
+    "used_as_index": true,
+    "call_path_depth_max": 1,
+    "same_statement_a1_a2": false,
+    "priority_gap": 2,
+    "any_masking_present": true
+  },
+  "provenance": {
+    "entries": [
+      {
+        "fact": "flows",
+        "status": "assumed_from_config",
+        "note": "entry points, interrupt numbers and priorities come from the suite README table, which also states the convention that a larger number is a higher priority"
+      },
+      {
+        "fact": "solver_result",
+        "status": "unknown",
+        "note": "stage 3 has not run; this is a stage-2 record"
+      },
+      {
+        "fact": "masking.interval.reenabled_within_interval_by",
+        "status": "proven",
+        "note": "irq 2 is masked at line 28 on every path through main, but isr_1 may preempt the interval and calls enable_isr(2) at line 46, so irq 2 is NOT masked throughout. Computing this from main's CFG alone would drop an annotated bug point"
+      },
+      {
+        "fact": "accesses[1].source",
+        "status": "proven",
+        "note": "the read at line 55 is guarded by global_flag == 1, which isr_1 sets at line 41 before re-enabling irq 2 -- so the guard and the unmasking come from the same preemption"
+      }
+    ],
+    "completeness": {
+      "unresolved_indirect_calls": 0,
+      "opaque_external_calls": [
+        "init",
+        "idlerun"
+      ],
+      "truncated_fields": []
+    }
+  },
+  "emitted_by": {
+    "tool_version": "0.1.0",
+    "stage": "stage2",
+    "run_id": "svp_simple_001_001-fixture",
+    "timestamp": "2026-09-26T00:00:00Z"
+  }
+}

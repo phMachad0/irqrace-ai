@@ -1,0 +1,235 @@
+"""The four numbers, and the invariant underneath them."""
+
+import dataclasses
+
+import pytest
+
+from irqrace.llm.fixtures import Fixture
+from irqrace.llm.scoring import (
+    blocking_element_groups,
+    consistency,
+    inspection_ratio,
+    score,
+    vote,
+)
+from irqrace.llm.verdict import (
+    Bucket,
+    Feasibility,
+    FeasibilityAnswer,
+    Harmfulness,
+    HarmfulnessAnswer,
+    Triage,
+)
+
+
+def _fixture(cid, label):
+    return Fixture(
+        path=None, record={"id": cid}, label=label, subject="s", annotation="a"
+    )
+
+
+def _triage(cid, feas, harm=None, conf=0.9):
+    return Triage(
+        candidate_id=cid,
+        fingerprint="f" * 64,
+        feasibility=FeasibilityAnswer(reasoning="r", verdict=feas, confidence=conf),
+        harmfulness=(
+            None
+            if harm is None
+            else HarmfulnessAnswer(reasoning="r", verdict=harm, confidence=conf)
+        ),
+    )
+
+
+REAL, TRAP = "bug_point", "trap"
+
+
+def test_perfect_row():
+    fx = [_fixture("a", REAL), _fixture("b", TRAP)]
+    tr = [
+        _triage("a", Feasibility.feasible, Harmfulness.harmful),
+        _triage("b", Feasibility.infeasible),
+    ]
+    s = score(fx, tr)
+    assert s.recall == 1.0
+    assert s.trap_rejection == 1.0
+    assert s.inspection_ratio == 0.5
+    assert s.gate_passed
+
+
+def test_a_bug_point_called_infeasible_fails_the_gate():
+    fx = [_fixture("a", REAL), _fixture("b", TRAP)]
+    tr = [
+        _triage("a", Feasibility.infeasible),
+        _triage("b", Feasibility.infeasible),
+    ]
+    s = score(fx, tr)
+    assert s.recall == 0.0
+    assert not s.gate_passed
+    assert s.missed == ("a",)
+    assert "FAIL" in s.report()
+
+
+def test_a_bug_point_called_uncertain_still_passes_the_gate():
+    """Uncertain costs Inspection Ratio, not recall. That is the trade."""
+    fx = [_fixture("a", REAL), _fixture("b", TRAP)]
+    tr = [
+        _triage("a", Feasibility.uncertain),
+        _triage("b", Feasibility.infeasible),
+    ]
+    s = score(fx, tr)
+    assert s.gate_passed
+    assert s.recall == 1.0
+
+
+def test_dropping_a_candidate_raises_rather_than_scoring_well():
+    """The invariant. A dropped candidate would raise recall by vanishing."""
+    fx = [_fixture("a", REAL), _fixture("b", REAL)]
+    tr = [_triage("a", Feasibility.feasible, Harmfulness.harmful)]
+    with pytest.raises(ValueError, match="never drop"):
+        score(fx, tr)
+
+
+def test_inventing_a_candidate_also_raises():
+    fx = [_fixture("a", REAL)]
+    tr = [
+        _triage("a", Feasibility.feasible, Harmfulness.harmful),
+        _triage("ghost", Feasibility.feasible, Harmfulness.harmful),
+    ]
+    with pytest.raises(ValueError, match="invented"):
+        score(fx, tr)
+
+
+def test_an_empty_scored_set_does_not_pass_the_gate():
+    """Recall over nothing is 1.0. A row where every candidate was excluded --
+    unreachable backend, systematic refusal -- must not report green having
+    measured nothing. Reached in practice before this guard existed."""
+    s = score([], [])
+    assert s.recall == 1.0
+    assert not s.gate_passed
+
+
+def test_a_set_of_traps_alone_does_not_pass_the_gate():
+    fx = [_fixture("t", TRAP)]
+    assert not score(fx, [_triage("t", Feasibility.infeasible)]).gate_passed
+
+
+def test_a_trap_bucketed_benign_counts_as_rejected():
+    fx = [_fixture("t", TRAP)]
+    tr = [_triage("t", Feasibility.feasible, Harmfulness.benign)]
+    assert score(fx, tr).trap_rejection == 1.0
+
+
+def test_a_trap_left_uncertain_counts_as_kept():
+    fx = [_fixture("t", TRAP)]
+    tr = [_triage("t", Feasibility.uncertain)]
+    s = score(fx, tr)
+    assert s.trap_rejection == 0.0
+    assert s.traps_kept_high == ("t",)
+
+
+def test_inspection_ratio_is_driven_by_the_worst_ranked_bug_point():
+    """One real defect sunk to the bottom costs the full 100%."""
+    fx = [_fixture("a", REAL), _fixture("b", TRAP), _fixture("c", REAL)]
+    tr = [
+        _triage("a", Feasibility.feasible, Harmfulness.harmful),
+        _triage("b", Feasibility.feasible, Harmfulness.harmful),
+        _triage("c", Feasibility.infeasible),
+    ]
+    assert inspection_ratio(fx, tr) == 1.0
+
+
+def test_inspection_ratio_is_zero_without_bug_points():
+    fx = [_fixture("t", TRAP)]
+    assert inspection_ratio(fx, [_triage("t", Feasibility.infeasible)]) == 0.0
+
+
+def test_consistency_measures_agreement_across_runs():
+    runs = [
+        [_triage("a", Feasibility.feasible, Harmfulness.harmful)],
+        [_triage("a", Feasibility.feasible, Harmfulness.harmful)],
+        [_triage("a", Feasibility.uncertain)],
+    ]
+    out = consistency(runs)
+    assert out["a"] == pytest.approx(2 / 3)
+    assert out["__mean__"] == pytest.approx(2 / 3)
+
+
+def test_consistency_needs_more_than_one_run():
+    with pytest.raises(ValueError):
+        consistency([[_triage("a", Feasibility.uncertain)]])
+
+
+# -- majority voting and IRIS-style grouping -------------------------------
+
+
+def test_voting_takes_the_modal_bucket():
+    runs = [
+        [_triage("a", Feasibility.feasible, Harmfulness.harmful)],
+        [_triage("a", Feasibility.feasible, Harmfulness.harmful)],
+        [_triage("a", Feasibility.infeasible)],
+    ]
+    assert vote(runs)[0].bucket is Bucket.likely_real
+
+
+def test_a_tie_resolves_toward_the_higher_bucket():
+    """Recall bias at the voting layer. Resolving a tie downward would
+    reintroduce the loss the decision policy forbids one layer up."""
+    runs = [
+        [_triage("a", Feasibility.feasible, Harmfulness.harmful)],
+        [_triage("a", Feasibility.infeasible)],
+    ]
+    assert vote(runs)[0].bucket is Bucket.likely_real
+
+
+def test_a_tie_between_uncertain_and_benign_resolves_to_uncertain():
+    runs = [
+        [_triage("a", Feasibility.uncertain)],
+        [_triage("a", Feasibility.feasible, Harmfulness.benign)],
+    ]
+    assert vote(runs)[0].bucket is Bucket.uncertain
+
+
+def test_voting_keeps_a_real_explanation_rather_than_synthesising_one():
+    runs = [
+        [_triage("a", Feasibility.feasible, Harmfulness.harmful, conf=0.4)],
+        [_triage("a", Feasibility.feasible, Harmfulness.harmful, conf=0.9)],
+    ]
+    winner = vote(runs)[0]
+    assert winner.feasibility.confidence == 0.9
+
+
+def test_voting_never_drops_or_invents_a_candidate():
+    runs = [
+        [_triage("a", Feasibility.uncertain), _triage("b", Feasibility.uncertain)],
+        [_triage("a", Feasibility.infeasible), _triage("b", Feasibility.uncertain)],
+    ]
+    assert {t.candidate_id for t in vote(runs)} == {"a", "b"}
+
+
+def test_blocking_elements_group_candidates_without_removing_any():
+    """IRIS prunes; this design may not, so the same signal is used to shorten
+    review instead -- one check clears the group."""
+    shared = "isr_1 never writes this variable"
+    triages = [
+        Triage(
+            candidate_id=cid,
+            fingerprint="f" * 64,
+            feasibility=FeasibilityAnswer(
+                reasoning="r",
+                blocking_element=element,
+                verdict=Feasibility.infeasible,
+                confidence=0.9,
+            ),
+        )
+        for cid, element in [("a", shared), ("b", shared), ("c", "something else")]
+    ]
+    groups = blocking_element_groups(triages)
+    assert groups == {shared: ["a", "b"]}
+    assert len(triages) == 3, "grouping must not remove anything"
+
+
+def test_candidates_without_a_blocking_element_are_not_grouped():
+    assert blocking_element_groups(
+        [_triage("a", Feasibility.feasible, Harmfulness.harmful)]
+    ) == {}
