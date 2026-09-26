@@ -2,7 +2,7 @@
 type: synthesis
 tags: [wiki, open-questions]
 sources: ["[[SDRacer (paper)]]", "[[IntRace (paper)]]", "[[NIChecker (paper)]]", "[[BMC4AV (paper)]]"]
-updated: 2026-08-27
+updated: 2026-09-26
 status: draft
 ---
 
@@ -34,16 +34,39 @@ with the date.
   `violation.info`, 45 entries) with per-access-triple-instance counts (BMC4AV's tables, 94) and nobody defines which they use ([[Contradictions]] #1). Every recall number this project ever
   reports divides by this choice. Recommended: **per-triple-instance**, declared explicitly.
   Blocks: the evaluation harness, i.e. everything measurable.
+- [ ] **Resolve the harmfulness criterion against Racebench's dead readers.** *(opened
+  2026-09-26, from the first live run.)* The criterion adopted from Bai et al. via
+  [[IntRace (paper)]] asks whether the shared variable feeds a branch or indexes an array.
+  Racebench's simple cases read shared variables into locals that are never used again, in at
+  least 10 of 31 cases, so the criterion classifies annotated bug points as **benign** — and
+  the model doing so is reasoning correctly about the code. Two of the first six bug points
+  came back `likely_benign` on that basis. Options: ask harmfulness only where the value is
+  live; restate the criterion counterfactually; or drop harmfulness on this benchmark and let
+  trap rejection carry the precision argument. Blocks: the interpretation of every harmfulness
+  number on Racebench, and the wording of the recall gate ([[LLM Stage Design]]).
+
 - [ ] **Define the match rule between a reported candidate and an annotated bug point.** Exact
   triple of line numbers? Same variable plus overlapping access set? [[IRIS (paper)]] had the
   same problem and answered it explicitly — a vulnerability counts as detected if any reported
   path passes through a patched location. Nothing equivalent exists here, and without it
   "recall 100%" is not a computable claim. Interacts with [[Pair-Triple Unification]]: pairs
   must be reconstructed into triples before matching. Blocks: the evaluation harness.
-- [ ] **Validate the ground-truth parser by hand.** Four incompatible annotation grammars plus
+  **Exact-line matching is now ruled out empirically**: all five annotations in
+  `svp_simple_019_001` carry line numbers from the *unannotated* `2.1` copy of the suite and
+  point at blank lines and `idlerun();` in the file they live in, and `svp_simple_001_001`
+  trap 1 points at a declaration one line above its read ([[Racebench]]). An exact rule loses
+  one bug point and four traps on 019 alone. A window around the nearest access to the named
+  variable absorbs both; the width is the thing left to decide.
+- [x] **Validate the ground-truth parser by hand.** Four incompatible annotation grammars plus
   typos; a strict parser reads 28 bug points where a tolerant one reads 48, with no error
   ([[Racebench]], [[Soundness and False Negatives]] §7b). Hand-count at least five cases to
   certify the parser before trusting any number it produces. Blocks: everything downstream.
+  **Partly answered (2026-09-26).** A tolerant reader built for fixture work independently
+  reproduces 48 and 38 from the files, and the 28-bug-point prediction reproduced exactly
+  before the two fixes it needed (headerless block defaults to bug points; case-insensitive
+  access type). Per-case counts and the pattern distribution are fixed as tests. What remains
+  is Track A's: this reader does not define the counting unit or the match rule, and the
+  canonical parser must be reconciled with it rather than written beside it.
 - [ ] **Decide whether equal-priority flows can preempt each other.** `svp_real_002` and
   `wdt_pci_1` both have same-priority ISR pairs, and no formal model in any of the four papers
   covers the case ([[Asymmetric Preemption]]). The recall-safe default is *yes, either may
@@ -97,16 +120,28 @@ with the date.
   context records for ten [[Racebench]] candidates — five bug points, five planted traps — and
   score a current model by hand. A negative result reshapes the whole design, so this is the
   cheapest high-information experiment available and should come first.
+  **Answered 2026-09-26: GO.** Run on 20 fixtures rather than 10, with the *simple-prompt
+  baseline* — no domain rules, no progressive prompting, no decomposition, no self-validation.
+  `openai/gpt-oss-120b` via Groq, JSON-Schema-enforced output. **Recall gate PASS at 9/9**
+  (one candidate excluded, see below), trap rejection **80%** (8/10), Inspection Ratio
+  **63.2%**. The concern this question existed to test — that nothing in the LLM branch has
+  been tried on concurrency and nothing transfers by assumption — is not borne out at this
+  integration point. Qualifications in the log entry of the same date.
 - [ ] **Write down the benignity criterion the LLM will apply, before it applies one.**
   [[BMC4AV (paper)]] asserts `(R,W,W)` is benign without argument and this wiki treats that as a
   defect ([[Contradictions]] #2). If the triage stage makes benignity judgements case-by-case
   without a stated, testable criterion, the project has reproduced the problem it set out to
   fix. Candidate starting point is the Bai et al. rule via [[IntRace (paper)]] — which is a
   reason to read it primarily rather than second-hand.
-- [ ] **Establish a current cost and capability baseline.** Every model number in the corpus is
+- [x] **Establish a current cost and capability baseline.** Every model number in the corpus is
   from 2023–24 (GPT-4, GPT-3.5, Claude 2, Bard, Llama 3) and none should be used to choose a
   model ([[LLM Integration Patterns]]). Measure tokens and cost per candidate on the probe above
   and record the model and date with the figure ([[Precision Metrics]] #8).
+  **Measured 2026-09-26.** Rendered context record averages ~2,150 tokens; a baseline-row
+  candidate costs ~3,400–5,200 tokens in and ~700 out. At Anthropic list prices that is
+  **$0.35** for a 10-candidate probe on Claude Opus 5 and **$10.25** for the full five-row
+  ablation over 20 fixtures ($2.05 on Haiku 4.5) — so the Roadmap's ">$30 on fixtures by W5"
+  trigger is well calibrated: n=3 voting across all five rows lands at ~$31, exactly on it.
 - [ ] **Instrument the progressive-prompt request channel from the first prototype.** What the
   model asks for, how often and how deep **is** the specification of the context record, now
   that precomputed slicing is out ([[Program Slicing]]). Not blocking, but it must be built in

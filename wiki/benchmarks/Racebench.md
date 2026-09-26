@@ -2,7 +2,7 @@
 type: benchmark
 tags: [wiki, benchmark]
 sources: ["[[Racebench (documentation)]]", "[[IntRace (paper)]]", "[[NIChecker (paper)]]", "[[BMC4AV (paper)]]"]
-updated: 2026-08-31
+updated: 2026-09-26
 status: solid
 ---
 
@@ -105,11 +105,71 @@ list with **no header at all**, just `// 1:` numbering. There are also outright 
 - `svp_simple_016_001` bug point 1 is written `<W#24>,<R#33>,<R#25>`, but line 33 is
   `global_var1 = 0x09;` — a **write**. The annotation's access type is wrong, and taken
   literally it is the only "defect" in the suite that would be invisible to a race detector;
-- `svp_simple_027_001` writes its middle access without the `#`, as `<W, 41>`.
+- `svp_simple_027_001` writes its middle access without the `#`, as `<W, 41>`;
+- `svp_simple_013_001` writes its middle access type in **lower case**, as `<w#66>`.
 
 A strict parser silently returns 28 bug points instead of 48 — a 42% undercount, with no
 error. That is very plausibly a contributing cause of the count disagreements below, and it is
-worth stating in any evaluation section.
+worth stating in any evaluation section. A tolerant reader was written against the local
+checkout and **independently reproduces 48 and 38** (`project-src/src/irqrace/llm/annotations.py`,
+with the counts fixed as tests). Two things were needed to get there and neither is obvious:
+the headerless block in `svp_simple_022_001` must default to *bug points* — requiring a header
+costs exactly those four and turns 48 into 44 — and the access type must be matched
+case-insensitively. Rather than match a grammar, the reader finds bracket groups and pulls a
+type letter and a number out of each one independently; field order, the `#`, the separator
+and the letter case then stop mattering, and all four grammars collapse into one rule.
+
+### `svp_simple_019_001` is annotated against the *other* copy of the suite
+
+All five of its annotations — one bug point and four traps — resolve cleanly against
+`racebench/2.1/svp_simple_019/` and **not** against the `2.1_remarks` file they are written in.
+In the shipped annotated file they point at `idlerun();`, at a bare `{`, and at blank lines:
+
+| Annotation | Points at, in `2.1_remarks` | Is, in `2.1` |
+| --- | --- | --- |
+| `<W#61>` | blank line | `svp_simple_019_001_global_var2 = 0x55;` |
+| `<W#63>` | blank line | `svp_simple_019_001_global_condition3 = 0;` |
+| `<W#65>` | `idlerun();` | `svp_simple_019_001_global_var1 = 0x01;` |
+
+**And the two copies are not the same program.** This is not a reformat. Diffing them:
+
+- `svp_simple_019_001_global_var1 = rand();` — an initialising write to *the very variable the
+  bug point is about* — is present in the plain copy and **deleted** in the annotated one;
+- `enable_isr(1)` moves from *after* each guarded read to *inside the guard, before the read*.
+  In the plain copy `reader4` and `reader5` execute with irq 1 **masked**; in the annotated
+  copy they execute with it **enabled**. The masking state of the annotated accesses is
+  inverted between the two files.
+
+So for this case the shipped ground truth describes a program that is not the one shipped
+beside it, and the difference is in exactly the property the defect turns on.
+
+**The directory named `2.1` holds racebench 2.0.** All 31 of its files self-identify in their
+header as `racebench2.0`, dated 19/10/30, against `racebench2.1_remarks` dated 19/11/25. Body
+comparison: **21 of the 31 are identical**, 10 differ, and 019 differs most at 12 lines. Only
+019's annotations resolve better against the older copy, so it is the only case where the
+ground truth is attached to the wrong program — but the version mismatch is suite-wide and
+worth knowing before either directory is treated as canonical.
+
+Two consequences, and they fall on evaluation rather than detection. First, any match rule
+keyed on line numbers loses **one bug point and four traps** on 019: 2% of recall and 10.5% of
+trap rejection, in the direction that makes a tool look worse than it is. Deciding that rule is
+already an open blocker ([[Roadmap]] W2, [[Open Questions]]) and this is the concrete case
+proving exact-line matching cannot be it; a window around the nearest access to the named
+variable absorbs both this and the `<R#63>` off-by-one below. Second, and worse, **019's five
+labels cannot be trusted at all** until someone decides which program they describe — a
+window-based rule will match them to accesses whose masking state is the opposite of the one
+the annotator was looking at. They are excluded from Track B's fixture set for that reason.
+
+Two further line references are wrong in the ordinary way, rather than by being from another
+file: `svp_simple_001_001` trap 1 gives `<R#63>`, which is `int reader2;`, a declaration — the
+read is on line 64. The wiki quotes that exact annotation above as its example of the
+juxtaposed grammar and did not previously record that the line is wrong.
+
+Separately, **five cases annotate a global while the annotated line accesses it through a
+pointer or a parameter** — `svp_simple_009_001` (`*q` for `_p`), `011` (`*m`, `*q`), `012`
+(`*p`), `024` (`array[index]`) and `025` (`*ptr_var`). Those are not defects; they are the
+cases that *require* alias reasoning, and they are worth knowing as a set before any
+name-based matching is attempted.
 
 **This matters more than it looks.** The benchmark's own ground truth is *atomicity-violation
 shaped* — three accesses — even though the suite is called "racebench" and the competition

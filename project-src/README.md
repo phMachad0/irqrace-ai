@@ -27,8 +27,55 @@ traded away deliberately.
 | **The config loads for one case** | done — for all 31, generated from the suite README |
 | **SVF lists its globals** | done — `irqrace probe` |
 
-Not W1 and not started: stage 1, stage 2, the Z3 stage, the LLM stage, the
-dashboard.
+Not W1 and not started: stage 1, stage 2, the Z3 stage, the dashboard.
+
+## Status — Track B, W1 harness (26 Sep 2026)
+
+Track B started on branch `track-b/llm-integration`, four weeks behind the
+Roadmap. The harness is built and tested; the measured work is blocked on
+fixtures, which are blocked on the Racebench suite (see below).
+
+| W1–W2 item | State |
+| --- | --- |
+| C4 owned and exercised against a resolver | done — `llm/resolver.py` |
+| **Provider-neutral backend seam** | done — `llm/backends/`, any model via `provider:model` |
+| Prompt harness: client, structured output, result cache | done — `llm/client.py`, `llm/cache.py` |
+| Token, latency and cost model | done — `llm/cost.py` |
+| The five ablation rows as compositions | done — `llm/prompts/` |
+| Recall gate, trap rejection, Inspection Ratio, consistency | done — `llm/scoring.py` |
+| **20 hand-built fixtures (10 bug points, 10 traps)** | **2/20 — blocked, see below** |
+| **Feasibility probe (the W1 go/no-go)** | **not run — needs the fixtures** |
+
+### The backend seam
+
+The harness talks to a `Backend`, never to an SDK, so the same prompt
+configuration can be measured against any model. That is not only portability:
+LLift's central claim is that **prompt architecture dominates model choice**,
+and holding the prompt fixed while swapping the model is the only way to check
+it here rather than cite it.
+
+| Spec | Reaches |
+| --- | --- |
+| `anthropic:claude-opus-5` | Claude, via the official SDK — the only adapter with prompt caching |
+| `openai:gpt-4o` | any OpenAI-compatible endpoint: OpenAI, Groq, Together, OpenRouter, LiteLLM, vLLM, LM Studio — set `IRQRACE_OPENAI_BASE_URL` |
+| `ollama:qwen2.5-coder:32b` | a local model |
+
+The generic adapters speak plain HTTP from the standard library. Depending on
+one vendor's SDK to talk to a local vLLM server would be backwards, and it
+means a reviewer can reproduce the ablation against a local model with nothing
+installed beyond this repository.
+
+Three differences across providers are **recorded rather than smoothed over**,
+because each one lands in a number: which structured-output tier served an
+answer (`native_schema` / `tool_call` / `prompted_json`, stored on every
+verdict as `produced_by`), whether the backend has prompt caching (so cost is
+not comparable without saying so), and whether it knew its own prices — an
+unpriced model yields `None`, never `0.00`.
+
+**Blocked on the Racebench suite.** The fixtures must be built from real
+`2.1_remarks` annotations; inventing source locations would poison the ground
+truth every number is measured against. The suite is not on this machine and
+`DEFAULT_SUITE` in `cli.py` points at Track A's checkout.
 
 ## Layout
 
@@ -36,7 +83,9 @@ dashboard.
 contracts/        C1-C4: the frozen schemas, plus one worked example of each
   examples/       svp_simple_001_001 -- one real bug point, one planted trap,
                   and run-fixture/, a hand-written C3 run directory
+fixtures/         Track B's labelled evaluation set; labels.json is the manifest
 src/irqrace/      the Python half: contracts, config, build, probe, run store
+  llm/            Track B: verdicts, prompts, C4 resolver, harness, scoring
 analysis/         the C++ half: SVF-based analysis binaries
 bench/configs/    one generated C1 file per Racebench simple case (31)
 scripts/          toolchain setup
@@ -78,6 +127,39 @@ irqrace probe bench/configs/svp_simple_001_001.yaml
 ```bash
 python3 -m pytest tests -q
 ```
+
+### Track B
+
+The LLM stage needs no toolchain, and its tests need no API key and no network
+— every backend is exercised through an injected transport.
+
+```bash
+pip install -e '.[llm]'             # pydantic only; covers the OpenAI-compatible
+                                    # and Ollama adapters
+pip install -e '.[llm-anthropic]'   # adds the Anthropic SDK
+```
+
+```bash
+irqrace llm prompts                      # the five ablation rows and their hashes
+irqrace llm prompts '+self-validation'   # the full system prefix, as sent
+irqrace llm backends                     # the providers and the spec form
+irqrace llm backends ollama:llama3       # one spec's capabilities and caveats
+irqrace llm fixtures                     # the labelled set; exits 1 while short of 10+10
+python3 scripts/build-fixtures.py        # regenerate the fixtures from the specs
+python3 scripts/run-ablation.py          # score the five rows; exits 1 if the gate fails
+python3 scripts/ablation-table.py a.json b.json   # the M3 table, one column group per model
+```
+
+The suite is found at `../racebench` or via `IRQRACE_RACEBENCH`.
+
+```bash
+python3 -m pytest tests/test_llm_*.py -q
+```
+
+On a machine without the Racebench suite, `pytest tests` fails during
+*collection* — `tests/test_racebench.py` parametrises at module scope from
+`DEFAULT_SUITE`, which is an absolute path into Track A's checkout. Until that
+is guarded, use `pytest tests --ignore=tests/test_racebench.py`.
 
 ## The contracts
 

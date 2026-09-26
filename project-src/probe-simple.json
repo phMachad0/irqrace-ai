@@ -1,0 +1,30 @@
+[
+  {
+    "row": "simple",
+    "config_hash": "4922b8d587d293bf",
+    "backend": "openai:openai/gpt-oss-120b",
+    "recall": 1.0,
+    "gate_passed": true,
+    "trap_rejection": 0.8,
+    "inspection_ratio": 0.631578947368421,
+    "buckets": {
+      "likely_real": 7,
+      "uncertain": 2,
+      "likely_benign": 3,
+      "likely_infeasible": 7
+    },
+    "blocking_element_groups": {},
+    "request_distribution": null,
+    "missed": [],
+    "excluded": [
+      {
+        "candidate": "c8972847f02fab758",
+        "reason": "backend error: https://api.groq.com/openai/v1 returned 400: {\"error\":{\"message\":\"Failed to generate JSON. Please adjust your prompt. See 'failed_generation' for more details.\",\"type\":\"invalid_request_error\",\"code\":\"json_validate_failed\",\"failed_generation\":\"{\\n  \\\"blocking_element\\\": null,\\n  \\\"confidence\\\": 0. nine,\\n  \\\"harm_confidence\\\": 0.85,\\n  \\\"harm_verdict\\\": \\\"benign\\\",\\n  \\\"reasoning\\\": \\\"The main task writes to *svp_simple_009_001_p (A1) and then to *svp_simple_009_001_q (A2). Both pointers alias the same stack variable (local_var1). Interrupt"
+      }
+    ],
+    "cost_usd": null,
+    "caveats": [
+      "no prompt caching - cost is not comparable with a cached backend"
+    ]
+  }
+]

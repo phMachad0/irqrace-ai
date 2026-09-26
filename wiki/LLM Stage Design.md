@@ -2,7 +2,7 @@
 type: project
 tags: [wiki, project, llm]
 sources: ["[[LLift (paper)]]", "[[IRIS (paper)]]", "[[SkipAnalyzer (paper)]]", "[[SAST-Genius (paper)]]", "[[Reducing False Alarms (paper)]]", "[[SDRacer (paper)]]"]
-updated: 2026-08-27
+updated: 2026-09-26
 status: draft
 ---
 
@@ -125,8 +125,27 @@ be a table of interrupt patterns with their verdicts:
 | preempting flow has **lower or equal** priority | no preemption *if strictly lower*; **equal priority is unresolved** — treat as possible |
 | interrupt not yet enabled at this point in the flow | infeasible only if disabled on **every** path reaching it |
 | the same statement inside a loop as both `A₁` and `A₂` | a valid triple — `svp_simple_029_001` annotates exactly this |
+| the same statement as both `A₁` and `A₂`, but executing **once** | **infeasible** — added 2026-09-26 from fixture work. The rule above is the one a model can over-apply by shape, and [[Racebench]] plants the counterexample: `svp_simple_006_001`'s guard `(i+j)==6 && i<j` has one solution over `i,j ∈ [0,5)`, and `svp_simple_015_001` names a variable twice in a ternary that evaluates one arm. Both are annotated traps. Check the guard and the bounds before applying the row above |
 | ISR re-enables a lower-priority interrupt inside itself | masking is dynamic; `svp_simple_003_001_isr_1` does this |
 | shared variable feeds a branch, or indexes an array or pointer | harmful rather than benign (Bai et al. criterion, via [[IntRace (paper)]]) |
+
+> [!warning] The harmfulness criterion and [[Racebench]]'s ground truth disagree
+> Measured on the first live run, 2026-09-26. The criterion above asks whether the shared
+> variable feeds a branch or indexes an array. **Racebench's simple cases read shared
+> variables into locals that are never used again** — `reader1 = global_var1;` and nothing
+> more — in at least 10 of the 31 cases. Applied literally, the criterion classifies those
+> annotated bug points as *benign*, and a model doing so is reasoning correctly:
+> *"the ISR only copies the value into a local variable and does not use it for any control
+> decision"* is a true statement about `svp_simple_005_001`.
+>
+> This is a specification conflict, not a model failure. The benchmark annotates atomicity
+> violations as **program facts**; its readers are dead stores because the suite exists to
+> exercise a detector, not to model a consequence. Three ways out, none free:
+> ask the harmfulness question only where the value is live; restate the criterion as *would
+> this matter if the value were used*; or drop harmfulness on this benchmark and report
+> feasibility alone, conceding that trap rejection then carries the whole precision argument.
+> Recorded in [[Open Questions]]; it blocks the interpretation of every harmfulness number
+> this project will produce on Racebench.
 
 Also state the priority convention explicitly — **larger number = higher priority**
 ([[Contradictions]] #3) — since the published papers disagree with the benchmark and the model
@@ -218,6 +237,13 @@ Proposed evaluation, in order:
 1. **Recall gate.** Every one of the 48 bug points must survive triage in a reported bucket.
    Any bug point ranked *likely infeasible* is a design failure, not a tuning issue — and is
    reportable as such.
+
+   > [!warning] The gate as worded does not catch *likely benign*, and it needs to
+   > Measured 2026-09-26 on the first live run: of the first six bug points, **two came back
+   > `likely_benign`** with correct feasibility reasoning. That passes this gate by the letter
+   > while sinking those candidates to the second-lowest bucket, so recall reads 100% and the
+   > Inspection Ratio collapses. Until the conflict below is resolved, the two numbers must
+   > always be reported together and a bug point in a low bucket named explicitly.
 2. **Trap rejection.** Of the 38 planted traps, how many are correctly bucketed low? This is the
    precision measure, and unlike precision it cannot be gamed by dropping candidates.
 3. **Inspection Ratio** on the combined set, and on the [[Real-World Program Benchmark]] where
