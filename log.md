@@ -838,3 +838,44 @@ measured.
 
 Credentials now load from a gitignored `.env`, so runs do not depend on remembering an export
 and keys stay out of shell history.
+
+## [2026-09-26] ingest | NIChecker artifact — Contradictions #1's open item closed
+
+Cloned `../NIChecker` (2.6 GB, Apache-2.0, benchmarks and results only) and recounted the
+18-program real-world suite from the files. [[Contradictions]] #1 left one item explicitly
+open — *"NIChecker's published 47 matches neither the 45 shipped entries nor BMC4AV's 37"* —
+and called re-counting the `logger` package "an original, defensible contribution". It is
+accounted for, and the answer is that **the artifact is corrupt and the paper is right**.
+
+**`violation.info` is a verdict table, not a list.** Each program also ships `mode.txt`, the
+nomination list of (variable, pattern) pairs the tool was told to check. The arithmetic pins
+the relationship: `mode.txt` totals **59** lines across the suite, and `violation.info` totals
+**45 `true violation` + 14 `false violation` = 59**. The 14 are planted false positives, so
+this suite is a triage benchmark in the same way [[Racebench]] is — worth knowing before
+Track B's W9 uses it.
+
+**`logger2/violation.info` belongs to a different program.** It names `test_global_var1/2/3`,
+which appear **zero** times in `logger2/main.c`; those identifiers occur only in the twelve
+anonymised programs, never in `logger*` or `blink*`, which use real names. It is also the only
+file in the suite with no `true`/`false` prefix on its lines. logger2's two nominations —
+`int numberOfRecords rww`, `int tickCounter wwr`, both variables present in its code — have no
+recorded verdict, and `logger3`, the sibling variant, nominates the same two pairs and records
+both as `true violation`.
+
+**45 recorded + 2 lost = 47**, exactly NIChecker's published figure. Stated as an inference,
+not a proof: logger2's verdicts cannot be read back, only reconstructed from its sibling. But
+nobody miscounted — the paper reported what its ground truth said before a file was overwritten.
+
+**The ground truth also mixes counting units inside itself**, which sharpens rather than
+settles the BMC4AV dispute. `blink1`–`blink3` write triples with line numbers
+(`timerCount(95W,121W,96R)`) — 12 entries — while the other fifteen programs write variable and
+pattern only — 50 entries. So the per-variable/per-instance mismatch the wiki attributed to a
+disagreement *between papers* is present *within the shipped document*. Fixing a unit means
+re-deriving line numbers for fifteen programs.
+
+**Method note.** My first hypothesis was that logger2 had simply lost its prefix, the same
+defect as `svp_simple_022_001`'s headerless block in [[Racebench]] — and a grep that assumed
+that would have produced a tidy "48 true violations" and a false parallel between the two
+benchmarks. Checking whether the named variables exist in the named program is what killed it.
+Two benchmarks, two different corruptions that a strict reader mis-handles in two different
+directions.

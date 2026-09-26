@@ -2,7 +2,7 @@
 type: comparison
 tags: [wiki, comparison]
 sources: ["[[SDRacer (paper)]]", "[[IntRace (paper)]]", "[[NIChecker (paper)]]", "[[BMC4AV (paper)]]", "[[Racebench (documentation)]]"]
-updated: 2026-08-20
+updated: 2026-09-26
 status: solid
 ---
 
@@ -38,11 +38,41 @@ The full per-program table is in [[Real-World Program Benchmark]]. This does not
 does mean the headline "NIChecker misses 57 of 94" divides a per-instance numerator by a
 per-variable denominator, and should not be quoted without that caveat.
 
-**What remains open**: NIChecker's published 47 matches neither the 45 shipped entries nor
-BMC4AV's 37, and no paper defines its counting unit explicitly. Settling it completely means
-fixing a unit — this wiki suggests per-triple-instance — and re-counting one package by hand
-against it. `logger` (3 programs, ~170–210 lines) is the cheapest place to do that, and it is
-still an original, defensible contribution.
+**The 47 is now accounted for, 2026-09-26: the artifact is corrupt, and NIChecker's published
+figure is right.** Recounted from the repository.
+
+`violation.info` is not a standalone list. Each program also ships `mode.txt`, the **nomination
+list** — the (variable, pattern) pairs the tool was told to check — and `violation.info` records
+one verdict per nomination. The arithmetic confirms the relationship exactly: across the 18
+programs `mode.txt` holds **59** lines, and `violation.info` holds **45 `true violation` + 14
+`false violation` = 59**. So the ground truth is a verdict table, and the 14 `false violation`
+entries are planted false positives, making this suite a triage benchmark in the same way
+[[Racebench]] is.
+
+**`logger2/violation.info` is a stray file from a different program.** It names
+`test_global_var1/2/3`, which occur **zero** times in `logger2/main.c` — those names belong to
+the twelve anonymised programs (`brake*`, `i2c_pca_isa*`, `i8xx_tco*`, `wdt_pci*`), never to
+`logger*` or `blink*`, which use real identifiers. It is also the only file in the suite
+carrying no `true`/`false` prefix, and logger2 is the only program whose `mode.txt` count and
+`violation.info` count disagree in that way.
+
+So **logger2's two nominations have no recorded verdict**. They are `int numberOfRecords rww`
+and `int tickCounter wwr`, both variables present in its code (13 and 11 occurrences), and
+`logger3` — the sibling variant, 188 lines against 183, differing in 39 — nominates *the same
+two pairs* and records **both as `true violation`**.
+
+That gives **45 recorded + 2 lost = 47**, which is exactly NIChecker's published count. The
+last step is an inference rather than a proof: logger2's verdicts are gone and cannot be read
+back, only reconstructed from its sibling. But it explains the discrepancy the entry above left
+open, and it does so without anyone having miscounted — the paper reported what its ground
+truth said before a file was overwritten.
+
+**What remains open**: BMC4AV's 94 is still a per-instance count against a per-variable
+denominator, so the "misses 57 of 94" headline keeps its caveat. And the ground truth **mixes
+units inside itself**: `blink1`–`blink3` write triples with line numbers
+(`timerCount(95W,121W,96R)`, 12 entries in all) while the other fifteen programs write only
+variable and pattern (50 entries). Fixing a unit — this wiki suggests per-triple-instance —
+therefore requires re-deriving line numbers for fifteen programs, not three.
 
 **A separate, real gap**: six shipped `true violation` entries carry the pattern `rww`, which
 BMC4AV excludes by construction and therefore cannot report — including all three violations
