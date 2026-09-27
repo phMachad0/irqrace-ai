@@ -1,0 +1,79 @@
+% ---------------------------------------------------------------------------
+% RESERVADO PARA A MONOGRAFIA COMPLETA -- nao incluido em parcial.tex.
+% Retirado do capitulo 6 da parcial em 27/09/2026, a pedido dos autores: a
+% parcial nao expoe o andamento do projeto. Reaproveitar no capitulo 7 ou 8.
+% ---------------------------------------------------------------------------
+
+\section{Estado atual}
+\label{sec:estado}
+
+Até a data desta monografia, os marcos M1 e M2 foram entregues. Os resultados
+abaixo são preliminares: medem partes da ferramenta, isoladamente, e não o
+ciclo completo.
+
+\subsection{Infraestrutura e gabarito}
+
+Os quatro contratos foram congelados como esquemas JSON na primeira semana. O
+ambiente de compilação usa Clang e LLVM~14 com o SVF~2.7, e os 31 casos simples
+do Racebench compilam para a representação intermediária. O gabarito foi
+certificado em 48 defeitos e 38 armadilhas, com a errata e a regra de
+casamento descritas no Capítulo~\ref{cap:metodologia}.
+
+\subsection{Estágio 1 e portão de recall (M2)}
+
+O estágio 1 analisa os 31 casos simples e gera 566 candidatos: 316 triplas e 250
+pares. \textbf{Todos os 48 defeitos anotados estão entre os candidatos}, e 35
+das 38 armadilhas também, o que é esperado, pois este estágio ainda não filtra
+nada. As três armadilhas ausentes são exatamente as que o próprio estágio 1 pode
+excluir com segurança: duas têm forma $(W,W,W)$, que é serializável, e uma
+exige que os dois ramos de uma expressão condicional executem juntos, o que o
+CFG mostra ser impossível.
+
+O portão de recall cumpriu seu papel antes mesmo de passar: detectou três
+defeitos na própria implementação, cada um dos quais fazia a ferramenta perder
+um defeito anotado sem nenhum erro visível. Restringir as posições
+compartilhadas a variáveis globais perdia um defeito em que uma variável local é
+compartilhada através de ponteiros globais. Tratar uma instrução como um único
+acesso perdia um defeito em que a mesma função é chamada duas vezes seguidas. E
+armazenamentos gerados pelo compilador no início das funções produziam
+candidatos sem linha no código-fonte.
+
+\subsection{Sonda de viabilidade do \llm\ (M1)}
+
+Antes de construir a etapa de triagem, era preciso saber se um \llm\ consegue
+julgar esse tipo de defeito, dado que nenhum trabalho anterior o testou. A
+sonda aplicou o \textit{prompt} simples, sem nenhuma das técnicas da
+Seção~\ref{sec:etapa-llm}, aos 20 registros montados à mão. O resultado foi
+positivo: nenhum dos 10 defeitos foi classificado como inviável, e o modelo
+separou corretamente os pares adversariais, inclusive um defeito e uma
+armadilha que diferem apenas pelo número de vezes que um laço executa. O modelo
+usado foi o \texttt{gpt-oss-120b}, em setembro de 2026.
+
+\subsection{Próximos passos}
+
+A frente B está medindo as linhas da ablação (M3). A frente A segue para o
+estágio 2. A integração das duas, prevista para a semana 8, trocará o resolvedor
+simulado pelo real e permitirá medir a linha de pedidos progressivos de contexto
+e repetir a triagem sobre os candidatos reais, que serão os casos que o solver
+não conseguiu decidir.
+
+\section{Riscos e contingência}
+\label{sec:riscos}
+
+O cronograma é ambicioso para duas pessoas em tempo parcial, e por isso define
+de antemão o que cortar primeiro, em ordem:
+
+\begin{enumerate}
+  \item a entrada com vários arquivos, que nenhum benchmark exercita;
+  \item a suíte de programas reais, pois o Racebench sozinho já sustenta o
+    portão de recall, a rejeição de armadilhas e a ablação;
+  \item o estágio 3 (Z3): sem ele, a ferramenta continua correta, pois esse
+    estágio só descarta, mas fica mais ruidosa e mais cara;
+  \item o reparo, pois detecção, triagem e ablação já formam um trabalho
+    completo;
+  \item o painel além da visualização de candidatos.
+\end{enumerate}
+
+Três itens não podem ser cortados: o portão de recall, a certificação do
+gabarito e a lista de premissas. São eles que tornam verificável a afirmação
+central do trabalho.

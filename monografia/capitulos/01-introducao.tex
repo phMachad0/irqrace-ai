@@ -1,0 +1,136 @@
+\chapter{Introdução}
+\label{cap:introducao}
+
+% Fontes no wiki: Thesis Goal, Synthesis, LLM Integration Patterns.
+
+\section{Contexto}
+\label{sec:contexto}
+
+Sistemas embarcados de missão crítica, como controle aeroespacial, frenagem automotiva e \textit{drivers} de dispositivos, reagem ao hardware por meio de
+interrupções. Quando um periférico sinaliza um evento, o processador suspende o
+código em execução e desvia para uma rotina de tratamento de interrupção
+(\textit{Interrupt Service Routine}, \isr). Ao término da rotina, a execução
+retorna ao ponto em que foi interrompida.
+
+Esse mecanismo introduz concorrência mesmo em programas sem \textit{threads}:
+uma \isr\ pode ser disparada entre duas instruções quaisquer do código
+principal, e ambos podem ler e escrever as mesmas variáveis globais. Se o
+programador não proteger essas variáveis, o resultado do programa passa a
+depender do instante exato em que a interrupção ocorreu.
+\citeonline{sdracer} relatam um caso concreto em uma versão do uCLinux, em que
+um \textit{driver} serial e um tratador de interrupção compartilham a linha de
+comunicação e, num caminho de execução raro, transmitem dados
+simultaneamente.
+
+\section{O problema}
+\label{sec:problema}
+
+Este trabalho trata de duas classes de defeito de concorrência em programas
+orientados a interrupções. Um \textit{data race} ocorre quando dois acessos à
+mesma posição de memória, em fluxos diferentes e sendo ao menos um deles uma
+escrita, podem acontecer sem ordem definida entre si. Uma violação de
+atomicidade ocorre quando dois acessos de um mesmo fluxo, que o programador
+supunha indivisíveis, são separados por um acesso de uma \isr\ à mesma
+variável, de modo que o resultado não corresponde a nenhuma execução em
+sequência. Os dois conceitos são definidos com precisão no
+Capítulo~\ref{cap:fundamentacao}.
+
+Esses defeitos são difíceis de detectar, isolar e corrigir, porque dependem da intercalação das execuções \cite{sdracer}: uma interrupção precisa chegar num intervalo de poucas instruções, e uma bateria de testes pode passar em todas as execuções observadas sem nunca exercitar esse intervalo. Por isso a literatura recorre a técnicas que raciocinam
+sobre todas as execuções possíveis: análise estática, execução simbólica e
+verificação de modelos.
+
+\section{A lacuna}
+\label{sec:lacuna}
+
+A revisão da literatura (Capítulo~\ref{cap:relacionados}) identifica três
+lacunas que motivam este trabalho.
+
+As ferramentas priorizam precisão e medem mal o recall. Três das quatro
+ferramentas estudadas relatam zero ou quase zero falsos positivos nos próprios
+benchmarks, enquanto a ausência de falsos negativos é afirmada por inspeção
+manual ou dentro de um limite de desenrolamento
+\cite{sdracer,intrace,nichecker}. \citeonline{bmc4av} afirmam que uma ferramenta
+com 100\% de precisão encontrou apenas 39,4\% das violações existentes na mesma
+suíte. Como se discute na Seção~\ref{sec:rel-comparacao}, essa afirmação depende também de como os defeitos são contados. Essa cultura de avaliação tem
+origem identificável: o benchmark que todos usam foi criado para uma
+competição que, nos casos simples, penalizava um falso positivo em 3 pontos e premiava uma
+detecção com apenas 2 \cite{racebench}.
+
+Nenhuma ferramenta trata as duas classes de defeito, e só a mais antiga
+repara. As ferramentas de \textit{data race} e as de violação de atomicidade
+formam linhas separadas, e apenas o SDRacer, de 2020, propõe correções
+\cite{sdracer}.
+
+Modelos de linguagem já ajudam a análise estática, mas nunca em
+concorrência. Trabalhos recentes usam modelos de linguagem de grande escala
+(\llm) para decidir quais alertas de um analisador são reais
+\cite{llift,chatgpt-static,reducing-fp}, inferir especificações
+\cite{iris,adataint} e propor correções \cite{skipanalyzer,sastgenius}. Todos
+tratam defeitos sequenciais: fluxo de dados contaminados, desreferência de
+ponteiro nulo, vazamento de recursos, uso antes da inicialização.
+\citeonline{llift} citam explicitamente a concorrência como algo que a análise
+estática modela mal, sem tratá-la. A interseção entre as duas literaturas está
+vazia, e é nela que este trabalho se situa.
+
+\section{Objetivos}
+\label{sec:objetivos}
+
+\subsection{Objetivo geral}
+
+Construir uma ferramenta que encontre \textit{data races} e violações de
+atomicidade em código C embarcado orientado a interrupções sem falsos
+negativos em relação a um conjunto explícito de premissas, aceitando falsos
+positivos, e que feche o ciclo com um modelo de linguagem: detectar,
+contextualizar, triar, reparar e re-verificar.
+
+\subsection{Objetivos específicos}
+
+\begin{enumerate}
+  \item Detectar, numa única análise estática, os candidatos das duas classes de
+    defeito, com recall de 100\% sobre o gabarito do Racebench.
+  \item Emitir, para cada candidato, um registro de contexto com as evidências de
+    que um revisor precisa: acessos, fluxos, prioridades, caminhos de chamada e
+    estado de mascaramento.
+  \item Descartar apenas candidatos que um solver prove impossíveis.
+  \item Usar um \llm\ para ordenar e explicar os candidatos restantes, reduzindo
+    o esforço de revisão sem nunca descartar um candidato.
+  \item Medir a contribuição de cada técnica de \textit{prompt}, numa ablação no
+    formato de \citeonline{llift}.
+  \item Propor correções específicas de interrupção e verificar que o defeito
+    desapareceu sem introduzir outros.
+\end{enumerate}
+
+\section{Justificativa}
+\label{sec:justificativa}
+
+Do ponto de vista prático, um defeito de concorrência que escapa aos testes se manifesta em campo, num sistema de controle físico. Uma análise que não perde defeitos é o que permite
+afirmar que um programa foi verificado. O preço dessa garantia são os falsos
+alarmes: na ferramenta IntRace, a primeira etapa gera cerca de 208 candidatos
+por programa real \cite{intrace}. Revisá-los um a um é caro. A etapa com \llm\
+proposta aqui ataca exatamente esse custo, ordenando os candidatos de modo que
+o revisor encontre os defeitos reais lendo o mínimo possível, sem que nenhum
+defeito saia do relatório.
+
+Do ponto de vista científico, o trabalho contribui em três frentes: é a
+primeira aplicação de triagem por \llm\ a concorrência com interrupções; unifica
+num só \textit{front end} as duas classes de defeito que a literatura trata
+separadamente; e explicita as premissas sob as quais a ausência de falsos
+negativos vale, o que nenhum dos trabalhos revisados faz.
+
+\section{Organização do documento}
+\label{sec:organizacao}
+
+O Capítulo~\ref{cap:fundamentacao} apresenta os conceitos necessários:
+interrupções, as duas classes de defeito, as técnicas de análise e as métricas
+de avaliação. O Capítulo~\ref{cap:relacionados} apresenta e compara os
+trabalhos relacionados nas duas literaturas. O Capítulo~\ref{cap:proposta}
+descreve a ferramenta proposta, e o Capítulo~\ref{cap:metodologia}, como ela
+será avaliada.
+\ifparcial
+O Capítulo~\ref{cap:plano} apresenta o plano de trabalho.
+\else
+Os Capítulos~\ref{cap:implementacao}, \ref{cap:avaliacao} e
+\ref{cap:conclusao} apresentam a implementação, a avaliação e as conclusões. O
+Apêndice~\ref{ap:contratos} detalha os contratos de dados entre as etapas da
+ferramenta.
+\fi

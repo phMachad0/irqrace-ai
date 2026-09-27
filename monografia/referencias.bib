@@ -1,0 +1,154 @@
+% ===========================================================================
+% Referências. Autores e veículos conferidos na primeira página de cada PDF em
+% raw/ (27/09/2026), além das páginas de wiki/sources/.
+% ===========================================================================
+
+% --- Concorrência em programas com interrupções ---------------------------
+
+% Autores do PDF (versão de pré-publicação). Publicado no IEEE TSE; o ano é o
+% da publicação online, conforme o wiki.
+@article{sdracer,
+  author  = {Yu Wang and Fengjuan Gao and Linzhang Wang and Tingting Yu and Ke Wang and Jianhua Zhao and Xuandong Li},
+  title   = {Automatic Detection, Validation, and Repair of Race Conditions in Interrupt-Driven Embedded Software},
+  journal = {IEEE Transactions on Software Engineering},
+  year    = {2020},
+  url     = {https://ieeexplore.ieee.org/document/9072666}
+}
+
+@article{intrace,
+  author  = {Jingwen Zhao and Yanxia Wu and Jibin Dong},
+  title   = {Efficient data race detection for interrupt-driven programs via path feasibility analysis},
+  journal = {The Journal of Supercomputing},
+  year    = {2024},
+  doi     = {10.1007/s11227-024-06189-4}
+}
+
+@article{nichecker,
+  author  = {Yuan Zhang and Lei Qu and Yifei Wu and Leihuan Wu and Tingting Yu and Rui Chen and Weiqiang Kong},
+  title   = {Bounded Verification of Atomicity Violations for Interrupt-Driven Programs via Lazy Sequentialization},
+  journal = {ACM Transactions on Software Engineering and Methodology},
+  volume  = {34},
+  number  = {3},
+  year    = {2025},
+  doi     = {10.1145/3705311}
+}
+
+% Preprint SEM revisão por pares. O texto diz isso sempre que o cita.
+@misc{bmc4av,
+  author       = {Zixuan Yuan and Bin Yu and Xincheng Wang and Xu Lu and Cheng Wen and Wensheng Wang and Hao Wang and Chu Chen and Cong Tian},
+  title        = {From Potential to Confirmed: Effective Detection of Atomicity Violations in Interrupt-Driven Programs via Guided Memory Access Graph},
+  howpublished = {SSRN preprint},
+  year         = {2026},
+  note         = {Preprint não revisado por pares. Disponível em: \url{https://ssrn.com/abstract=6731320}}
+}
+
+% Cita-se o repositório, não a documentação DeepWiki (gerada por máquina).
+@misc{racebench,
+  author       = {{Racebench}},
+  title        = {Racebench: benchmark de defeitos de concorrência em programas orientados a interrupções, versão 2.1},
+  howpublished = {Repositório GitHub},
+  year         = {2019},
+  note         = {Disponível em: \url{https://github.com/chenruibuaa/racebench}}
+}
+
+% --- LLMs aplicados à análise estática ------------------------------------
+
+@article{llift,
+  author  = {Haonan Li and Yu Hao and Yizhuo Zhai and Zhiyun Qian},
+  title   = {Enhancing Static Analysis for Practical Bug Detection: An {LLM}-Integrated Approach},
+  journal = {Proceedings of the ACM on Programming Languages},
+  volume  = {8},
+  number  = {OOPSLA1},
+  year    = {2024},
+  doi     = {10.1145/3649828}
+}
+
+% O PDF traz "Published as a conference paper at ICLR 2025".
+@inproceedings{iris,
+  author    = {Ziyang Li and Saikat Dutta and Mayur Naik},
+  title     = {{IRIS}: {LLM}-Assisted Static Analysis for Detecting Security Vulnerabilities},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2025},
+  note      = {Disponível em: \url{https://arxiv.org/abs/2405.17238}}
+}
+
+@misc{skipanalyzer,
+  author       = {Mohammad Mahdi Mohajer and Reem Aleithan and Nima Shiri Harzevili and Moshi Wei and Alvine Boaye Belle and Hung Viet Pham and Song Wang},
+  title        = {{SkipAnalyzer}: A Tool for Static Code Analysis with Large Language Models},
+  howpublished = {arXiv:2310.18532},
+  year         = {2023},
+  note         = {Disponível em: \url{https://arxiv.org/abs/2310.18532}}
+}
+
+@inproceedings{chatgpt-static,
+  author    = {Mohammad Mahdi Mohajer and Reem Aleithan and Nima Shiri Harzevili and Moshi Wei and Alvine Boaye Belle and Hung Viet Pham and Song Wang},
+  title     = {Effectiveness of {ChatGPT} for Static Analysis: How Far Are We?},
+  booktitle = {Proceedings of the 1st ACM International Conference on AI-Powered Software (AIware)},
+  address   = {Porto de Galinhas},
+  year      = {2024},
+  doi       = {10.1145/3664646.3664777}
+}
+
+@inproceedings{adataint,
+  author    = {Shiyin Lin},
+  title     = {{LLM}-Driven Adaptive Source--Sink Identification and False Positive Mitigation for Static Analysis},
+  booktitle = {Proceedings of the 8th International Conference on Computer Information Science and Artificial Intelligence (ICCSAI)},
+  year      = {2025},
+  doi       = {10.1145/3773365.3773410}
+}
+
+@inproceedings{reducing-fp,
+  author    = {George David Apostolidis and Ilias Kalouptsoglou and Miltiadis Siavvas and Dionysios Kehagias and Dimitrios Tzovaras},
+  title     = {{AI}-Enhanced Static Analysis: Reducing False Alarms Using Large Language Models},
+  booktitle = {2025 IEEE International Conference on Smart Computing (SMARTCOMP)},
+  year      = {2025},
+  doi       = {10.1109/SMARTCOMP65954.2025.00088}
+}
+
+% Preprint / relatório técnico SEM revisão por pares.
+@techreport{sastgenius,
+  author      = {Vaibhav Agrawal and Kiarash Ahi},
+  title       = {{LLM}-Driven {SAST-Genius}: A Hybrid Static Analysis Framework for Comprehensive and Actionable Security},
+  institution = {Preprint},
+  year        = {2025},
+  note        = {Não revisado por pares}
+}
+
+% --- Ferramentas de base ----------------------------------------------------
+% Referências clássicas, sem PDF local: dados bibliográficos de conhecimento
+% geral, a conferir antes da versão final.
+
+@inproceedings{cbmc,
+  author    = {Edmund Clarke and Daniel Kroening and Flavio Lerda},
+  title     = {A Tool for Checking {ANSI-C} Programs},
+  booktitle = {Tools and Algorithms for the Construction and Analysis of Systems (TACAS)},
+  year      = {2004}
+}
+
+@inproceedings{lazycseq,
+  author    = {Omar Inverso and Ermenegildo Tomasco and Bernd Fischer and Salvatore La Torre and Gennaro Parlato},
+  title     = {Bounded Model Checking of Multi-threaded {C} Programs via Lazy Sequentialization},
+  booktitle = {Computer Aided Verification (CAV)},
+  year      = {2014}
+}
+
+@inproceedings{z3,
+  author    = {Leonardo de Moura and Nikolaj Bj{\o}rner},
+  title     = {{Z3}: An Efficient {SMT} Solver},
+  booktitle = {Tools and Algorithms for the Construction and Analysis of Systems (TACAS)},
+  year      = {2008}
+}
+
+@inproceedings{svf,
+  author    = {Yulei Sui and Jingling Xue},
+  title     = {{SVF}: Interprocedural Static Value-Flow Analysis in {LLVM}},
+  booktitle = {Proceedings of the 25th International Conference on Compiler Construction (CC)},
+  year      = {2016}
+}
+
+@inproceedings{llvm,
+  author    = {Chris Lattner and Vikram Adve},
+  title     = {{LLVM}: A Compilation Framework for Lifelong Program Analysis and Transformation},
+  booktitle = {International Symposium on Code Generation and Optimization (CGO)},
+  year      = {2004}
+}

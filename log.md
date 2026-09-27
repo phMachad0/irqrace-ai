@@ -1127,3 +1127,72 @@ trap count: `+domain` called two more traps feasible (trap rejection 70% → 50%
 Ratio gap runs from **5 points in `+domain`'s favour to 10 against it** depending on tie
 convention (60–75% against a fixed 65%), and the table reports the pessimistic end. With n=20 at one sample, confidence values clustering on 0.90 is itself worth
 watching: it makes the ranking coarser than the metric assumes.
+
+## [2026-09-27] direction | thesis monograph scaffolded — `monografia/`
+
+Lucas asked for the TCC monograph plan (POLI-USP, PCS) and a LaTeX source for the partial
+version. Created `monografia/` at the vault root: abntex2, one source with two entry points
+(`parcial.tex` = chapters 1–6, restricted to before the full implementation; `final.tex` =
+1–5 plus implementation, evaluation, conclusion), `latexmk` with output in `build/`
+(gitignored). Chapter 3 already drafts a short presentation of each paper from
+`wiki/sources/`, every number attributed to its authors and the two preprints (BMC4AV,
+SAST-Genius) flagged as such. `referencias.bib` holds the 12 sources plus CBMC, Lazy-CSeq,
+Z3, SVF, LLVM; authors for SDRacer, LLift and IRIS were filled from memory and marked
+VERIFICAR, and AdaTaint and Reducing False Alarms carry placeholders because the clippings
+have no byline. Racebench is cited as the repository, not the DeepWiki export. Open with the
+human: PCS formatting rules and deadlines, and whether the monograph is joint with Pedro —
+the skeleton assumes joint. Not yet compiled: WSL has no Linux distribution installed.
+
+## [2026-09-27] build | partial monograph written — chapters 1–6, checked against the wiki
+
+`monografia/parcial.tex` now has full text for introduction, background, related work,
+proposal, evaluation methodology and work plan, plus resumo, abstract and the contracts
+appendix; no pending marker remains in those files (the marker macro is also switched off).
+Every claim was drafted from the wiki pages it cites — Thesis Goal, Pipeline Design, LLM Stage
+Design, Soundness Assumptions, Roadmap, the concept, source, benchmark and comparison pages,
+`project-src/docs/evaluation-protocol.md` and `contracts/README.md` — with numbers phrased as
+reported by their authors. Two slips caught on the final pass and fixed: the fixture set has
+six adversarial *pairs*, not six adversarial records; and only `wdt_pci` is confirmed by the
+wiki as a Linux kernel driver.
+
+**Bibliography now checked against the PDFs in `raw/`**, not memory. That corrected the SDRacer
+author list (Ke Wang was missing), gave NIChecker's full author names, confirmed IRIS as ICLR
+2025, and filled the two entries the clippings had no byline for: AdaTaint (Shiyin Lin, ICCSAI
+2025) and Reducing False Alarms (Apostolidis, Kalouptsoglou, Siavvas, Kehagias, Tzovaras —
+IEEE SMARTCOMP 2025, DOI 10.1109/SMARTCOMP65954.2025.00088). The wiki's source pages for those
+two still lack the byline; worth adding on the next lint.
+
+Cover: Poli and USP logos from poli.usp.br, both authors with NUSP, advisor as edited by the
+human in `config/dados.tex`. Builds with the local MiKTeX: 44 pages, no overfull boxes, no
+undefined citation or reference.
+
+## [2026-09-27] direction | the partial monograph does not expose project status
+
+Lucas's call: the partial stops at 6.2 (schedule), then the references. Removed from the
+partial: §6.3 current state (M1, M2, stage-1 counts), §6.4 risks, the contracts appendix, the
+"first results" sentence of resumo/abstract, and two methodology sentences phrased as work
+already done. Nothing deleted: §6.3–6.4 moved to `monografia/capitulos/reservado-final-estado-atual.tex`
+(not included anywhere) for the final version, and a `\ifparcial` switch in `parcial.tex` /
+`final.tex` keeps the appendix and its cross-references in the final only. Partial: 40 pages;
+both versions build clean.
+
+## [2026-09-27] lint | partial monograph re-checked sentence by sentence against the wiki
+
+Every chapter of `monografia/parcial.tex` re-read against its wiki sources. 23 corrections,
+three of them factual errors introduced when drafting:
+
+- **"None of the baselines was available"** was wrong. The wiki records only [[Rchecker]] and
+  [[intAtom]] as unobtainable; [[CPA4AV]] and [[iCBMC]] were run by the papers that used them.
+- **"Racebench is common to the whole literature reviewed"** was wrong: it is what IntRace,
+  NIChecker and BMC4AV evaluate on — not SDRacer, not the LLM sources. The chapter opening
+  also called the benchmarks "common to both literatures".
+- **"All seven LLM sources follow the same division of labour"** overstated
+  [[LLM Integration Patterns]], which says the corpus *converges* on it; two sources also test
+  standalone detection.
+
+Also an internal inconsistency: chapters 2 and 4 called Z3 "the only stage allowed to discard"
+while chapter 4 has stage 2 discarding on proof too. Restated as the wiki's actual rule — only a
+proof of impossibility discards. The rest were precision fixes: competition scoring is for the
+simple cases, IntRace used 30 of 31 cases, SDRacer's repair list includes locks, LLift's $0.43 is
+GPT-4 at 2024 prices, BMC4AV's "automatic" is its own claim, and two unsourced rhetorical claims
+in the introduction were replaced by what SDRacer actually says. Builds clean; 43 pages.

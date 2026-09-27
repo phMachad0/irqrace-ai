@@ -1,0 +1,52 @@
+% ===========================================================================
+% MONOGRAFIA PARCIAL
+% Recorte: até antes da implementação completa da ferramenta.
+% Compilar: latexmk parcial.tex   (ou: make parcial)
+% ===========================================================================
+
+\documentclass[12pt, openright, oneside, a4paper, english, brazil]{abntex2}
+
+% A parcial termina no cronograma e nas referências: sem estado atual e sem
+% apêndices. Os capítulos consultam esta chave onde o texto muda entre versões.
+\newif\ifparcial
+\parcialtrue
+
+\input{config/preambulo}
+\input{config/estilo}
+\input{config/dados}
+\newcommand{\versaodocumento}{Monografia Parcial · Trabalho de Conclusão de Curso}
+\input{config/capa}
+
+\preambulo{Monografia parcial apresentada à Escola Politécnica da Universidade
+de São Paulo como parte dos requisitos da disciplina de Trabalho de Conclusão
+de Curso em Engenharia de Computação.}
+
+\begin{document}
+
+\selectlanguage{brazil}
+\frenchspacing
+
+% --- Elementos pré-textuais ---
+\imprimircapa
+\imprimirfolhaderosto*
+
+\input{pre-textuais/resumo}
+\input{pre-textuais/abstract}
+\input{pre-textuais/listas}
+
+% --- Elementos textuais ---
+\textual
+
+\input{capitulos/01-introducao}
+\input{capitulos/02-fundamentacao}
+\input{capitulos/03-trabalhos-relacionados}
+\input{capitulos/04-proposta}
+\input{capitulos/05-metodologia}
+\input{capitulos/06-plano-de-trabalho}
+
+% --- Elementos pós-textuais ---
+\postextual
+
+\bibliography{referencias}
+
+\end{document}
