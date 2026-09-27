@@ -46,6 +46,8 @@ Consequences for how you should read and write here:
 | Raw sources | `Clippings/*.md`, `raw/*.pdf` | Human (Obsidian Web Clipper) or PDF extraction | **Immutable.** Never edit or reformat. Read-only source of truth. |
 | Wiki | `wiki/**` | LLM only | Created, updated, cross-referenced on every ingest. |
 | Navigation | `index.md`, `log.md` | LLM only | Updated on every ingest, query-that-was-filed, and lint pass. |
+| Implementation | `project-src/**` | LLM + human together | The tool itself. Code, contracts, tests. |
+| Implementation diary | `wiki/diario/**` | LLM only | **Portuguese.** One page per Roadmap week. Mandatory — see below. |
 | Schema | `CLAUDE.md` (this file) | LLM + human together | Co-evolves as conventions change. |
 
 **Tool artifacts and benchmarks live outside the vault**, one directory up: `../racebench`,
@@ -165,6 +167,57 @@ Run when asked ("lint the wiki"). Check for:
 - gaps a targeted web search or a new paper would close.
 
 Report findings as a list with suggested fixes; apply them only when told to.
+
+## The implementation diary — `wiki/diario/`
+
+**This folder is the one exception to the English rule: it is written in Brazilian Portuguese.**
+Everything else in the vault stays in English, because the vocabulary comes from the papers.
+
+`wiki/diario/` holds one page per week of the [[Roadmap]], recording in detail what was actually
+implemented in `project-src/` that week. It is the bridge between the English research wiki and
+a thesis text that will be written in Portuguese, and it is what makes the implementation
+legible to a reader who has not read the code.
+
+### When to write it
+
+**Writing or updating the week's page is part of finishing that week, not an optional extra** —
+in the same way `index.md` and `log.md` are updated on every ingest. Concretely:
+
+1. At the end of each week of implementation work, create `wiki/diario/Semana N — <título>.md`.
+2. **Whenever that week's code changes in a later iteration, revise the page.** A diary page that
+   describes code that no longer exists is worse than no page: it teaches the wrong thing to
+   whoever reads it while writing the thesis.
+3. If a decision recorded there is reversed, say so on the page rather than editing the history
+   away. The reasoning that was abandoned is often the most useful part.
+
+### What a page must contain
+
+- **What the week was supposed to deliver**, as a table against the Roadmap's own done-when
+  items, with the actual state of each.
+- **Every technical concept it mentions, explained.** ISR, bitcode, `DILocation`, may-alias,
+  points-to, CFG, back edge, serializability, NDJSON, JSON Schema, recall, Inspection Ratio —
+  assume the reader knows C and general programming, and nothing about this project or this
+  literature. A term used without being defined somewhere is a defect in the page.
+- **Code snippets that carry the explanation**, quoted verbatim from `project-src/` with the file
+  path above them. Choose the fragment that makes the idea click — the guard that encodes a
+  soundness rule, the regex that absorbs a malformed grammar — not a whole file. If the code has
+  changed, requote it.
+- **The findings and the decisions**, including the ones that turned out wrong. The recall gate
+  catching a bug in the implementation is more instructive than the gate passing.
+- **How to reproduce it**, as the actual commands.
+- **The state at the end of the week**, and what is still missing.
+
+### Conventions
+
+- Frontmatter as usual, with `type: project` and `tags: [wiki, project, diario, pt-br]`.
+- Filenames in Portuguese Title Case: `Semana 3 — O Front End do Stage 1.md`.
+- Link to the neighbouring weeks at the top and bottom, so the folder reads as a sequence.
+- Link into the English wiki freely — `[[Pipeline Design]]`, `[[Soundness Assumptions]]` — and
+  keep the English technical terms where the literature uses them, glossing them in Portuguese on
+  first use rather than translating them away.
+- Where the Roadmap groups weeks into one block (W3–W4 is one block, "Stage 1"), still write one
+  page per week, split the material thematically, and **say at the top of both pages that the
+  split is thematic** rather than implying the work happened in two phases.
 
 ## Log format
 

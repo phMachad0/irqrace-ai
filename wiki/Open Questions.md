@@ -2,7 +2,7 @@
 type: synthesis
 tags: [wiki, open-questions]
 sources: ["[[SDRacer (paper)]]", "[[IntRace (paper)]]", "[[NIChecker (paper)]]", "[[BMC4AV (paper)]]"]
-updated: 2026-09-26
+updated: 2026-09-27
 status: draft
 ---
 
@@ -30,10 +30,43 @@ with the date.
 
 ### Still open — static side
 
-- [ ] **Fix the counting unit, and state it.** The corpus mixes per-variable counts (the shipped
-  `violation.info`, 45 entries) with per-access-triple-instance counts (BMC4AV's tables, 94) and nobody defines which they use ([[Contradictions]] #1). Every recall number this project ever
-  reports divides by this choice. Recommended: **per-triple-instance**, declared explicitly.
-  Blocks: the evaluation harness, i.e. everything measurable.
+- [x] ~~**Fix the counting unit, and state it.**~~ Settled 2026-09-10: **per-triple-instance**,
+  giving **48 bug points and 38 traps** over the 31 simple cases. The alternatives were measured
+  on the same suite — per-(case, variable) gives 33/29 and per-case gives 31/31 — and both hide
+  structure the finer unit keeps, such as `svp_simple_017_001` carrying four distinct bug points
+  on one variable. It is also the unit [[BMC4AV (paper)]]'s tables count, so cross-paper
+  comparison survives. Recorded in every run manifest;
+  `project-src/docs/evaluation-protocol.md`.
+- [x] ~~**Define the match rule.**~~ Settled 2026-09-10: a candidate matches an annotation when
+  it is in the **same subject**, concerns the **same shared location**, and its **ordered access
+  lines equal the annotation's corrected lines**. Access kinds are reported but not required —
+  the ordered line triple already separates all 86 annotations with zero collisions and no
+  bug/trap clash, so kinds add failure modes and no discrimination, and 20 annotated accesses
+  name a line that both reads and writes. Variable *names* are not required either, since 12
+  annotations name the location through an alias (`*p`, `*ptr_var`, `global_array[1]`) that the
+  may-alias analysis is supposed to resolve. Per [[Pair-Triple Unification]], the recall gate is
+  measured on triples only; pair candidates get a separate *pair coverage* number.
+  `project-src/docs/evaluation-protocol.md`.
+- [x] ~~**Validate the ground-truth parser by hand.**~~ Done 2026-09-10. The tolerant parser
+  reproduces **48 bug points and 38 traps** and agrees with a hand count of the five most
+  adversarial cases — 001 (juxtaposed accesses, full-width colon), 016 (missing bracket, wrong
+  access kind, no trap section), 019 (line drift), 022 (headerless bug list), 031 (reversed
+  fields) — at 12 bugs and 9 traps. `project-src/docs/groundtruth-handcount.md`.
+  **Caveat, and the reason this is not fully closed in spirit**: the same person wrote the parser
+  and the hand count, so it establishes agreement, not correctness. Pedro spot-checks 019 and
+  022, the two where the count rests on a judgement rather than transcription.
+  Track B's tolerant reader (`project-src/src/irqrace/llm/annotations.py`, built for the
+  fixtures) independently reproduces 48 and 38 as well (2026-09-26); two readers now exist and
+  should be reconciled into one rather than drift apart.
+- [ ] **Are `svp_simple_019_001`'s bug/trap labels stale?** Its annotations predate an edit that
+  inserted `{`, `enable_isr(1);` and `}` into two guarded blocks in `main` — which is how the
+  line drift was reconstructed ([[Racebench]]). That edit is *semantically significant*: the
+  `enable_isr(1)` is what makes the reads at lines 51 and 59 preemptible despite the
+  `disable_isr(1)` above them. If the annotations were written before it, the labels may be as
+  stale as the line numbers, and the errata deliberately corrects only the latter. One bug point
+  and four traps — about 1% of the ground truth — turn on this. Cannot be settled from the
+  repository alone; would need the suite's history or its authors. Blocks: nothing, but it is a
+  stated threat to validity.
 - [x] **Resolve the harmfulness criterion against Racebench's dead readers.** *(opened
   2026-09-26, from the first live run.)* The criterion adopted from Bai et al. via
   [[IntRace (paper)]] asks whether the shared variable feeds a branch or indexes an array.
@@ -50,28 +83,6 @@ with the date.
   `simple` → `+domain` Inspection Ratio gap survives the change, so it was never the
   harmfulness clause — see `log.md`, same date.
 
-- [ ] **Define the match rule between a reported candidate and an annotated bug point.** Exact
-  triple of line numbers? Same variable plus overlapping access set? [[IRIS (paper)]] had the
-  same problem and answered it explicitly — a vulnerability counts as detected if any reported
-  path passes through a patched location. Nothing equivalent exists here, and without it
-  "recall 100%" is not a computable claim. Interacts with [[Pair-Triple Unification]]: pairs
-  must be reconstructed into triples before matching. Blocks: the evaluation harness.
-  **Exact-line matching is now ruled out empirically**: all five annotations in
-  `svp_simple_019_001` carry line numbers from the *unannotated* `2.1` copy of the suite and
-  point at blank lines and `idlerun();` in the file they live in, and `svp_simple_001_001`
-  trap 1 points at a declaration one line above its read ([[Racebench]]). An exact rule loses
-  one bug point and four traps on 019 alone. A window around the nearest access to the named
-  variable absorbs both; the width is the thing left to decide.
-- [x] **Validate the ground-truth parser by hand.** Four incompatible annotation grammars plus
-  typos; a strict parser reads 28 bug points where a tolerant one reads 48, with no error
-  ([[Racebench]], [[Soundness and False Negatives]] §7b). Hand-count at least five cases to
-  certify the parser before trusting any number it produces. Blocks: everything downstream.
-  **Partly answered (2026-09-26).** A tolerant reader built for fixture work independently
-  reproduces 48 and 38 from the files, and the 28-bug-point prediction reproduced exactly
-  before the two fixes it needed (headerless block defaults to bug points; case-insensitive
-  access type). Per-case counts and the pattern distribution are fixed as tests. What remains
-  is Track A's: this reader does not define the counting unit or the match rule, and the
-  canonical parser must be reconciled with it rather than written beside it.
 - [ ] **Decide whether equal-priority flows can preempt each other.** `svp_real_002` and
   `wdt_pci_1` both have same-priority ISR pairs, and no formal model in any of the four papers
   covers the case ([[Asymmetric Preemption]]). The recall-safe default is *yes, either may
@@ -82,12 +93,13 @@ with the date.
   preempt itself? May it fire more than once inside one interval `[A₁, A₂]`? [[SDRacer (tool)]]
   excludes reentrant interrupts and [[NIChecker (tool)]] bounds ISR executions, so the corpus
   does not agree. Affects which triples exist at all. Blocks: candidate derivation.
-- [ ] **Write the soundness assumption list as a page.** [[Soundness and False Negatives]] says
-  the deliverable is "a written list of assumptions — pointer model, call-graph construction for
-  indirect calls, recognized masking primitives, treatment of loops, ISR arrival model, priority
-  semantics — under which no defect is missed". That list does not exist yet, and until it does
-  the central claim of [[Thesis Goal]] cannot be stated precisely, let alone tested. Cheap: it
-  is a writing task, and several of the entries are already decided above.
+- [x] ~~**Write the soundness assumption list as a page.**~~ Done 2026-09-10:
+  [[Soundness Assumptions]]. Nine groups, 27 entries, each giving the assumption, **how it could
+  hide a defect**, and where it is implemented or checked. Four entries are honest gaps —
+  SVF's own soundness (inherited, not proven here), SVF's behaviour on unresolved indirect calls,
+  inter-procedural reachability (not yet built), and `svp_simple_019_001`'s labels. One entry,
+  **E3 ISR re-entrancy**, is deliberately *not* recall-safe and is flagged for revisit before any
+  recall claim is final.
 - [ ] **Settle the external-function model list.** With multi-file input now a stated capability
   ([[Pipeline Design]]), functions with no body in the module go from a rarity to a routine
   occurrence. The sound default — assume any global may be read and written — is correct and
