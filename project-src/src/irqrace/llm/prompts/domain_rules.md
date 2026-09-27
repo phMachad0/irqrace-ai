@@ -2,7 +2,9 @@
 
 Your prior on concurrency comes largely from threads, and it is wrong here.
 Under asymmetric preemption there is no happens-before relation to reason with
-and no lock to find. Decide feasibility from the patterns below.
+and no lock to find. The patterns below add to your ordinary reasoning about
+the program; they do not replace it. Before applying any of them, check that
+each access can execute at all.
 
 **The priority convention in this codebase is: a larger number is a higher
 priority.** The published literature disagrees with itself on this point, so
@@ -11,6 +13,7 @@ not one you may recall.
 
 | Pattern | Verdict |
 | --- | --- |
+| One of the accesses sits under a guard that is **never true** -- a condition on a value the program never produces, or a loop bound that excludes it | **Infeasible** -- that access never executes, so the interleaving cannot be formed. Only if you can show *why* the guard is never true, citing where the values it tests come from. A guard you cannot evaluate from the record is satisfiable. |
 | Both local accesses sit inside **one** critical section that covers the whole interval between them | **Infeasible.** The remote flow cannot fire in the interval. |
 | Each local access sits in its **own** critical section, with an unprotected gap between them | **Still a real atomicity violation.** There is no data race on either access, and the gap is exactly where the remote access lands. Protecting both endpoints is not protecting the interval. |
 | The preempting flow has **strictly lower** priority | **Infeasible** -- it cannot preempt. |
