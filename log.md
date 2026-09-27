@@ -398,3 +398,53 @@ Three findings, each recorded in the wiki or in `project-src/docs/`:
    is therefore the only subject that can exercise stage 1's indirect-call handling.
 
 142 tests pass, including an end-to-end build-and-probe over all 31 subjects.
+
+## [2026-09-10] build | W2 Track A — ground truth certified, counting unit and match rule fixed
+
+Vault renamed `research-ai-brain` → `irqrace`; older entries use the former name. Everything in
+[[Roadmap]] W2 for Track A is done, and both of the open blockers it depended on are closed.
+
+**Tolerant annotation parser**, certified. It reproduces **48 bug points and 38 traps** and
+agrees with a hand count of the five most adversarial cases (12 bugs, 9 traps). It accepts all
+four access grammars and, more usefully, **records every deviation it tolerated** — 15 grammar
+deviations, a headerless bug list, a nonstandard trap header — so the parse is auditable rather
+than merely permissive. One new typo for [[Racebench]]'s list: `svp_simple_013_001` writes its
+middle access type in lowercase, `<w#66>`.
+
+**Two findings about the annotations themselves**, both from cross-checking every annotated
+access against the line it names:
+
+1. **Eight access kinds contradict the source**, across five cases, where the wiki had recorded
+   one. `svp_simple_002_001` trap 3 calls two writes reads — and the same file's own bug point
+   annotates those very lines as writes. `svp_simple_022_001` does it three times.
+2. **All of `svp_simple_019_001`'s annotated ISR writes point at the wrong line**, three of them
+   at `idlerun();` and two at blank lines. The drift is reconstructible: every `isr_1` write is
+   understated by exactly six lines and reads in `main` drift by 0, 2, 3 and 5, which is what
+   inserting `{`, `enable_isr(1);` and `}` into two guarded blocks produces. **An exact-line
+   match against the shipped annotations scores zero on this case's bug point**, because line 65
+   contains no access to anything.
+
+**Decisions taken** (Pedro, 2026-09-10), both recorded in every run manifest:
+
+- **Counting unit: per-triple-instance**, 48/38. Measured alternatives were per-(case, variable)
+  at 33/29 and per-case at 31/31.
+- **Match rule: same subject, same shared location, same ordered access lines.** Access kinds
+  and variable *names* are reported but not required. Justified by measurement rather than
+  taste: the ordered line triple separates all 86 annotations with zero collisions and no
+  bug/trap clash, so kinds buy no discrimination — while 20 annotated accesses name a line that
+  both reads and writes, and 12 name the location through an alias.
+- **Ground truth is matched after a curated errata**, `project-src/bench/racebench-errata.yaml`:
+  12 corrections, each quoting the annotation as written and carrying its evidence, eleven
+  `certain` and one `likely`. **No correction changes a count**; the shape distribution does
+  move, and both readings are now reported side by side in [[Racebench]].
+
+**[[Soundness Assumptions]]** written — the list [[Thesis Goal]]'s central claim is relative to.
+27 entries in nine groups, each with how it could hide a defect and where it is checked. Four
+are honest gaps, and **E3, ISR re-entrancy, is deliberately not recall-safe** and flagged for
+revisit before any recall claim is final.
+
+New open question raised rather than resolved: `svp_simple_019_001`'s bug/trap **labels** may be
+as stale as its line numbers, since the six inserted lines are semantically significant. The
+errata corrects only the line numbers.
+
+190 tests pass. The evaluation harness runs end to end against the two hand-built fixtures.

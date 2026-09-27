@@ -1,7 +1,7 @@
 ---
 type: index
 tags: [wiki, index]
-updated: 2026-08-31
+updated: 2026-09-10
 ---
 
 # Index
@@ -11,7 +11,7 @@ Catalog of the wiki. Start at [[Overview]]; read [[Thesis Goal]] for what this v
 the LLM per `CLAUDE.md` — update on every ingest.
 
 **Counts**: 12 sources (5 concurrency, 7 LLM) · 4 tool pages + 7 baseline/infrastructure ·
-20 concepts · 4 benchmarks · 5 comparisons · 5 project pages.
+20 concepts · 4 benchmarks · 5 comparisons · 6 project pages.
 
 ## Navigation
 
@@ -22,6 +22,7 @@ the LLM per `CLAUDE.md` — update on every ingest.
 | [[Pipeline Design]] | the static half: each borrowed technique, and fix validation |
 | [[LLM Stage Design]] | the LLM half: architecture, context record, prompt design, evaluation plan |
 | [[Dashboard Design]] | the UI: Streamlit over a headless core, 45 numbered requirements, run store layout |
+| [[Soundness Assumptions]] | **the list the no-false-negatives claim is relative to** — 27 entries, each with how it could hide a defect |
 | [[Roadmap]] | 10-week plan to 6 Nov: static / LLM / UI tracks, four contracts, five milestones, de-scoping ladder |
 | [[Synthesis]] | what the four sources collectively say; working thesis statement |
 | [[Open Questions]] | sources to acquire, empirical questions a TCC could answer |
@@ -39,6 +40,9 @@ The tool itself, outside the wiki layer. Started 2026-08-31 (W1 of [[Roadmap]]).
 | `project-src/bench/configs/` | one generated C1 file per [[Racebench]] simple case (31) |
 | `project-src/docs/masking-semantics.md` | why per-flow interval masking drops a real bug point |
 | `project-src/docs/toolchain-notes.md` | SVF/LLVM pairing, the `optnone` trap, the K&R-prototype call-graph trap |
+| `project-src/docs/evaluation-protocol.md` | counting unit, match rule, what is reported and what is gated |
+| `project-src/docs/groundtruth-handcount.md` | the five hand-counted cases certifying the annotation parser |
+| `project-src/bench/racebench-errata.yaml` | 12 curated corrections to the Racebench annotations, with evidence |
 
 ## Sources (`wiki/sources/`)
 

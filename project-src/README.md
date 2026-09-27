@@ -16,6 +16,21 @@ The design lives in the wiki one directory up:
 LLM may not.** Recall is the headline metric and it must be 100%; precision is
 traded away deliberately.
 
+## Status — end of W2 (10 Sep 2026)
+
+| W2 item | State |
+| --- | --- |
+| Tolerant annotation parser for `2.1_remarks` | done — reproduces **48 / 38**, records every deviation it tolerates |
+| Hand-count five cases to certify it | done — 12 bugs / 9 traps, agrees; `docs/groundtruth-handcount.md` |
+| **Counting unit fixed and documented** | **per-triple-instance**, 48 / 38 |
+| **Match rule fixed and documented** | same subject, same location, same ordered lines; `docs/evaluation-protocol.md` |
+| Soundness assumption list exists | done — `../wiki/Soundness Assumptions.md`, 27 entries |
+
+Also produced, because the certification turned it up: a curated errata of 12 corrections to the
+Racebench annotations (`bench/racebench-errata.yaml`), each with its evidence. Matching against
+the shipped text scores zero on `svp_simple_019_001`'s bug point, whose ISR write is annotated
+six lines above where it is.
+
 ## Status — end of W1 (31 Aug 2026)
 
 | W1 item | State |
@@ -39,6 +54,7 @@ contracts/        C1-C4: the frozen schemas, plus one worked example of each
 src/irqrace/      the Python half: contracts, config, build, probe, run store
 analysis/         the C++ half: SVF-based analysis binaries
 bench/configs/    one generated C1 file per Racebench simple case (31)
+bench/racebench-errata.yaml   12 curated corrections to the annotations, with evidence
 scripts/          toolchain setup
 docs/             notes that are about the implementation rather than the field
 tests/            unit tests, plus an end-to-end pass over all 31 subjects

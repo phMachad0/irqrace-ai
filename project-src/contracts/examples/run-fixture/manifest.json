@@ -22,8 +22,8 @@
     "externals_default": "may-read-write-reachable",
     "indirect_calls": "signature-matched-address-taken",
     "allow_same_statement_a1_a2": true,
-    "counting_unit": null,
-    "match_rule": null
+    "counting_unit": "per-triple-instance",
+    "match_rule": "same-subject-same-location-same-ordered-lines"
   },
   "solver": {
     "enabled": true,

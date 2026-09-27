@@ -23,6 +23,18 @@ from .toolchain import detect
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_SUITE = Path("/home/pedro/Documentos/tcc/racebench/2.1_remarks")
 BENCH_CONFIGS = REPO_ROOT / "bench" / "configs"
+ERRATA = REPO_ROOT / "bench" / "racebench-errata.yaml"
+
+#: The five adversarial cases hand-counted to certify the parser
+#: (docs/groundtruth-handcount.md). Kept here so `irqrace groundtruth certify`
+#: checks the parser against the written count rather than against itself.
+HAND_COUNT = {
+    "svp_simple_001_001": (1, 2),
+    "svp_simple_016_001": (3, 0),
+    "svp_simple_019_001": (1, 4),
+    "svp_simple_022_001": (4, 3),
+    "svp_simple_031_001": (3, 0),
+}
 
 
 def _err(msg: str) -> int:
@@ -272,6 +284,99 @@ def cmd_bench_build_all(args: argparse.Namespace) -> int:
     return 1 if failed else 0
 
 
+# -- ground truth ---------------------------------------------------------
+
+
+def cmd_groundtruth_parse(args: argparse.Namespace) -> int:
+    from .groundtruth import apply_errata, load_errata, parse_suite
+
+    suite = parse_suite(Path(args.suite))
+    before = suite.shape_distribution()
+    applied: list[str] = []
+    if not args.raw:
+        applied = apply_errata(suite, load_errata(Path(args.errata)))
+    after = suite.shape_distribution()
+
+    if args.json:
+        print(json.dumps({
+            "bug_points": len(suite.bugs), "traps": len(suite.traps),
+            "cases": len(suite.cases), "errata_applied": len(applied),
+            "shapes": after,
+            "anomalies": [vars(a) for a in suite.anomalies],
+        }, indent=2, ensure_ascii=False))
+        return 0
+
+    label = "as written" if args.raw else "with errata applied"
+    print(f"{len(suite.cases)} cases, {label}: "
+          f"{len(suite.bugs)} bug points, {len(suite.traps)} traps")
+    print()
+    print("shape   bug trap")
+    for k in sorted(set(before) | set(after)):
+        a = after.get(k, {"bug": 0, "trap": 0})
+        b = before.get(k, {"bug": 0, "trap": 0})
+        shift = "" if a == b else f"   (as written: {b['bug']}/{b['trap']})"
+        print(f"  {k:<5} {a['bug']:>3} {a['trap']:>4}{shift}")
+
+    if applied and args.verbose:
+        print()
+        print(f"{len(applied)} correction(s) applied:")
+        for line in applied:
+            print(f"  {line}")
+
+    counts: dict[str, int] = {}
+    for x in suite.anomalies:
+        counts[x.code] = counts.get(x.code, 0) + 1
+    if counts:
+        print()
+        print("tolerated deviations:")
+        for code, n in sorted(counts.items(), key=lambda kv: -kv[1]):
+            print(f"  {n:>3}  {code}")
+    if args.verbose:
+        for x in suite.anomalies:
+            print(f"  {x.case}:{x.line} [{x.code}] {x.detail}")
+    return 0
+
+
+def cmd_groundtruth_certify(args: argparse.Namespace) -> int:
+    """Check the parser against the written hand count, not against itself."""
+    from .groundtruth import parse_suite
+
+    suite = parse_suite(Path(args.suite))
+    bad = 0
+    for case, (bugs, traps) in sorted(HAND_COUNT.items()):
+        got = suite.by_case(case)
+        ok = (len(got.bugs), len(got.traps)) == (bugs, traps)
+        bad += not ok
+        mark = "ok  " if ok else "FAIL"
+        print(f"[{mark}] {case}: hand {bugs} bug / {traps} trap, "
+              f"parser {len(got.bugs)} / {len(got.traps)}")
+    hb = sum(v[0] for v in HAND_COUNT.values())
+    ht = sum(v[1] for v in HAND_COUNT.values())
+    print(f"       hand-counted total: {hb} bug, {ht} trap")
+    print(f"       whole suite: {len(suite.bugs)} bug, {len(suite.traps)} trap "
+          f"(expected 48 / 38)")
+    if (len(suite.bugs), len(suite.traps)) != (48, 38):
+        print("       ! suite total does not match the certified figures")
+        bad += 1
+    return 1 if bad else 0
+
+
+def cmd_groundtruth_errata(args: argparse.Namespace) -> int:
+    from .groundtruth import apply_errata, load_errata, parse_suite
+
+    corrections = load_errata(Path(args.errata))
+    suite = parse_suite(Path(args.suite))
+    report = apply_errata(suite, corrections)
+    for corr, line in zip(corrections, report):
+        print(f"[{corr.confidence:<7}] {line}")
+        if args.verbose:
+            print(f"            as written: {corr.as_written}")
+            print(f"            {corr.evidence}")
+    print(f"{len(corrections)} correction(s); "
+          f"totals unchanged at {len(suite.bugs)} bug / {len(suite.traps)} trap")
+    return 0
+
+
 # -- parser ---------------------------------------------------------------
 
 
@@ -316,6 +421,22 @@ def build_parser() -> argparse.ArgumentParser:
     rc.add_argument("run", nargs="*")
     rc.add_argument("--run-root", default="runs")
     rc.set_defaults(func=cmd_runstore_check)
+
+    gtp = sub.add_parser("groundtruth", help="Racebench's annotated ground truth")
+    gts = gtp.add_subparsers(dest="sub", required=True)
+    for name, fn, helptext in (
+        ("parse", cmd_groundtruth_parse, "parse the annotations and report what was tolerated"),
+        ("certify", cmd_groundtruth_certify, "check the parser against the hand count"),
+        ("errata", cmd_groundtruth_errata, "list the curated corrections and their evidence"),
+    ):
+        sp = gts.add_parser(name, help=helptext)
+        sp.add_argument("--suite", default=str(DEFAULT_SUITE))
+        sp.add_argument("--errata", default=str(ERRATA))
+        sp.add_argument("--raw", action="store_true",
+                        help="do not apply the errata; report the annotations as shipped")
+        sp.add_argument("--verbose", "-v", action="store_true")
+        sp.add_argument("--json", action="store_true")
+        sp.set_defaults(func=fn)
 
     bn = sub.add_parser("bench", help="Racebench")
     bs = bn.add_subparsers(dest="sub", required=True)
