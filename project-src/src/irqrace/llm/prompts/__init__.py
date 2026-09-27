@@ -88,7 +88,7 @@ class PromptConfig:
 
         Nothing candidate-specific goes in here. That is what makes it cacheable
         across a whole 31-subject sweep, and the saving is the reason the
-        ablation is affordable at five rows.
+        ablation is affordable at every row.
 
         **The baseline row does not reach the cache minimum.** Prompt caching
         needs a prefix of roughly 1024 tokens; ``simple`` is about 565 and the
@@ -116,26 +116,37 @@ def _sha(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
-#: The five rows, cumulative, in the order they are reported. ``ABLATION[-1]``
+#: The active rows, cumulative, in the order they are reported. ``ABLATION[-1]``
 #: is the full pipeline and is what the deployed stage runs.
+#:
+#: **Progressive prompting (D#2) is deferred** until the static pipeline exists
+#: (2026-09-27, Lucas). Until Track A's resolver lands in W8 the only C4
+#: backend is :class:`~irqrace.llm.resolver.RecordBackedResolver`, which can
+#: only re-serve the record the model already has or answer ``not_found`` -- so
+#: a request round costs a full re-send of the history and cannot add
+#: information. No active row opens the request loop; the loop itself and its
+#: tests stay, and :data:`DEFERRED` keeps the row's definition for when it
+#: returns. The row names below keep their meaning *relative to the row before*,
+#: and the config hash changes with the assets, so no cached answer from the
+#: progressive versions can be served for these.
 ABLATION: tuple[PromptConfig, ...] = (
     PromptConfig(name="simple"),
     PromptConfig(name="+domain", domain_rules=True),
-    PromptConfig(name="+progressive", domain_rules=True, progressive=True),
-    PromptConfig(
-        name="+decomposition",
-        domain_rules=True,
-        progressive=True,
-        decomposition=True,
-    ),
+    PromptConfig(name="+decomposition", domain_rules=True, decomposition=True),
     PromptConfig(
         name="+self-validation",
         domain_rules=True,
-        progressive=True,
         decomposition=True,
         self_validation=True,
     ),
 )
+
+#: Rows defined but not run. Selecting one by name is an error that says why.
+DEFERRED: dict[str, PromptConfig] = {
+    "+progressive": PromptConfig(
+        name="+progressive", domain_rules=True, progressive=True
+    ),
+}
 
 FULL = ABLATION[-1]
 

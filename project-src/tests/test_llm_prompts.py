@@ -1,17 +1,27 @@
 """The ablation must differ in exactly the stated way, and nowhere else."""
 
 from irqrace.llm import prompts
-from irqrace.llm.prompts import ABLATION, BY_NAME, FULL, PromptConfig
+from irqrace.llm.prompts import ABLATION, BY_NAME, DEFERRED, FULL, PromptConfig
 
 
-def test_five_cumulative_rows():
+def test_four_active_cumulative_rows():
     assert [c.name for c in ABLATION] == [
         "simple",
         "+domain",
-        "+progressive",
         "+decomposition",
         "+self-validation",
     ]
+
+
+def test_progressive_is_deferred_not_deleted():
+    """No active row opens the request loop, and no active row tells the model
+    it may ask -- an instruction it cannot act on would change the prompt
+    without changing the pipeline."""
+    for config in ABLATION:
+        assert not config.progressive, config.name
+        assert "context_requests.md" not in config.assets(), config.name
+    assert DEFERRED["+progressive"].progressive
+    assert "+progressive" not in BY_NAME
 
 
 def test_each_row_is_a_superset_of_the_one_before():

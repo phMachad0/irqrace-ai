@@ -172,7 +172,9 @@ def test_a_request_block_is_answered_before_the_verdict_is_asked_for():
                "Now I can answer."],
         answers=[_feas(), _harm()],
     )
-    client = _client(BY_NAME["+self-validation"], fake)
+    config = PromptConfig(name="progressive", domain_rules=True, progressive=True,
+                          decomposition=True, self_validation=True)
+    client = _client(config, fake)
     client.triage(RECORD)
     assert any(e["kind"] == "isr_body" for e in client.request_log)
     assert any(
@@ -220,13 +222,13 @@ def test_a_refusal_propagates_instead_of_becoming_a_verdict():
 
 
 def test_cost_is_accounted_per_candidate():
-    """`+decomposition` is progressive, so each of the two conversations costs
-    a free-form turn plus a structured one. Four requests is the row's price."""
+    """`+decomposition` asks two structured questions and, with progressive
+    prompting deferred, nothing else. Two requests is the row's price."""
     fake = FakeBackend(answers=[_feas(), _harm()])
     client = _client(BY_NAME["+decomposition"], fake)
     client.triage(RECORD)
     assert client.spend.candidates == 1
-    assert client.spend.requests == 4
+    assert client.spend.requests == 2
     assert client.spend.cost_per_candidate > 0
     assert "fake:v1" in client.spend.report()
 

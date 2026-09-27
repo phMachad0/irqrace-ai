@@ -263,3 +263,63 @@ def test_trap_rejection_over_no_traps_is_not_reported_as_perfect():
     fx = [_fixture("a", REAL)]
     s = score(fx, [_triage("a", Feasibility.feasible, Harmfulness.harmful)])
     assert "n/a" in s.report()
+
+
+# -- the Racebench view: harmfulness asked, not scored --------------------
+
+
+def test_without_harm_a_benign_bug_point_ranks_as_found():
+    """svp_simple_005's shape: feasible, reader is a dead local, model says
+    benign. Scored with harm it sinks to the bottom; without, it is found."""
+    fixtures = [_fixture("bug", "bug_point"), _fixture("t1", "trap"),
+                _fixture("t2", "trap")]
+    triages = [
+        _triage("bug", Feasibility.feasible, Harmfulness.benign),
+        _triage("t1", Feasibility.feasible, Harmfulness.harmful),
+        _triage("t2", Feasibility.uncertain),
+    ]
+    with_harm = score(fixtures, triages)
+    without = score(fixtures, triages, harm_scored=False)
+    assert with_harm.inspection_ratio == 1.0
+    assert without.inspection_ratio < with_harm.inspection_ratio
+    assert without.harm_scored is False
+
+
+def test_without_harm_only_infeasible_rejects_a_trap():
+    """A trap called benign no longer counts as rejected: precision on Racebench
+    rests on feasibility alone, which is the cost option C accepts."""
+    fixtures = [_fixture("bug", "bug_point"), _fixture("trap", "trap")]
+    triages = [
+        _triage("bug", Feasibility.feasible, Harmfulness.harmful),
+        _triage("trap", Feasibility.feasible, Harmfulness.benign),
+    ]
+    assert score(fixtures, triages).trap_rejection == 1.0
+    assert score(fixtures, triages, harm_scored=False).trap_rejection == 0.0
+
+
+def test_the_view_never_changes_the_reported_bucket():
+    """A measurement view, not a second decision policy."""
+    fixtures = [_fixture("bug", "bug_point")]
+    t = _triage("bug", Feasibility.feasible, Harmfulness.benign)
+    s = score(fixtures, [t], harm_scored=False)
+    assert t.bucket is Bucket.likely_benign
+    assert s.bucket_counts == {"likely_benign": 1}
+    assert "not scored" in s.report()
+
+
+def test_without_harm_the_recall_gate_still_catches_infeasible():
+    fixtures = [_fixture("bug", "bug_point")]
+    s = score(fixtures, [_triage("bug", Feasibility.infeasible)], harm_scored=False)
+    assert not s.gate_passed
+    assert s.missed == ("bug",)
+
+
+def test_inspection_ratio_ties_are_broken_pessimistically():
+    """Equal bucket and confidence: the bug point is read last. The figure must
+    not depend on how candidate ids sort -- ids are hashes."""
+    fixtures = [_fixture("a_bug", "bug_point"), _fixture("z_trap", "trap")]
+    triages = [
+        _triage("a_bug", Feasibility.feasible, Harmfulness.harmful, conf=0.9),
+        _triage("z_trap", Feasibility.feasible, Harmfulness.harmful, conf=0.9),
+    ]
+    assert inspection_ratio(fixtures, triages) == 1.0

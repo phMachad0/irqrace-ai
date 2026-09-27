@@ -32,6 +32,7 @@ import json
 import sys
 from pathlib import Path
 
+#: ``+progressive`` stays so files that measured it still render; it is deferred.
 ROW_ORDER = ["simple", "+domain", "+progressive", "+decomposition", "+self-validation"]
 
 
@@ -110,6 +111,18 @@ def render(by_backend: dict[str, dict[str, dict]]) -> str:
         }
         if misses:
             lines.append(f"- **recall gate broken**: {misses}")
+        # Files written before 2026-09-27 have no flag and scored harm.
+        views = {r.get("harm_scored", True) for r in results.values()}
+        if views == {False}:
+            lines.append(
+                "- harmfulness asked and reported, **not scored**: Racebench "
+                "annotates program facts, so a feasible candidate counts as found"
+            )
+        elif len(views) > 1:
+            lines.append(
+                "- ⚠ **rows scored under different views** (harmfulness scored in "
+                "some, not in others) — not comparable; re-score with one view"
+            )
         benign = {
             name: r["bug_points_bucketed_benign"]
             for name, r in results.items()
@@ -117,8 +130,7 @@ def render(by_backend: dict[str, dict[str, dict]]) -> str:
         }
         if benign:
             lines.append(
-                "- bug points bucketed `likely_benign` (passes the gate, sinks "
-                f"the Inspection Ratio): {benign}"
+                f"- bug points reported `likely_benign`: {benign}"
             )
         excluded = {
             name: len(r["excluded"]) for name, r in results.items() if r.get("excluded")

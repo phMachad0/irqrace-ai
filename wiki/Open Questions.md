@@ -34,7 +34,7 @@ with the date.
   `violation.info`, 45 entries) with per-access-triple-instance counts (BMC4AV's tables, 94) and nobody defines which they use ([[Contradictions]] #1). Every recall number this project ever
   reports divides by this choice. Recommended: **per-triple-instance**, declared explicitly.
   Blocks: the evaluation harness, i.e. everything measurable.
-- [ ] **Resolve the harmfulness criterion against Racebench's dead readers.** *(opened
+- [x] **Resolve the harmfulness criterion against Racebench's dead readers.** *(opened
   2026-09-26, from the first live run.)* The criterion adopted from Bai et al. via
   [[IntRace (paper)]] asks whether the shared variable feeds a branch or indexes an array.
   Racebench's simple cases read shared variables into locals that are never used again, in at
@@ -44,6 +44,11 @@ with the date.
   live; restate the criterion counterfactually; or drop harmfulness on this benchmark and let
   trap rejection carry the precision argument. Blocks: the interpretation of every harmfulness
   number on Racebench, and the wording of the recall gate ([[LLM Stage Design]]).
+  **Decided 2026-09-27 (Lucas): option C.** On Racebench the harmfulness answer is asked,
+  recorded and reported but not scored; a feasible candidate counts as found. Harmfulness is
+  judged on the [[Real-World Program Benchmark]] in W9. Consequence found on re-scoring: the
+  `simple` → `+domain` Inspection Ratio gap survives the change, so it was never the
+  harmfulness clause — see `log.md`, same date.
 
 - [ ] **Define the match rule between a reported candidate and an annotated bug point.** Exact
   triple of line numbers? Same variable plus overlapping access set? [[IRIS (paper)]] had the
