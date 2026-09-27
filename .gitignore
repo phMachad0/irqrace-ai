@@ -25,3 +25,6 @@ runs/
 
 # Claude Code local settings
 .claude/
+
+# Monografia: saída do LaTeX
+monografia/build/

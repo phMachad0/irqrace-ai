@@ -1,0 +1,9 @@
+# latexmk: XeLaTeX (para a fonte Arial) + bibtex (abntex2cite usa bibtex)
+$pdf_mode = 5;
+$xelatex = 'xelatex -interaction=nonstopmode -file-line-error -synctex=1 %O %S';
+$bibtex_use = 2;
+$out_dir = 'build';
+@default_files = ('parcial.tex');
+# Roda o bibtex daqui (onde está referencias.bib), e não de dentro de build/.
+# Com o padrão (fudge ligado), o MiKTeX não achava o .bib.
+$bibtex_fudge = 0;

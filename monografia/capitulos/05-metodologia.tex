@@ -1,0 +1,185 @@
+\chapter{Metodologia de avaliação}
+\label{cap:metodologia}
+
+% wiki: LLM Stage Design (Testing and evaluation), concepts/Precision Metrics,
+% benchmarks/Racebench; project-src/docs/evaluation-protocol.md
+
+Este capítulo define como a ferramenta será avaliada: as perguntas de pesquisa,
+o gabarito contra o qual se mede, as métricas, o protocolo experimental e as
+ameaças à validade.
+
+\section{Perguntas de pesquisa}
+\label{sec:qp}
+
+\begin{description}
+  \item[QP1] A etapa estática encontra todos os defeitos anotados no Racebench,
+    isto é, atinge recall de 100\%?
+  \item[QP2] A triagem por \llm\ reduz o esforço de revisão sem que nenhum
+    defeito real seja classificado como inviável?
+  \item[QP3] Qual a contribuição de cada técnica de \textit{prompt}? Essa pergunta
+    é respondida por uma ablação no formato de \citeonline{llift}.
+  \item[QP4] O \llm\ propõe correções corretas para os defeitos encontrados?
+\end{description}
+
+\section{Benchmarks e gabarito}
+\label{sec:benchmarks}
+
+\subsection{Unidade de contagem}
+
+Toda taxa de recall divide por um número de defeitos, e a literatura usa números
+diferentes para os mesmos programas sem dizer por quê
+(Seção~\ref{sec:rel-comparacao}). Este trabalho adota explicitamente
+uma tripla anotada como um defeito. Medidas sobre os 31 casos simples
+do Racebench, as unidades possíveis dão resultados bem diferentes
+(Tabela~\ref{tab:unidades}).
+
+\begin{table}[htb]
+  \centering
+  \caption{Contagem do gabarito do Racebench conforme a unidade}
+  \label{tab:unidades}
+  \begin{tabular}{@{}lcc@{}}
+    \toprule
+    Unidade & Defeitos & Armadilhas \\
+    \midrule
+    por instância de tripla & 48 & 38 \\
+    por par (caso, variável) & 33 & 29 \\
+    por caso & 31 & 31 \\
+    \bottomrule
+  \end{tabular}
+  \fonte{Elaborada pelos autores a partir das anotações de \citeonline{racebench}.}
+\end{table}
+
+A unidade por instância é a mais fina, e portanto a mais difícil de inflar; é a
+usada pelo BMC4AV, o que preserva a comparação; e as unidades mais grossas
+escondem estrutura: um mesmo caso chega a ter quatro defeitos distintos
+numa só variável.
+
+\subsection{Leitura e correção do gabarito}
+
+As anotações do Racebench usam ao menos quatro gramáticas incompatíveis e contêm
+erros: um leitor estrito encontra apenas 28 defeitos, sem acusar erro. Por isso
+o leitor de gabarito precisa tolerar as variações, e sua contagem é validada
+contra uma contagem manual dos casos mais difíceis antes de qualquer medição.
+
+Doze anotações são corrigidas antes da comparação, por uma errata em que cada
+correção traz sua evidência: seis números de linha (cinco deles num único caso cujas anotações apontam para linhas sem nenhum acesso) e seis tipos de acesso trocados.
+Nenhuma correção altera as contagens. Sem elas, uma comparação exata com o texto
+distribuído daria recall zero para um defeito que a ferramenta encontra na linha
+certa.
+
+\subsection{Regra de casamento}
+
+Um candidato reportado corresponde a uma tripla anotada quando está no
+mesmo programa, trata da mesma posição de memória e tem as mesmas linhas
+ordenadas $(A_1, B, A_2)$ que a anotação corrigida. Três escolhas são
+deliberadas:
+
+\begin{itemize}
+  \item o tipo de acesso não precisa coincidir, porque as linhas já distinguem
+    todas as 86 anotações sem colisão e 20 acessos anotados estão em linhas que
+    leem e escrevem a variável;
+  \item o nome da variável é comparado depois de resolver apelidos, pois 12
+    anotações nomeiam a posição por um ponteiro, um elemento de vetor ou um campo de estrutura;
+  \item o recall é medido apenas sobre triplas; os pares recebem uma medida
+    própria de cobertura, publicada ao lado.
+\end{itemize}
+
+\subsection{Conjunto de triagem}
+
+A etapa com \llm\ é desenvolvida e medida, até a integração com a etapa
+estática, sobre 20 registros de contexto montados à mão a partir do
+Racebench: 10 defeitos anotados e 10 armadilhas, organizados de modo a formar
+seis pares adversariais, isto é, um defeito e uma armadilha que diferem em um
+único detalhe, como o estado de mascaramento. Os pares existem para que o modelo não
+acerte pela aparência do código. Um caso cujas anotações descrevem uma versão
+diferente do programa distribuído foi excluído do conjunto.
+
+\subsection{Suíte de programas reais}
+
+A suíte de 18 programas (Seção~\ref{sec:rel-benchmarks}) é usada na etapa final.
+Seu gabarito registra, por variável, 45 violações verdadeiras e 14 falsas, o
+que também a torna um conjunto de triagem.
+
+\section{Métricas}
+\label{sec:metricas}
+
+\begin{description}
+  \item[Portão de recall] Todos os defeitos anotados precisam chegar ao relatório
+    e nenhum pode ser classificado como provavelmente inviável. Uma falha aqui
+    é um defeito de projeto, não um ajuste.
+  \item[Rejeição de armadilhas] Fração das armadilhas classificadas nos grupos
+    baixos. É a medida de precisão da triagem e, ao contrário da precisão, não
+    melhora descartando candidatos.
+  \item[\textit{Inspection Ratio}] Fração da lista ordenada que um revisor
+    precisa ler até encontrar todos os defeitos \cite{reducing-fp}. Empates de
+    grupo e confiança são resolvidos pelo pior caso, colocando o defeito real por
+    último.
+  \item[Consistência] Concordância entre execuções repetidas do mesmo candidato.
+    \citeonline{llift} mostram que a decomposição e a autovalidação a melhoram
+    independentemente da acurácia.
+  \item[Taxas de reparo] Taxa sintática (um analisador sintático aceita a correção) e taxa
+    lógica (a correção equivale a uma escrita à mão), como em
+    \citeonline{skipanalyzer}, seguidas da re-verificação.
+\end{description}
+
+No Racebench, apenas a viabilidade entra nessas métricas. O gabarito anota
+fatos do programa (a intercalação existe), e muitos de seus defeitos leem
+a variável compartilhada para uma variável local que nunca é usada. Um modelo
+que classifica esses casos como benignos está raciocinando corretamente sobre o
+código, e pontuar essa resposta contra o gabarito puniria o acerto. A pergunta
+de nocividade continua sendo feita e registrada, e é avaliada na suíte de
+programas reais, em que o código tem efeito observável.
+
+\section{Protocolo experimental}
+\label{sec:protocolo}
+
+\subsection{Ablação}
+
+A ablação acrescenta um componente de \textit{prompt} por linha, sempre sobre os
+mesmos candidatos: \textit{prompt} simples; mais regras do domínio; mais pedidos
+progressivos de contexto; mais decomposição da tarefa; mais autovalidação. Como
+os pedidos de contexto só trazem informação nova quando respondidos a partir do
+código real, a linha correspondente é medida depois da integração com o
+resolvedor da etapa estática.
+
+Na ablação do LLift, o \textit{prompt} simples já perdia a maioria dos defeitos,
+e o recall era a variável que se movia. Se, neste domínio, o recall já partir de
+100\%, as variáveis dependentes da ablação passam a ser a rejeição de armadilhas
+e o \textit{Inspection Ratio}.
+
+\subsection{Registro e reprodutibilidade}
+
+Todo número é registrado com o modelo, a data e a configuração de
+\textit{prompt} que o produziram, pois as comparações de modelos da literatura
+envelhecem rapidamente. As respostas do modelo são guardadas em cache,
+indexadas pelo candidato, pela configuração e pelo modelo, de modo que uma
+mesma medição possa ser recalculada sem nova chamada. O custo em
+\textit{tokens} e em tempo é medido por candidato. Uma linha da ablação só é
+considerada medida se cobrir todos os candidatos previstos.
+
+\section{Ameaças à validade}
+\label{sec:ameacas}
+
+\begin{itemize}
+  \item Amostra pequena. Vinte candidatos e uma amostra por candidato
+    tornam diferenças de um ou dois candidatos indistinguíveis de ruído; a
+    medição de consistência com várias amostras é o que permite afirmar uma
+    diferença.
+  \item Ajuste sobre o conjunto de teste. Quando o \textit{prompt} é
+    corrigido depois de observar erros nos mesmos 20 casos, o número seguinte é
+    otimista. Por isso as versões anteriores e posteriores são reportadas lado a
+    lado.
+  \item Gabarito com erros conhecidos. A errata corrige o que pode ser
+    verificado no código; o rótulo de um caso cujas anotações descrevem outra
+    versão do programa não pode ser corrigido sem decidir de novo o gabarito.
+  \item População diferente após a integração. Com a etapa estática
+    completa, o \llm\ recebe apenas o que o solver não decidiu, que são os casos
+    mais difíceis; os números obtidos sobre os 20 registros montados à mão não
+    se transferem automaticamente.
+  \item Benchmarks de arquivo único. Todos os programas avaliados são um
+    único arquivo; a entrada com vários arquivos é uma capacidade da ferramenta
+    exercida fora do gabarito.
+  \item Premissas não conservadoras. A exclusão de reentrância
+    (Seção~\ref{sec:premissas}) é uma perda potencial de recall registrada, não
+    medida.
+\end{itemize}

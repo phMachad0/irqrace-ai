@@ -1,0 +1,309 @@
+\chapter{Fundamentação teórica}
+\label{cap:fundamentacao}
+
+Este capítulo apresenta os conceitos sobre os quais o restante do trabalho se
+apoia. A Seção~\ref{sec:interrupcoes} descreve o modelo de execução de
+programas orientados a interrupções; a Seção~\ref{sec:defeitos}, os defeitos
+que se busca encontrar; a Seção~\ref{sec:tecnicas}, as técnicas de análise
+usadas pela literatura e por este trabalho; a Seção~\ref{sec:soundness}, como
+se mede a qualidade de um detector; e a Seção~\ref{sec:llm}, o que são os
+modelos de linguagem e como são usados na análise de programas.
+
+\section{Programas orientados a interrupções}
+\label{sec:interrupcoes}
+
+% wiki: concepts/Asymmetric Preemption, Interrupt Nesting,
+%       Interrupt Masking and Synchronization
+
+\subsection{Interrupções, ISRs e prioridades}
+
+Um programa orientado a interrupções é formado por um fluxo principal
+(\textit{main}), que executa continuamente, e por um conjunto de rotinas de
+tratamento de interrupção. Formalmente, a literatura o descreve como
+$P = \mathit{Main} \parallel \mathit{ISR}_1 \parallel \dots \parallel
+\mathit{ISR}_n$, com uma função que atribui uma prioridade a cada fluxo
+\cite{bmc4av}. Cada fluxo é uma raiz de execução: tudo o que ele alcança por
+chamadas de função pode ser executado sob sua identidade.
+
+Uma \isr\ pode interromper (\textit{preemptar}) o fluxo principal, e uma \isr\
+de prioridade maior pode interromper outra de prioridade menor. A convenção de
+numeração varia na literatura: \citeonline{sdracer} e \citeonline{intrace}
+formalizam números maiores como prioridades menores, enquanto
+\citeonline{bmc4av} adotam o contrário. O benchmark usado por todos esses
+trabalhos declara explicitamente que número maior significa prioridade
+maior \cite{racebench}, e essa é a convenção adotada aqui.
+
+\subsection{Preempção assimétrica}
+
+A preempção entre interrupções é assimétrica: uma \isr\ interrompe o
+fluxo principal, mas o fluxo principal nunca interrompe uma \isr; uma \isr\ de
+alta prioridade interrompe uma de baixa, e nunca o contrário. Entre
+\textit{threads}, ao contrário, a preempção é simétrica.
+
+\citeonline{sdracer} tiram daí três consequências. Primeiro, uma \isr\ não pode
+bloquear: ela executa até o fim, a menos que outra de prioridade maior a
+interrompa. Segundo, a relação \textit{happens-before}, base da detecção de
+condições de corrida entre \textit{threads}, deixa de ser correta quando uma
+interrupção ocorre durante o cálculo dela. Terceiro, a sincronização não é
+feita com travas (\textit{locks}), mas com mascaramento de interrupções. Por
+isso as técnicas de \textit{threads} não se transferem diretamente, e a
+literatura sobre interrupções recorre a padrões de acesso e a prioridades.
+
+\subsection{Aninhamento}
+
+Uma \isr\ interrompida por outra de prioridade maior, que por sua vez pode ser
+interrompida, forma uma cadeia de aninhamento
+(\textit{nesting}). O aninhamento multiplica as intercalações possíveis e é a
+característica que mais separa as ferramentas: o NIChecker o trata
+nativamente, o IntRace por uma conversão sequencial de dentro para fora, e o
+SDRacer exclui explicitamente interrupções reentrantes
+\cite{nichecker,intrace,sdracer}.
+
+\subsection{Sincronização por mascaramento}
+
+Como não há travas, o programador impede a interrupção de ocorrer:
+mascara a interrupção antes de um trecho crítico e a reabilita depois.
+No benchmark Racebench, isso é feito com \texttt{disable\_isr(n)} e
+\texttt{enable\_isr(n)}, em que \texttt{n = -1} significa todas as
+interrupções \cite{racebench}. Em código real, o mascaramento pode vir de APIs
+padronizadas (como \texttt{disable\_irq} no Linux), de escritas diretas em
+registradores ou de variáveis de controle, e \citeonline{intrace} pedem ao
+usuário um arquivo de configuração que liste esses mecanismos não padronizados.
+
+Dois cuidados decidem se uma análise de mascaramento perde defeitos. O
+primeiro: uma interrupção só pode ser considerada mascarada num ponto se
+estiver mascarada em todos os caminhos que chegam a esse ponto;
+``mascarada em algum caminho'' não basta. O segundo, menos evidente: o
+mascaramento feito por um fluxo pode ser desfeito por outro. No caso
+\texttt{svp\_simple\_001\_001} do Racebench, o fluxo principal mascara a
+interrupção 2 durante todo o intervalo de um defeito anotado; ainda assim o
+defeito é real, porque a interrupção 1 continua habilitada, interrompe esse
+intervalo e reabilita a interrupção 2 por dentro. Uma análise que olhe só para
+o fluxo principal descartaria um defeito real.
+
+\section{Defeitos de concorrência}
+\label{sec:defeitos}
+
+% wiki: concepts/Data Race, Atomicity Violation, Access Interleaving Patterns,
+%       Pair-Triple Unification
+
+\subsection{Data race}
+
+Em programas com interrupções, um \textit{data race} é definido em termos de
+preempção, e não de simultaneidade. \citeonline{intrace} o descrevem como dois
+eventos de fluxos diferentes que acessam o mesmo objeto, sendo ao menos um
+deles uma escrita, e em que o evento que interrompe tem prioridade maior.
+\citeonline{sdracer} acrescentam uma condição de hardware: a interrupção que
+interrompe precisa estar habilitada no instante do primeiro acesso. O defeito
+envolve dois acessos e é uma pergunta sobre um instante: a
+rotina $B$ pode executar exatamente no ponto do acesso $A$?
+
+\subsection{Violação de atomicidade}
+
+Uma violação de atomicidade envolve três acessos à mesma variável: dois
+do fluxo interrompido, $A_1$ e $A_2$, e um acesso $B$ de uma \isr\ que ocorre
+entre eles. O defeito existe quando a execução resultante não equivale a
+nenhuma execução em série dos fluxos (atomicidade como serializabilidade).
+Diferentemente do \textit{data race}, é uma pergunta sobre um
+intervalo: $B$ pode executar em algum ponto de $[A_1, A_2]$?
+
+Das oito combinações de leitura (R) e escrita (W) sobre a tripla, quatro não são
+serializáveis e constituem violações. A Tabela~\ref{tab:padroes} mostra cada
+uma e por que ela quebra a atomicidade.
+
+\begin{table}[htb]
+  \centering
+  \caption{Os quatro padrões de violação de atomicidade}
+  \label{tab:padroes}
+  \begin{tabular}{@{}lL{10cm}@{}}
+    \toprule
+    Padrão $(A_1, B, A_2)$ & Por que quebra a atomicidade \\
+    \midrule
+    $(R,W,R)$ & as duas leituras do mesmo fluxo veem valores diferentes \\
+    $(R,W,W)$ & $A_2$ escreve com base numa leitura que ficou obsoleta \\
+    $(W,R,W)$ & a \isr\ enxerga um valor intermediário que não deveria existir \\
+    $(W,W,R)$ & $A_2$ lê o valor escrito pela \isr, e não o escrito por $A_1$ \\
+    \bottomrule
+  \end{tabular}
+  \fonte{Elaborada pelos autores.}
+\end{table}
+
+As outras quatro combinações, $(R,R,\ast)$, $(W,R,R)$ e $(W,W,W)$, são
+serializáveis e não constituem violação. O padrão $(R,W,W)$ é disputado na
+literatura: \citeonline{bmc4av} o classificam como benigno e o excluem, enquanto
+\citeonline{nichecker} o contam como defeito. Este trabalho o mantém, porque o
+gabarito do Racebench o anota em 10 dos 48 defeitos
+(Seção~\ref{sec:rel-benchmarks}).
+
+\subsection{A relação entre as duas classes}
+
+Toda violação de atomicidade $(A_1, B, A_2)$ se projeta em dois pares
+adjacentes, $(A_1, B)$ e $(B, A_2)$. Nos quatro padrões da
+Tabela~\ref{tab:padroes}, cada um desses pares contém ao menos uma escrita, e
+portanto é um \textit{data race} em potencial. Assim, na etapa de casamento de
+padrões, o conjunto de pares contém o conjunto de triplas. Essa contenção foi
+verificada nos 48 defeitos anotados do Racebench, sem exceção.
+
+A contenção, porém, não sobrevive a um filtro de mascaramento. Considere o
+trecho da Listagem~\ref{lst:secoes}, em que cada acesso do fluxo principal está
+protegido por sua própria seção crítica, mas o intervalo entre elas não está.
+
+\begin{lstlisting}[caption={Violação de atomicidade sem \textit{data race}},label={lst:secoes}]
+void task(void) {
+    disable_isr(1);  a = shared;     enable_isr(1);  /* A1 */
+    /* ... interrupcoes habilitadas aqui ... */
+    disable_isr(1);  shared = a + 1; enable_isr(1);  /* A2 */
+}
+void isr_1(void) { shared = 0; }                     /* B  */
+\end{lstlisting}
+
+Não há \textit{data race}: $B$ não pode ocorrer no instante de $A_1$ nem no de
+$A_2$. Mas $B$ pode ocorrer entre as duas seções críticas, o que é uma violação
+de atomicidade real. Um detector que trabalhasse só com pares, com um filtro de
+mascaramento correto, não reportaria nada aqui. A conclusão, que orienta a
+proposta do Capítulo~\ref{cap:proposta}, é que as duas classes podem
+compartilhar a enumeração de acessos, mas devem ser derivadas e filtradas
+separadamente.
+
+\subsection{Defeito nocivo e defeito benigno}
+
+Nem todo defeito tem consequência. \citeonline{intrace} adotam o critério de
+Bai et al.: um \textit{data race} é nocivo se a variável compartilhada alimenta
+uma condição de desvio (\texttt{if}, \texttt{while}) ou é usada como índice de
+vetor ou ponteiro. Os mesmos autores apontam condições de corrida
+deliberadamente deixadas sem proteção, por razões de tempo real, como uma
+fonte de seus falsos positivos. A nocividade é, portanto, um julgamento sobre a
+intenção do programa, distinto da pergunta sobre se a intercalação é possível.
+
+\section{Técnicas de análise de programas}
+\label{sec:tecnicas}
+
+% wiki: concepts/Symbolic Execution, Bounded Model Checking,
+%       Lazy Sequentialization, Loop Abstraction, Path Feasibility Analysis
+
+\subsection{Análise estática}
+
+A análise estática raciocina sobre o código sem executá-lo. Três estruturas são
+centrais aqui. O grafo de chamadas indica quais funções cada função
+pode chamar e, com isso, tudo o que é alcançável a partir de cada fluxo. O
+grafo de fluxo de controle (CFG) indica, dentro de uma função, em que
+ordem as instruções podem executar. A análise de ponteiros indica a
+que posições de memória cada ponteiro pode apontar; ela é do tipo
+\textit{may} (``pode apontar'') quando superaproxima as possibilidades, e do
+tipo \textit{must} (``certamente aponta'') quando as subaproxima. Para não perder
+defeitos, é preciso usar a forma \textit{may}: uma posição é compartilhada
+quando os conjuntos de posições que dois fluxos podem acessar se interceptam.
+
+Este trabalho faz a análise sobre a representação intermediária do compilador
+LLVM \cite{llvm} e usa a biblioteca SVF para a análise de ponteiros
+\cite{svf}. Os metadados de depuração do LLVM (\texttt{DILocation}) permitem
+associar cada instrução analisada a uma linha do código-fonte C, o que é
+indispensável para que um revisor, humano ou modelo de linguagem, consiga
+entender o resultado.
+
+\subsection{Execução simbólica}
+
+Na execução simbólica, as entradas do programa são tratadas como símbolos, e
+cada caminho percorrido acumula uma condição sobre esses símbolos. Um solver
+decide se a condição é satisfazível, isto é, se existe alguma entrada que leve
+o programa por aquele caminho. \citeonline{sdracer} usam a técnica para gerar
+entradas e intercalações de interrupções que alcancem os pontos suspeitos, e
+observam que registradores de hardware não são variáveis livres: seus valores
+dependem do modelo do dispositivo.
+
+\subsection{Verificação de modelos limitada}
+
+A verificação de modelos limitada (\textit{Bounded Model Checking}, BMC)
+procura defeitos em todas as execuções de comprimento até um limite $u$,
+codificando o programa como uma fórmula para um solver SAT ou SMT. Sua
+vantagem é produzir um contraexemplo, isto é, uma execução concreta que
+exibe o defeito. Sua limitação é que o espaço de estados cresce
+exponencialmente com $u$: alguns casos do Racebench exigem desenrolar um laço
+10.000 vezes antes de o defeito aparecer \cite{nichecker}. A ferramenta de
+referência dessa família é o CBMC \cite{cbmc}.
+
+Duas técnicas atenuam o problema. A sequencialização preguiçosa
+(\textit{lazy sequentialization}) traduz o programa concorrente num programa
+sequencial não determinístico que simula suas execuções, e o entrega a um
+verificador sequencial \cite{lazycseq}. A abstração de laços substitui
+laços por versões superaproximadas antes do desenrolamento, para que defeitos
+profundos apareçam com um limite pequeno \cite{nichecker}. Em qualquer caso,
+um resultado ``sem contraexemplo'' vale apenas até o limite escolhido; não é
+uma prova de ausência de defeitos.
+
+\subsection{Viabilidade de caminho com solver SMT}
+
+A análise de viabilidade de caminho decide se alguma execução real alcança os
+acessos de um candidato na ordem exigida. \citeonline{intrace} constroem um
+resumo simbólico da \isr, inserem o bloco de alta prioridade no bloco de baixa
+prioridade no ponto de preempção e entregam as restrições de caminho ao solver
+Z3 \cite{z3}. Se o solver responde que as restrições são insatisfazíveis
+(\textit{UNSAT}), a intercalação é impossível, e isso é uma prova.
+Essa propriedade é central neste trabalho: só uma prova de impossibilidade, como essa, autoriza descartar um candidato.
+
+\section{Soundness, recall e precisão}
+\label{sec:soundness}
+
+% wiki: concepts/Soundness and False Negatives, Precision Metrics
+
+Um falso positivo é um alerta que não corresponde a um defeito real;
+um falso negativo é um defeito real que não gerou alerta. Uma análise é
+\textit{sound} (correta) em relação a um conjunto de premissas quando não
+produz falsos negativos sob essas premissas. A ausência incondicional de falsos
+negativos não é alcançável para C com ponteiros, tabelas de vetores de
+interrupção e fluxo de controle dependente de hardware; o que se pode afirmar
+honestamente é a ausência relativa a uma lista explícita de premissas.
+
+A Tabela~\ref{tab:metricas} resume as métricas usadas na literatura e neste
+trabalho.
+
+\begin{table}[htb]
+  \centering
+  \caption{Métricas de avaliação}
+  \label{tab:metricas}
+  \begin{tabular}{@{}L{3.6cm}L{5.4cm}L{5.0cm}@{}}
+    \toprule
+    Métrica & Definição & O que responde \\
+    \midrule
+    Precisão & $TP / (TP + FP)$ & quanto do que foi reportado é real \\
+    Recall (taxa de acerto) & $TP / (TP + FN)$ & quanto do que existe foi encontrado \\
+    \textit{Inspection Ratio} & $(TP + FP) / (TP + FP + TN + FN)$ & quanto é preciso ler \\
+    \bottomrule
+  \end{tabular}
+  \fonte{\citeonline{reducing-fp}; elaborada pelos autores.}
+\end{table}
+
+Este trabalho prioriza o recall, e a razão é concreta: uma ferramenta pode ter
+precisão perfeita examinando apenas o que o usuário indicou e, ainda assim,
+perder a maioria dos defeitos. A precisão, sozinha, pode ser melhorada
+descartando candidatos; o \textit{Inspection Ratio} não, pois mede a fração do
+conjunto que um revisor precisa ler até encontrar todos os defeitos reais. Com
+o recall mantido em 100\% por construção, é o \textit{Inspection Ratio} que
+mostra o custo da ferramenta \cite{reducing-fp}.
+
+\section{Modelos de linguagem na análise de programas}
+\label{sec:llm}
+
+% wiki: concepts/Prompt Architecture, LLM Triage
+
+Um modelo de linguagem de grande escala (\llm) é uma rede neural treinada para
+continuar textos, capaz de ler e produzir código. A instrução dada a ele é
+chamada de \textit{prompt}. Para uso por outro programa, pede-se ao modelo uma
+saída estruturada, isto é, uma resposta num formato fixo como JSON,
+que possa ser lida e validada automaticamente.
+
+Três limitações importam para este trabalho. Um \llm\ pode alucinar,
+afirmando com confiança fatos falsos sobre o código. Suas respostas
+variam entre execuções, de modo que uma mesma pergunta pode receber
+veredictos diferentes. E seu uso tem custo, medido em
+\textit{tokens}: \citeonline{llift} relatam cerca de 7.000 \textit{tokens}
+e US\$~0,43 por candidato analisado, com o GPT-4 e os preços de 2024.
+
+A literatura mostra que a forma como a interação é estruturada pesa mais que o
+modelo escolhido. Na ablação de \citeonline{llift}, o mesmo modelo, sobre os
+mesmos dados, passa de um recall de 0,15 com uma pergunta direta para 1,00 com
+quatro componentes: ensino de uma regra do domínio por exemplos, pedidos
+progressivos de contexto (o modelo pede as definições de que precisa),
+decomposição da tarefa em conversas separadas e autovalidação contra regras
+enviesadas para o lado seguro. Esses componentes são a base do desenho da
+etapa de \llm\ deste trabalho (Seção~\ref{sec:etapa-llm}).
