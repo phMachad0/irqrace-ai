@@ -204,6 +204,107 @@ def cmd_probe(args: argparse.Namespace) -> int:
     return 1 if serious else 0
 
 
+# -- stage 1 --------------------------------------------------------------
+
+
+def cmd_stage1(args: argparse.Namespace) -> int:
+    from .stage1_driver import Stage1Error, stage1
+
+    cfg, store = _prepare(args)
+    try:
+        _do_build(cfg, store)
+        summary = stage1(cfg, store, store.root / "build" / "whole.bc")
+    except (BuildError, Stage1Error) as e:
+        return _err(str(e))
+
+    print(f"{cfg.name}: {summary['candidates']} candidates "
+          f"({summary['triples']} triples, {summary['pairs']} pairs) from "
+          f"{summary['accesses']} accesses to {summary['objects']} shared object(s)")
+    for w in summary["warnings"]:
+        print(f"  ! [{w.get('severity', 'warn')}] {w['code']}: {w['message']}")
+    print(f"  {store.root}")
+    return 0
+
+
+def cmd_stage1_all(args: argparse.Namespace) -> int:
+    """Stage 1 over every Racebench case, then the recall gate.
+
+    The W3-W4 done-when: candidates.jsonl for all 31 cases and all 48 annotated
+    bug points present.
+    """
+    from .evaluation import inspection_ratio, match_subject, report_json
+    from .groundtruth import load_suite
+    from .runstore import RunStore
+    from .stage1_driver import Stage1Error, stage1
+
+    configs = sorted(Path(args.configs).glob("*.yaml"))
+    if not configs:
+        return _err(f"no configurations in {args.configs}")
+    gt = load_suite(Path(args.suite), Path(args.errata))
+
+    rows, failures = [], []
+    total_c = total_t = total_p = 0
+    bugs_found = bugs_total = traps_found = traps_total = 0
+
+    for path in configs:
+        try:
+            cfg = Config.load(path)
+            store = RunStore.create(cfg, run_root=args.run_root)
+            _do_build(cfg, store)
+            summary = stage1(cfg, store, store.root / "build" / "whole.bc")
+        except (ConfigError, BuildError, Stage1Error) as e:
+            failures.append((path.stem, str(e).splitlines()[0]))
+            print(f"[FAIL] {path.stem}: {str(e).splitlines()[0]}")
+            continue
+
+        candidates = store.read_candidates("stage1")
+        case = gt.by_case(cfg.name)
+        rep = match_subject(case.all, candidates, subject=cfg.name)
+        (store.root / "eval" / "report.json").write_text(
+            json.dumps(report_json(rep), indent=2, ensure_ascii=False) + "\n")
+
+        bugs_found += rep.bugs_detected
+        bugs_total += len(rep.bug_matches)
+        traps_found += rep.traps_reported
+        traps_total += len(rep.trap_matches)
+        total_c += summary["candidates"]
+        total_t += summary["triples"]
+        total_p += summary["pairs"]
+
+        gate = "ok " if rep.bugs_detected == len(rep.bug_matches) else "MISS"
+        rows.append((cfg.name, summary, rep, gate))
+        print(f"[{gate}] {cfg.name:<20} {summary['candidates']:>5} cand "
+              f"({summary['triples']:>4}t {summary['pairs']:>3}p)  "
+              f"bugs {rep.bugs_detected}/{len(rep.bug_matches)}  "
+              f"traps {rep.traps_reported}/{len(rep.trap_matches)}")
+        for m in rep.bug_matches:
+            if not m.detected:
+                a = m.annotation
+                print(f"        MISSED {a.kind}{a.index} {a.variable} "
+                      f"{a.pattern}{a.lines}")
+
+    n = len(rows)
+    print()
+    print(f"{n}/{len(configs)} subjects analysed")
+    print(f"candidates: {total_c} total, {total_c / n:.1f} per subject "
+          f"({total_t} triples, {total_p} pairs)"
+          if n else "no subjects analysed")
+    print(f"RECALL GATE: {bugs_found}/{bugs_total} annotated bug points present "
+          f"-- {'PASS' if bugs_found == bugs_total and bugs_total else 'FAIL'}")
+    print(f"traps reported: {traps_found}/{traps_total} "
+          "(expected to be high; stage 1 does not filter)")
+    ratios = [inspection_ratio(r) for _, _, r, _ in rows]
+    ratios = [x for x in ratios if x is not None]
+    if ratios:
+        print(f"inspection ratio: {sum(ratios) / len(ratios):.2f} mean over "
+              f"{len(ratios)} subject(s) whose bug points were all found")
+    print("for scale: IntRace reports ~208 candidates per program, on real-world "
+          "subjects rather than these 37-97 line cases")
+    for name, msg in failures:
+        print(f"  FAILED {name}: {msg}")
+    return 0 if (bugs_total and bugs_found == bugs_total and not failures) else 1
+
+
 # -- run store ------------------------------------------------------------
 
 
@@ -414,6 +515,19 @@ def build_parser() -> argparse.ArgumentParser:
     pr.add_argument("--run-root", default=None)
     pr.add_argument("--json", action="store_true")
     pr.set_defaults(func=cmd_probe)
+
+    s1 = sub.add_parser("stage1", help="run stage 1 on one subject")
+    s1.add_argument("config")
+    s1.add_argument("--run-root", default=None)
+    s1.set_defaults(func=cmd_stage1)
+
+    sa = sub.add_parser("stage1-all",
+                        help="stage 1 over every Racebench case, then the recall gate")
+    sa.add_argument("--configs", default=str(BENCH_CONFIGS))
+    sa.add_argument("--suite", default=str(DEFAULT_SUITE))
+    sa.add_argument("--errata", default=str(ERRATA))
+    sa.add_argument("--run-root", default="runs")
+    sa.set_defaults(func=cmd_stage1_all)
 
     r = sub.add_parser("runstore", help="the C3 run store")
     rs = r.add_subparsers(dest="sub", required=True)

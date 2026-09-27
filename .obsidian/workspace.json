@@ -13,12 +13,40 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "project-src/README.md",
+                "file": "wiki/Roadmap.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "README"
+              "title": "Roadmap"
+            }
+          },
+          {
+            "id": "530409491a00e341",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "wiki/Soundness Assumptions.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Soundness Assumptions"
+            }
+          },
+          {
+            "id": "95bafbbabbc12c11",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "wiki/Roadmap.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Roadmap"
             }
           }
         ]
@@ -46,7 +74,7 @@
                 "searchQuery": ""
               },
               "icon": "lucide-folder-closed",
-              "title": "Files"
+              "title": "Explorador de arquivos"
             }
           },
           {
@@ -55,7 +83,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "irqrace",
+                "query": "r7",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -63,7 +91,7 @@
                 "sortOrder": "alphabetical"
               },
               "icon": "lucide-search",
-              "title": "Search"
+              "title": "Procurar"
             }
           },
           {
@@ -79,8 +107,7 @@
               "title": "Bookmarks"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "horizontal",
@@ -180,53 +207,53 @@
   },
   "left-ribbon": {
     "hiddenItems": {
-      "switcher:Open quick switcher": false,
-      "graph:Open graph view": false,
-      "canvas:Create new canvas": false,
-      "daily-notes:Open today's daily note": false,
-      "templates:Insert template": false,
-      "command-palette:Open command palette": false,
-      "bases:Create new base": false
+      "switcher:Abrir a troca rápida": false,
+      "graph:Abrir visualização em gráfico": false,
+      "canvas:Criar novo canvas": false,
+      "daily-notes:Abrir a nota de hoje": false,
+      "templates:Inserir modelo": false,
+      "command-palette:Abrir paleta de comandos": false,
+      "bases:Criar nova base": false
     }
   },
   "active": "daf91d4fc9128290",
   "lastOpenFiles": [
-    "index.md",
+    "index.md.tmp.479619.87d83d17178b",
+    "index.md.tmp.479619.f3bdda5f9ff1",
+    "index.md.tmp.479619.286bbafb6e20",
+    "log.md.tmp.479619.66b8ea2807cd",
+    "project-src/README.md.tmp.479619.7260d8e62d4f",
+    "project-src/README.md.tmp.479619.e691631f78a9",
+    "project-src/README.md.tmp.479619.11575241e1aa",
+    "project-src/src/irqrace/__pycache__/cli.cpython-310.pyc.139802653782320",
+    "project-src/src/irqrace/cli.py.tmp.479619.dd9855538455",
+    "project-src/src/irqrace/cli.py.tmp.479619.31fc23e8664a",
+    "project-src/src/irqrace/__pycache__/cli.cpython-310.pyc.139790455697712",
+    "project-src/README.md",
+    "wiki/diario/Semana 3 — O Front End do Stage 1.md",
+    "wiki/diario/Semana 2 — Ground Truth e Protocolo de Avaliação.md",
+    "wiki/diario/Semana 1 — Contratos e Toolchain.md",
+    "wiki/Soundness Assumptions.md",
+    "wiki/Roadmap.md",
+    "wiki/Pipeline Design.md",
+    "wiki/Dashboard Design.md",
+    "wiki/concepts/Specification Inference.md",
+    "wiki/concepts/LLM Triage.md",
+    "wiki/concepts/Path Feasibility Analysis.md",
     "project-src/contracts/c3-run-store.md",
+    "CLAUDE.md",
+    "wiki/diario/Semana 4 — Derivação de Candidatos e o Recall Gate.md",
+    "project-src/docs/evaluation-protocol.md",
+    "project-src/docs/groundtruth-handcount.md",
+    "index.md",
     "wiki/comparisons/Reimplementation Assessment.md",
     "Clippings/SDRacer.md",
     "wiki/benchmarks/Candidate Evaluation Subjects.md",
     "wiki/concepts/Atomicity Violation.md",
-    "wiki/Pipeline Design.md",
     "wiki/concepts/Pair-Triple Unification.md",
     "wiki/Open Questions.md",
     "wiki/LLM Stage Design.md",
     "wiki/benchmarks/Real-World Program Benchmark.md",
-    "Clippings/BMC4AV.md",
-    "wiki/concepts/Access Interleaving Patterns.md",
-    "wiki/concepts/LLM Triage.md",
-    "wiki/concepts/Path Feasibility Analysis.md",
-    "wiki/Roadmap.md",
-    "project-src/docs/toolchain-notes.md",
-    "project-src/README.md",
-    "project-src/docs/masking-semantics.md",
-    "project-src/scripts/build-analysis.sh",
-    "project-src/scripts/setup-svf.sh",
-    "project-src/scripts/env.sh",
-    "project-src/tests/__pycache__/test_pipeline.cpython-310-pytest-6.2.5.pyc",
-    "project-src/tests/test_pipeline.py",
-    "project-src/tests/__pycache__/test_racebench.cpython-310-pytest-6.2.5.pyc",
-    "project-src/tests/__pycache__/test_candidate.cpython-310-pytest-6.2.5.pyc",
-    "project-src/tests/test_racebench.py",
-    "project-src/tests/test_candidate.py",
-    "project-src/tests/__pycache__/test_contracts.cpython-310-pytest-6.2.5.pyc",
-    "project-src/contracts/README.md",
-    "wiki/Thesis Goal.md",
-    "Clippings/IntRace.md",
-    "wiki/tools/BMC4AV (tool).md",
-    "wiki/Dashboard Design.md",
-    "log.md",
-    "Clippings/NIChecker.md",
     "NIChecker/Comparison_CPA4AV_Experiments/OurExp_CPA4AV/source_CPA4AV/CPA4AV/CPA4AV-Ourtool/output/cfaPixel.svg",
     "NIChecker/Comparison_CPA4AV_Experiments/OurExp_CPA4AV/source_CPA4AV/CPA4AV/CPA4AV-Ourtool/output/ARG.svg",
     "NIChecker/Comparison_CPA4AV_Experiments/OurExp_CPA4AV/source_CPA4AV/Naive_IPS/CPA4AV-Ourtool/output/cfaPixel.svg",

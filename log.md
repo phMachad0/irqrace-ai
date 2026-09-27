@@ -448,3 +448,77 @@ as stale as its line numbers, since the six inserted lines are semantically sign
 errata corrects only the line numbers.
 
 190 tests pass. The evaluation harness runs end to end against the two hand-built fixtures.
+
+## [2026-09-18] build | W3–W4 Track A — stage 1, recall gate 48/48 — **Milestone M2**
+
+Stage 1 exists and the gate the whole project is built around passes.
+
+```
+31/31 subjects analysed
+candidates: 566 total, 18.3 per subject (316 triples, 250 pairs)
+RECALL GATE: 48/48 annotated bug points present -- PASS
+traps reported: 35/38     inspection ratio: 0.30 mean
+```
+
+**Structure.** A new C++ tool, `irqrace-stage1`, walks outward from the configured entry points
+over its own call graph, identifies shared locations through SVF's may-alias analysis, and
+enumerates every access with flow, R/W, enclosing function, call path, `DILocation` and loop
+nest — plus an intra-flow `may_precede` relation computed on the CFG. Candidate derivation
+happens in Python on top of that: **pairs and triples from one access set, neither derived from
+the other** ([[Pair-Triple Unification]]). Nothing in stage 1 filters on interrupt state,
+priority or path feasibility.
+
+**The gate caught three real defects in the implementation**, which is the whole reason it is
+scheduled before anything else:
+
+1. **Restricting shared locations to globals lost an annotated bug point.**
+   `svp_simple_009_001` shares a *stack* variable between its task and its ISR by storing its
+   address into two global pointers. The sharing criterion is "two flows reach it", not "it is a
+   global", and the shortcut failed silently — 47/48 with no error.
+2. **A function called twice makes one instruction two dynamic accesses.**
+   `svp_simple_029_001` calls `GetTmData` twice in a row, so its single
+   `return tm_blocks[tm_name];` is two accesses and the suite annotates exactly that triple.
+   Intra-procedural CFG reachability alone says the instruction cannot precede itself. This is
+   [[Racebench]]'s loop argument reached through repeated calls instead of a back edge.
+3. **Prologue argument spills are not accesses.** At `-O0` clang stores each parameter into an
+   alloca with no `DebugLoc`; treating those as accesses produced candidates with no source
+   range at all. Skipped now — and where a `DebugLoc` is genuinely missing the enclosing
+   function's line is used and the record marked, because dropping the candidate would be a
+   silent recall loss.
+
+**The W2 errata paid for itself immediately.** `svp_simple_019_001`'s bug point is detected at
+lines (45, 71, 59) — the *corrected* lines. The analyzer reports line 71, where the write
+actually is; the shipped annotation says 65, which is `idlerun();`. Without the errata this
+would have been a miss attributable to nothing in the tool.
+
+**One filter was added and is recorded rather than applied quietly**: triples are restricted to
+the four unserializable interleavings, `(R,W,R)`, `(R,W,W)`, `(W,W,R)`, `(W,R,W)`. All 48 bug
+points fall inside it. Two planted traps do not — both are `(W,W,W)` once corrected — and stage
+1 correctly declines to report them. [[Soundness Assumptions]] gains seven entries from this
+week (A2b, C1b, C2b, G2b, G2c, H1b, H1c), one of which, **G2c**, is a deliberate precision-side
+choice flagged for revisit alongside E3.
+
+203 tests pass.
+
+## [2026-09-18] direction | implementation diary in Portuguese — `wiki/diario/`
+
+Pedro asked for an implementation diary in **Brazilian Portuguese**, one page per Roadmap week,
+covering W1–W4. It is now the **only** folder in the vault not written in English; the rest stays
+in English because the vocabulary comes from the papers.
+
+Four pages written: [[Semana 1 — Contratos e Toolchain]],
+[[Semana 2 — Ground Truth e Protocolo de Avaliação]], [[Semana 3 — O Front End do Stage 1]] and
+[[Semana 4 — Derivação de Candidatos e o Recall Gate]]. Each gives the week against the
+Roadmap's own done-when items, defines every technical concept it uses rather than assuming it,
+quotes the code fragments that carry the explanation verbatim from `project-src/`, records the
+findings — including the implementation bugs the recall gate caught — and ends with the commands
+to reproduce it.
+
+W3–W4 is a single block in the [[Roadmap]] and was implemented in one pass; the split between
+those two pages is thematic (front end / derivation and gate) and both pages say so, rather than
+implying two phases.
+
+`CLAUDE.md` gains a section making this **part of the workflow**: at the end of each week of
+implementation the corresponding page must be created, and it must be revised whenever that
+week's code changes in a later iteration — a diary page describing code that no longer exists
+teaches the wrong thing to whoever reads it while writing the thesis.
