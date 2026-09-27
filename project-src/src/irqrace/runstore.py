@@ -20,6 +20,7 @@ from typing import Any, Iterable
 
 from . import TOOL_VERSION, contracts
 from .config import Config
+from .evaluation import COUNTING_UNIT, MATCH_RULE
 
 STAGE_NAMES = [
     "build", "stage1", "stage2", "solver", "context", "triage", "repair", "reverify",
@@ -80,10 +81,11 @@ class RunStore:
                 "externals_default": cfg.data["externals"]["default"],
                 "indirect_calls": cfg.analysis["indirect_calls"],
                 "allow_same_statement_a1_a2": cfg.analysis["allow_same_statement_a1_a2"],
-                # Both are W2 blockers and deliberately null until decided, so
-                # that any number produced before then is visibly unquotable.
-                "counting_unit": None,
-                "match_rule": None,
+                # Decided 2026-09-10; see docs/evaluation-protocol.md. Recorded
+                # per run because every recall number divides by the first and
+                # is computed with the second.
+                "counting_unit": COUNTING_UNIT,
+                "match_rule": MATCH_RULE,
             },
             "solver": {
                 "enabled": cfg.analysis["solver"]["enabled"],

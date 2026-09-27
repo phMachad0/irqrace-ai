@@ -71,18 +71,36 @@ accesses with line numbers, the middle one from an ISR:
 //1.svp_simple_019_001_global_var1<R#45>,<W#65>,<R#54>
 ```
 
-Measured shape distribution over the 48 bug points and 38 traps of the 31 simple cases:
+Measured shape distribution over the 48 bug points and 38 traps of the 31 simple cases.
+Re-measured 2026-09-10 with the certified parser, which reports the annotations **as written**
+and separately **as corrected** by the errata described below:
 
 | Shape | Bug points | FP traps |
 | --- | --- | --- |
-| `(R,W,R)` | 25 | 19 |
-| `(R,W,W)` | 10 | 6 |
-| `(W,W,R)` | 7 | 5 |
-| `(W,R,W)` | 6 | 8 |
+| | as written → corrected | as written → corrected |
+| `(R,W,R)` | 25 → 23 | 19 → 16 |
+| `(R,W,W)` | 10 → 11 | 6 → 7 |
+| `(W,W,R)` | 6 → 8 | 5 → 5 |
+| `(W,R,W)` | 6 → 6 | 8 → 8 |
+| `(W,R,R)` | 1 → 0 | 0 → 0 |
+| `(W,W,W)` | 0 → 0 | 0 → 2 |
 
-Every bug point is a triple in the four-pattern set, and **all 48 project onto access pairs
-containing at least one write** — the empirical half of the argument in
-[[Pair-Triple Unification]].
+The earlier version of this table gave `(W,W,R)` = 7 and no `(W,R,R)`; that figure had the
+`svp_simple_016_001` correction silently applied. The totals, 48 and 38, are the same under
+every reading — **no correction changes a count**.
+
+Two shapes here fall outside the four-pattern set the suite is usually described by, and both
+are traps rather than bug points. `(W,W,W)` — an ISR write between two task writes — is not an
+atomicity violation under last-writer-wins, which is a plausible thing to plant as a false
+positive.
+
+Every bug point projects onto access pairs **each** containing at least one write — the
+empirical half of the argument in [[Pair-Triple Unification]]. Exactly one shipped annotation
+violates that, `svp_simple_016_001` bug point 1, whose literal reading `(W,R,R)` has an `(R,R)`
+projection; it is also the annotation whose middle access contradicts its own source line, so
+the two independent arguments for correcting it agree. Note that a **read** in the middle
+position is entirely normal — 14 of the 86 annotations are `(W,R,W)`, the ISR observing an
+intermediate value.
 
 ### The annotations are not machine-readable without a tolerant parser
 
@@ -106,7 +124,7 @@ list with **no header at all**, just `// 1:` numbering. There are also outright 
   `global_var1 = 0x09;` — a **write**. The annotation's access type is wrong, and taken
   literally it is the only "defect" in the suite that would be invisible to a race detector;
 - `svp_simple_027_001` writes its middle access without the `#`, as `<W, 41>`;
-- `svp_simple_013_001` writes its middle access type in **lower case**, as `<w#66>`.
+- `svp_simple_013_001` writes its middle access type in **lowercase**, as `<w#66>`.
 
 A strict parser silently returns 28 bug points instead of 48 — a 42% undercount, with no
 error. That is very plausibly a contributing cause of the count disagreements below, and it is
@@ -179,6 +197,42 @@ was billed as race detection. It means:
   points, and so is reporting triples under a two-access name ([[Data Race]]).
 - The `(R,W,W)`-vs-`(W,W,R)` argument between [[NIChecker (paper)]] and [[BMC4AV (paper)]] is
   an argument about which annotated triples count — not about how to read the code.
+
+### The annotations' access kinds are wrong in eight places, and case 019's line numbers in ten
+
+Measured 2026-09-10 by cross-checking every annotated access against the line it names
+(`log.md`). Two distinct classes of error, neither of which changes the counts and both of which
+change what a recall number means.
+
+**Eight access kinds contradict the source**, across five cases — where this page previously
+recorded one. `svp_simple_002_001` trap 3 calls lines 33 and 35 reads when both are
+`global_array[TRIGGER] = 1;`, and the same file's own bug point 1 annotates those very lines as
+writes. `svp_simple_022_001` calls line 58 a read in two entries and line 56 a read in a third;
+both are plain assignments in the two branches of `func_3`. `svp_simple_016_001` bug point 1 is
+the previously known one. `svp_simple_017_001` trap 1 annotates `local_array` as read at a line
+that writes it — what that line reads is `global_var`, the index, which is a different variable.
+
+**All ten of `svp_simple_019_001`'s annotated accesses that name an ISR write, or a read below
+line 45, point at the wrong line** — including three that point at `idlerun();` and two at blank
+lines. The drift is reconstructible rather than arbitrary: `global_var1` is written at 71 and
+annotated 65, `global_var2` at 67 annotated 61, `global_condition3` at 69 annotated 63 — every
+`isr_1` write understated by exactly six — while reads in `main` drift by 0, 2, 3 and 5
+depending on where they sit. Six inserted lines explain all of it: the two guarded blocks in
+`main` each gained `{`, `enable_isr(1);` and `}`, and every later line shifts by the number of
+insertions above it.
+
+This one is not a transcription slip. **`enable_isr(1)` inside those blocks is semantically
+significant** — it is what makes the reads at 51 and 59 preemptible despite the `disable_isr(1)`
+above them. If the annotations predate that edit, this case's bug/trap *labels* may be as stale
+as its line numbers, which is a ground-truth question this wiki cannot settle from the
+repository alone ([[Open Questions]]).
+
+The practical consequence is decisive for any evaluation harness: **an exact-line match against
+the shipped annotations scores zero on `svp_simple_019_001`'s bug point**, because line 65
+contains no access to anything. Recall measured that way is measuring the benchmark's
+typography. The corrections, with the evidence for each, are curated in the implementation at
+`project-src/bench/racebench-errata.yaml`, and the protocol that consumes them in
+`project-src/docs/evaluation-protocol.md`.
 
 ### Two entry points are named wrongly in the README
 

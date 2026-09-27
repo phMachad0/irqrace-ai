@@ -22,3 +22,6 @@ runs/
 
 # In-progress run logs. Finished results are committed deliberately, by name.
 *.log
+
+# Claude Code local settings
+.claude/

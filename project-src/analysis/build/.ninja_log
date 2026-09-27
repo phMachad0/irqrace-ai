@@ -1,11 +1,6 @@
 # ninja log v5
-0	6999	1788218057892084277	CMakeFiles/irqrace-probe.dir/src/irqrace-probe.cpp.o	ff92febb407b1338
-6999	7990	1788218058880093114	bin/irqrace-probe	2ed78f1736ed3ee7
-2	7116	1788218098568448062	CMakeFiles/irqrace-probe.dir/src/irqrace-probe.cpp.o	ff92febb407b1338
-7116	7857	1788218099304454644	bin/irqrace-probe	2ed78f1736ed3ee7
-1	7119	1788218417239503515	CMakeFiles/irqrace-probe.dir/src/irqrace-probe.cpp.o	ff92febb407b1338
-7119	7865	1788218417975511513	bin/irqrace-probe	2ed78f1736ed3ee7
-2	8571	1788218809071553473	CMakeFiles/irqrace-probe.dir/src/irqrace-probe.cpp.o	ff92febb407b1338
-8571	9455	1788218809943561329	bin/irqrace-probe	2ed78f1736ed3ee7
-1	8050	1788218879216377371	CMakeFiles/irqrace-probe.dir/src/irqrace-probe.cpp.o	ff92febb407b1338
-8050	8919	1788218880076388481	bin/irqrace-probe	2ed78f1736ed3ee7
+10135	10877	1789733973091486731	bin/irqrace-stage1	c2492d8c53da4c45
+1	10135	1789733972355480510	CMakeFiles/irqrace-stage1.dir/src/irqrace-stage1.cpp.o	1381445b742d83e6
+10147	11252	1789733386633831503	bin/irqrace-probe	2ed78f1736ed3ee7
+0	10147	1789733385545822695	CMakeFiles/irqrace-probe.dir/src/irqrace-probe.cpp.o	38569196b3821f55
+0	68	1789754638970255448	build.ninja	8dcbcaffdc36185c

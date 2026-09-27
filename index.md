@@ -1,7 +1,7 @@
 ---
 type: index
 tags: [wiki, index]
-updated: 2026-09-26
+updated: 2026-09-27
 ---
 
 # Index
@@ -11,7 +11,7 @@ Catalog of the wiki. Start at [[Overview]]; read [[Thesis Goal]] for what this v
 the LLM per `CLAUDE.md` — update on every ingest.
 
 **Counts**: 12 sources (5 concurrency, 7 LLM) · 4 tool pages + 7 baseline/infrastructure ·
-20 concepts · 4 benchmarks · 5 comparisons · 5 project pages.
+20 concepts · 4 benchmarks · 5 comparisons · 6 project pages.
 
 ## Navigation
 
@@ -22,9 +22,23 @@ the LLM per `CLAUDE.md` — update on every ingest.
 | [[Pipeline Design]] | the static half: each borrowed technique, and fix validation |
 | [[LLM Stage Design]] | the LLM half: architecture, context record, prompt design, evaluation plan |
 | [[Dashboard Design]] | the UI: Streamlit over a headless core, 45 numbered requirements, run store layout |
+| [[Soundness Assumptions]] | **the list the no-false-negatives claim is relative to** — 27 entries, each with how it could hide a defect |
 | [[Roadmap]] | 10-week plan to 6 Nov: static / LLM / UI tracks, four contracts, five milestones, de-scoping ladder |
 | [[Synthesis]] | what the four sources collectively say; working thesis statement |
 | [[Open Questions]] | sources to acquire, empirical questions a TCC could answer |
+
+## Diário de implementação (`wiki/diario/`) — **em português**
+
+A única parte do vault escrita em português brasileiro: uma página por semana do [[Roadmap]],
+explicando em detalhe o que foi implementado, com trechos de código e todo conceito definido.
+Criada e revisada ao fim de cada semana de implementação (ver `CLAUDE.md`).
+
+| Página | Semana | Conteúdo |
+| --- | --- | --- |
+| [[Semana 1 — Contratos e Toolchain]] | W1 · 31 ago–4 set | os quatro contratos C1–C4, toolchain LLVM/SVF, `irqrace-probe`, três achados |
+| [[Semana 2 — Ground Truth e Protocolo de Avaliação]] | W2 · 7–11 set | parser tolerante das anotações, conferência à mão, unidade de contagem, regra de casamento, errata |
+| [[Semana 3 — O Front End do Stage 1]] | W3 · 14–18 set | grafo de chamadas, alcançabilidade, may-alias, enumeração de acessos, `may_precede` |
+| [[Semana 4 — Derivação de Candidatos e o Recall Gate]] | W4 · 21–25 set | pares e trincas, as quatro formas não serializáveis, **recall gate 48/48**, M2 |
 
 ## Implementation (`project-src/`)
 
@@ -36,12 +50,15 @@ The tool itself, outside the wiki layer. Started 2026-08-31 (W1 of [[Roadmap]]).
 | `project-src/README.md` | status against the Roadmap, layout, how to build and run |
 | `project-src/contracts/` | **C1–C4 frozen as JSON Schema**, with a worked example of each and a synthetic C3 run directory |
 | `project-src/src/irqrace/` | Python: contract validation, C1 parser, bitcode build, SVF probe, run store |
-| `project-src/src/irqrace/llm/` | **Track B**: the triage and repair stage. Provider-neutral backends, the five ablation rows, C4 resolver, scoring, the tolerant annotation reader |
+| `project-src/src/irqrace/llm/` | **Track B**: the triage and repair stage. Provider-neutral backends, four active ablation rows (progressive deferred), C4 resolver, scoring, the tolerant annotation reader |
 | `project-src/fixtures/` | the 20 labelled context records — 10 bug points, 10 traps, six adversarial pairs |
-| `project-src/analysis/` | C++ over SVF; currently `irqrace-probe` ([[Dashboard Design]] R4, R7) |
+| `project-src/analysis/` | C++ over SVF: `irqrace-probe` ([[Dashboard Design]] R4, R7) and `irqrace-stage1` (reachability, shared locations, accesses, may-precede) |
 | `project-src/bench/configs/` | one generated C1 file per [[Racebench]] simple case (31) |
 | `project-src/docs/masking-semantics.md` | why per-flow interval masking drops a real bug point |
 | `project-src/docs/toolchain-notes.md` | SVF/LLVM pairing, the `optnone` trap, the K&R-prototype call-graph trap |
+| `project-src/docs/evaluation-protocol.md` | counting unit, match rule, what is reported and what is gated |
+| `project-src/docs/groundtruth-handcount.md` | the five hand-counted cases certifying the annotation parser |
+| `project-src/bench/racebench-errata.yaml` | 12 curated corrections to the Racebench annotations, with evidence |
 
 ## Sources (`wiki/sources/`)
 

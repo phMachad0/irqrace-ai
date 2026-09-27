@@ -1,0 +1,221 @@
+# Curated errata for the Racebench 2.1_remarks ground-truth annotations.
+#
+# Policy decision, 2026-09-10: the evaluation harness matches reported candidates
+# against the *corrected* annotations, and every correction lives here, with the
+# evidence for it, so that the deviation from the shipped suite is auditable
+# rather than silent. See docs/evaluation-protocol.md.
+#
+# Nothing here changes the COUNTS. All 31 simple cases still carry 48 bug points
+# and 38 planted traps; only line numbers and access kinds are corrected. What
+# does change is the shape distribution, and that difference is reported.
+#
+# Confidence levels:
+#   certain   -- the source admits only one reading
+#   likely    -- the correction is strongly implied but rests on a reconstruction
+#
+# Each entry names an annotation by (case, kind, index) exactly as numbered in
+# the file, quotes it as written, and gives the corrected access triple in
+# annotation order A1, B, A2.
+
+schema_version: errata/1.0.0
+suite: racebench 2.1_remarks
+curated: 2026-09-10
+curated_by: hand verification against the case sources; see docs/groundtruth-handcount.md
+
+notes:
+  svp_simple_019_001: >
+    Every annotation in this case is offset, and the offsets are reconstructible
+    rather than arbitrary. In the main task the accesses to global_var1 sit at
+    lines 45, 51 and 59 while the annotations name 45, 49 and 54; the accesses to
+    global_condition3 sit at 48 and 56 while the annotations name 48 and 53. Every
+    write in isr_1 is understated by exactly six lines: global_var2 is written at
+    67 and annotated 61, global_condition3 at 69 annotated 63, global_var1 at 71
+    annotated 65.
+
+    Six lines explain all of it. The two guarded blocks in main are
+
+        if ((cond1 == 1) && (condition3 == 1))
+        {                      <- inserted
+          enable_isr(1);       <- inserted
+          reader4 = global_var1;
+        }                      <- inserted
+
+    and the same three lines again around reader5. Adding those six lines shifts
+    every later line by exactly the number of insertions above it: reader4 by 2
+    (49 -> 51), the blank before the second idlerun by 3 (53 -> 56), reader5 by 5
+    (54 -> 59), and everything in isr_1 by all 6 (65 -> 71). The annotations were
+    therefore written against the file before those blocks were expanded.
+
+    One consequence is NOT corrected here, because it is not a line-number
+    question: `enable_isr(1)` inside those blocks is semantically significant --
+    it is what makes the reads at 51 and 59 preemptible despite the `disable_isr(1)`
+    at 47 and 55. If the annotations predate that edit, the bug/trap *labels* for
+    this case may be stale too, not only the line numbers. Recorded as an open
+    question rather than resolved by decree; the labels are left as shipped.
+
+  shape_effects: >
+    Correcting access kinds moves six annotations between shape buckets. Two of
+    them, svp_simple_002_001 trap 3 and svp_simple_017_001 trap 1, become (W,W,W),
+    a shape outside the four-pattern set the suite is usually described by. That
+    is coherent rather than alarming: an ISR write between two task writes to one
+    location is not an atomicity violation under last-writer-wins, which is a
+    plausible thing to plant as a false positive. Both are traps, neither is a bug
+    point, and the recall denominator is unaffected.
+
+corrections:
+
+  # -- line numbers ------------------------------------------------------
+
+  - case: svp_simple_001_001
+    kind: trap
+    index: 1
+    reason: line-off-by-one
+    confidence: certain
+    as_written: "svp_simple_001_001_global_var<W#43><R#63><W#44>"
+    corrected: [[write, 43], [read, 64], [write, 44]]
+    evidence: >
+      Line 63 is the declaration `int reader2;`. The read of global_var is the
+      following statement, `reader2 = svp_simple_001_001_global_var;` on line 64.
+      No other line in isr_2 reads global_var.
+
+  - case: svp_simple_019_001
+    kind: bug
+    index: 1
+    reason: line-drift
+    confidence: certain
+    as_written: "svp_simple_019_001_global_var1<R#45>,<W#65>,<R#54>"
+    corrected: [[read, 45], [write, 71], [read, 59]]
+    evidence: >
+      global_var1 is written exactly once in isr_1, at line 71; line 65 is
+      `idlerun();`. Its reads in main are at 45, 51 and 59; line 54 is
+      `idlerun();`. Rank-aligning the annotated reads 45, 49, 54 onto the actual
+      45, 51, 59 gives 54 -> 59, which is also what the six-line insertion
+      described above predicts.
+
+  - case: svp_simple_019_001
+    kind: trap
+    index: 1
+    reason: line-drift
+    confidence: certain
+    as_written: "svp_simple_019_001_global_var2<R#40>,<W#61>,<R#42>"
+    corrected: [[read, 40], [write, 67], [read, 42]]
+    evidence: >
+      global_var2 is written once in isr_1, at line 67; line 61 is blank. Both
+      reads, at 40 and 42, sit above the inserted blocks and are already correct.
+
+  - case: svp_simple_019_001
+    kind: trap
+    index: 2
+    reason: line-drift
+    confidence: certain
+    as_written: "svp_simple_019_001_global_var1<R#45>,<W#65>,<R#49>"
+    corrected: [[read, 45], [write, 71], [read, 51]]
+    evidence: >
+      As bug 1, with the second read rank-aligning 49 -> 51 (reader4).
+
+  - case: svp_simple_019_001
+    kind: trap
+    index: 3
+    reason: line-drift
+    confidence: certain
+    as_written: "svp_simple_019_001_global_var1<R#49>,<W#65>,<R#54>"
+    corrected: [[read, 51], [write, 71], [read, 59]]
+    evidence: >
+      As bug 1, with both reads rank-aligned: 49 -> 51 (reader4), 54 -> 59 (reader5).
+
+  - case: svp_simple_019_001
+    kind: trap
+    index: 4
+    reason: line-drift
+    confidence: certain
+    as_written: "svp_simple_019_001_global_condition3<R#48><W#63>,<R#53>"
+    corrected: [[read, 48], [write, 69], [read, 56]]
+    evidence: >
+      global_condition3 is written once in isr_1, at line 69; line 63 is blank.
+      It is read at 48 (already correct) and 56; line 53 is blank, and 53 -> 56 is
+      the three-line shift the insertion predicts at that point.
+
+  # -- access kinds ------------------------------------------------------
+
+  - case: svp_simple_002_001
+    kind: trap
+    index: 3
+    reason: access-kind
+    confidence: certain
+    as_written: "svp_simple_002_001_global_array<R#33>,<W#44>,<R#35>"
+    corrected: [[write, 33], [write, 44], [write, 35]]
+    evidence: >
+      Line 33 is `if (i == TRIGGER) global_array[TRIGGER] = 1;` and line 35 is
+      `global_array[TRIGGER] = 1;` -- both writes. The same file's bug point 1 and
+      trap 1 already annotate those very lines as `<W#33>` and `<W#35>`, so the
+      annotator's own other entries contradict this one.
+
+  - case: svp_simple_016_001
+    kind: bug
+    index: 1
+    reason: access-kind
+    confidence: certain
+    as_written: "svp_simple_016_001_global_var1<W#24>,<R#33>,<R#25>"
+    corrected: [[write, 24], [write, 33], [read, 25]]
+    evidence: >
+      Line 33 is `svp_simple_016_001_global_var1 = 0x09;`, the only access in
+      isr_1 and unambiguously a write. The same file's bug points 2 and 3
+      annotate that very line as `<W#33>`, so the annotator's own entries
+      contradict this one.
+
+      There is a second, independent reason to believe the correction. Every
+      other annotated triple in the suite projects onto two access pairs that
+      each contain at least one write -- the empirical half of the argument in
+      [[Pair-Triple Unification]]. Read literally, this entry is (W,R,R), whose
+      second projection (B, A2) is (R,R): two reads, which no race detector can
+      flag and no atomicity violation can arise from. It is the only annotation
+      in the suite with that property, and the correction removes it.
+
+  - case: svp_simple_017_001
+    kind: trap
+    index: 1
+    reason: access-kind
+    confidence: likely
+    as_written: "svp_simple_017_001_local_array<R#32>,<W#41>,<R#32>"
+    corrected: [[write, 32], [write, 41], [write, 32]]
+    evidence: >
+      The annotated variable is local_array, and line 32 is
+      `local_array[global_var] = i++;` -- a write to local_array. What line 32
+      reads is global_var, the index, which is a different variable and the
+      subject of this case's four bug points. Marked `likely` rather than
+      `certain` because an alternative reading is that the annotator meant the
+      index read and mis-named the variable; under either reading the entry stays
+      a trap and the denominator is unchanged.
+
+  - case: svp_simple_022_001
+    kind: bug
+    index: 2
+    reason: access-kind
+    confidence: certain
+    as_written: "svp_simple_022_001_global_var1 <R, #55>, <W,#66>, <R,#58>"
+    corrected: [[read, 55], [write, 66], [write, 58]]
+    evidence: >
+      Line 58 is `svp_simple_022_001_global_var1 = 0;`, the else branch of
+      func_3 -- a plain assignment with no read of the variable.
+
+  - case: svp_simple_022_001
+    kind: bug
+    index: 3
+    reason: access-kind
+    confidence: certain
+    as_written: "svp_simple_022_001_global_var1 <R, #58>, <W,#66>, <R,#63>"
+    corrected: [[write, 58], [write, 66], [read, 63]]
+    evidence: >
+      Line 58 is a write, as above. Line 63 is
+      `global_var3 = global_var1;`, a read of global_var1, and is correct.
+
+  - case: svp_simple_022_001
+    kind: trap
+    index: 2
+    reason: access-kind
+    confidence: certain
+    as_written: "svp_simple_022_001_global_var1 <R, #55>, <W,#66>, <R,#56>"
+    corrected: [[read, 55], [write, 66], [write, 56]]
+    evidence: >
+      Line 56 is `svp_simple_022_001_global_var1 = 12;`, the then branch of
+      func_3 -- a plain assignment.

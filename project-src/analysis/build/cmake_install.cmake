@@ -1,4 +1,4 @@
-# Install script for directory: /home/pedro/Documentos/tcc/research-ai-brain/project-src/analysis
+# Install script for directory: /home/pedro/Documentos/tcc/irqrace/project-src/analysis
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -50,5 +50,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/pedro/Documentos/tcc/research-ai-brain/project-src/analysis/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/pedro/Documentos/tcc/irqrace/project-src/analysis/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
