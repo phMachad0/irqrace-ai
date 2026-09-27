@@ -146,6 +146,11 @@ be a table of interrupt patterns with their verdicts:
 > feasibility alone, conceding that trap rejection then carries the whole precision argument.
 > Recorded in [[Open Questions]]; it blocks the interpretation of every harmfulness number
 > this project will produce on Racebench.
+>
+> **Decided 2026-09-27: the third way out.** Scoring on Racebench uses feasibility only
+> (`scoring_bucket` in `project-src/src/irqrace/llm/scoring.py`); the reported bucket is
+> unchanged. Trap rejection now carries the precision argument on this benchmark, and
+> harmfulness is evaluated on the real-world suite.
 
 Also state the priority convention explicitly — **larger number = higher priority**
 ([[Contradictions]] #3) — since the published papers disagree with the benchmark and the model

@@ -5,7 +5,7 @@
     python3 scripts/run-ablation.py --rows simple --samples 1     # the W1 probe
     python3 scripts/run-ablation.py --backend ollama:qwen2.5-coder:32b
 
-With no ``--rows`` it runs all five rows of the LLift-shaped ablation and
+With no ``--rows`` it runs every active row of the LLift-shaped ablation and
 prints the table (Roadmap W5, milestone M3). With ``--rows simple`` and one
 sample it is the **W1 feasibility probe**: the go/no-go that
 ``wiki/Open Questions.md`` says must run before anything is built on top of the
@@ -18,6 +18,13 @@ by an enforced schema on a cached one.
 
 **A candidate the backend refuses is excluded and reported, never scored.**
 Scoring a refusal as any bucket would corrupt the row.
+
+**Harmfulness is not scored by default.** The fixtures are Racebench, which
+annotates program facts; see ``scoring_bucket`` in ``irqrace.llm.scoring``.
+``--score-harm`` restores the old view, for comparison only.
+
+**``--cache-only`` sends no request.** A cache miss becomes an exclusion, so
+re-scoring measured rows can never spend tokens by accident.
 """
 
 from __future__ import annotations
@@ -62,7 +69,7 @@ from irqrace.llm.backends import BackendError, RefusalError, from_spec  # noqa: 
 from irqrace.llm.cache import Cache  # noqa: E402
 from irqrace.llm.client import TriageClient  # noqa: E402
 from irqrace.llm.fixtures import load_all  # noqa: E402
-from irqrace.llm.prompts import ABLATION, BY_NAME  # noqa: E402
+from irqrace.llm.prompts import ABLATION, BY_NAME, DEFERRED  # noqa: E402
 from irqrace.llm.resolver import (  # noqa: E402
     render_distribution,
     request_distribution,
@@ -97,9 +104,19 @@ def run_row(config, fixtures, backend, cache, samples, run_dir):
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--backend", default="anthropic:claude-opus-5")
-    ap.add_argument("--rows", nargs="*", help="row names; default is all five")
+    ap.add_argument("--rows", nargs="*", help="row names; default is every active row")
     ap.add_argument("--samples", type=int, default=1, help=">1 measures consistency")
     ap.add_argument("--no-cache", action="store_true")
+    ap.add_argument(
+        "--cache-only",
+        action="store_true",
+        help="never call the backend; a cache miss is reported as excluded",
+    )
+    ap.add_argument(
+        "--score-harm",
+        action="store_true",
+        help="let the harmfulness answer count (off for Racebench; see scoring_bucket)",
+    )
     ap.add_argument("--run-dir", type=Path, help="write C3 transcripts here")
     ap.add_argument("--json", type=Path, help="also write the results as JSON")
     args = ap.parse_args()
@@ -112,6 +129,28 @@ def main() -> int:
     except BackendError as e:
         print(e, file=sys.stderr)
         return 2
+
+    for r in args.rows or ():
+        if r in DEFERRED:
+            print(
+                f"row {r!r} is deferred until the static pipeline exists; "
+                "see DEFERRED in irqrace/llm/prompts",
+                file=sys.stderr,
+            )
+            return 2
+        if r not in BY_NAME:
+            print(f"unknown row {r!r}; known: {', '.join(BY_NAME)}", file=sys.stderr)
+            return 2
+
+    if args.cache_only:
+        if args.no_cache:
+            print("--cache-only and --no-cache contradict each other", file=sys.stderr)
+            return 2
+
+        def _no_request(request):
+            raise BackendError("--cache-only: cache miss, no request sent")
+
+        backend.chat = _no_request
 
     fixtures = load_all()
     configs = (
@@ -136,7 +175,7 @@ def main() -> int:
         # With several samples the reported verdict is the vote, not run 0:
         # ties resolve toward the higher bucket, so voting cannot lose recall.
         final = vote(runs) if len(runs) > 1 else runs[0]
-        s = score(scored, final, n_expected=len(fixtures))
+        s = score(scored, final, n_expected=len(fixtures), harm_scored=args.score_harm)
 
         print(f"--- {config.name}  ({config.hash()})")
         print("    " + s.report().replace("\n", "\n    "))
@@ -155,9 +194,9 @@ def main() -> int:
                 for v in vs:
                     print(f"        {cid}: {v}")
 
-        # Real bug points in a low bucket. The recall gate does not catch
-        # likely_benign, so it is printed separately rather than inferred from
-        # the Inspection Ratio.
+        # Real bug points the model called benign. With harm scored, these pass
+        # the recall gate but sink the Inspection Ratio; without, they are the
+        # harm answers the benchmark cannot judge. Printed either way.
         low = [
             f.candidate_id
             for f in scored
@@ -166,9 +205,14 @@ def main() -> int:
             .bucket.value == "likely_benign"
         ]
         if low:
+            effect = (
+                "passes the recall gate, sinks the Inspection Ratio"
+                if args.score_harm
+                else "reported benign, scored on feasibility only"
+            )
             print(
-                f"    [!] {len(low)} bug point(s) bucketed likely_benign — passes "
-                f"the recall gate, sinks the Inspection Ratio: {', '.join(low)}"
+                f"    [!] {len(low)} bug point(s) bucketed likely_benign — "
+                f"{effect}: {', '.join(low)}"
             )
 
         # IRIS-style grouping: shared blocking elements shorten review without
@@ -206,6 +250,7 @@ def main() -> int:
                 "trap_rejection": s.trap_rejection,
                 "inspection_ratio": s.inspection_ratio,
                 "buckets": s.bucket_counts,
+                "harm_scored": s.harm_scored,
                 "blocking_element_groups": blocking_element_groups(final),
                 "request_distribution": (
                     request_distribution(client.request_log)

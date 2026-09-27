@@ -146,7 +146,8 @@ irqrace llm backends                     # the providers and the spec form
 irqrace llm backends ollama:llama3       # one spec's capabilities and caveats
 irqrace llm fixtures                     # the labelled set; exits 1 while short of 10+10
 python3 scripts/build-fixtures.py        # regenerate the fixtures from the specs
-python3 scripts/run-ablation.py          # score the five rows; exits 1 if the gate fails
+python3 scripts/run-ablation.py          # score the active rows; exits 1 if the gate fails
+python3 scripts/run-ablation.py --cache-only --rows simple +domain   # re-score, no requests
 python3 scripts/ablation-table.py a.json b.json   # the M3 table, one column group per model
 ```
 

@@ -28,12 +28,54 @@ import collections
 import dataclasses
 
 from irqrace.llm.fixtures import Fixture
-from irqrace.llm.verdict import INSPECTION_ORDER, Bucket, Triage
+from irqrace.llm.verdict import (
+    INSPECTION_ORDER,
+    Bucket,
+    Feasibility,
+    Harmfulness,
+    Triage,
+    bucket_of,
+)
 
 #: Buckets that count as "rejected" for trap rejection. Note that
 #: ``likely_benign`` counts: a trap correctly identified as harmless is
 #: correctly handled, even though it was not called infeasible.
 LOW_BUCKETS = frozenset({Bucket.likely_infeasible, Bucket.likely_benign})
+
+
+def scoring_bucket(triage: Triage, harm_scored: bool = True) -> Bucket:
+    """The bucket a candidate is *scored* in, which is not always the one reported.
+
+    With ``harm_scored`` off, only the feasibility answer counts: a feasible
+    candidate scores as ``likely_real`` whatever the harmfulness answer said.
+    This is the view for [[Racebench]] (decided 2026-09-27, option C in
+    ``log.md``). The suite annotates atomicity violations as **program facts**
+    -- the interleaving exists -- and many of its readers copy the shared value
+    into a local that is never used. A model that calls those benign is
+    reasoning correctly, and scoring its harmfulness answer against this ground
+    truth punishes the correct answer. So on Racebench the harmfulness verdict is
+    still asked, still recorded and still reported, but not scored; it is judged
+    on the real-world suite, where the code does something.
+
+    The reported bucket (:attr:`Triage.bucket`) never changes. This is a view
+    for measurement, not a second decision policy.
+    """
+    if harm_scored:
+        return triage.bucket
+    if triage.feasibility.verdict is Feasibility.feasible:
+        # Treat the harm axis as settled in the benchmark's own terms: an
+        # interleaving that exists is the annotated defect.
+        return bucket_of(Feasibility.feasible, Harmfulness.harmful)
+    return bucket_of(triage.feasibility.verdict, None)
+
+
+def scoring_rank_key(triage: Triage, harm_scored: bool = True) -> tuple[int, float]:
+    """Rank order under :func:`scoring_bucket`. Confidence follows the same view:
+    without the harm axis, only feasibility confidence breaks ties."""
+    if harm_scored:
+        return triage.rank_key
+    bucket = scoring_bucket(triage, harm_scored=False)
+    return (INSPECTION_ORDER.index(bucket), -triage.feasibility.confidence)
 
 
 class RecallFailure(AssertionError):
@@ -56,6 +98,10 @@ class Score:
     #: refused or failed on. ``n_candidates`` counts only those actually
     #: scored, so the two differ exactly when something was excluded.
     n_expected: int = 0
+    #: Whether the harmfulness answer counted. See :func:`scoring_bucket`.
+    #: ``bucket_counts`` always shows the buckets as *reported*, so the harm
+    #: answers stay visible even when they are not scored.
+    harm_scored: bool = True
 
     @property
     def coverage(self) -> float:
@@ -108,12 +154,17 @@ class Score:
             ),
             f"inspection ratio: {self.inspection_ratio:.1%} "
             f"({self._to_read()}/{self.n_candidates} candidates read to find them all)",
-            "buckets:          "
+            "buckets reported: "
             + ", ".join(
                 f"{b.value}={self.bucket_counts.get(b.value, 0)}"
                 for b in INSPECTION_ORDER
             ),
         ]
+        if not self.harm_scored:
+            lines.append(
+                "harmfulness:      asked and reported, not scored — feasibility "
+                "alone decides the figures above (Racebench annotates program facts)"
+            )
         if self.missed:
             lines.append(
                 "  [!] ranked likely_infeasible: " + ", ".join(self.missed)
@@ -128,12 +179,16 @@ def score(
     fixtures: list[Fixture],
     triages: list[Triage],
     n_expected: int | None = None,
+    *,
+    harm_scored: bool = True,
 ) -> Score:
     """Score one row of the ablation.
 
     :param n_expected: how many candidates the row was meant to cover. Pass
         the full fixture count when some were excluded, so the result knows it
         is partial; omitting it assumes ``fixtures`` is the whole set.
+    :param harm_scored: whether the harmfulness answer counts toward the
+        figures. Off for Racebench -- see :func:`scoring_bucket`.
 
     :raises ValueError: if the triaged set is not exactly the input set. This
         is the no-drop invariant, checked rather than assumed.
@@ -158,7 +213,8 @@ def score(
     missed = tuple(
         f.candidate_id
         for f in bug_points
-        if by_id[f.candidate_id].bucket is Bucket.likely_infeasible
+        if scoring_bucket(by_id[f.candidate_id], harm_scored)
+        is Bucket.likely_infeasible
     )
     recall = (
         (len(bug_points) - len(missed)) / len(bug_points) if bug_points else 1.0
@@ -167,7 +223,7 @@ def score(
     kept_high = tuple(
         f.candidate_id
         for f in traps
-        if by_id[f.candidate_id].bucket not in LOW_BUCKETS
+        if scoring_bucket(by_id[f.candidate_id], harm_scored) not in LOW_BUCKETS
     )
     trap_rejection = (
         (len(traps) - len(kept_high)) / len(traps) if traps else 1.0
@@ -184,15 +240,20 @@ def score(
         missed=missed,
         trap_rejection=trap_rejection,
         traps_kept_high=kept_high,
-        inspection_ratio=inspection_ratio(fixtures, triages),
+        inspection_ratio=inspection_ratio(fixtures, triages, harm_scored=harm_scored),
         bucket_counts=dict(counts),
+        harm_scored=harm_scored,
     )
 
 
-def inspection_ratio(fixtures: list[Fixture], triages: list[Triage]) -> float:
+def inspection_ratio(
+    fixtures: list[Fixture], triages: list[Triage], *, harm_scored: bool = True
+) -> float:
     """Fraction of the ranked list a reviewer reads to see every real defect.
 
-    Ranking is by :attr:`Triage.rank_key` -- bucket order, then confidence. The
+    Ranking is by :attr:`Triage.rank_key` -- bucket order, then confidence, then
+    bug points last among exact ties (pessimistic, so the figure never depends
+    on how candidate ids happen to sort). The
     ratio is the 1-based position of the *last* bug point in that order divided
     by the total, so a single bug point sunk to the bottom costs the full 100%.
     That sharpness is the point: it is what distinguishes this from precision,
@@ -205,9 +266,13 @@ def inspection_ratio(fixtures: list[Fixture], triages: list[Triage]) -> float:
     if not real:
         return 0.0
 
+    # Ties -- same bucket, same confidence -- put bug points *after* the other
+    # candidates they tie with: the worst case for the reviewer. Breaking them by
+    # candidate id, as this did until 2026-09-27, ordered them by a hash, and on
+    # the `+domain` row that alone moved the ratio anywhere between 60% and 75%.
     ordered = sorted(
         (f.candidate_id for f in fixtures),
-        key=lambda cid: (by_id[cid].rank_key, cid),
+        key=lambda cid: (scoring_rank_key(by_id[cid], harm_scored), cid in real, cid),
     )
     last = max(i for i, cid in enumerate(ordered, start=1) if cid in real)
     return last / len(ordered)

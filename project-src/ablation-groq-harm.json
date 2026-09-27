@@ -8,7 +8,7 @@
     "coverage": 1.0,
     "n_scored": 20,
     "n_expected": 20,
-    "trap_rejection": 0.7,
+    "trap_rejection": 0.8,
     "inspection_ratio": 0.65,
     "buckets": {
       "likely_real": 7,
@@ -16,7 +16,7 @@
       "likely_benign": 4,
       "likely_infeasible": 7
     },
-    "harm_scored": false,
+    "harm_scored": true,
     "blocking_element_groups": {},
     "request_distribution": null,
     "missed": [],
@@ -57,7 +57,7 @@
     "coverage": 1.0,
     "n_scored": 20,
     "n_expected": 20,
-    "trap_rejection": 0.5,
+    "trap_rejection": 0.8,
     "inspection_ratio": 0.75,
     "buckets": {
       "likely_real": 6,
@@ -65,7 +65,7 @@
       "uncertain": 2,
       "likely_infeasible": 5
     },
-    "harm_scored": false,
+    "harm_scored": true,
     "blocking_element_groups": {},
     "request_distribution": null,
     "missed": [],

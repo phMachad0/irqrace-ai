@@ -922,3 +922,84 @@ but the direction is consistent across three separate measures.
 `+progressive`, `+decomposition` and `+self-validation` remain unmeasured. They are not
 affordable on this tier: the two decomposition rows issue four to five requests per candidate
 against an 8,000 token-per-minute ceiling.
+
+## [2026-09-27] direction | progressive prompting deferred until the static pipeline exists
+
+Lucas's call, to stop spending tokens on a row that cannot yet measure what it is named for.
+
+**Why.** Reading the request loop end to end found that the ablation's only C4 backend is
+`RecordBackedResolver(record)` (`client.py:189`; its `extra` hook is used only in tests). It
+answers from the record the model already has, so every request either re-serves something in
+the prompt or comes back `not_found`/`unsupported` with a recall rule attached. No request can
+add information. `svp_simple_029_001`'s trap, which the M1 entry predicted progressive prompting
+would fix, is the concrete case: the caller body at lines 73–74 is not in the record, so asking
+for `SetSelfCtrlFlag` returns `not_found` and rule 2 tells the model to assume it touches the
+variable. The prediction could not come true, and its failure would say nothing about the model.
+Meanwhile each round re-sends the whole history (the API is stateless): up to 5 calls per
+candidate, up to 10 with decomposition.
+
+**What changed** (`project-src`, 238 passing): `ABLATION` is four rows — `simple`, `+domain`,
+`+decomposition`, `+self-validation` — none progressive, none carrying `context_requests.md`.
+The `+progressive` definition lives in `DEFERRED`; `run-ablation.py` and `irqrace llm prompts`
+refuse it by name with the reason. The loop and its tests stay. Rows 3–4 now cost at most 2
+requests per candidate. `simple` and `+domain` hashes are unchanged, so their measured results
+remain cached; the two later rows have new hashes, so nothing from their progressive versions can
+be served.
+
+**Correction to chat on the same day:** `+self-validation` adds no request — it is prompt text.
+
+**Consequence for M3.** The table is no longer in [[LLift (paper)]]'s five-row shape; D#2 is
+missing and must be reported as deferred, not as measured-null. It returns when a resolver can
+answer from real source — cheapest form: read `subject.source_root` and serve
+`function_definition`/`isr_body`, ahead of Track A's W8 resolver.
+
+## [2026-09-27] direction | harmfulness not scored on Racebench (option C) — and what re-scoring showed
+
+Lucas chose option C from the [[Open Questions]] entry on Racebench's dead readers: the
+harmfulness answer is still asked, recorded and reported, but **on Racebench only feasibility is
+scored** — a feasible candidate counts as found. The benchmark annotates program facts ("the
+interleaving exists"), so a model that correctly calls `reader = x;` with a dead `reader` benign
+was being penalised for being right. Harmfulness gets judged on the real-world suite in W9.
+
+**Code** (`project-src`, 242 passing): `scoring_bucket()` / `scoring_rank_key()` give the
+feasibility-only view; `score(..., harm_scored=False)` uses it for recall, trap rejection and
+Inspection Ratio, while `bucket_counts` keeps the reported buckets. `run-ablation.py` defaults
+to it (`--score-harm` restores the old view) and gains **`--cache-only`**, which replaces the
+backend's `chat` with an error so a cache miss becomes an exclusion instead of a request.
+Results carry `harm_scored`; the M3 table states the view and warns on mixed views.
+
+**Re-scored from cache, 0 requests:**
+
+| row | recall | trap rejection (old → C) | Inspection Ratio (old → C) |
+| --- | --- | --- | --- |
+| `simple` | 100% | 80% → **70%** | 65% → **65%** |
+| `+domain` | 100% | 80% → **50%** | 75% → **75%** |
+
+`ablation-groq.json`/`.md` now hold view C; the old view is kept as `ablation-groq-harm.json`.
+
+**This corrects the 2026-09-26 reading.** That entry attributed `+domain`'s 10-point Inspection
+Ratio loss to the harmfulness clause sinking bug points. Under view C the harmfulness answer
+cannot move anything, and a gap remains — so the clause was not the whole cause. *How big* a gap
+turned out to depend on something arbitrary; see the review note below.
+In view C every bug point in both rows is `feasible`, which makes the Inspection Ratio simply
+the number of candidates called feasible: `simple` calls 13 feasible (10 bugs + 3 traps),
+`+domain` 15 (10 + 5). The two extra are **traps `simple` correctly called infeasible and
+`+domain` called feasible** — `svp_simple_002_001`'s trap and one of `svp_simple_003_001`'s two
+traps — which `+domain` then labelled benign. The old view hid this: calling them benign put
+them in a low bucket and counted them as rejected, which is why trap rejection read 80% for
+both rows. `+domain` worsened *feasibility* judgement on two traps, and the harmfulness answer
+was masking it. The domain-rules table, not the harmfulness clause, is what to examine.
+
+Same strength-of-evidence caveat as before: n=20, one sample, two candidates.
+
+**Review note, same day — the Inspection Ratio broke ties by hash.** Candidates with equal
+bucket and confidence were ordered by candidate id, which is a fingerprint hash. Under view C
+`+domain` has seven feasible candidates tied at confidence 0.90 (four bug points, three traps),
+and that tie alone let its Inspection Ratio land anywhere from **60% to 75%**; `simple` has no
+such tie and is 65% either way. Ties now put bug points last — the reviewer's worst case,
+deterministic and conservative — which happens to reproduce every figure above, so no number
+changes; what changes is that they no longer depend on hash order. The robust finding is the
+trap count: `+domain` called two more traps feasible (trap rejection 70% → 50%). The Inspection
+Ratio gap runs from **5 points in `+domain`'s favour to 10 against it** depending on tie
+convention (60–75% against a fixed 65%), and the table reports the pessimistic end. With n=20 at one sample, confidence values clustering on 0.90 is itself worth
+watching: it makes the ranking coarser than the metric assumes.

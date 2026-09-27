@@ -305,7 +305,7 @@ def cmd_llm_fixtures(args: argparse.Namespace) -> int:
 
 
 def cmd_llm_prompts(args: argparse.Namespace) -> int:
-    from .llm.prompts import ABLATION, BY_NAME
+    from .llm.prompts import ABLATION, BY_NAME, DEFERRED
 
     if args.row is None:
         for c in ABLATION:
@@ -322,6 +322,8 @@ def cmd_llm_prompts(args: argparse.Namespace) -> int:
             print(f"{c.name:18} {c.hash()}  {', '.join(on) or 'baseline'}")
         return 0
 
+    if args.row in DEFERRED:
+        return _err(f"row {args.row!r} is deferred until the static pipeline exists")
     if args.row not in BY_NAME:
         return _err(f"unknown row {args.row!r}; known: {', '.join(BY_NAME)}")
     print(BY_NAME[args.row].system_prompt())
