@@ -1196,3 +1196,43 @@ proof of impossibility discards. The rest were precision fixes: competition scor
 simple cases, IntRace used 30 of 31 cases, SDRacer's repair list includes locks, LLift's $0.43 is
 GPT-4 at 2024 prices, BMC4AV's "automatic" is its own claim, and two unsourced rhetorical claims
 in the introduction were replaced by what SDRacer actually says. Builds clean; 43 pages.
+
+## [2026-09-28] direction | monograph rebuilt on the PCS template; status report added
+
+The partial monograph was restructured to follow the department's own LaTeX model,
+`TCC_PCS_EPUSP_2023`, and a separate status report was written for the advisors.
+
+**Format.** The document now uses the model's preamble, class options, cover and title page,
+and compiles with pdfLaTeX. The custom cover, the custom chapter style and the XeLaTeX/Arial
+dependency were dropped. Qualitative tables became `quadro` environments, which is what the
+model ships for them.
+
+**Structure.** The model's six chapters replace the previous nine. Related work no longer has a
+chapter of its own — the review is digested into *Aspectos Conceituais*, with the papers cited
+inline. The proposal became *Projeto e Implementação* and the evaluation methodology became
+*Testes e Avaliação*, both inside *Desenvolvimento do Trabalho*.
+
+**Four cuts, all requested.** The uCLinux anecdote; the inter-stage contracts, including the
+C1–C4 table and its appendix, which are internal development material; the schedule, milestones
+and the division of work between the authors; and the *Considerações Finais* chapter, which now
+exists only in `final.tex`.
+
+**One editorial decision worth recording.** *Data race* and atomicity violation are now
+distinguished exactly once, where the defect is defined, and treated as synonyms thereafter; the
+pair/triple contrast is gone from the text entirely. The tool still derives both, so the
+monograph is written ahead of a possible decision to keep only triples. If that decision is
+reversed, the text has to change, not just a footnote.
+
+**BMC4AV was demoted rather than removed.** Pedro raised that its zero-false-positive claim
+could read as weakening our motivation, and that its counting dispute costs the reader more than
+it returns. The counting-unit subsection is gone and the tool's own headline numbers with it;
+what remains is its method, the fact that it is the only obtainable artifact, and its recall
+critique of NIChecker with the preprint and unit caveats in one sentence. The argument that the
+denominator is in dispute now rests on our own recount, not on the dispute between the two
+papers.
+
+**`monografia/relato.tex`** is a six-page status report in the same class, in article mode. It
+covers the literature review and the decisions drawn from it, the plan, what is built, milestone
+status, next steps and the de-scoping ladder. Written for advisors rather than for developers,
+so it carries results and findings but no implementation mechanics, and it names the two fronts
+without naming who runs them.

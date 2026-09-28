@@ -1,24 +1,24 @@
 \setlength{\absparsep}{18pt}
 \begin{resumo}
-Software embarcado orientado a interrupções está sujeito a \textit{data races} e
-violações de atomicidade: uma rotina de tratamento de interrupção pode
-interromper o código principal entre dois acessos a uma variável compartilhada
-e corromper seu valor. As ferramentas da literatura priorizam a precisão, medem
-mal o recall e tratam essas duas classes de defeito separadamente; apenas a mais
-antiga propõe correções. Em paralelo, trabalhos recentes usam modelos de
-linguagem para triar e reparar alertas de analisadores estáticos, mas todos
-tratam defeitos sequenciais. Este trabalho propõe uma ferramenta que ocupa essa
-interseção. Uma análise estática sobre a representação intermediária do LLVM
-encontra os candidatos das duas classes sem falsos negativos, em relação a uma
-lista explícita de premissas; um solver SMT descarta apenas o que prova
-impossível; e um modelo de linguagem ordena, explica e propõe correções para os
-candidatos restantes, sem nunca descartá-los. A avaliação usa o benchmark
-Racebench, com gabarito recontado e corrigido (48 defeitos e 38 armadilhas),
-métricas que não podem ser melhoradas descartando candidatos (portão de recall,
-rejeição de armadilhas e \textit{Inspection Ratio}) e uma ablação das técnicas de
-\textit{prompt}. Esta monografia parcial apresenta a fundamentação, a revisão da
-literatura, a proposta, a metodologia de avaliação e o cronograma do trabalho.
+Software embarcado orientado a interrupções está sujeito a defeitos de
+concorrência onde uma rotina de tratamento
+de interrupção pode ser disparada entre dois acessos a uma variável
+compartilhada e corromper seu valor. As ferramentas da literatura priorizam a
+precisão, medem mal o recall e apenas a mais antiga propõe correções. Em
+paralelo, trabalhos recentes usam modelos de linguagem para triar e reparar
+alertas de analisadores estáticos, mas todos tratam defeitos sequenciais. Este
+trabalho ocupa a interseção vazia entre as duas literaturas. Uma análise
+estática sobre a representação intermediária do LLVM encontra os candidatos sem
+falsos negativos em relação a uma lista explícita de premissas, um solucionador
+SMT descarta apenas o que prova impossível e um modelo de linguagem ordena,
+explica e propõe correções para os candidatos restantes, sem nunca descartá-los.
+A avaliação usa o \textit{benchmark} Racebench com gabarito recontado e
+corrigido, métricas que não podem ser melhoradas descartando candidatos, entre
+elas o portão de recall, a rejeição de armadilhas e o \textit{Inspection Ratio},
+e uma ablação das técnicas de \textit{prompt}. Esta monografia parcial
+apresenta os aspectos conceituais, o método de trabalho, os requisitos, o
+projeto da ferramenta e o procedimento de avaliação.
 
-Palavras-chave: concorrência. interrupções. software embarcado.
+\textbf{Palavras-chave}: concorrência. interrupções. software embarcado.
 análise estática. modelos de linguagem.
 \end{resumo}

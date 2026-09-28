@@ -1,26 +1,25 @@
 \begin{resumo}[Abstract]
 \begin{otherlanguage*}{english}
-Interrupt-driven embedded software is prone to data races and atomicity
-violations: an interrupt service routine can preempt the main code between two
+Interrupt-driven embedded software suffers from concurrency defects where an interrupt service routine may fire between two
 accesses to a shared variable and corrupt its value. Existing tools favour
-precision, measure recall poorly and treat the two defect classes separately;
-only the oldest one proposes fixes. Meanwhile, recent work uses large language
-models to triage and repair static-analyzer alerts, but all of it addresses
-sequential defects. This work proposes a tool at that intersection. A static
-analysis over LLVM's intermediate representation finds candidates of both
-classes with no false negatives relative to an explicit list of assumptions; an
-SMT solver discards only what it proves impossible; and a language model ranks,
-explains and proposes fixes for the remaining candidates, never discarding them.
-The evaluation uses the Racebench benchmark with a recounted and corrected
-ground truth (48 defects and 38 traps), metrics that cannot be improved by
-discarding candidates (recall gate, trap rejection and Inspection Ratio), and an
-ablation of prompt techniques. This partial report presents the background, the
-literature review, the proposal, the evaluation methodology and the work
-schedule.
+precision, measure recall poorly, and only the oldest one proposes fixes.
+Meanwhile, recent work uses large language models to triage and repair
+static-analyzer alerts, but all of it addresses sequential defects. This work
+sits at the empty intersection between the two literatures. A static analysis
+over LLVM's intermediate representation finds candidates with no false
+negatives relative to an explicit list of assumptions, an SMT solver discards
+only what it proves impossible, and a language model ranks, explains and
+proposes fixes for the remaining candidates without ever discarding them. The
+evaluation uses the Racebench benchmark with a recounted and corrected ground
+truth, metrics that cannot be improved by discarding candidates, namely the
+recall gate, trap rejection and the Inspection Ratio, and an ablation of prompt
+techniques. This partial report presents the conceptual background, the work
+method, the requirements, the tool design and the evaluation procedure.
 
 \vspace{\onelineskip}
+
 \noindent
-Keywords: concurrency. interrupts. embedded software. static
-analysis. large language models.
+\textbf{Keywords}: concurrency. interrupts. embedded software. static analysis.
+large language models.
 \end{otherlanguage*}
 \end{resumo}

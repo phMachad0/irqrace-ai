@@ -1,0 +1,140 @@
+\chapter{Especificação de Requisitos} \label{cap:especificacao}
+
+Os requisitos abaixo descrevem a ferramenta como um todo, da entrada em código
+C ao relatório ordenado que o revisor lê. Eles derivam do objetivo enunciado na
+Seção~\ref{sec:objetivos} e das limitações observadas nas ferramentas
+existentes, e alguns deles são restrições deliberadas, que proíbem
+comportamentos que melhorariam os números finais ao custo do recall.
+
+\section{Princípio que governa a especificação}
+\label{sec:principio}
+
+Uma única regra atravessa todos os requisitos. Um solucionador pode descartar
+um candidato; o modelo de linguagem, não. Um veredicto de insatisfazibilidade é
+uma prova de que a intercalação não existe, e o julgamento de um \llm\ não é
+prova alguma. A consequência é que as etapas automáticas de filtragem
+podem reduzir o conjunto, enquanto a etapa de triagem apenas o ordena e o
+explica, mantendo tudo no relatório final.
+
+A regra não decorre apenas de prudência. A literatura mede o efeito das duas
+políticas no mesmo ponto de integração, e os filtros que descartam candidatos
+perdem de 6 a 25 pontos de recall \cite{reducing-fp,adataint}, ao passo que a
+política conservadora do LLift alcança recall de 1,00 \cite{llift}. Dela decorre
+também a escolha das métricas, uma vez que a precisão deixa de ser a medida
+principal e cede lugar ao recall, que precisa ser de 100\%, acompanhado do
+\textit{Inspection Ratio} (Seção~\ref{sec:soundness}).
+
+\section{Requisitos funcionais}
+\label{sec:rf}
+
+\begin{quadro}[htb]
+  \caption{\label{quadro:rf}Requisitos funcionais}
+  \small
+  \begin{tabular}{@{}lL{11.6cm}@{}}
+    \toprule
+    & Descrição \\
+    \midrule
+    RF1 & Aceitar como entrada um programa em C, com um ou vários arquivos, e um arquivo de configuração que declare os fluxos, suas prioridades e as primitivas de mascaramento da plataforma. \\
+    RF2 & Identificar as posições de memória alcançadas por mais de um fluxo, incluindo variáveis locais compartilhadas por meio de ponteiros. \\
+    RF3 & Enumerar todos os acessos de leitura e escrita a essas posições, registrando fluxo, função, caminho de chamadas, linha do código-fonte e laços que envolvem o acesso. \\
+    RF4 & Derivar candidatos a defeito a partir dessa enumeração, restringindo as triplas aos quatro padrões não serializáveis do Quadro~\ref{quadro:padroes}. \\
+    RF5 & Descartar candidatos cujos fluxos comprovadamente não podem se sobrepor, por prioridade ou por mascaramento. \\
+    RF6 & Verificar a viabilidade de caminho dos candidatos restantes com um solucionador SMT, descartando apenas os provados impossíveis. \\
+    RF7 & Emitir, para cada candidato sobrevivente, um registro de contexto com as evidências necessárias para julgá-lo. \\
+    RF8 & Responder a pedidos de contexto adicionais feitos durante a triagem, como a definição de uma função, o corpo de uma \isr\ ou o estado de mascaramento numa linha. \\
+    RF9 & Classificar cada candidato em um de quatro grupos de leitura, com explicação, sem remover nenhum candidato do relatório. \\
+    RF10 & Propor, para cada candidato, uma correção no vocabulário de interrupções, acompanhada de uma testemunha da intercalação que a justifica. \\
+    RF11 & Reverificar o programa corrigido, confirmando o desaparecimento do defeito e a ausência de defeitos novos. \\
+    RF12 & Oferecer um painel que permita configurar o programa, executar a análise, ler cada candidato ao lado do código-fonte e aceitar ou rejeitar uma correção. \\
+    \bottomrule
+  \end{tabular}
+  \fonte{Elaborado pelos autores.}
+\end{quadro}
+
+Três requisitos merecem comentário, porque neles está a diferença em relação às
+ferramentas existentes.
+
+O RF5 e o RF6 são requisitos de descarte, e ambos são condicionados a uma
+prova. No RF5, a prova é estrutural, pois um fluxo de prioridade estritamente
+menor não interrompe outro, e uma interrupção mascarada em todos os caminhos
+não ocorre. No RF6, a prova é o veredicto de insatisfazibilidade do
+solucionador. Um resultado inconclusivo, por limite de tempo ou por construção
+não suportada, nunca é tratado como descarte, e o candidato segue adiante
+carregando a informação de até onde o solucionador chegou.
+
+O RF9 fixa o papel do modelo de linguagem, que ordena e explica sem alterar a
+composição do relatório. Nisso reside a diferença entre reduzir o esforço de
+revisão e reduzir o recall, e é também o que permite à avaliação adotar o
+\textit{Inspection Ratio} como medida de custo.
+
+O RF12, comumente tratado como acessório em trabalhos acadêmicos, é aqui parte
+da contribuição. A comparação do Quadro~\ref{quadro:capacidades} mostra que a
+automação é o eixo em que as ferramentas dessa literatura efetivamente
+competem, com o NIChecker exigindo que o usuário indique variável e padrão a
+cada execução e o IntRace exigindo um arquivo de configuração escrito
+manualmente. Uma ferramenta que produz bons candidatos, mas não pode ser
+operada, não atende ao objetivo a que se propõe.
+
+\section{Requisitos não funcionais}
+\label{sec:rnf}
+
+\begin{quadro}[htb]
+  \caption{\label{quadro:rnf}Requisitos não funcionais}
+  \small
+  \begin{tabular}{@{}lL{11.6cm}@{}}
+    \toprule
+    & Descrição \\
+    \midrule
+    RNF1 & Nenhum defeito anotado no gabarito pode deixar de aparecer no relatório, e nenhum pode ser classificado no grupo de menor prioridade de leitura. \\
+    RNF2 & As premissas sob as quais o RNF1 vale devem estar declaradas por escrito e versionadas junto com o código. \\
+    RNF3 & Toda decisão de descarte deve ser rastreável até a prova que a autorizou. \\
+    RNF4 & O registro de contexto deve distinguir o que foi provado, o que veio da configuração e o que é desconhecido. \\
+    RNF5 & A etapa de triagem deve ser independente do provedor do modelo, permitindo trocar de modelo sem alterar os \textit{prompts}. \\
+    RNF6 & Toda medição deve registrar o modelo, a data e a configuração de \textit{prompt} que a produziram, e as respostas do modelo devem ser guardadas em cache para que uma medição possa ser recalculada sem nova chamada. \\
+    RNF7 & O código analisado deve entrar no \textit{prompt} delimitado e declarado como dado, nunca como instrução. \\
+    RNF8 & O custo por candidato, em \textit{tokens} e em tempo, deve ser medido e reportado. \\
+    \bottomrule
+  \end{tabular}
+  \fonte{Elaborado pelos autores.}
+\end{quadro}
+
+O RNF7 responde a um risco apontado por \citeonline{sastgenius}. O código
+analisado entra no \textit{prompt} acompanhado de seus comentários, e um
+comentário pode ter sido escrito para instruir o modelo a ignorar um defeito.
+Num analisador de segurança, trata-se de um vetor de ataque; neste trabalho,
+é ao menos uma via pela qual o modelo pode ser induzido ao erro por um
+comentário desatualizado.
+
+O RNF5 e o RNF6 existem porque comparações entre modelos envelhecem
+rapidamente. O que este trabalho pretende afirmar não é que um modelo
+específico funciona, e sim que uma determinada arquitetura de \textit{prompt}
+funciona, afirmação que só é verificável se o modelo puder ser substituído com
+o restante mantido fixo.
+
+\section{Premissas e ameaças ao recall}
+\label{sec:premissas}
+
+O RNF1 é uma afirmação condicional, e as condições são as premissas abaixo.
+Elas valem tanto como especificação quanto como declaração de limites.
+
+\begin{itemize}
+  \item O arquivo de configuração nomeia todos os fluxos. Um tratador não
+    declarado é invisível para a análise, e esta é a maior ameaça ao recall.
+  \item Uma chamada indireta cujos alvos não se resolvem pode chamar qualquer
+    função de assinatura compatível cujo endereço tenha sido tomado.
+  \item Posições compartilhadas são identificadas por análise \textit{may}, e a
+    correção da análise de ponteiros usada é herdada, não reverificada.
+  \item Uma função sem corpo disponível pode ler e escrever qualquer variável
+    global.
+  \item Fluxos de mesma prioridade podem se interromper mutuamente, e o
+    aninhamento é permitido.
+  \item Uma interrupção só está mascarada num intervalo se estiver mascarada em
+    todos os caminhos e se nenhum outro fluxo puder reabilitá-la ali dentro.
+  \item Apenas uma prova descarta um candidato, de modo que nem o resultado
+    inconclusivo do solucionador nem o julgamento do \llm\ o fazem.
+\end{itemize}
+
+Uma premissa afasta-se deliberadamente desse padrão conservador, a de que uma
+\isr\ não interrompe a si mesma. O Racebench não exclui a reentrância e a
+literatura diverge quanto a ela, de modo que a escolha fica registrada como
+perda potencial de recall, a ser revista antes de qualquer afirmação final.

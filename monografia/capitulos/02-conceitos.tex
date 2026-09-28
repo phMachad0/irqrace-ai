@@ -1,0 +1,513 @@
+\chapter{Aspectos Conceituais} \label{cap:conceitos}
+
+Este capítulo reúne os conceitos sobre os quais o restante do documento se
+apoia e, junto com eles, a revisão da literatura. Os dois conteúdos aparecem
+entrelaçados deliberadamente, uma vez que quase toda definição empregada aqui
+provém de um trabalho específico e carrega as escolhas que esse trabalho fez. A
+Seção~\ref{sec:interrupcoes} descreve o modelo de execução de programas
+orientados a interrupções. A Seção~\ref{sec:defeitos} define o defeito que se
+busca encontrar. A Seção~\ref{sec:tecnicas} apresenta as técnicas de análise
+empregadas pela literatura e por este trabalho, e a Seção~\ref{sec:ferramentas}
+descreve as quatro ferramentas que formam o estado da arte. Os
+\textit{benchmarks} vêm na Seção~\ref{sec:benchmarks-conceito}, as métricas de
+avaliação na Seção~\ref{sec:soundness} e o uso de modelos de linguagem em
+análise estática na Seção~\ref{sec:llm}.
+
+Uma advertência vale para todo o capítulo. Salvo indicação em contrário, os
+números citados são os relatados pelos próprios autores. Muitos foram medidos
+em hardware diferente, sobre contagens diferentes do mesmo \textit{benchmark},
+ou copiados de outros artigos porque as ferramentas de comparação não estavam
+disponíveis. Eles descrevem o que cada trabalho afirma, não um resultado
+comparável entre trabalhos.
+
+\section{Programas orientados a interrupções}
+\label{sec:interrupcoes}
+
+\subsection{Fluxos, prioridades e preempção assimétrica}
+
+Um programa orientado a interrupções é formado por um fluxo principal, que
+executa continuamente, e por um conjunto de rotinas de tratamento de
+interrupção. A literatura o descreve como
+$P = \mathit{Main} \parallel \mathit{ISR}_1 \parallel \dots \parallel
+\mathit{ISR}_n$, com uma função que atribui uma prioridade a cada fluxo
+\cite{bmc4av}. Cada fluxo é uma raiz de execução, no sentido de que tudo o que
+ele alcança por chamadas de função pode executar sob sua identidade e com sua
+prioridade.
+
+A preempção entre esses fluxos é assimétrica. Uma \isr\ interrompe o fluxo
+principal, mas o fluxo principal nunca interrompe uma \isr; uma \isr\ de
+prioridade alta interrompe uma de prioridade baixa, e nunca o contrário. Entre
+\textit{threads}, a preempção é simétrica, e é dessa diferença que
+\citeonline{sdracer} tiram as três consequências que separam os dois mundos.
+Uma \isr\ não pode bloquear, já que executa até o fim a menos que outra de
+prioridade maior a interrompa. A relação \textit{happens-before}, base dos
+detectores de corrida entre \textit{threads}, deixa de ser correta quando uma
+interrupção ocorre durante o próprio cálculo dessa relação. E a sincronização
+não é feita com travas, mas com mascaramento de interrupções. As técnicas de
+\textit{threads}, portanto, não se transferem, e a literatura de interrupções
+raciocina sobre padrões de acesso e prioridades.
+
+A convenção de numeração das prioridades diverge entre os artigos, o que exige
+atenção de quem reimplementa qualquer um deles.
+\citeonline{sdracer} e \citeonline{intrace} formalizam números maiores como
+prioridades menores, e \citeonline{bmc4av} adotam o contrário. O
+\textit{benchmark} usado por todos eles declara explicitamente que número maior
+significa prioridade maior \cite{racebench}, e é essa a convenção adotada aqui.
+
+\subsection{Aninhamento}
+
+Uma \isr\ interrompida por outra de prioridade maior, que por sua vez pode ser
+interrompida, forma uma cadeia de aninhamento (\textit{nesting}). O aninhamento
+multiplica as intercalações possíveis e é a característica que mais distingue
+as ferramentas entre si. O NIChecker o trata nativamente, codificando
+prioridade e mascaramento nas condições de invocação de cada \isr\
+\cite{nichecker}. O IntRace o aborda por uma conversão sequencial de dentro
+para fora \cite{intrace}, o BMC4AV por relações de ordem parcial entre acessos
+\cite{bmc4av}, e o SDRacer exclui interrupções reentrantes do seu
+modelo \cite{sdracer}.
+
+\subsection{Sincronização por mascaramento}
+
+Sem travas, o programador impede que a interrupção ocorra. Ele mascara a
+interrupção antes do trecho que precisa ser indivisível e a reabilita depois.
+No Racebench isso é feito com \texttt{disable\_isr(n)} e
+\texttt{enable\_isr(n)}, em que \texttt{n = -1} designa todas as interrupções
+\cite{racebench}. Em código real, o mascaramento pode vir de APIs padronizadas,
+como \texttt{disable\_irq} no Linux, de escritas diretas em registradores de
+controle ou de variáveis mantidas pelo próprio programa. \citeonline{intrace}
+resolvem o problema pedindo ao usuário um arquivo de configuração que enumere
+os mecanismos não padronizados da plataforma.
+
+Dois cuidados decidem se uma análise de mascaramento perde defeitos. O primeiro
+é que uma interrupção só pode ser dada como mascarada num ponto se estiver
+mascarada em todos os caminhos que chegam àquele ponto, pois ``mascarada em
+algum caminho'' não oferece proteção alguma. O segundo é menos evidente e aparece no
+próprio \textit{benchmark}. O mascaramento feito por um fluxo pode ser desfeito
+por outro. No caso \texttt{svp\_simple\_001\_001} do Racebench, o fluxo
+principal mantém a interrupção 2 mascarada durante todo o intervalo de um
+defeito anotado, e o defeito ainda assim é real, porque a interrupção 1
+continua habilitada, interrompe esse intervalo e reabilita a interrupção 2 por
+dentro. Uma análise que considerasse apenas o fluxo local
+descartaria um defeito verdadeiro sem qualquer indício de erro.
+
+\section{O defeito de concorrência tratado neste trabalho}
+\label{sec:defeitos}
+
+A literatura enuncia o problema de duas maneiras. SDRacer e IntRace falam em
+\textit{data race} e o definem sobre dois acessos, um de cada fluxo, sendo ao
+menos um deles uma escrita, perguntando se a \isr\ pode executar no instante
+exato do acesso do outro fluxo \cite{sdracer,intrace}. NIChecker e BMC4AV falam
+em violação de atomicidade e a definem sobre três acessos, dois do fluxo
+interrompido e um da \isr\ entre eles, perguntando se a execução resultante
+equivale a alguma execução em série dos fluxos \cite{nichecker,bmc4av}. Este
+trabalho adota a segunda formulação, por duas razões. O gabarito do Racebench
+anota todos os seus defeitos sobre três acessos, inclusive nos casos usados
+pelos trabalhos da primeira linha, e a pergunta sobre um intervalo é
+estritamente mais exigente que a pergunta sobre um instante. Os dois termos são
+empregados como sinônimos no restante do documento.
+
+Uma violação de atomicidade envolve três acessos à mesma posição de memória.
+Dois deles, $A_1$ e $A_2$, pertencem ao fluxo interrompido e o programador os
+supunha indivisíveis. O terceiro, $B$, pertence a uma \isr\ e ocorre entre os
+outros dois. Das oito combinações possíveis de leitura (R) e escrita (W) sobre
+a tripla, quatro produzem um estado que nenhuma execução em série produziria.
+O Quadro~\ref{quadro:padroes} mostra cada uma delas.
+
+\begin{quadro}[htb]
+  \caption{\label{quadro:padroes}Os quatro padrões não serializáveis}
+  \begin{tabular}{@{}lL{9.5cm}@{}}
+    \toprule
+    Padrão $(A_1, B, A_2)$ & Por que quebra a atomicidade \\
+    \midrule
+    $(R,W,R)$ & as duas leituras do mesmo fluxo veem valores diferentes \\
+    $(R,W,W)$ & $A_2$ escreve com base numa leitura que ficou obsoleta \\
+    $(W,R,W)$ & a \isr\ enxerga um valor intermediário que não deveria existir \\
+    $(W,W,R)$ & $A_2$ lê o valor escrito pela \isr, e não o escrito por $A_1$ \\
+    \bottomrule
+  \end{tabular}
+  \fonte{Elaborado pelos autores a partir de \citeonline{nichecker} e
+  \citeonline{bmc4av}.}
+\end{quadro}
+
+As outras quatro combinações, $(R,R,\ast)$, $(W,R,R)$ e $(W,W,W)$, são
+serializáveis. O padrão $(R,W,W)$ é disputado, e a divergência importa para
+qualquer contagem. \citeonline{bmc4av} o classificam como benigno e excluem do
+Racebench os casos que só o contêm, enquanto \citeonline{nichecker} o contam
+como defeito. Este trabalho o mantém, porque o gabarito do Racebench o anota em
+10 dos 48 defeitos que contamos nos casos simples.
+
+Nem todo defeito tem consequência, e a literatura separa as duas perguntas.
+\citeonline{intrace} adotam o critério de que um defeito é nocivo quando a
+variável compartilhada alimenta uma condição de desvio ou serve de índice de
+vetor ou de ponteiro. Os mesmos autores relatam corridas deixadas sem proteção
+deliberadamente sem proteção, por razões de tempo real, como uma de suas duas
+fontes conhecidas de falsos positivos. Julgar a nocividade é julgar a intenção do programa, o que
+é distinto de decidir se a intercalação é possível, e as duas perguntas são
+mantidas separadas ao longo de todo este trabalho.
+
+\section{Técnicas de análise de programas}
+\label{sec:tecnicas}
+
+\subsection{Análise estática}
+
+A análise estática raciocina sobre o código sem executá-lo, e três estruturas
+sustentam o que se faz aqui. O grafo de chamadas indica quais funções cada
+função pode chamar e, por extensão, tudo o que é alcançável a partir de cada
+fluxo. O grafo de fluxo de controle (\textit{Control-Flow Graph}, CFG) indica,
+dentro de uma função, em que ordem as instruções podem executar. A análise de
+ponteiros indica a que posições de memória cada ponteiro pode apontar. Ela é do
+tipo \textit{may} quando superaproxima as possibilidades e do tipo \textit{must}
+quando as subaproxima. Para não perder defeitos é preciso usar a forma
+\textit{may}, e uma posição é considerada compartilhada quando os conjuntos de
+posições que dois fluxos podem alcançar se interceptam.
+
+Este trabalho faz a análise sobre a representação intermediária do compilador
+LLVM \cite{llvm} e usa a biblioteca SVF na análise de ponteiros \cite{svf}. Os
+metadados de depuração do LLVM, em particular o \texttt{DILocation}, permitem
+associar cada instrução analisada a uma linha do código-fonte C. Sem esse
+vínculo, nenhum revisor, humano ou modelo de linguagem, conseguiria interpretar
+o resultado.
+
+\subsection{Execução simbólica e viabilidade de caminho}
+
+Na execução simbólica as entradas do programa são tratadas como símbolos, e
+cada caminho percorrido acumula uma condição sobre esses símbolos. Um
+solucionador decide se a condição é satisfazível, isto é, se existe alguma
+entrada que leve o programa por aquele caminho. \citeonline{sdracer} usam a
+técnica para gerar entradas e intercalações que alcancem os pontos suspeitos, e
+registram uma limitação relevante, a de que registradores de hardware não
+constituem variáveis livres, pois seus valores dependem do modelo do
+dispositivo.
+
+A análise de viabilidade de caminho aplica a mesma ideia a um candidato
+específico. \citeonline{intrace} constroem um resumo simbólico da \isr,
+inserem-no no ponto de preempção e entregam as restrições resultantes ao
+solucionador Z3 \cite{z3}. Quando o solucionador responde que as restrições são
+insatisfazíveis, a intercalação é impossível, e esse veredicto é uma prova.
+Essa propriedade ocupa um lugar central no projeto apresentado adiante, porque
+só uma prova de impossibilidade autoriza descartar um candidato.
+
+\subsection{Verificação de modelos limitada}
+
+A verificação de modelos limitada (\textit{Bounded Model Checking}, BMC)
+procura defeitos em todas as execuções de comprimento até um limite $u$,
+codificando o programa como uma fórmula para um solucionador SAT ou SMT. Sua
+vantagem é produzir um contraexemplo, isto é, uma execução concreta que exibe o
+defeito. Sua limitação é o crescimento exponencial do espaço de estados com
+$u$, e alguns casos do Racebench exigem desenrolar um laço dez mil vezes antes
+de o defeito aparecer \cite{nichecker}. A ferramenta de referência dessa
+família é o CBMC \cite{cbmc}.
+
+Duas técnicas atenuam o problema. A sequencialização preguiçosa (\textit{lazy
+sequentialization}) traduz o programa concorrente num programa sequencial não
+determinístico que simula suas execuções e o entrega a um verificador
+sequencial \cite{lazycseq}. A abstração de laços substitui laços por versões
+superaproximadas antes do desenrolamento, para que defeitos profundos apareçam
+com um limite pequeno \cite{nichecker}. Em qualquer caso, a ausência de
+contraexemplo vale apenas até o limite escolhido e não é prova de ausência de
+defeitos.
+
+\section{Ferramentas de detecção para programas com interrupções}
+\label{sec:ferramentas}
+
+\subsection{SDRacer}
+
+\citeonline{sdracer} combinam análise estática, execução simbólica e simulação
+numa plataforma virtual para detectar, validar e reparar condições de corrida
+em software embarcado. A ferramenta trabalha em quatro etapas. A análise
+estática emite os alertas iniciais. A execução simbólica gera entradas e
+intercalações que alcancem cada alerta e elimina os de condições de caminho
+conflitantes. A plataforma virtual Simics força as interrupções a ocorrer nos
+pontos suspeitos e mantém apenas os candidatos que de fato se intercalam. Por fim, a
+ferramenta sugere correções, e o vocabulário dessas correções é específico de
+interrupção, incluindo desabilitar e reabilitar a interrupção em volta do
+acesso, inserir travas, estender uma seção crítica existente ou fundir seções
+adjacentes.
+
+Os autores relatam 190 condições de corrida detectadas em nove
+\textit{benchmarks} embarcados, com a execução simbólica eliminando 40,3\% dos
+alertas estáticos e a validação dinâmica mais 36,7\%. As correções custaram
+menos de 0,09 de sobrecarga em 9 dos 11 programas avaliados; nos outros dois a
+sobrecarga foi bem maior, porque desabilitar interrupções alterou o fluxo de
+controle da tarefa principal. A ausência de falsos negativos foi afirmada por
+inspeção manual. É a única ferramenta revisada que repara defeitos, e a
+contrapartida é que sua detecção se limita ao que a plataforma virtual consegue
+simular.
+
+\subsection{IntRace}
+
+\citeonline{intrace} detectam corridas de forma puramente estática, em três
+estágios de custo e precisão crescentes. O primeiro constrói o CFG a partir do
+Clang e de uma passagem LLVM, identifica os recursos compartilhados por análise
+de ponteiros interprocedural e casa acessos, ignorando deliberadamente
+condições de desvio e estado das interrupções para não perder nada. O segundo
+descarta candidatos cujos fluxos não podem se sobrepor, seja por prioridade,
+seja por mascaramento. O terceiro verifica a viabilidade de cada candidato
+restante com o Z3.
+
+A medição por estágio é o resultado mais aproveitável do artigo. São cerca de
+208 candidatos por programa real após o primeiro estágio; o segundo elimina
+54,2\% deles; o terceiro elimina mais 86,2\% do que lhe chega e consome 69,7\%
+do tempo total de análise. Sobre 30 dos 31 casos simples do Racebench, os
+autores relatam 5 falsos positivos e 73,2\% a menos de falsos positivos que a
+ferramenta Rchecker, embora os números do Rchecker tenham sido copiados do
+artigo original, pois a ferramenta não estava disponível. Sobre nove programas
+industriais, relatam 118 corridas e 9 falsos positivos. A arquitetura em três
+estágios do IntRace é o ponto de partida direto da etapa estática deste
+trabalho.
+
+\subsection{NIChecker}
+
+\citeonline{nichecker} verificam violações de atomicidade traduzindo o programa
+com interrupções num programa sequencial, por sequencialização preguiçosa, e
+entregando o resultado ao CBMC \cite{lazycseq,cbmc}. As condições de invocação
+de cada \isr\ no programa sequencial codificam prioridade e mascaramento, o que
+dá suporte nativo ao aninhamento. Antes do desenrolamento a ferramenta aplica
+abstração de laços, o que lhe permite encontrar defeitos que exigiriam
+desenrolar um laço dez mil vezes, e o fatiamento de programa somado à redução
+de pontos de preempção acelera a verificação em até 42,2\%. É o único trabalho
+revisado que prova a correção limitada de sua tradução.
+
+Os autores relatam 96,4\% de precisão no Racebench e 47 violações encontradas,
+sem falsos positivos, numa suíte de 18 programas reais. A limitação prática mais
+séria é operacional, já que o usuário precisa indicar, a cada execução, qual
+variável global e qual padrão verificar.
+
+\subsection{BMC4AV}
+
+\citeonline{bmc4av} também partem do CBMC, mas, em vez de sequencializar o
+programa, guiam o solucionador com um grafo de acessos à memória construído
+durante a resolução. Primeiro identificam violações potenciais por casamento de
+padrões e, para cada uma, as relações de ordem que precisariam valer; depois
+estendem o grafo guiados por essas relações até confirmar ou descartar a
+violação. É a única das quatro ferramentas revisadas cujo código-fonte está
+disponível.
+
+Sua contribuição mais relevante para este trabalho não é o resultado que
+reporta, e sim a crítica que dirige ao NIChecker, segundo a qual uma ferramenta
+com precisão de 100\% encontraria menos de 40\% das violações existentes na
+suíte de 18 programas reais. A crítica é aqui tomada como sintoma do problema
+de avaliação discutido na Seção~\ref{sec:soundness}, com duas ressalvas. O
+trabalho é um \textit{preprint} sem revisão por pares, e a contagem que sustenta
+o número adota uma unidade diferente da do gabarito distribuído com a suíte, o
+que explica parte da diferença.
+
+\subsection{Outras ferramentas citadas}
+
+Os trabalhos acima se comparam a ferramentas que não foram revisadas
+diretamente aqui. O Rchecker detecta corridas com o CBMC e uma lista de
+máscaras de interrupção; o intAtom detecta violações de atomicidade de forma
+estática; o CPA4AV usa árvores de alcançabilidade abstratas e falha nos casos
+com laços profundos; e o iCBMC estende o CBMC para interrupções aninhadas.
+Rchecker e intAtom não puderam ser obtidos pelos autores que os usaram como
+comparação, e seus números foram copiados de outros artigos, medidos em outro
+hardware \cite{intrace,nichecker,bmc4av}.
+
+\subsection{Comparação}
+
+O Quadro~\ref{quadro:capacidades} resume as quatro ferramentas.
+
+\begin{quadro}[htb]
+  \caption{\label{quadro:capacidades}Capacidades das ferramentas revisadas}
+  \small
+  \begin{tabular}{@{}L{2.4cm}L{2.5cm}L{2.5cm}L{3.0cm}L{2.7cm}@{}}
+    \toprule
+    & SDRacer & IntRace & NIChecker & BMC4AV \\
+    \midrule
+    Ano, veículo & 2020, TSE & 2024, J. Supercomp. & 2025, TOSEM & 2026, \textit{preprint} \\
+    Método & estático, simbólico e dinâmico & estático e Z3 & sequencialização e BMC & BMC com grafo de acessos \\
+    Aninhamento & exclui reentrância & conversão sequencial & nativo & por ordens parciais \\
+    Automação & automática & arquivo de configuração & variável e padrão por execução & automática, segundo os autores \\
+    Repara defeitos & sim & não & não & não \\
+    Código disponível & não & não & não & sim \\
+    \bottomrule
+  \end{tabular}
+  \fonte{Elaborado pelos autores a partir de \citeonline{sdracer},
+  \citeonline{intrace}, \citeonline{nichecker} e \citeonline{bmc4av}.}
+\end{quadro}
+
+Duas leituras do quadro orientam este trabalho. A primeira é que a ausência de
+falsos negativos é afirmada, não medida. SDRacer e IntRace a apoiam em inspeção
+manual, e os trabalhos de verificação limitada, na ausência de contraexemplo
+até um limite de desenrolamento. Nenhum deles declara as premissas sob as quais
+nenhum defeito é perdido, o que torna a afirmação impossível de verificar de
+fora. A segunda é que a automação é o eixo real da competição entre eles. Cada
+ferramenta nova ataca o trabalho manual exigido pela anterior, e é nesse sentido
+que a usabilidade aparece, mais adiante, como parte da contribuição deste
+trabalho.
+
+\section{Benchmarks}
+\label{sec:benchmarks-conceito}
+
+\subsection{Racebench}
+
+O Racebench \cite{racebench} é o \textit{benchmark} sobre o qual IntRace,
+NIChecker e BMC4AV são avaliados. Foi criado para uma competição de protótipos
+de detecção de condições de corrida realizada em Hangzhou, na China, em
+novembro de 2019, e seus programas são modelados em software embarcado do setor
+aeroespacial. A versão 2.1 tem 31 casos simples e 2 complexos, cada um com um
+fluxo principal e de uma a três \isr s, em até três níveis de prioridade.
+
+O gabarito é anotado no próprio código, e cada defeito anotado registra os três
+acessos que o compõem. Além dos defeitos, o \textit{benchmark} contém armadilhas,
+que são falsos positivos inseridos intencionalmente, vários deles trechos
+corretamente protegidos por mascaramento. A regra de pontuação da competição
+premiava cada detecção com 2 pontos e punia cada falso positivo com 3.
+
+Contando diretamente as anotações dos 31 casos simples, obtivemos 48 defeitos e
+38 armadilhas. Os artigos usam outras contagens para os mesmos casos, sendo 50
+em \citeonline{intrace}, 54 em \citeonline{nichecker} e 38 sobre um subconjunto
+de 25 casos em \citeonline{bmc4av}. Parte da divergência tem explicação
+mecânica. As anotações usam ao menos quatro gramáticas incompatíveis e contêm
+erros de digitação, de modo que um leitor estrito encontra apenas 28 defeitos
+sem acusar nenhum erro. A divergência tem consequência direta sobre qualquer
+taxa de recall publicada, uma vez que é o denominador dessa taxa que está em
+disputa. Por esse motivo, este trabalho fixa e publica sua unidade de contagem
+antes de realizar qualquer medição, conforme descrito na
+Seção~\ref{sec:avaliacao}.
+
+\subsection{Suíte de programas reais}
+
+A segunda suíte, usada por NIChecker e BMC4AV, tem 18 programas extraídos de
+seis pacotes, entre eles o \textit{firmware} de um registrador de temperatura,
+um controle de LEDs, um sistema de freio eletrônico gerado a partir de um
+modelo Simulink e três \textit{drivers}, num total de 10.633 linhas
+\cite{nichecker,bmc4av}. Cada programa acompanha um arquivo com as prioridades
+dos fluxos e um arquivo de gabarito, que registra 45 entradas de violação
+verdadeira e 14 de falso positivo.
+
+\section{Correção, recall e precisão}
+\label{sec:soundness}
+
+Um falso positivo é um alerta que não corresponde a um defeito real, e um falso
+negativo é um defeito real que não gerou alerta. Uma análise é \textit{sound},
+ou correta, em relação a um conjunto de premissas quando não produz falsos
+negativos sob essas premissas. A ausência incondicional de falsos negativos não
+é alcançável para C com ponteiros, tabelas de vetores de interrupção e fluxo de
+controle dependente de hardware. O que se pode afirmar honestamente é a
+ausência relativa a uma lista explícita de premissas, e é essa a afirmação que
+este trabalho se propõe a sustentar.
+
+O Quadro~\ref{quadro:metricas} resume as métricas usadas na literatura e aqui.
+
+\begin{quadro}[htb]
+  \caption{\label{quadro:metricas}Métricas de avaliação}
+  \small
+  \begin{tabular}{@{}L{3.0cm}L{6.4cm}L{4.4cm}@{}}
+    \toprule
+    Métrica & Definição & O que responde \\
+    \midrule
+    Precisão & $TP / (TP + FP)$ & quanto do que foi reportado é real \\
+    Recall (taxa de acerto) & $TP / (TP + FN)$ & quanto do que existe foi encontrado \\
+    \textit{Inspection Ratio} & $(TP + FP) / (TP + FP + TN + FN)$ & quanto é preciso ler \\
+    \bottomrule
+  \end{tabular}
+  \fonte{Elaborado pelos autores a partir de \citeonline{reducing-fp}.}
+\end{quadro}
+
+A prioridade dada aqui ao recall tem uma razão concreta. A precisão, sozinha,
+pode ser melhorada descartando candidatos, e uma ferramenta pode exibir
+precisão perfeita examinando apenas o que o usuário já apontou, perdendo a
+maioria dos defeitos. O \textit{Inspection Ratio} não tem essa fragilidade,
+porque mede a fração do conjunto que um revisor precisa ler até encontrar todos
+os defeitos reais. Com o recall mantido em 100\% por construção, é o
+\textit{Inspection Ratio} que mostra o custo real da ferramenta
+\cite{reducing-fp}.
+
+\section{Modelos de linguagem aplicados à análise estática}
+\label{sec:llm}
+
+\subsection{O que é e o que falha}
+
+Um modelo de linguagem de grande escala (\llm) é uma rede neural treinada para
+continuar textos, capaz de ler e produzir código. A instrução dada a ele é
+chamada de \textit{prompt}, e para uso programático pede-se uma saída
+estruturada, num formato fixo como JSON, que possa ser lida e validada
+automaticamente.
+
+Três limitações importam aqui. Um \llm\ pode alucinar, afirmando com confiança
+fatos falsos sobre o código. Suas respostas variam entre execuções, de modo que
+a mesma pergunta pode receber veredictos diferentes. E seu uso tem custo,
+medido em \textit{tokens}, com \citeonline{llift} relatando cerca de 7.000
+\textit{tokens} e US\$~0,43 por candidato analisado, com o GPT-4 e os preços de
+2024. Qualquer desenho que dependa do julgamento do modelo como decisão final
+herda essas três limitações.
+
+\subsection{Triagem de alertas}
+
+\citeonline{llift} partem do UBITect, analisador que procura usos de variáveis
+antes da inicialização no \textit{kernel} Linux. A análise estática do UBITect
+gera cerca de 140 mil candidatos, e sua etapa de execução simbólica abandona 53
+mil deles, ou 40\%, por limite de tempo ou memória. O LLift entrega ao \llm\
+apenas esses casos não decididos, com uma política conservadora segundo a qual
+tudo o que não for provado seguro é reportado. O trabalho encontrou quatro
+defeitos reais confirmados pela comunidade do Linux. Sua ablação mostra o
+recall passando de 0,15, com uma pergunta direta, para 1,00 com quatro
+componentes de \textit{prompt}, descritos adiante. É a referência estrutural
+mais próxima deste trabalho, e seu formato de ablação é adotado aqui.
+
+\citeonline{chatgpt-static} avaliam modelos GPT na remoção de falsos positivos
+do analisador Infer e obtêm precisão de 93,88\% para desreferência de ponteiro
+nulo, mas apenas 63,33\% para vazamento de recursos, com os mesmos
+\textit{prompts} e o mesmo modelo. A lição é que a qualidade da triagem depende
+da classe de defeito e não se transfere por suposição, razão pela qual a
+aplicação a defeitos de concorrência precisa ser medida, e não presumida.
+
+\citeonline{reducing-fp} filtram alertas do CppCheck com um modelo CodeBERT
+ajustado. No conjunto Big-Vul a precisão sobe de 5,88\% para 96,20\%, mas o
+recall cai de 46,90\% para 40,66\%, e os próprios autores reconhecem que a
+filtragem introduz falsos negativos. É desse trabalho que vem a métrica
+\textit{Inspection Ratio}, que no mesmo experimento cai de 50,49\% para 2,44\%.
+
+\subsection{Inferência de especificações}
+
+\citeonline{iris} usam um \llm\ para inferir quais funções de bibliotecas são
+fontes e sumidouros de dados contaminados, alimentando com essas
+especificações o analisador CodeQL. Num conjunto de 120 vulnerabilidades reais
+em Java a detecção sobe de 27, com o CodeQL sozinho, para 55. A precisão
+continua baixa, com taxa média de falsas descobertas de 84,82\%, e a triagem
+por \llm\ só melhora a precisão com modelos grandes, piorando com modelos
+pequenos.
+
+\citeonline{adataint} seguem a mesma ideia, combinando inferência de
+especificações com um classificador que filtra alertas. Os resultados vêm de
+\textit{benchmarks} sintéticos, e o filtro descarta alertas com recall de
+75,4\%, ou seja, cerca de um quarto dos defeitos é perdido por construção.
+
+\subsection{Detecção e reparo}
+
+\citeonline{skipanalyzer} encadeiam três componentes com \llm, fazendo
+detecção, filtragem de falsos positivos e reparo sobre alertas do Infer em
+Java. No reparo obtêm taxa lógica, isto é, correção equivalente à escrita por
+um humano, de 97,30\% para desreferência nula e 91,77\% para vazamento de
+recursos, sem ajuste fino. O mesmo grupo assina \citeonline{chatgpt-static}, e
+os dois trabalhos compartilham dados, de modo que devem ser lidos como um só
+conjunto de evidências.
+
+\citeonline{sastgenius} integram o analisador Semgrep a um modelo Llama~3
+ajustado, que faz triagem, geração de \textit{exploits} para validar alertas e
+sugestão de correções. Trata-se de um \textit{preprint}, que relata a precisão
+subindo de 35,7\% para 89,5\% mas não relata recall. Sua contribuição mais
+relevante para o projeto apresentado aqui é apontar o risco de
+\textit{prompt injection}, já que o código analisado, comentários inclusive,
+entra no \textit{prompt} e pode tentar instruir o modelo a ignorar um defeito.
+
+\subsection{O que a literatura de \llm\ já estabeleceu}
+
+Três conclusões atravessam esses sete trabalhos. A divisão de trabalho que
+funciona atribui ao analisador o raciocínio sobre o programa inteiro e ao
+modelo o julgamento local, e nenhum dos trabalhos usa o modelo como analisador
+autônomo. A política de decisão tem efeito maior que a escolha do modelo, pois os
+filtros que descartam candidatos perdem de 6 a 25 pontos de recall
+\cite{reducing-fp,adataint}, enquanto a política conservadora do LLift atinge
+recall de 1,00 no mesmo ponto de integração \cite{llift}. E a arquitetura do
+\textit{prompt} importa mais que o modelo escolhido, como mostra a ablação de
+\citeonline{llift}, em que o mesmo modelo, sobre os mesmos dados, vai de 0,15 a
+1,00 de recall ao ganhar ensino de regras do domínio por exemplos, pedidos
+progressivos de contexto, decomposição da tarefa em conversas separadas e
+autovalidação contra regras enviesadas para o lado seguro.
+
+Nenhum desses sete trabalhos toca em concorrência, e nenhuma das quatro
+ferramentas da Seção~\ref{sec:ferramentas} usa modelos de linguagem. A lacuna
+que este trabalho ocupa é a interseção vazia entre as duas literaturas, e as
+conclusões acima são o que se leva de uma para a outra.

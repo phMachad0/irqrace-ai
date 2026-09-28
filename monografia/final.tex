@@ -1,54 +1,76 @@
 % ===========================================================================
-% MONOGRAFIA COMPLETA
-% Os capítulos 1 a 5 são os mesmos da parcial, revisados. O capítulo 6 (plano)
-% sai; entram implementação, avaliação e conclusão.
-% Compilar: latexmk final.tex   (ou: make final)
+% MONOGRAFIA FINAL — Trabalho de Conclusão de Curso
+% Estrutura e formatação conforme o modelo TCC_PCS_EPUSP_2023 (abntex2
+% ajustado para o PCS-EPUSP). Compilar: latexmk final.tex (ou: make final)
 % ===========================================================================
 
-\documentclass[12pt, openright, oneside, a4paper, english, brazil]{abntex2}
+\documentclass[
+	12pt,
+	openright,
+	oneside,
+	a4paper,
+	english,
+	french,
+	spanish,
+	brazil
+	]{abntex2}
 
+% Versão completa: os capítulos usam esta chave para expor os resultados
+% experimentais, ausentes da parcial.
 \newif\ifparcial
 \parcialfalse
 
 \input{config/preambulo}
-\input{config/estilo}
 \input{config/dados}
-\newcommand{\versaodocumento}{Trabalho de Conclusão de Curso}
-\input{config/capa}
 
-\preambulo{Trabalho de Conclusão de Curso apresentado à Escola Politécnica da
-Universidade de São Paulo para obtenção do título de Engenheiro de Computação.}
+\preambulo{Trabalho de conclusão de curso apresentado ao Departamento de
+Engenharia de Computação e Sistemas Digitais da Escola Politécnica da
+Universidade de São Paulo para obtenção do Título de Engenheiro.}
 
 \begin{document}
 
 \selectlanguage{brazil}
 \frenchspacing
 
+% ----------------------------------------------------------
+% ELEMENTOS PRÉ-TEXTUAIS
+% ----------------------------------------------------------
+
 \imprimircapa
-\imprimirfolhaderosto*
+
+% Gere a ficha catalográfica em https://www.poli.usp.br/bibliotecas/servicos/catalogacao-na-publicacao
+% salve-a como ficha.pdf nesta pasta e troque pelo bloco comentado abaixo.
+\imprimirfolhaderosto
+
+% \imprimirfolhaderosto*
+% \begin{fichacatalografica}
+%     \includepdf{ficha.pdf}
+% \end{fichacatalografica}
 
 \input{pre-textuais/resumo}
 \input{pre-textuais/abstract}
 \input{pre-textuais/listas}
 
+% ----------------------------------------------------------
+% ELEMENTOS TEXTUAIS
+% ----------------------------------------------------------
 \textual
 
 \input{capitulos/01-introducao}
-\input{capitulos/02-fundamentacao}
-\input{capitulos/03-trabalhos-relacionados}
-\input{capitulos/04-proposta}
-\input{capitulos/05-metodologia}
-\input{capitulos/07-implementacao}
-\input{capitulos/08-avaliacao}
-\input{capitulos/09-conclusao}
+\input{capitulos/02-conceitos}
+\input{capitulos/03-metodo}
+\input{capitulos/04-requisitos}
+\input{capitulos/05-desenvolvimento}
 
+\phantompart
+
+\input{capitulos/06-consideracoes}
+
+% ----------------------------------------------------------
+% ELEMENTOS PÓS-TEXTUAIS
+% ----------------------------------------------------------
 \postextual
 
 \bibliography{referencias}
-
-\begin{apendicesenv}
-\partapendices
-\input{pos-textuais/apendice-contratos}
-\end{apendicesenv}
 
 \end{document}

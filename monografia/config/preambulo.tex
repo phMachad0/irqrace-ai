@@ -1,107 +1,98 @@
 % ---------------------------------------------------------------------------
-% Preâmbulo: pacotes e macros compartilhados por parcial.tex e final.tex
-% Compilado com XeLaTeX (ver latexmkrc), por causa da fonte Arial.
+% Preâmbulo compartilhado por parcial.tex e final.tex.
+%
+% Segue o modelo TCC_PCS_EPUSP_2023 (abntex2 ajustado para o PCS-EPUSP por
+% Cintia Borges Margi, mar/2023). As únicas adições ao preâmbulo do modelo são
+% os pacotes de tabela e de desenho usados pelas figuras deste trabalho.
+% Compila com pdfLaTeX.
 % ---------------------------------------------------------------------------
 
-% ---------------------------------------------------------------------------
-% Fontes. O texto é Arial 12 (o tamanho vem da opção 12pt da classe). Numa
-% máquina sem Arial instalada, usa-se a TeX Gyre Heros, clone livre da
-% Helvetica, de métrica equivalente. A capa mantém a fonte serifada com que foi
-% desenhada (TeX Gyre Termes, clone livre da Times).
-% ---------------------------------------------------------------------------
-\usepackage{amsmath}
-\usepackage{fontspec}
-\IfFontExistsTF{Arial}{%
-  \setmainfont{Arial}
-  \setsansfont{Arial}
-}{%
-  \setmainfont{texgyreheros}[Extension=.otf, UprightFont=*-regular,
-    BoldFont=*-bold, ItalicFont=*-italic, BoldItalicFont=*-bolditalic]
-  \setsansfont{texgyreheros}[Extension=.otf, UprightFont=*-regular,
-    BoldFont=*-bold, ItalicFont=*-italic, BoldItalicFont=*-bolditalic]
-}
-\newfontfamily\fontecapa{texgyretermes}[Extension=.otf, UprightFont=*-regular,
-  BoldFont=*-bold, ItalicFont=*-italic, BoldItalicFont=*-bolditalic]
-% Letras e dígitos das poucas fórmulas do texto na mesma fonte do texto
-\usepackage[italic]{mathastext}
-
+% --- Pacotes básicos do modelo ---------------------------------------------
+\usepackage{lmodern}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
 \usepackage{indentfirst}
-% Folga para parágrafos com fórmulas ou termos longos que não se quebram
-\setlength{\emergencystretch}{2em}
-\usepackage{microtype}
+\usepackage{color}
 \usepackage{graphicx}
-\usepackage{xcolor}
-\usepackage{booktabs}
-\usepackage{tabularx}
-% Coluna de parágrafo alinhada à esquerda, para tabelas com texto (evita a
-% hifenização forçada das colunas estreitas justificadas)
-\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
-\usepackage{listings}
-\usepackage{tikz}
-\usetikzlibrary{positioning,arrows.meta,fit,backgrounds}
+\usepackage{microtype}
+\usepackage{amsmath}
 
-% Citações no padrão ABNT, autor-data
+% --- Adições deste trabalho ------------------------------------------------
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta}
+% Coluna de parágrafo alinhada à esquerda, para quadros com texto corrido
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\setlength{\emergencystretch}{2em}
+
+% --- Citações no padrão ABNT ------------------------------------------------
 \usepackage[brazilian,hyperpageref]{backref}
 \usepackage[alf]{abntex2cite}
 
 \renewcommand{\backrefpagesname}{Citado na(s) página(s):~}
 \renewcommand{\backref}{}
 \renewcommand*{\backrefalt}[4]{%
-  \ifcase #1 %
-    Nenhuma citação no texto.%
-  \or
-    Citado na página #2.%
-  \else
-    Citado #1 vezes nas páginas #2.%
-  \fi}
+	\ifcase #1 %
+		Nenhuma citação no texto.%
+	\or
+		Citado na página #2.%
+	\else
+		Citado #1 vezes nas páginas #2.%
+	\fi}%
 
-% ---------------------------------------------------------------------------
-% Estética: fora da capa, tudo em preto. As duas cores abaixo são usadas
-% apenas pela capa (config/capa.tex).
-% ---------------------------------------------------------------------------
-\definecolor{azulpoli}{HTML}{0B2A4A}
-\definecolor{cinzacapa}{HTML}{5A6270}
+% --- Aparência do PDF -------------------------------------------------------
+\definecolor{blue}{RGB}{41,5,195}
 
-\renewcommand{\ABNTEXchapterfont}{\bfseries}
-\renewcommand{\ABNTEXsectionfont}{\bfseries}
-\renewcommand{\ABNTEXsubsectionfont}{\bfseries}
-
-\AtBeginDocument{%
-  \hypersetup{
-    pdftitle={\imprimirtitulo},
-    pdfauthor={\autorumnome, \autordoisnome},
-    pdfsubject={\imprimirtipotrabalho},
-    hidelinks,
-  }%
+\makeatletter
+\hypersetup{
+		pdftitle={\@title},
+		pdfauthor={\@author},
+		pdfsubject={\imprimirpreambulo},
+		pdfcreator={LaTeX with abnTeX2},
+		pdfkeywords={concorrência}{interrupções}{análise estática}{modelos de linguagem},
+		colorlinks=true,
+		linkcolor=blue,
+		citecolor=blue,
+		filecolor=magenta,
+		urlcolor=blue,
+		bookmarksdepth=4
 }
+\makeatother
 
-% Código C nas listagens: sem cor e sem negrito
-\lstset{
-  language=C,
-  basicstyle=\ttfamily\small,
-  keywordstyle=,
-  commentstyle=\itshape,
-  numbers=left,
-  numberstyle=\tiny,
-  frame=single,
-  breaklines=true,
-  showstringspaces=false,
-}
+% Posiciona figuras e tabelas no topo da página quando sozinhas na página
+\makeatletter
+\setlength{\@fptop}{5pt}
+\makeatother
+
+% --- Quadros e lista de quadros (recurso do modelo) -------------------------
+\newcommand{\quadroname}{Quadro}
+\newcommand{\listofquadrosname}{Lista de quadros}
+
+\newfloat[chapter]{quadro}{loq}{\quadroname}
+\newlistof{listofquadros}{loq}{\listofquadrosname}
+\newlistentry{quadro}{loq}{0}
+
+\setfloatadjustment{quadro}{\centering}
+\counterwithout{quadro}{chapter}
+\renewcommand{\cftquadroname}{\quadroname\space}
+\renewcommand*{\cftquadroaftersnum}{\hfill--\hfill}
+
+\setfloatlocations{quadro}{hbtp}
+
+% --- Espaçamentos do modelo -------------------------------------------------
+\setlength{\parindent}{1.3cm}
+\setlength{\parskip}{0.2cm}
+
+% --- Termos recorrentes -----------------------------------------------------
+\newcommand{\isr}{\textit{ISR}}
+\newcommand{\llm}{\textit{LLM}}
 
 % ---------------------------------------------------------------------------
-% Marcação de trabalho pendente.
-% Para a versão de entrega, troque \mostrarpendentestrue por \mostrarpendentesfalse:
-% os marcadores somem do PDF sem precisar apagá-los do texto.
+% Marcação de trabalho pendente. Aparece em vermelho no PDF enquanto
+% \mostrarpendentestrue estiver ativo; para a entrega, troque por
+% \mostrarpendentesfalse e os marcadores somem sem precisar apagá-los.
 % ---------------------------------------------------------------------------
 \newif\ifmostrarpendentes
 \mostrarpendentesfalse
 \newcommand{\pendente}[1]{%
   \ifmostrarpendentes{\color{red}[PENDENTE: #1]}\fi}
-
-% Sem negrito no corpo do texto: os rótulos de listas de descrição (QP1, nomes
-% das métricas) saem em estilo normal, seguidos de dois-pontos.
-\renewcommand*{\descriptionlabel}[1]{\hspace{\labelsep}\normalfont #1:}
-
-% Termos recorrentes
-\newcommand{\isr}{\textit{ISR}}
-\newcommand{\llm}{\textit{LLM}}
