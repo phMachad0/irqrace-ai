@@ -1,0 +1,199 @@
+% ===========================================================================
+% RELATO DO ESTADO ATUAL DO TCC
+% Documento curto, em formato de artigo, na mesma classe e no mesmo estilo da
+% monografia (modelo TCC_PCS_EPUSP_2023).
+% Compilar: latexmk relato.tex   (ou: make relato)
+% ===========================================================================
+
+\documentclass[article,12pt,oneside,a4paper,english,brazil]{abntex2}
+
+\newif\ifparcial
+\parcialtrue
+
+\input{config/preambulo}
+\input{config/dados}
+
+\titulo{Relato do Estado Atual do Trabalho de Conclusão de Curso}
+\data{28 de setembro de 2026}
+\tipotrabalho{Relato de andamento}
+\preambulo{Relato de andamento do Trabalho de Conclusão de Curso apresentado ao
+Departamento de Engenharia de Computação e Sistemas Digitais da Escola
+Politécnica da Universidade de São Paulo.}
+
+\begin{document}
+
+\selectlanguage{brazil}
+\frenchspacing
+
+\imprimirfolhaderosto
+
+\section{Identificação e objetivo}
+
+O trabalho constrói uma ferramenta que detecta defeitos de concorrência em
+código C embarcado orientado a interrupções e encerra o ciclo com um modelo de
+linguagem, indo da detecção à contextualização, à triagem, ao reparo e à
+reverificação. O compromisso central é a ausência de falsos negativos em
+relação a uma lista explícita de premissas, aceitando falsos positivos em
+troca, com o esforço de revisão controlado pela etapa de triagem em vez de pelo
+descarte de candidatos. A fundamentação, os requisitos e o projeto estão na
+monografia parcial entregue junto com este relato, que se limita a informar em
+que ponto o trabalho se encontra.
+
+O título completo é \emph{Detecção de Defeitos de Concorrência em Software
+Embarcado Orientado a Interrupções, com Triagem e Reparo Assistidos por Modelos
+de Linguagem}, sob orientação do Prof. Dr. Carlos Cugnasca.
+
+\section{Pesquisa bibliográfica e decisões dela derivadas}
+
+A fase de revisão está concluída. Foram analisados em profundidade onze artigos,
+divididos em duas literaturas que não se comunicam. A primeira trata da detecção
+de defeitos de concorrência em programas com interrupções e reúne quatro
+ferramentas publicadas entre 2020 e 2026. A segunda trata do uso de modelos de
+linguagem para apoiar analisadores estáticos e reúne sete trabalhos, todos
+dedicados a defeitos sequenciais. A interseção entre as duas está vazia, e é ela
+que o trabalho ocupa.
+
+A revisão não se limitou à leitura. Cada artigo foi confrontado com os artefatos
+correspondentes, quando obtíveis, e apenas um dos quatro detectores está
+disponível, o que obrigou a tratar quase todo número publicado como afirmação do
+autor. Desse confronto vieram dois resultados que a leitura isolada não daria. O
+gabarito do \textit{benchmark} adotado foi recontado a partir das anotações do
+próprio código e resultou em 48 defeitos e 38 armadilhas, ao passo que os três
+artigos que o empregam usam contagens diferentes entre si. O conjunto de
+programas reais distribuído com uma das ferramentas foi igualmente recontado e
+mostrou-se corrompido em um de seus dezoito programas, o que explica a
+divergência entre o número publicado pelos autores e o número registrado nos
+arquivos. Ambas as verificações estão documentadas e são, elas próprias,
+contribuição do trabalho, pois nenhuma taxa de acerto dessa literatura é
+comparável enquanto o gabarito não estiver acordado.
+
+Do trabalho de digestão saíram as decisões de projeto que hoje governam a
+implementação. O recall tem precedência sobre a precisão, o que inverte a
+prioridade adotada pela literatura. Nenhum candidato é descartado sem prova de
+impossibilidade, de modo que o modelo de linguagem ordena e explica, mas nunca
+remove. A unidade de contagem e a regra que decide quando um candidato
+corresponde a um defeito anotado foram fixadas por escrito antes de qualquer
+medição. E a afirmação de ausência de falsos negativos passou a ser acompanhada
+da lista de premissas sob as quais vale, item que nenhum dos trabalhos revisados
+apresenta.
+
+\section{Planejamento}
+
+O planejamento foi consolidado num roteiro de dez semanas, de 31 de agosto a 6
+de novembro de 2026, organizado em duas frentes que avançam em paralelo e cinco
+marcos de acompanhamento. A primeira frente cuida da análise estática, que
+encontra os candidatos a defeito e reúne as evidências de cada um. A segunda
+cuida da integração com modelos de linguagem, responsável pela triagem, pelo
+reparo e pela avaliação dessas etapas. Uma terceira frente, o painel de
+operação, é construída no tempo que as duas primeiras liberam.
+
+O roteiro prevê que a segunda frente nunca dependa da primeira. Até a
+integração, prevista para a oitava semana, ela trabalha sobre vinte casos de
+teste montados manualmente a partir do \textit{benchmark}, o que permitiu que as
+duas frentes avançassem desde a primeira semana sem bloqueio mútuo.
+
+\section{O que já foi realizado}
+
+\subsection{Análise estática}
+
+O ambiente de compilação está operacional e todos os 31 programas do
+\textit{benchmark} são processados pela ferramenta. O gabarito foi certificado
+contra contagem manual, acompanhado de uma errata de doze anotações em que cada
+correção traz sua evidência, sem que nenhuma delas altere as contagens.
+
+A primeira das três etapas da análise está implementada e produz 566 candidatos
+sobre os 31 programas, com média de 18,3 por programa. O teste que condiciona
+todo o projeto passa, com os 48 defeitos anotados presentes entre os candidatos.
+
+\subsection{Integração com modelos de linguagem}
+
+O ambiente de execução está construído e permite trocar o modelo sem alterar as
+instruções enviadas a ele, reaproveitar respostas já obtidas e registrar, para
+cada medição, qual modelo e qual configuração a produziram. Os vinte casos de
+teste estão montados e cobrem a variedade de situações que o \textit{benchmark}
+apresenta, entre elas seis duplas adversariais, nas quais um defeito real e uma
+armadilha diferem em um único fato.
+
+A sonda de viabilidade, que era o item de maior risco do projeto por não ter
+precedente na literatura, foi respondida positivamente. Sem nenhuma das técnicas
+previstas para a etapa de triagem, nenhum defeito foi classificado como inviável
+e as duplas adversariais foram separadas corretamente. Duas das cinco linhas da
+tabela de ablação já estão medidas, conforme o Quadro~\ref{quadro:ablacao}.
+
+\begin{quadro}[htb]
+  \caption{\label{quadro:ablacao}Linhas da ablação já medidas}
+  \small
+  \begin{tabular}{@{}lL{2.6cm}L{2.8cm}L{3.0cm}@{}}
+    \toprule
+    Linha & Recall & Rejeição de armadilhas & \textit{Inspection Ratio} \\
+    \midrule
+    instrução simples & 100\% (10/10) & 70\% & 65\% \\
+    mais regras do domínio & 100\% (10/10) & 50\% & 75\% \\
+    \bottomrule
+  \end{tabular}
+  \fonte{Elaborado pelos autores. Medições sobre 20 casos de teste, uma amostra
+  por candidato, setembro de 2026.}
+\end{quadro}
+
+O resultado da segunda linha é negativo e está sendo tratado como achado, e não
+como ruído a corrigir. Ensinar ao modelo as regras do domínio piorou seu
+julgamento sobre duas armadilhas, sem mover o recall. Com vinte casos e uma
+única amostra por candidato, a evidência ainda é fraca, e é a repetição das
+medições que permitirá afirmar a diferença. As demais etapas previstas para essa
+frente, entre elas o reparo, estão implementadas e aguardam medição.
+
+\subsection{Produtos disponíveis}
+
+Estão disponíveis o código das duas frentes, acompanhado de mais de duzentos
+testes automatizados, a base de conhecimento com a revisão da literatura e um
+diário de implementação em português, com uma página por semana de trabalho, que
+registra o que foi construído e por quê.
+
+\section{Aderência ao cronograma}
+
+Os dois primeiros marcos foram entregues, conforme o Quadro~\ref{quadro:marcos}.
+O trabalho está na quinta das dez semanas previstas.
+
+\begin{quadro}[htb]
+  \caption{\label{quadro:marcos}Situação dos marcos}
+  \small
+  \begin{tabular}{@{}llL{6.8cm}l@{}}
+    \toprule
+    Marco & Data & Entrega & Situação \\
+    \midrule
+    M1 & 11/09 & gabarito certificado, casos de teste montados e sonda de viabilidade respondida & concluído \\
+    M2 & 25/09 & primeira etapa da análise nos 31 programas, com os 48 defeitos encontrados & concluído \\
+    M3 & 02/10 & tabela de ablação da triagem & em curso \\
+    M4 & 23/10 & ciclo completo no \textit{benchmark}, da análise ao reparo & previsto \\
+    M5 & 06/11 & suíte de programas reais e métricas finais & previsto \\
+    \bottomrule
+  \end{tabular}
+  \fonte{Elaborado pelos autores.}
+\end{quadro}
+
+O marco M2 foi entregue uma semana antes da data prevista. O marco M1 teve um de
+seus três itens concluído com atraso, pois a sonda de viabilidade dependia de
+acesso a um provedor de modelos de linguagem, obtido apenas em 26 de setembro.
+Os outros dois itens saíram na data, e a frente afetada usou o período para
+construir as partes que não dependiam desse acesso, de modo que o atraso não se
+propagou para os marcos seguintes.
+
+\section{Próximas etapas}
+
+Na análise estática, as próximas três semanas implementam as duas etapas
+restantes, que reduzem o conjunto de candidatos descartando apenas aqueles cuja
+impossibilidade pode ser provada. A oitava semana integra as duas frentes, a
+nona aplica a ferramenta à suíte de 18 programas reais e a décima consolida os
+resultados e o texto final.
+
+Na frente de modelos de linguagem, as três linhas restantes da ablação precisam
+ser medidas num provedor com capacidade adequada, uma vez que o serviço gratuito
+usado até aqui limita a vazão a ponto de tornar a medição completa inviável em
+tempo. O custo foi levantado e é da ordem de dez dólares para a tabela completa.
+Uma dessas linhas foi deliberadamente adiada para depois da integração, quando
+passará a existir contexto real a ser consultado, sem o qual ela não mediria
+aquilo que lhe dá nome. Em seguida vêm a medição das taxas de reparo e a
+repetição da triagem sobre os candidatos produzidos pela análise, que formam
+população diferente e mais difícil que a dos casos montados manualmente.
+
+\end{document}

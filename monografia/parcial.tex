@@ -1,50 +1,74 @@
 % ===========================================================================
-% MONOGRAFIA PARCIAL
-% Recorte: até antes da implementação completa da ferramenta.
-% Compilar: latexmk parcial.tex   (ou: make parcial)
+% MONOGRAFIA PARCIAL — Trabalho de Conclusão de Curso
+% Estrutura e formatação conforme o modelo TCC_PCS_EPUSP_2023 (abntex2
+% ajustado para o PCS-EPUSP). Compilar: latexmk parcial.tex (ou: make parcial)
 % ===========================================================================
 
-\documentclass[12pt, openright, oneside, a4paper, english, brazil]{abntex2}
+\documentclass[
+	12pt,
+	openright,
+	oneside,
+	a4paper,
+	english,
+	french,
+	spanish,
+	brazil
+	]{abntex2}
 
-% A parcial termina no cronograma e nas referências: sem estado atual e sem
-% apêndices. Os capítulos consultam esta chave onde o texto muda entre versões.
+% A parcial não expõe resultados experimentais. Os capítulos consultam esta
+% chave nos poucos pontos em que o texto muda entre as duas versões.
 \newif\ifparcial
 \parcialtrue
 
 \input{config/preambulo}
-\input{config/estilo}
 \input{config/dados}
-\newcommand{\versaodocumento}{Monografia Parcial · Trabalho de Conclusão de Curso}
-\input{config/capa}
 
-\preambulo{Monografia parcial apresentada à Escola Politécnica da Universidade
-de São Paulo como parte dos requisitos da disciplina de Trabalho de Conclusão
-de Curso em Engenharia de Computação.}
+\preambulo{Monografia parcial apresentada ao Departamento de Engenharia de
+Computação e Sistemas Digitais da Escola Politécnica da Universidade de São
+Paulo, como parte dos requisitos da disciplina de Trabalho de Conclusão de
+Curso.}
 
 \begin{document}
 
 \selectlanguage{brazil}
 \frenchspacing
 
-% --- Elementos pré-textuais ---
+% ----------------------------------------------------------
+% ELEMENTOS PRÉ-TEXTUAIS
+% ----------------------------------------------------------
+
 \imprimircapa
-\imprimirfolhaderosto*
+
+% A folha de rosto sai sem ficha catalográfica nesta versão. Para a entrega
+% final, gere a ficha em https://www.poli.usp.br/bibliotecas/servicos/catalogacao-na-publicacao
+% salve-a como ficha.pdf nesta pasta e troque pelo bloco comentado abaixo.
+\imprimirfolhaderosto
+
+% \imprimirfolhaderosto*
+% \begin{fichacatalografica}
+%     \includepdf{ficha.pdf}
+% \end{fichacatalografica}
 
 \input{pre-textuais/resumo}
 \input{pre-textuais/abstract}
 \input{pre-textuais/listas}
 
-% --- Elementos textuais ---
+% ----------------------------------------------------------
+% ELEMENTOS TEXTUAIS
+% ----------------------------------------------------------
 \textual
 
 \input{capitulos/01-introducao}
-\input{capitulos/02-fundamentacao}
-\input{capitulos/03-trabalhos-relacionados}
-\input{capitulos/04-proposta}
-\input{capitulos/05-metodologia}
-\input{capitulos/06-plano-de-trabalho}
+\input{capitulos/02-conceitos}
+\input{capitulos/03-metodo}
+\input{capitulos/04-requisitos}
+\input{capitulos/05-desenvolvimento}
 
-% --- Elementos pós-textuais ---
+% As considerações finais são exclusivas da monografia completa.
+
+% ----------------------------------------------------------
+% ELEMENTOS PÓS-TEXTUAIS
+% ----------------------------------------------------------
 \postextual
 
 \bibliography{referencias}

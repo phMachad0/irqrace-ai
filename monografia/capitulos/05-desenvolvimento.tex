@@ -1,0 +1,433 @@
+\chapter{Desenvolvimento do Trabalho} \label{cap:desenvolvimento}
+
+\section{Tecnologias Utilizadas}
+\label{sec:tecnologias}
+
+A etapa estática é construída sobre a infraestrutura do compilador LLVM
+\cite{llvm}. Os programas são compilados com o Clang para a representação
+intermediária, com \texttt{-g}, para que os metadados de depuração preservem o
+vínculo entre cada instrução e a linha do código-fonte, e com \texttt{-O0},
+para que nenhum acesso à memória seja eliminado por otimização. Programas com
+vários arquivos são compilados separadamente e ligados num só módulo com o
+\texttt{llvm-link}. Ligar a representação intermediária, em vez de concatenar
+código-fonte, preserva a origem de cada instrução, resolve símbolos
+\texttt{static} de mesmo nome em arquivos diferentes e respeita as definições
+de pré-processador de cada um.
+
+A análise de ponteiros usa a biblioteca SVF \cite{svf}, que trabalha sobre essa
+mesma representação e oferece as consultas do tipo \textit{may} de que a
+Seção~\ref{sec:tecnicas} trata. A verificação de viabilidade de caminho usa o
+solucionador Z3 \cite{z3}, seguindo o uso que \citeonline{intrace} fazem dele.
+A reverificação recorre a um verificador de modelos limitado, o CBMC
+\cite{cbmc} ou o próprio BMC4AV, que é a única das quatro ferramentas revisadas
+cujo código-fonte está disponível.
+
+A etapa de triagem é escrita em Python, com um cliente que isola o provedor do
+modelo atrás de uma interface própria, como exige o RNF5. As respostas do
+modelo são pedidas em formato estruturado e validadas contra um esquema antes
+de serem usadas, de modo que uma resposta malformada falha de imediato em vez
+de contaminar uma medição. O cache de respostas é indexado pelo candidato, pela
+configuração de \textit{prompt} e pelo modelo, o que permite recalcular uma
+tabela sem repetir chamadas.
+
+\section{Projeto e Implementação}
+\label{sec:projeto}
+
+\subsection{Visão geral}
+
+A ferramenta percorre o ciclo detectar, contextualizar, triar, reparar e
+reverificar, ilustrado na Figura~\ref{fig:pipeline}. A etapa estática produz os
+candidatos e o contexto de cada um; a etapa com modelo de linguagem os ordena,
+explica e propõe correções; e a própria análise estática, com apoio de um
+verificador limitado, confirma as correções.
+
+\begin{figure}[htb]
+  \centering
+  \caption{Pipeline da ferramenta proposta}
+  \label{fig:pipeline}
+  \begin{tikzpicture}[
+      node distance=5mm and 4.5mm,
+      etapa/.style={draw=black, rounded corners=2pt, align=center,
+        minimum height=11mm, text width=29.5mm, font=\small, fill=white},
+      llm/.style={etapa, dashed},
+      seta/.style={-{Stealth[length=2.2mm]}, thick, color=black},
+      nota/.style={font=\scriptsize, color=black, align=center}]
+    \node[etapa] (cfg) {Código C +\\configuração};
+    \node[etapa, right=of cfg] (e1) {Estágio 1\\candidatos};
+    \node[etapa, right=of e1] (e2) {Estágio 2\\prioridade e\\mascaramento};
+    \node[etapa, right=of e2] (e3) {Estágio 3\\viabilidade (Z3)};
+    \node[llm, below=12mm of e3] (tri) {Triagem\\(ordena e explica)};
+    \node[llm, left=of tri] (rep) {Reparo\\com testemunha};
+    \node[etapa, left=of rep] (rev) {Reverificação};
+    \node[etapa, left=of rev] (rel) {Relatório\\ordenado};
+    \draw[seta] (cfg) -- (e1);
+    \draw[seta] (e1) -- (e2);
+    \draw[seta] (e2) -- (e3);
+    \draw[seta] (e3) -- node[right, nota] {registro de\\contexto} (tri);
+    \draw[seta] (tri) -- (rep);
+    \draw[seta] (rep) -- (rev);
+    \draw[seta] (rev) -- (rel);
+    \draw[seta, dashed] (rev.north) to[bend left=18] node[left, nota, pos=0.35] {nova\\análise} (e1.south);
+    \node[nota, above=1mm of e2] {só descartam com prova de impossibilidade};
+    \node[nota, below=1mm of rep] {etapas com \llm\ (tracejadas): nunca descartam};
+  \end{tikzpicture}
+  \fonte{Elaborada pelos autores.}
+\end{figure}
+
+\subsection{Entrada e configuração}
+
+O modelo de interrupções vem de um arquivo de configuração escrito à mão, que
+nomeia os pontos de entrada de cada fluxo, suas prioridades e as primitivas de
+mascaramento da plataforma. Inferir esse modelo com um \llm, como
+\citeonline{iris} fazem com especificações de bibliotecas, foi considerado e
+descartado. As primitivas de mascaramento formam um conjunto fechado por
+plataforma, os dois \textit{benchmarks} já distribuem a configuração, e
+encontrar os pontos de entrada, que é a parte crítica para o recall, é uma
+busca textual pela API de registro de interrupções, não um julgamento. O
+arquivo tem ainda um efeito colateral útil sobre o custo, já que a análise
+percorre apenas o código alcançável a partir dos fluxos declarados, e não o
+repositório inteiro.
+
+\subsection{Estágio 1, derivação de candidatos}
+
+O primeiro estágio segue o desenho de \citeonline{intrace} e ignora de
+propósito condições de desvio e estado das interrupções, para não perder nada.
+Ele identifica os fluxos a partir da configuração, tratando cada ponto de
+entrada como raiz de uma análise de alcançabilidade; identifica as posições
+compartilhadas por análise \textit{may}, sem se restringir a variáveis globais,
+já que uma variável local cujo endereço circula em ponteiros globais também é
+compartilhada; enumera os acessos a essas posições com todo o contexto exigido
+pelo RF3; e deriva os candidatos.
+
+Os candidatos são as combinações $(A_1, B, A_2)$ que se encaixam em algum dos
+quatro padrões não serializáveis do Quadro~\ref{quadro:padroes}, com $A_1$ e
+$A_2$ no fluxo interrompido, nessa ordem, e $B$ num fluxo capaz de interrompê-lo
+entre os dois. A ordem entre $A_1$ e $A_2$ vem do grafo de fluxo de controle da
+função que os contém.
+
+Um detalhe sobre laços é decisivo para o recall. Um único acesso no
+código-fonte, dentro de um laço que pode repetir, corresponde a vários acessos
+em execução, e por isso a mesma instrução pode ocupar as posições $A_1$ e $A_2$
+de uma tripla. O mesmo vale para uma função chamada duas vezes pelo mesmo
+fluxo. O Racebench anota defeitos exatamente com essa forma, de modo que uma
+implementação que tratasse cada instrução como um acesso único perderia
+defeitos sem emitir qualquer sinal de erro.
+
+\subsection{Estágio 2, prioridade e mascaramento}
+
+O segundo estágio descarta candidatos cujos fluxos comprovadamente não podem se
+sobrepor. Um fluxo só é interrompido por outro de prioridade estritamente
+maior, com a convenção de que número maior é prioridade maior. Fluxos de mesma
+prioridade são tratados como capazes de se interromper mutuamente, pois nenhum
+dos modelos formais da literatura cobre esse caso e essa é a leitura que não
+perde defeitos.
+
+O mascaramento é calculado por uma análise de fluxo de dados que determina, em
+cada ponto do programa, quais interrupções estão desabilitadas. Uma interrupção
+só conta como mascarada durante o intervalo $[A_1, A_2]$ se estiver mascarada
+em todo ponto de todo caminho de $A_1$ a $A_2$ no fluxo local e se nenhum fluxo
+capaz de executar dentro desse intervalo puder reabilitá-la. A segunda condição
+é o que evita perder o defeito do caso \texttt{svp\_simple\_001\_001} descrito
+na Seção~\ref{sec:interrupcoes}. Escritas em registradores que a configuração
+não reconheça nunca contam como mascaramento.
+
+Nenhum modelo de periodicidade é assumido, porque o Racebench declara que uma
+interrupção pode ocorrer em qualquer ponto habilitado, quantas vezes for.
+
+\subsection{Estágio 3, viabilidade com Z3}
+
+O terceiro estágio aplica a análise de viabilidade de caminho de
+\citeonline{intrace}. Como o estágio anterior, só descarta com prova, isto é,
+com um veredicto de insatisfazibilidade. O resultado admite quatro valores,
+contando o inconclusivo e o não executado, e um resultado inconclusivo, por
+limite de tempo ou construção não suportada, nunca é tratado como decidido. O
+candidato segue para a triagem carregando a informação de até onde o
+solucionador chegou.
+
+A posição desse estágio antes da triagem é fixa, por três motivos. Ele é um
+filtro correto, que só descarta com prova. Reduz fortemente o volume, e os
+números do IntRace dão a ordem de grandeza, com cerca de 208 candidatos por
+programa caindo para cerca de 95 após o segundo estágio e para algo em torno de
+13 após o terceiro \cite{intrace}, redução que é o que torna a triagem por \llm\
+economicamente viável. E reproduz a arquitetura do LLift, em que o modelo
+recebe apenas os casos que a execução simbólica não conseguiu decidir
+\cite{llift}.
+
+\subsection{O registro de contexto}
+
+Para cada candidato sobrevivente a ferramenta emite um registro de contexto,
+que é um documento estruturado com as evidências necessárias para julgá-lo.
+\citeonline{llift} atribuem 5 de seus 13 falsos positivos a lacunas no
+relatório entregue pelo analisador ao modelo, o que justifica tratar esse
+registro como produto de primeira classe da análise, e não como subproduto. O
+Quadro~\ref{quadro:registro} resume seus campos.
+
+\begin{quadro}[htb]
+  \caption{\label{quadro:registro}Campos do registro de contexto}
+  \begin{tabular}{@{}lL{10.4cm}@{}}
+    \toprule
+    Campo & Conteúdo \\
+    \midrule
+    padrão & qual dos quatro padrões do Quadro~\ref{quadro:padroes} \\
+    variável & nome, tipo, se é \texttt{volatile}, local da declaração \\
+    acessos & para cada um, leitura ou escrita, linha, função e fluxo \\
+    fluxos & ponto de entrada, prioridade e como o fluxo foi identificado \\
+    caminhos & sequência de chamadas do ponto de entrada até cada acesso \\
+    mascaramento & estado de cada interrupção em cada acesso e no intervalo \\
+    laços & laços que envolvem cada acesso, e se $A_1$ e $A_2$ são a mesma instrução \\
+    código & corpo completo das funções que contêm os acessos \\
+    solucionador & veredicto e, se inconclusivo, o motivo \\
+    proveniência & o que foi provado, o que veio da configuração, o que é desconhecido \\
+    \bottomrule
+  \end{tabular}
+  \fonte{Elaborado pelos autores.}
+\end{quadro}
+
+Duas ausências no registro são intencionais. Não há campo booleano de
+mascaramento, e sim três valores, incluído o desconhecido, porque um booleano
+obrigaria o desconhecido a ser representado como um dos outros dois. E não há fatiamento de programa
+pré-calculado. Um fatiamento sobre uma variável global tende a abarcar quase
+todo o programa, e um fatiamento incompleto leva o modelo a declarar com
+confiança que um defeito real é impossível. O registro traz as camadas sempre
+úteis, e o modelo pede o que falta, como descrito adiante.
+
+\subsection{Triagem, duas perguntas e quatro grupos}
+
+O modelo nunca escolhe diretamente onde o candidato fica na fila. Ele responde
+a duas perguntas estreitas, a de se a intercalação pode acontecer e, caso
+possa, a de se ela causa dano. Separar as perguntas evita que ``benigno'' se
+converta silenciosamente em ``impossível'', que seria a confusão mais custosa
+neste contexto. O grupo do candidato sai das duas respostas por uma
+tabela fixa (Quadro~\ref{quadro:grupos}), em que qualquer dúvida sobe o
+candidato na fila de leitura.
+
+\begin{quadro}[htb]
+  \caption{\label{quadro:grupos}Derivação do grupo de cada candidato, em ordem de leitura}
+  \begin{tabular}{@{}cL{3.4cm}L{5.6cm}L{2.8cm}@{}}
+    \toprule
+    Ordem & Grupo & Viabilidade & Nocividade \\
+    \midrule
+    1 & provavelmente real & possível & nociva \\
+    2 & incerto & incerta, ou possível com nocividade incerta & qualquer \\
+    3 & provavelmente benigno & possível & benigna \\
+    4 & provavelmente inviável & impossível, com o elemento que impede & não perguntada \\
+    \bottomrule
+  \end{tabular}
+  \fonte{Elaborado pelos autores.}
+\end{quadro}
+
+Todos os grupos aparecem no relatório. O grupo determina apenas a posição de
+leitura, e é essa ordem que o \textit{Inspection Ratio} avalia.
+
+\subsection{Desenho do \textit{prompt}}
+
+O desenho segue os quatro componentes de \citeonline{llift}, adaptados ao
+domínio. O primeiro é o ensino de regras do domínio por exemplos. O
+conhecimento prévio do modelo vem sobretudo de \textit{threads} e o leva a
+procurar travas e relações \textit{happens-before}, então o \textit{prompt}
+ensina uma tabela de padrões de interrupção com seus veredictos, cobrindo a
+seção crítica que abrange todo o intervalo, as duas seções separadas que deixam
+uma lacuna no meio, a prioridade estritamente menor que impede a preempção, a
+prioridade igual que não impede, e a mesma instrução num laço formando uma
+tripla consigo mesma.
+
+O segundo componente são os pedidos progressivos de contexto. O modelo pode
+pedir, num formato fixo, a definição de uma função, o corpo de uma \isr, o
+estado de mascaramento numa linha ou a expansão de uma macro. O registro desses
+pedidos tem valor próprio, pois mede empiricamente que contexto o registro
+deveria conter desde o início, questão que a literatura de fatiamento não
+resolve para variáveis globais.
+
+O terceiro é a decomposição da tarefa, com viabilidade e nocividade perguntadas
+em conversas separadas. O quarto é a autovalidação enviesada para o recall,
+com o modelo conferindo regras fixas antes de responder, entre elas a de que
+mascaramento desconhecido conta como habilitado, a de que uma função cuja
+definição não foi obtida pode acessar a variável, e a de que ``incerto'' é
+sempre uma resposta segura.
+
+A resposta final é estruturada, com a explicação antes do veredicto, como
+recomendam \citeonline{iris}. O código analisado entra delimitado e declarado
+como dado, conforme o RNF7.
+
+\subsection{Reparo com testemunha}
+
+Para cada candidato, o modelo pode propor uma correção no vocabulário de
+interrupções enumerado por \citeonline{sdracer}, desabilitando e reabilitando a
+interrupção em torno do trecho afetado, estendendo uma seção crítica existente
+ou fundindo seções adjacentes. A correção precisa tornar atômico todo o
+intervalo $[A_1, A_2]$, e não apenas proteger um dos acessos isoladamente.
+
+Inspirada na validação por \textit{exploits} de \citeonline{sastgenius}, toda
+proposta exige uma testemunha, que diz qual \isr\ dispara, em que ponto, em que
+ordem ocorrem os acessos e que estado resulta diferente de qualquer execução em
+série. A testemunha é conferida mecanicamente contra o registro de contexto antes de a
+correção ser aceita, o que impede a aceitação de uma correção plausível, porém
+injustificada.
+
+\subsection{Reverificação}
+
+Uma correção é verificada em duas etapas que falham em direções opostas.
+Primeiro a análise estática é executada de novo sobre o programa corrigido.
+Como seus filtros só descartam com prova, o desaparecimento do candidato
+certifica, sob as premissas declaradas, que o defeito foi eliminado, e a nova análise
+completa é a única forma de detectar regressões, como uma seção crítica
+estendida que cria outro defeito. Se o candidato persistir, o resultado é
+inconclusivo, porque uma análise superaproximada pode continuar reportando um
+defeito já corrigido. Os casos inconclusivos vão então para um verificador
+limitado, que codifica a violação como uma asserção. Por fim, como observam
+\citeonline{sdracer}, verifica-se se a correção alterou o fluxo de controle ou
+a latência, que em código de interrupção constitui propriedade de correção, e
+não mero detalhe de desempenho.
+
+\section{Testes e Avaliação}
+\label{sec:avaliacao}
+
+% \subsection{Perguntas de pesquisa}
+
+% A avaliação responde a quatro perguntas. A primeira é se a etapa estática
+% encontra todos os defeitos anotados no Racebench, ou seja, se atinge recall de
+% 100\%. A segunda é se a triagem reduz o esforço de revisão sem que nenhum
+% defeito real seja classificado como inviável. A terceira é qual a contribuição
+% de cada técnica de \textit{prompt}, respondida por uma ablação no formato de
+% \citeonline{llift}. A quarta é se o modelo propõe correções corretas para os
+% defeitos encontrados.
+
+% \subsection{Unidade de contagem e leitura do gabarito}
+
+% Toda taxa de recall divide por um número de defeitos, e a
+% Seção~\ref{sec:benchmarks-conceito} mostrou que a literatura usa números
+% diferentes para os mesmos programas sem justificar a escolha. Este trabalho
+% adota uma tripla anotada como um defeito. A Tabela~\ref{tab:unidades} mostra
+% quanto a escolha muda o denominador.
+
+% \begin{table}[htb]
+%   \centering
+%   \caption{Contagem do gabarito do Racebench conforme a unidade}
+%   \label{tab:unidades}
+%   \begin{tabular}{@{}lcc@{}}
+%     \toprule
+%     Unidade & Defeitos & Armadilhas \\
+%     \midrule
+%     por instância de tripla & 48 & 38 \\
+%     por variável em cada caso & 33 & 29 \\
+%     por caso & 31 & 31 \\
+%     \bottomrule
+%   \end{tabular}
+%   \fonte{Elaborada pelos autores a partir das anotações de \citeonline{racebench}.}
+% \end{table}
+
+% A unidade por instância é a mais fina e, por isso, a mais difícil de inflar. É
+% também a usada pelo BMC4AV, o que preserva a comparação, e as unidades mais
+% grossas escondem estrutura, já que um mesmo caso chega a ter quatro defeitos
+% distintos numa só variável.
+
+% As anotações usam ao menos quatro gramáticas incompatíveis e contêm erros, de
+% modo que um leitor estrito encontra apenas 28 defeitos sem acusar nenhuma
+% falha. O leitor de gabarito precisa portanto tolerar as variações, e sua
+% contagem é validada contra uma contagem manual dos casos mais difíceis antes de
+% qualquer medição. Doze anotações são corrigidas por uma errata em que cada
+% correção traz sua evidência, sendo seis números de linha, cinco deles num único
+% caso cujas anotações apontam para linhas sem nenhum acesso, e seis tipos de
+% acesso trocados. Nenhuma correção altera as contagens. Sem elas, uma comparação
+% exata com o texto distribuído daria recall zero para um defeito que a
+% ferramenta encontra na linha certa.
+
+% \subsection{Regra de casamento}
+
+% Um candidato reportado corresponde a uma tripla anotada quando está no mesmo
+% programa, trata da mesma posição de memória e tem as mesmas linhas ordenadas
+% $(A_1, B, A_2)$ que a anotação corrigida. Três escolhas são deliberadas. O tipo
+% de acesso não precisa coincidir, porque as linhas já distinguem todas as 86
+% anotações sem colisão e 20 acessos anotados estão em linhas que leem e escrevem
+% a variável. O nome da variável é comparado depois de resolver apelidos, pois 12
+% anotações nomeiam a posição por um ponteiro, um elemento de vetor ou um campo
+% de estrutura. E a comparação é feita sobre as anotações corrigidas, cuja errata
+% é publicada junto com os resultados.
+
+% \subsection{Conjunto de triagem}
+% \label{sec:conjunto-triagem}
+
+% A etapa com \llm\ é desenvolvida e medida, até a integração, sobre 20 registros
+% de contexto montados à mão a partir do Racebench, sendo 10 defeitos anotados e
+% 10 armadilhas. Eles estão organizados de modo a formar seis duplas
+% adversariais, isto é, um defeito e uma armadilha que diferem num único detalhe,
+% como o estado de mascaramento. As duplas existem para que o modelo não possa
+% acertar com base apenas na aparência do código. Um caso cujas anotações descrevem uma versão do programa
+% diferente da distribuída foi excluído do conjunto.
+
+% A suíte de 18 programas reais entra na etapa final. Seu gabarito registra, por
+% variável, 45 violações verdadeiras e 14 falsas, o que também a torna um
+% conjunto de triagem.
+
+% \subsection{Métricas}
+
+% O portão de recall exige que todos os defeitos anotados cheguem ao relatório e
+% que nenhum caia no grupo de menor prioridade de leitura. Uma falha aqui é
+% defeito de projeto, não parâmetro a ajustar. A rejeição de armadilhas mede a
+% fração das armadilhas classificadas nos grupos baixos, e é a medida de precisão
+% da triagem que, ao contrário da precisão, não melhora descartando candidatos. O
+% \textit{Inspection Ratio} mede a fração da lista ordenada que um revisor
+% precisa ler até encontrar todos os defeitos \cite{reducing-fp}, com empates
+% resolvidos pelo pior caso, colocando o defeito real por último. A consistência
+% mede a concordância entre execuções repetidas do mesmo candidato, e
+% \citeonline{llift} mostram que decomposição e autovalidação a melhoram
+% independentemente da acurácia. As taxas de reparo são duas, a sintática, em que
+% um analisador sintático aceita a correção, e a lógica, em que a correção
+% equivale a uma escrita à mão, como em \citeonline{skipanalyzer}, seguidas da
+% reverificação.
+
+% No Racebench apenas a viabilidade entra nessas métricas. O gabarito anota fatos
+% do programa, e muitos de seus defeitos leem a variável compartilhada para uma
+% variável local que nunca é usada. Um modelo que classifica esses casos como
+% benignos está raciocinando corretamente sobre o código, e pontuar essa resposta
+% contra o gabarito puniria o acerto. A pergunta de nocividade continua sendo
+% feita e registrada, e é avaliada na suíte de programas reais, na qual o código tem
+% efeito observável.
+
+% \subsection{Protocolo experimental}
+
+% A ablação acrescenta um componente de \textit{prompt} por linha, sempre sobre
+% os mesmos candidatos, partindo do \textit{prompt} simples e somando as regras
+% do domínio, os pedidos progressivos de contexto, a decomposição da tarefa e a
+% autovalidação. Como os pedidos de contexto só trazem informação nova quando
+% respondidos a partir do código real, a linha correspondente é medida depois da
+% integração com o resolvedor da etapa estática.
+
+% Na ablação do LLift o \textit{prompt} simples já perdia a maioria dos defeitos,
+% e o recall era a variável que se movia. Se aqui o recall partir de 100\%, as
+% variáveis dependentes passam a ser a rejeição de armadilhas e o
+% \textit{Inspection Ratio}, e é assim que a tabela final deve ser lida.
+
+% Todo número é registrado com o modelo, a data e a configuração de
+% \textit{prompt} que o produziram, conforme o RNF6, e uma linha da ablação só é
+% considerada medida se cobrir todos os candidatos previstos.
+
+% \ifparcial\else
+% \subsection{Resultados}
+% \label{sec:resultados}
+
+% \pendente{Recall da etapa estática, tabela de ablação da triagem, rejeição de
+% armadilhas, \textit{Inspection Ratio}, taxas de reparo, custo por candidato e
+% resultados na suíte de programas reais.}
+% \fi
+
+% \subsection{Ameaças à validade}
+% \label{sec:ameacas}
+
+% Vinte candidatos e uma amostra por candidato tornam diferenças de um ou dois
+% candidatos indistinguíveis de ruído, e é a medição de consistência com várias
+% amostras que permite afirmar uma diferença. Quando o \textit{prompt} é
+% corrigido depois de observar erros nos mesmos 20 casos, o número seguinte é
+% otimista, e por isso as versões anteriores e posteriores são reportadas lado a
+% lado. A errata corrige o que pode ser verificado no código, mas o rótulo de um
+% caso cujas anotações descrevem outra versão do programa não pode ser corrigido
+% sem decidir de novo o gabarito.
+
+% Duas ameaças são estruturais. Depois da integração a população muda, pois o
+% modelo passa a receber apenas o que o solucionador não decidiu, que são os
+% casos mais difíceis, de modo que os números obtidos sobre os registros montados
+% à mão não se transferem automaticamente. E todos os programas avaliados são de
+% arquivo único, o que deixa a entrada com vários arquivos como capacidade
+% exercida fora do gabarito. Por fim, a exclusão de reentrância da
+% Seção~\ref{sec:premissas} é uma perda potencial de recall registrada, não
+% medida.

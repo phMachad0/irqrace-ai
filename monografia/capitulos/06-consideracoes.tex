@@ -1,0 +1,56 @@
+\chapter{Considerações Finais} \label{cap:consideracoes}
+
+\section{Conclusões do Projeto de Formatura}
+\label{sec:conclusoes}
+
+% Capítulo exclusivo da monografia final: a parcial não o inclui.
+\pendente{Balanço final do trabalho: resultados atingidos e não atingidos, com
+justificativas, à luz das quatro perguntas de pesquisa da
+Seção~\ref{sec:avaliacao}.}
+
+\section{Contribuições}
+\label{sec:contribuicoes}
+
+O trabalho contribui em quatro pontos.
+
+O primeiro é a leitura crítica do gabarito do Racebench, com uma contagem
+explícita por unidade, uma errata em que cada correção traz sua evidência e uma
+regra de casamento publicada. Sem isso, nenhuma taxa de recall dessa literatura
+é comparável com outra.
+
+O segundo é a lista explícita de premissas sob as quais a ausência de falsos
+negativos vale. As quatro ferramentas revisadas afirmam essa ausência sem
+declarar as condições, o que torna a afirmação impossível de verificar
+externamente.
+
+O terceiro é a unificação, num só \textit{front end}, das duas formas pelas
+quais a literatura enuncia o defeito, hoje tratadas por ferramentas distintas,
+com a enumeração de acessos compartilhada e os filtros separados.
+
+O quarto é a aplicação de triagem e reparo assistidos por modelo de linguagem a
+defeitos de concorrência, com a ablação das técnicas de \textit{prompt} no
+formato de \citeonline{llift}. É a contribuição de maior risco e também a que
+não tem precedente em nenhuma das duas literaturas revisadas.
+
+\section{Perspectivas de Continuidade}
+\label{sec:continuidade}
+
+Quatro caminhos se abrem a partir do que está especificado aqui.
+
+O primeiro é a inferência automática do modelo de interrupções. O arquivo de
+configuração é hoje escrito à mão e é a maior ameaça declarada ao recall, já
+que um tratador não declarado é invisível para a análise. Inferir os pontos de
+entrada a partir da API de registro de interrupções da plataforma eliminaria
+essa dependência.
+
+O segundo é o tratamento de reentrância. A premissa de que uma \isr\ não
+interrompe a si mesma é a única premissa não conservadora da lista, e removê-la
+exige decidir como limitar a profundidade de aninhamento sem perder defeitos.
+
+O terceiro é a avaliação sobre código de produção com vários arquivos. Os dois
+\textit{benchmarks} disponíveis são de arquivo único, e a capacidade de ligar
+vários módulos existe sem que haja gabarito para exercitá-la.
+
+O quarto é estender a mesma arquitetura a outras classes de defeito de
+concorrência, como as que envolvem mais de duas variáveis compartilhadas, que
+nenhuma das ferramentas revisadas trata.

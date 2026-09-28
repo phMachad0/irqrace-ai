@@ -1,56 +1,55 @@
 # Monografia do TCC
 
-Fonte LaTeX (abntex2) da monografia parcial e da completa. Os capítulos são
-compartilhados: `parcial.tex` inclui os capítulos 1–6, `final.tex` inclui 1–5
-e 7–9.
+Fonte LaTeX da monografia parcial e da completa. A estrutura e a formatação
+seguem o modelo do departamento, `TCC_PCS_EPUSP_2023` (abntex2 ajustado para o
+PCS-EPUSP), com os seis capítulos que ele propõe. Os capítulos são
+compartilhados pelas duas versões: `parcial.tex` e `final.tex` diferem apenas
+na chave `\ifparcial`, que libera os trechos de resultados na versão completa.
 
-## Compilar no Windows (MiKTeX)
+## Compilar
 
-Compila com **XeLaTeX** (configurado no `latexmkrc`), porque o texto usa a
-fonte Arial instalada no sistema. Numa máquina sem Arial, o preâmbulo usa a TeX
-Gyre Heros, de métrica equivalente. O MiKTeX desta máquina baixa sozinho os
-pacotes que faltarem. Num terminal, dentro desta pasta:
-
-```bash
-latexmk parcial.tex    # gera build/parcial.pdf
-latexmk final.tex      # gera build/final.pdf
-```
-
-## Compilar (WSL)
-
-Uma vez, numa distribuição Ubuntu do WSL:
+Compila com **pdfLaTeX**, como o modelo. Num terminal, dentro desta pasta:
 
 ```bash
-sudo apt update
-sudo apt install texlive-xetex texlive-latex-extra texlive-publishers \
-                 texlive-lang-portuguese texlive-fonts-extra latexmk make
-sudo apt install ttf-mscorefonts-installer   # opcional: Arial de verdade
+make parcial
 ```
-
-`abntex2` vem no pacote `texlive-publishers`.
-
-Depois, dentro desta pasta:
 
 ```bash
-cd /mnt/c/Users/luoma/Desktop/irqrace-ai/monografia
-make parcial      # gera build/parcial.pdf
-make final        # gera build/final.pdf
-make watch        # recompila a cada alteração salva
+make final
 ```
+
+`make watch` recompila a parcial a cada alteração salva e `make limpar` apaga os
+intermediários. Os PDFs saem em `build/`.
+
+No Ubuntu ou WSL, o que precisa estar instalado:
+
+```bash
+sudo apt install texlive-latex-extra texlive-publishers texlive-lang-portuguese texlive-fonts-recommended texlive-pictures latexmk make
+```
+
+`abntex2` vem no pacote `texlive-publishers`. No MiKTeX, os pacotes que faltarem
+são baixados na primeira compilação.
 
 ## Estrutura
 
-| Pasta | Conteúdo |
+| Caminho | Conteúdo |
 | --- | --- |
-| `config/` | preâmbulo (pacotes, macros) e dados da capa |
-| `pre-textuais/` | resumo, abstract, listas e siglas |
-| `capitulos/` | um arquivo por capítulo |
-| `pos-textuais/` | apêndices |
+| `config/preambulo.tex` | pacotes e macros, espelhando o preâmbulo do modelo |
+| `config/dados.tex` | título, autores, orientador e instituição |
+| `pre-textuais/` | resumo, abstract, listas, siglas e sumário |
+| `capitulos/` | um arquivo por capítulo, na ordem do modelo |
 | `figuras/` | imagens |
-| `referencias.bib` | bibliografia; campos `VERIFICAR` ainda não conferidos |
+| `referencias.bib` | bibliografia |
+
+## Ficha catalográfica
+
+A folha de rosto sai sem ficha nesta versão. Para a entrega final, gere a ficha
+em <https://www.poli.usp.br/bibliotecas/servicos/catalogacao-na-publicacao>,
+salve como `ficha.pdf` nesta pasta e troque o `\imprimirfolhaderosto` pelo bloco
+comentado logo abaixo dele.
 
 ## Marcadores de pendência
 
-`\pendente{...}` aparece em vermelho no PDF. Para a entrega, troque
-`\mostrarpendentestrue` por `\mostrarpendentesfalse` em
-`config/preambulo.tex`.
+`\pendente{...}` marca o que ainda falta escrever. Fica invisível por padrão;
+para enxergar os marcadores em vermelho, troque `\mostrarpendentesfalse` por
+`\mostrarpendentestrue` em `config/preambulo.tex`.
