@@ -115,15 +115,18 @@ O Quadro~\ref{quadro:padroes} mostra cada uma delas.
 
 \begin{quadro}[htb]
   \caption{\label{quadro:padroes}Os quatro padrões não serializáveis}
-  \begin{tabular}{@{}lL{9.5cm}@{}}
-    \toprule
+  \begin{tabular}{|l|L{9.5cm}|}
+    \hline
     Padrão $(A_1, B, A_2)$ & Por que quebra a atomicidade \\
-    \midrule
+    \hline
     $(R,W,R)$ & as duas leituras do mesmo fluxo veem valores diferentes \\
+    \hline
     $(R,W,W)$ & $A_2$ escreve com base numa leitura que ficou obsoleta \\
+    \hline
     $(W,R,W)$ & a \isr\ enxerga um valor intermediário que não deveria existir \\
+    \hline
     $(W,W,R)$ & $A_2$ lê o valor escrito pela \isr, e não o escrito por $A_1$ \\
-    \bottomrule
+    \hline
   \end{tabular}
   \fonte{Elaborado pelos autores a partir de \citeonline{nichecker} e
   \citeonline{bmc4av}.}
@@ -310,17 +313,22 @@ O Quadro~\ref{quadro:capacidades} resume as quatro ferramentas.
 \begin{quadro}[htb]
   \caption{\label{quadro:capacidades}Capacidades das ferramentas revisadas}
   \small
-  \begin{tabular}{@{}L{2.4cm}L{2.5cm}L{2.5cm}L{3.0cm}L{2.7cm}@{}}
-    \toprule
+  \begin{tabular}{|L{2.4cm}|L{2.5cm}|L{2.5cm}|L{3.0cm}|L{2.7cm}|}
+    \hline
     & SDRacer & IntRace & NIChecker & BMC4AV \\
-    \midrule
+    \hline
     Ano, veículo & 2020, TSE & 2024, J. Supercomp. & 2025, TOSEM & 2026, \textit{preprint} \\
+    \hline
     Método & estático, simbólico e dinâmico & estático e Z3 & sequencialização e BMC & BMC com grafo de acessos \\
+    \hline
     Aninhamento & exclui reentrância & conversão sequencial & nativo & por ordens parciais \\
+    \hline
     Automação & automática & arquivo de configuração & variável e padrão por execução & automática, segundo os autores \\
+    \hline
     Repara defeitos & sim & não & não & não \\
+    \hline
     Código disponível & não & não & não & sim \\
-    \bottomrule
+    \hline
   \end{tabular}
   \fonte{Elaborado pelos autores a partir de \citeonline{sdracer},
   \citeonline{intrace}, \citeonline{nichecker} e \citeonline{bmc4av}.}
@@ -393,14 +401,16 @@ O Quadro~\ref{quadro:metricas} resume as métricas usadas na literatura e aqui.
 \begin{quadro}[htb]
   \caption{\label{quadro:metricas}Métricas de avaliação}
   \small
-  \begin{tabular}{@{}L{3.0cm}L{6.4cm}L{4.4cm}@{}}
-    \toprule
+  \begin{tabular}{|L{3.0cm}|L{6.4cm}|L{4.4cm}|}
+    \hline
     Métrica & Definição & O que responde \\
-    \midrule
+    \hline
     Precisão & $TP / (TP + FP)$ & quanto do que foi reportado é real \\
+    \hline
     Recall (taxa de acerto) & $TP / (TP + FN)$ & quanto do que existe foi encontrado \\
+    \hline
     \textit{Inspection Ratio} & $(TP + FP) / (TP + FP + TN + FN)$ & quanto é preciso ler \\
-    \bottomrule
+    \hline
   \end{tabular}
   \fonte{Elaborado pelos autores a partir de \citeonline{reducing-fp}.}
 \end{quadro}

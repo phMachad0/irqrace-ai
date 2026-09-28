@@ -34,7 +34,7 @@ mantém a verificação limitada mas guia o solucionador com um grafo de acessos
 memória \cite{bmc4av}. As quatro relatam precisão alta e poucos falsos
 positivos.
 
-O que elas não relatam com o mesmo cuidado é o recall, isto é, a fração dos
+O que elas não relatam com o mesmo cuidado é o \textit{recall}, isto é, a fração dos
 defeitos existentes que a ferramenta efetivamente encontra, medida definida
 formalmente na Seção~\ref{sec:soundness}. Três delas afirmam ausência de falsos
 negativos com base em inspeção manual ou dentro de um limite de desenrolamento
@@ -44,7 +44,7 @@ existentes na mesma suíte. Essa assimetria tem origem identificável. O
 \textit{benchmark} que todas utilizam foi criado para uma competição de
 protótipos na qual, nos casos simples, uma detecção valia 2 pontos e um falso
 positivo custava 3 \cite{racebench}. Otimizar para essa regra equivale a
-otimizar contra o recall, e a prática permaneceu depois da competição.
+otimizar contra o \textit{recall}, e a prática permaneceu depois da competição.
 
 Em paralelo, e sem contato com essa literatura, modelos de linguagem de grande
 escala (\llm) passaram a ser usados para tornar a análise estática utilizável.
@@ -71,7 +71,7 @@ Desse objetivo derivam seis objetivos específicos.
 
 \begin{enumerate}
   \item Detectar, numa única análise estática, os candidatos a defeito, com
-    recall de 100\% sobre o gabarito do \textit{benchmark} Racebench.
+    \textit{recall} de 100\% sobre o gabarito do \textit{benchmark} Racebench.
   \item Emitir, para cada candidato, um registro de contexto com as evidências
     de que um revisor precisa, incluindo acessos, fluxos, prioridades, caminhos
     de chamada e estado de mascaramento das interrupções.

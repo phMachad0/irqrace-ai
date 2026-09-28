@@ -164,21 +164,30 @@ Quadro~\ref{quadro:registro} resume seus campos.
 
 \begin{quadro}[htb]
   \caption{\label{quadro:registro}Campos do registro de contexto}
-  \begin{tabular}{@{}lL{10.4cm}@{}}
-    \toprule
+  \begin{tabular}{|l|L{10.4cm}|}
+    \hline
     Campo & Conteúdo \\
-    \midrule
+    \hline
     padrão & qual dos quatro padrões do Quadro~\ref{quadro:padroes} \\
+    \hline
     variável & nome, tipo, se é \texttt{volatile}, local da declaração \\
+    \hline
     acessos & para cada um, leitura ou escrita, linha, função e fluxo \\
+    \hline
     fluxos & ponto de entrada, prioridade e como o fluxo foi identificado \\
+    \hline
     caminhos & sequência de chamadas do ponto de entrada até cada acesso \\
+    \hline
     mascaramento & estado de cada interrupção em cada acesso e no intervalo \\
+    \hline
     laços & laços que envolvem cada acesso, e se $A_1$ e $A_2$ são a mesma instrução \\
+    \hline
     código & corpo completo das funções que contêm os acessos \\
+    \hline
     solucionador & veredicto e, se inconclusivo, o motivo \\
+    \hline
     proveniência & o que foi provado, o que veio da configuração, o que é desconhecido \\
-    \bottomrule
+    \hline
   \end{tabular}
   \fonte{Elaborado pelos autores.}
 \end{quadro}
@@ -203,15 +212,18 @@ candidato na fila de leitura.
 
 \begin{quadro}[htb]
   \caption{\label{quadro:grupos}Derivação do grupo de cada candidato, em ordem de leitura}
-  \begin{tabular}{@{}cL{3.4cm}L{5.6cm}L{2.8cm}@{}}
-    \toprule
+  \begin{tabular}{|c|L{3.4cm}|L{5.6cm}|L{2.8cm}|}
+    \hline
     Ordem & Grupo & Viabilidade & Nocividade \\
-    \midrule
+    \hline
     1 & provavelmente real & possível & nociva \\
+    \hline
     2 & incerto & incerta, ou possível com nocividade incerta & qualquer \\
+    \hline
     3 & provavelmente benigno & possível & benigna \\
+    \hline
     4 & provavelmente inviável & impossível, com o elemento que impede & não perguntada \\
-    \bottomrule
+    \hline
   \end{tabular}
   \fonte{Elaborado pelos autores.}
 \end{quadro}
@@ -282,152 +294,154 @@ não mero detalhe de desempenho.
 \section{Testes e Avaliação}
 \label{sec:avaliacao}
 
-% \subsection{Perguntas de pesquisa}
+\subsection{Perguntas de pesquisa}
 
-% A avaliação responde a quatro perguntas. A primeira é se a etapa estática
-% encontra todos os defeitos anotados no Racebench, ou seja, se atinge recall de
-% 100\%. A segunda é se a triagem reduz o esforço de revisão sem que nenhum
-% defeito real seja classificado como inviável. A terceira é qual a contribuição
-% de cada técnica de \textit{prompt}, respondida por uma ablação no formato de
-% \citeonline{llift}. A quarta é se o modelo propõe correções corretas para os
-% defeitos encontrados.
+A avaliação responde a quatro perguntas. A primeira é se a etapa estática
+encontra todos os defeitos anotados no Racebench, ou seja, se atinge recall de
+100\%. A segunda é se a triagem reduz o esforço de revisão sem que nenhum
+defeito real seja classificado como inviável. A terceira é qual a contribuição
+de cada técnica de \textit{prompt}, respondida por uma ablação no formato de
+\citeonline{llift}. A quarta é se o modelo propõe correções corretas para os
+defeitos encontrados.
 
-% \subsection{Unidade de contagem e leitura do gabarito}
+\subsection{Unidade de contagem e leitura do gabarito}
 
-% Toda taxa de recall divide por um número de defeitos, e a
-% Seção~\ref{sec:benchmarks-conceito} mostrou que a literatura usa números
-% diferentes para os mesmos programas sem justificar a escolha. Este trabalho
-% adota uma tripla anotada como um defeito. A Tabela~\ref{tab:unidades} mostra
-% quanto a escolha muda o denominador.
+Toda taxa de recall divide por um número de defeitos, e a
+Seção~\ref{sec:benchmarks-conceito} mostrou que a literatura usa números
+diferentes para os mesmos programas sem justificar a escolha. Este trabalho
+adota uma tripla anotada como um defeito. A Tabela~\ref{tab:unidades} mostra
+quanto a escolha muda o denominador.
 
-% \begin{table}[htb]
-%   \centering
-%   \caption{Contagem do gabarito do Racebench conforme a unidade}
-%   \label{tab:unidades}
-%   \begin{tabular}{@{}lcc@{}}
-%     \toprule
-%     Unidade & Defeitos & Armadilhas \\
-%     \midrule
-%     por instância de tripla & 48 & 38 \\
-%     por variável em cada caso & 33 & 29 \\
-%     por caso & 31 & 31 \\
-%     \bottomrule
-%   \end{tabular}
-%   \fonte{Elaborada pelos autores a partir das anotações de \citeonline{racebench}.}
-% \end{table}
+\begin{table}[htb]
+  \centering
+  \caption{Contagem do gabarito do Racebench conforme a unidade}
+  \label{tab:unidades}
+  \begin{tabular}{|l|c|c|}
+    \hline
+    Unidade & Defeitos & Armadilhas \\
+    \hline
+    por instância de tripla & 48 & 38 \\
+    \hline
+    por variável em cada caso & 33 & 29 \\
+    \hline
+    por caso & 31 & 31 \\
+    \hline
+  \end{tabular}
+  \fonte{Elaborada pelos autores a partir das anotações de \citeonline{racebench}.}
+\end{table}
 
-% A unidade por instância é a mais fina e, por isso, a mais difícil de inflar. É
-% também a usada pelo BMC4AV, o que preserva a comparação, e as unidades mais
-% grossas escondem estrutura, já que um mesmo caso chega a ter quatro defeitos
-% distintos numa só variável.
+A unidade por instância é a mais fina e, por isso, a mais difícil de inflar. É
+também a usada pelo BMC4AV, o que preserva a comparação, e as unidades mais
+grossas escondem estrutura, já que um mesmo caso chega a ter quatro defeitos
+distintos numa só variável.
 
-% As anotações usam ao menos quatro gramáticas incompatíveis e contêm erros, de
-% modo que um leitor estrito encontra apenas 28 defeitos sem acusar nenhuma
-% falha. O leitor de gabarito precisa portanto tolerar as variações, e sua
-% contagem é validada contra uma contagem manual dos casos mais difíceis antes de
-% qualquer medição. Doze anotações são corrigidas por uma errata em que cada
-% correção traz sua evidência, sendo seis números de linha, cinco deles num único
-% caso cujas anotações apontam para linhas sem nenhum acesso, e seis tipos de
-% acesso trocados. Nenhuma correção altera as contagens. Sem elas, uma comparação
-% exata com o texto distribuído daria recall zero para um defeito que a
-% ferramenta encontra na linha certa.
+As anotações usam ao menos quatro gramáticas incompatíveis e contêm erros, de
+modo que um leitor estrito encontra apenas 28 defeitos sem acusar nenhuma
+falha. O leitor de gabarito precisa portanto tolerar as variações, e sua
+contagem é validada contra uma contagem manual dos casos mais difíceis antes de
+qualquer medição. Doze anotações são corrigidas por uma errata em que cada
+correção traz sua evidência, sendo seis números de linha, cinco deles num único
+caso cujas anotações apontam para linhas sem nenhum acesso, e seis tipos de
+acesso trocados. Nenhuma correção altera as contagens. Sem elas, uma comparação
+exata com o texto distribuído daria recall zero para um defeito que a
+ferramenta encontra na linha certa.
 
-% \subsection{Regra de casamento}
+\subsection{Regra de casamento}
 
-% Um candidato reportado corresponde a uma tripla anotada quando está no mesmo
-% programa, trata da mesma posição de memória e tem as mesmas linhas ordenadas
-% $(A_1, B, A_2)$ que a anotação corrigida. Três escolhas são deliberadas. O tipo
-% de acesso não precisa coincidir, porque as linhas já distinguem todas as 86
-% anotações sem colisão e 20 acessos anotados estão em linhas que leem e escrevem
-% a variável. O nome da variável é comparado depois de resolver apelidos, pois 12
-% anotações nomeiam a posição por um ponteiro, um elemento de vetor ou um campo
-% de estrutura. E a comparação é feita sobre as anotações corrigidas, cuja errata
-% é publicada junto com os resultados.
+Um candidato reportado corresponde a uma tripla anotada quando está no mesmo
+programa, trata da mesma posição de memória e tem as mesmas linhas ordenadas
+$(A_1, B, A_2)$ que a anotação corrigida. Três escolhas são deliberadas. O tipo
+de acesso não precisa coincidir, porque as linhas já distinguem todas as 86
+anotações sem colisão e 20 acessos anotados estão em linhas que leem e escrevem
+a variável. O nome da variável é comparado depois de resolver apelidos, pois 12
+anotações nomeiam a posição por um ponteiro, um elemento de vetor ou um campo
+de estrutura. E a comparação é feita sobre as anotações corrigidas, cuja errata
+é publicada junto com os resultados.
 
-% \subsection{Conjunto de triagem}
-% \label{sec:conjunto-triagem}
+\subsection{Conjunto de triagem}
+\label{sec:conjunto-triagem}
 
-% A etapa com \llm\ é desenvolvida e medida, até a integração, sobre 20 registros
-% de contexto montados à mão a partir do Racebench, sendo 10 defeitos anotados e
-% 10 armadilhas. Eles estão organizados de modo a formar seis duplas
-% adversariais, isto é, um defeito e uma armadilha que diferem num único detalhe,
-% como o estado de mascaramento. As duplas existem para que o modelo não possa
-% acertar com base apenas na aparência do código. Um caso cujas anotações descrevem uma versão do programa
-% diferente da distribuída foi excluído do conjunto.
+A etapa com \llm\ é desenvolvida e medida, até a integração, sobre 20 registros
+de contexto montados à mão a partir do Racebench, sendo 10 defeitos anotados e
+10 armadilhas. Eles estão organizados de modo a formar seis duplas
+adversariais, isto é, um defeito e uma armadilha que diferem num único detalhe,
+como o estado de mascaramento. As duplas existem para que o modelo não possa
+acertar com base apenas na aparência do código. Um caso cujas anotações descrevem uma versão do programa
+diferente da distribuída foi excluído do conjunto.
 
-% A suíte de 18 programas reais entra na etapa final. Seu gabarito registra, por
-% variável, 45 violações verdadeiras e 14 falsas, o que também a torna um
-% conjunto de triagem.
+A suíte de 18 programas reais entra na etapa final. Seu gabarito registra, por
+variável, 45 violações verdadeiras e 14 falsas, o que também a torna um
+conjunto de triagem.
 
-% \subsection{Métricas}
+\subsection{Métricas}
 
-% O portão de recall exige que todos os defeitos anotados cheguem ao relatório e
-% que nenhum caia no grupo de menor prioridade de leitura. Uma falha aqui é
-% defeito de projeto, não parâmetro a ajustar. A rejeição de armadilhas mede a
-% fração das armadilhas classificadas nos grupos baixos, e é a medida de precisão
-% da triagem que, ao contrário da precisão, não melhora descartando candidatos. O
-% \textit{Inspection Ratio} mede a fração da lista ordenada que um revisor
-% precisa ler até encontrar todos os defeitos \cite{reducing-fp}, com empates
-% resolvidos pelo pior caso, colocando o defeito real por último. A consistência
-% mede a concordância entre execuções repetidas do mesmo candidato, e
-% \citeonline{llift} mostram que decomposição e autovalidação a melhoram
-% independentemente da acurácia. As taxas de reparo são duas, a sintática, em que
-% um analisador sintático aceita a correção, e a lógica, em que a correção
-% equivale a uma escrita à mão, como em \citeonline{skipanalyzer}, seguidas da
-% reverificação.
+O portão de recall exige que todos os defeitos anotados cheguem ao relatório e
+que nenhum caia no grupo de menor prioridade de leitura. Uma falha aqui é
+defeito de projeto, não parâmetro a ajustar. A rejeição de armadilhas mede a
+fração das armadilhas classificadas nos grupos baixos, e é a medida de precisão
+da triagem que, ao contrário da precisão, não melhora descartando candidatos. O
+\textit{Inspection Ratio} mede a fração da lista ordenada que um revisor
+precisa ler até encontrar todos os defeitos \cite{reducing-fp}, com empates
+resolvidos pelo pior caso, colocando o defeito real por último. A consistência
+mede a concordância entre execuções repetidas do mesmo candidato, e
+\citeonline{llift} mostram que decomposição e autovalidação a melhoram
+independentemente da acurácia. As taxas de reparo são duas, a sintática, em que
+um analisador sintático aceita a correção, e a lógica, em que a correção
+equivale a uma escrita à mão, como em \citeonline{skipanalyzer}, seguidas da
+reverificação.
 
-% No Racebench apenas a viabilidade entra nessas métricas. O gabarito anota fatos
-% do programa, e muitos de seus defeitos leem a variável compartilhada para uma
-% variável local que nunca é usada. Um modelo que classifica esses casos como
-% benignos está raciocinando corretamente sobre o código, e pontuar essa resposta
-% contra o gabarito puniria o acerto. A pergunta de nocividade continua sendo
-% feita e registrada, e é avaliada na suíte de programas reais, na qual o código tem
-% efeito observável.
+No Racebench apenas a viabilidade entra nessas métricas. O gabarito anota fatos
+do programa, e muitos de seus defeitos leem a variável compartilhada para uma
+variável local que nunca é usada. Um modelo que classifica esses casos como
+benignos está raciocinando corretamente sobre o código, e pontuar essa resposta
+contra o gabarito puniria o acerto. A pergunta de nocividade continua sendo
+feita e registrada, e é avaliada na suíte de programas reais, na qual o código tem
+efeito observável.
 
-% \subsection{Protocolo experimental}
+\subsection{Protocolo experimental}
 
-% A ablação acrescenta um componente de \textit{prompt} por linha, sempre sobre
-% os mesmos candidatos, partindo do \textit{prompt} simples e somando as regras
-% do domínio, os pedidos progressivos de contexto, a decomposição da tarefa e a
-% autovalidação. Como os pedidos de contexto só trazem informação nova quando
-% respondidos a partir do código real, a linha correspondente é medida depois da
-% integração com o resolvedor da etapa estática.
+A ablação acrescenta um componente de \textit{prompt} por linha, sempre sobre
+os mesmos candidatos, partindo do \textit{prompt} simples e somando as regras
+do domínio, os pedidos progressivos de contexto, a decomposição da tarefa e a
+autovalidação. Como os pedidos de contexto só trazem informação nova quando
+respondidos a partir do código real, a linha correspondente é medida depois da
+integração com o resolvedor da etapa estática.
 
-% Na ablação do LLift o \textit{prompt} simples já perdia a maioria dos defeitos,
-% e o recall era a variável que se movia. Se aqui o recall partir de 100\%, as
-% variáveis dependentes passam a ser a rejeição de armadilhas e o
-% \textit{Inspection Ratio}, e é assim que a tabela final deve ser lida.
+Na ablação do LLift o \textit{prompt} simples já perdia a maioria dos defeitos,
+e o recall era a variável que se movia. Se aqui o recall partir de 100\%, as
+variáveis dependentes passam a ser a rejeição de armadilhas e o
+\textit{Inspection Ratio}, e é assim que a tabela final deve ser lida.
 
-% Todo número é registrado com o modelo, a data e a configuração de
-% \textit{prompt} que o produziram, conforme o RNF6, e uma linha da ablação só é
-% considerada medida se cobrir todos os candidatos previstos.
+Todo número é registrado com o modelo, a data e a configuração de
+\textit{prompt} que o produziram, conforme o RNF6, e uma linha da ablação só é
+considerada medida se cobrir todos os candidatos previstos.
 
-% \ifparcial\else
-% \subsection{Resultados}
-% \label{sec:resultados}
+\ifparcial\else
+\subsection{Resultados}
+\label{sec:resultados}
 
-% \pendente{Recall da etapa estática, tabela de ablação da triagem, rejeição de
-% armadilhas, \textit{Inspection Ratio}, taxas de reparo, custo por candidato e
-% resultados na suíte de programas reais.}
-% \fi
+\pendente{Recall da etapa estática, tabela de ablação da triagem, rejeição de
+armadilhas, \textit{Inspection Ratio}, taxas de reparo, custo por candidato e
+resultados na suíte de programas reais.}
+\fi
 
-% \subsection{Ameaças à validade}
-% \label{sec:ameacas}
+\subsection{Ameaças à validade}
+\label{sec:ameacas}
 
-% Vinte candidatos e uma amostra por candidato tornam diferenças de um ou dois
-% candidatos indistinguíveis de ruído, e é a medição de consistência com várias
-% amostras que permite afirmar uma diferença. Quando o \textit{prompt} é
-% corrigido depois de observar erros nos mesmos 20 casos, o número seguinte é
-% otimista, e por isso as versões anteriores e posteriores são reportadas lado a
-% lado. A errata corrige o que pode ser verificado no código, mas o rótulo de um
-% caso cujas anotações descrevem outra versão do programa não pode ser corrigido
-% sem decidir de novo o gabarito.
+Vinte candidatos e uma amostra por candidato tornam diferenças de um ou dois
+candidatos indistinguíveis de ruído, e é a medição de consistência com várias
+amostras que permite afirmar uma diferença. Quando o \textit{prompt} é
+corrigido depois de observar erros nos mesmos 20 casos, o número seguinte é
+otimista, e por isso as versões anteriores e posteriores são reportadas lado a
+lado. A errata corrige o que pode ser verificado no código, mas o rótulo de um
+caso cujas anotações descrevem outra versão do programa não pode ser corrigido
+sem decidir de novo o gabarito.
 
-% Duas ameaças são estruturais. Depois da integração a população muda, pois o
-% modelo passa a receber apenas o que o solucionador não decidiu, que são os
-% casos mais difíceis, de modo que os números obtidos sobre os registros montados
-% à mão não se transferem automaticamente. E todos os programas avaliados são de
-% arquivo único, o que deixa a entrada com vários arquivos como capacidade
-% exercida fora do gabarito. Por fim, a exclusão de reentrância da
-% Seção~\ref{sec:premissas} é uma perda potencial de recall registrada, não
-% medida.
+Duas ameaças são estruturais. Depois da integração a população muda, pois o
+modelo passa a receber apenas o que o solucionador não decidiu, que são os
+casos mais difíceis, de modo que os números obtidos sobre os registros montados
+à mão não se transferem automaticamente. E todos os programas avaliados são de
+arquivo único, o que deixa a entrada com vários arquivos como capacidade
+exercida fora do gabarito. Por fim, a exclusão de reentrância da
+Seção~\ref{sec:premissas} é uma perda potencial de recall registrada, não
+medida.

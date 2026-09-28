@@ -30,23 +30,34 @@ principal e cede lugar ao recall, que precisa ser de 100\%, acompanhado do
 \begin{quadro}[htb]
   \caption{\label{quadro:rf}Requisitos funcionais}
   \small
-  \begin{tabular}{@{}lL{11.6cm}@{}}
-    \toprule
+  \begin{tabular}{|l|L{11.6cm}|}
+    \hline
     & Descrição \\
-    \midrule
+    \hline
     RF1 & Aceitar como entrada um programa em C, com um ou vários arquivos, e um arquivo de configuração que declare os fluxos, suas prioridades e as primitivas de mascaramento da plataforma. \\
+    \hline
     RF2 & Identificar as posições de memória alcançadas por mais de um fluxo, incluindo variáveis locais compartilhadas por meio de ponteiros. \\
+    \hline
     RF3 & Enumerar todos os acessos de leitura e escrita a essas posições, registrando fluxo, função, caminho de chamadas, linha do código-fonte e laços que envolvem o acesso. \\
+    \hline
     RF4 & Derivar candidatos a defeito a partir dessa enumeração, restringindo as triplas aos quatro padrões não serializáveis do Quadro~\ref{quadro:padroes}. \\
+    \hline
     RF5 & Descartar candidatos cujos fluxos comprovadamente não podem se sobrepor, por prioridade ou por mascaramento. \\
+    \hline
     RF6 & Verificar a viabilidade de caminho dos candidatos restantes com um solucionador SMT, descartando apenas os provados impossíveis. \\
+    \hline
     RF7 & Emitir, para cada candidato sobrevivente, um registro de contexto com as evidências necessárias para julgá-lo. \\
+    \hline
     RF8 & Responder a pedidos de contexto adicionais feitos durante a triagem, como a definição de uma função, o corpo de uma \isr\ ou o estado de mascaramento numa linha. \\
+    \hline
     RF9 & Classificar cada candidato em um de quatro grupos de leitura, com explicação, sem remover nenhum candidato do relatório. \\
+    \hline
     RF10 & Propor, para cada candidato, uma correção no vocabulário de interrupções, acompanhada de uma testemunha da intercalação que a justifica. \\
+    \hline
     RF11 & Reverificar o programa corrigido, confirmando o desaparecimento do defeito e a ausência de defeitos novos. \\
+    \hline
     RF12 & Oferecer um painel que permita configurar o programa, executar a análise, ler cada candidato ao lado do código-fonte e aceitar ou rejeitar uma correção. \\
-    \bottomrule
+    \hline
   \end{tabular}
   \fonte{Elaborado pelos autores.}
 \end{quadro}
@@ -81,19 +92,26 @@ operada, não atende ao objetivo a que se propõe.
 \begin{quadro}[htb]
   \caption{\label{quadro:rnf}Requisitos não funcionais}
   \small
-  \begin{tabular}{@{}lL{11.6cm}@{}}
-    \toprule
+  \begin{tabular}{|l|L{11.6cm}|}
+    \hline
     & Descrição \\
-    \midrule
+    \hline
     RNF1 & Nenhum defeito anotado no gabarito pode deixar de aparecer no relatório, e nenhum pode ser classificado no grupo de menor prioridade de leitura. \\
+    \hline
     RNF2 & As premissas sob as quais o RNF1 vale devem estar declaradas por escrito e versionadas junto com o código. \\
+    \hline
     RNF3 & Toda decisão de descarte deve ser rastreável até a prova que a autorizou. \\
+    \hline
     RNF4 & O registro de contexto deve distinguir o que foi provado, o que veio da configuração e o que é desconhecido. \\
+    \hline
     RNF5 & A etapa de triagem deve ser independente do provedor do modelo, permitindo trocar de modelo sem alterar os \textit{prompts}. \\
+    \hline
     RNF6 & Toda medição deve registrar o modelo, a data e a configuração de \textit{prompt} que a produziram, e as respostas do modelo devem ser guardadas em cache para que uma medição possa ser recalculada sem nova chamada. \\
+    \hline
     RNF7 & O código analisado deve entrar no \textit{prompt} delimitado e declarado como dado, nunca como instrução. \\
+    \hline
     RNF8 & O custo por candidato, em \textit{tokens} e em tempo, deve ser medido e reportado. \\
-    \bottomrule
+    \hline
   \end{tabular}
   \fonte{Elaborado pelos autores.}
 \end{quadro}

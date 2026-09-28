@@ -22,7 +22,7 @@ reimplementado daquilo que só pode ser citado.
 Antes de qualquer análise, as anotações do Racebench são lidas, contadas e
 certificadas contra uma contagem manual, e tanto a unidade de contagem quanto a
 regra que decide se um candidato reportado corresponde a um defeito anotado são
-fixadas por escrito. Medir recall exige um denominador, e a
+fixadas por escrito. Medir \textit{recall} exige um denominador, e a
 Seção~\ref{sec:benchmarks-conceito} mostrou que a literatura utiliza
 denominadores diferentes sem justificar a escolha. Esta fase precede a
 implementação precisamente para que nenhuma decisão de contagem possa ser
@@ -42,8 +42,8 @@ afete a análise.
 A quarta fase implementa a etapa estática em três estágios de custo crescente,
 na ordem em que executam. Cada estágio só é considerado concluído quando todos
 os defeitos anotados permanecem presentes em sua saída. Esse teste, aqui
-denominado portão de recall, é executado a cada alteração e trata uma perda de
-recall como defeito de implementação, e não como parâmetro a ajustar.
+denominado portão de \textit{recall}, é executado a cada alteração e trata uma perda de
+\textit{recall} como defeito de implementação, e não como parâmetro a ajustar.
 
 \section{Implementação da etapa com modelo de linguagem}
 \label{sec:fase-llm}

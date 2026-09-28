@@ -1236,3 +1236,23 @@ covers the literature review and the decisions drawn from it, the plan, what is 
 status, next steps and the de-scoping ladder. Written for advisors rather than for developers,
 so it carries results and findings but no implementation mechanics, and it names the two fronts
 without naming who runs them.
+
+## [2026-09-28] direction | table grids added; a whole subsection recovered from stray comments
+
+Every table and quadro in the monograph and the status report gained full horizontal and
+vertical rules, on request — the booktabs style (`\toprule`/`\midrule`/`\bottomrule`, no
+verticals) is gone from `monografia/`.
+
+**Found in the process, unrelated to the request: `capitulos/05-desenvolvimento.tex`'s entire
+*Testes e Avaliação* subsection — research questions through threats to validity, about 130
+lines including the counting-unit table — was commented out line by line in the commit already
+pushed to `origin/track-b/llm-integration`.** The section heading and its label were live; every
+paragraph and every table after it was not. Compiled output was silent about it: no undefined
+references, since the `\label`/`\ref` pairs were commented together, and no LaTeX warning, since
+missing content is not an error. Root cause not established — nothing in this session's own
+edits explains it, and it predates the table-grid request. Fixed by removing the leading `%`
+from the affected range and reverifying byte for byte against the intended prose, then
+recompiling all three documents and confirming the section's headings and its table both appear
+in `pdftotext` output. Worth a standing habit: after any bulk `sed`/script edit to a `.tex` file,
+grep the file for `^%` before trusting a clean `latexmk` run — a commented-out block is invisible
+to both the compiler and a page-count check.
