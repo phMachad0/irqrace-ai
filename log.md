@@ -1256,3 +1256,21 @@ recompiling all three documents and confirming the section's headings and its ta
 in `pdftotext` output. Worth a standing habit: after any bulk `sed`/script edit to a `.tex` file,
 grep the file for `^%` before trusting a clean `latexmk` run — a commented-out block is invisible
 to both the compiler and a page-count check.
+
+
+## [2026-10-20] build | Track B W4/W7/W8 completed — source-backed C4 resolver, repair evaluator, and C3 pipeline
+
+Completed all remaining Track B code deliverables on `track-b/llm-integration` so the LLM track is self-contained through W8 without blocking on Track A's C++ stages:
+
+- **`SourceBackedResolver` (`src/irqrace/llm/resolver.py`)**: implements a C-source-tree C4 resolver (`served_by = "resolver"`) alongside `RecordBackedResolver`. Serves `function_definition`, `isr_body`, `macro_expansion` (including multiline `#define`), `type_definition`, `global_declaration`, `all_accesses_to` across translation units, and `all_call_paths` directly from the subject's `.c`/`.h` files while preserving all C4 recall rules (`RECALL_RULES`) when a symbol has no definition in the tree. `run-ablation.py` gains `--resolver {mock,source,auto}`, `--source-root`, and `--include-deferred` to run `+progressive` against the source resolver.
+- **W7 repair stage completion (`src/irqrace/llm/repair.py`, `scripts/run-repair.py`)**: added deterministic result caching (`_patch_schema_hash`, `_repair_config_hash`), C3 repair artifact emission (`repair/<cid>/patch.diff`, `repair/<cid>/patch.json`, `llm/<cid>/repair-turns.jsonl`), in-memory unified diff application (`apply_unified_diff`), `clang`/`gcc -fsyntax-only` verification (`make_compile_checker`), `RepairScore`, and `score_repairs()`. Added `scripts/run-repair.py` to evaluate any backend against the 10 hand-written reference fixes.
+- **W8 end-to-end C3 `RunStore` pipeline & CLI (`src/irqrace/llm/pipeline.py`, `src/irqrace/cli.py`)**: implemented `prepare_context`, `triage_store`, `read_triages`, and `repair_store`, plus `irqrace llm triage` and `irqrace llm repair`. Preserves C3 Rule 6 (no candidate disappears without an `unsat` solver proof) and validates all manifests and records against C2–C4 schemas.
+- **Diary and test suite**: wrote [[Semana 5 a 8 — Trilha B (Triagem, Ablação, Reparo e Integração C3-C4)]]. **243 tests pass** offline (202 Track B tests in `tests/test_llm_*.py`).
+
+## [2026-10-20] build | Track C Streamlit pipeline visualizer & inter-stage metrics dashboard
+
+Implemented the interactive Streamlit visualizer (`src/irqrace/ui/app.py`, `dashboard.py`, `irqrace ui`, and `scripts/seed-showcase-run.py`) over Contract C3 (`runs/<run_id>/`) and Track B's fixtures/prompts/resolvers:
+
+- **Step-by-step block inspector (`Input → Processing → Output`)**: renders every stage (`0. Input & C1` → `1. Build & IR Probe` → `2. Stage 1 SVF & Co-exec` → `3. Stage 2 & Z3 Solver` → `4. Context C2 & Live C4 Playground` → `5. LLM Stage A Triage & C4 Turns` → `6. LLM Stage B Repair & Patched C Preview`) with side-by-side C source highlighting (R26), provenance inspection (R25), explicit display of Z3 `unsat` dropped candidates with proof (R24), and human reviewer label persistence in `eval/human_labels.json` (R28).
+- **Inter-stage funnel metrics & Racebench suite aggregator**: computes per-stage $N_{\text{in}} \to N_{\text{out}}$, static pruning rate $\Delta N_s$, `dropped_with_proof`, Recall Gate $\mathcal{R}_s$, Trap Survival Rate, Inspection Ratio progression $\text{IR}_s$, and marginal human effort saved $\Delta \text{IR}_s$, with one-click Markdown and LaTeX `booktabs` table export for the monograph (R44) plus run-to-run diff comparison (R41).
+- **End-to-end showcase + 31 Racebench runs**: `scripts/seed-showcase-run.py` populates `build/probe.json` across all 31 Racebench Stage-1 runs and builds a C3-validated 8-stage showcase run (`runs/000-e2e-showcase-svp_simple_001_001`). **420 tests pass** in WSL (**249 offline** in Windows venv).

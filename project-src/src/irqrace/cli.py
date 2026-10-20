@@ -573,6 +573,169 @@ def cmd_llm_backends(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_llm_triage(args: argparse.Namespace) -> int:
+    """Triage a C3 run directory or a single C2 context record."""
+    from .llm.backends import BackendError, RefusalError, from_spec
+    from .llm.cache import Cache
+    from .llm.client import TriageClient
+    from .llm.pipeline import triage_store
+    from .llm.prompts import BY_NAME, DEFERRED
+    from .llm.resolver import resolver_for
+
+    all_rows = {**BY_NAME, **DEFERRED}
+    if args.row not in all_rows:
+        return _err(f"unknown row {args.row!r}; known: {', '.join(all_rows)}")
+    config = all_rows[args.row]
+
+    try:
+        backend = from_spec(args.backend)
+    except BackendError as e:
+        return _err(str(e))
+
+    cache = Cache(enabled=not args.no_cache)
+    target = Path(args.target)
+
+    if target.is_dir():
+        store = RunStore(target)
+        try:
+            summary = triage_store(
+                store,
+                config=config,
+                backend=backend,
+                cache=cache,
+                samples=args.samples,
+                resolver_mode=args.resolver,
+            )
+        except (BackendError, RefusalError) as e:
+            return _err(str(e))
+        if args.json:
+            doc = {
+                k: v
+                for k, v in summary.items()
+                if k not in ("triages", "spend")
+            }
+            doc["triages"] = [
+                {**t.model_dump(mode="json"), "bucket": t.bucket.value}
+                for t in summary["triages"]
+            ]
+            print(json.dumps(doc, indent=2, ensure_ascii=False))
+            return 0
+        print(
+            f"{summary['run_id']}: {summary['candidates_out']}/{summary['candidates_in']} "
+            f"triaged ({summary['backend']}, {summary['config']})"
+        )
+        for t in summary["triages"]:
+            print(f"  [{t.bucket.value:<17}] {t.candidate_id}  conf={t.feasibility.confidence:.2f}")
+        return 0
+
+    if not target.is_file():
+        return _err(f"{target} does not exist")
+
+    record = json.loads(target.read_text(encoding="utf-8"))
+    client = TriageClient(config, backend=backend, cache=cache)
+    resolver = resolver_for(record, mode=args.resolver)
+    try:
+        verdict = client.triage(record, resolver=resolver)
+    except (BackendError, RefusalError) as e:
+        return _err(str(e))
+
+    doc = {**verdict.model_dump(mode="json"), "bucket": verdict.bucket.value}
+    if args.json:
+        print(json.dumps(doc, indent=2, ensure_ascii=False))
+    else:
+        print(f"[{verdict.bucket.value}] {verdict.candidate_id}")
+        print(f"  feasibility: {verdict.feasibility.verdict.value} ({verdict.feasibility.confidence:.2f})")
+        if verdict.harmfulness is not None:
+            print(f"  harmfulness: {verdict.harmfulness.verdict.value} ({verdict.harmfulness.confidence:.2f})")
+        print(f"  reasoning:   {verdict.feasibility.reasoning}")
+    return 0
+
+
+def cmd_llm_repair(args: argparse.Namespace) -> int:
+    """Propose an interrupt-specific fix for a C3 run directory or a C2 record."""
+    from .llm.backends import BackendError, RefusalError, from_spec
+    from .llm.cache import Cache
+    from .llm.pipeline import repair_store
+    from .llm.prompts import BY_NAME, DEFERRED
+    from .llm.repair import RepairClient, witness_problems
+
+    all_rows = {**BY_NAME, **DEFERRED}
+    if args.row not in all_rows:
+        return _err(f"unknown row {args.row!r}; known: {', '.join(all_rows)}")
+    config = all_rows[args.row]
+
+    try:
+        backend = from_spec(args.backend)
+    except BackendError as e:
+        return _err(str(e))
+
+    cache = Cache(enabled=not args.no_cache)
+    target = Path(args.target)
+
+    if target.is_dir():
+        store = RunStore(target)
+        try:
+            summary = repair_store(
+                store, config=config, backend=backend, cache=cache
+            )
+        except (BackendError, RefusalError, RuntimeError) as e:
+            return _err(str(e))
+        if args.json:
+            doc = {
+                k: v
+                for k, v in summary.items()
+                if k not in ("patches", "spend")
+            }
+            doc["patches"] = {
+                cid: p.model_dump(mode="json")
+                for cid, p in summary["patches"].items()
+            }
+            print(json.dumps(doc, indent=2, ensure_ascii=False))
+            return 0
+        print(
+            f"{summary['run_id']}: {summary['candidates_out']}/{summary['candidates_in']} "
+            f"repaired ({summary['backend']}, {summary['config']})"
+        )
+        for cid, p in summary["patches"].items():
+            print(
+                f"  [{p.strategy.value:<15}] {cid}  irqs={p.masked_irqs}  "
+                f"lines={p.covers_from_line}..{p.covers_to_line}"
+            )
+        return 0
+
+    if not target.is_file():
+        return _err(f"{target} does not exist")
+
+    record = json.loads(target.read_text(encoding="utf-8"))
+    client = RepairClient(config, backend=backend, cache=cache)
+    try:
+        patch = client.repair(record)
+    except (BackendError, RefusalError, RuntimeError) as e:
+        return _err(str(e))
+
+    problems = witness_problems(patch, record)
+    if args.json:
+        print(
+            json.dumps(
+                {**patch.model_dump(mode="json"), "witness_problems": problems},
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
+    else:
+        print(
+            f"[{patch.strategy.value}] {record['id']}  irqs={patch.masked_irqs}  "
+            f"lines={patch.covers_from_line}..{patch.covers_to_line}"
+        )
+        print(f"  witness: {patch.witness.firing_flow} @ {patch.witness.preemption_point}")
+        print(f"  latency: {patch.latency_note}")
+        if problems:
+            for prob in problems:
+                print(f"  ! witness problem: {prob}")
+        print(patch.diff)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="irqrace", description=__doc__)
     p.add_argument("--version", action="version", version=f"irqrace {TOOL_VERSION}")
@@ -667,7 +830,49 @@ def build_parser() -> argparse.ArgumentParser:
     mb.add_argument("spec", nargs="?", help="provider:model, e.g. ollama:llama3")
     mb.set_defaults(func=cmd_llm_backends)
 
+    mt = ms.add_parser("triage", help="triage a C3 run directory or C2 context record")
+    mt.add_argument("target", help="path to a C3 run directory or C2 .json file")
+    mt.add_argument("--backend", default="anthropic:claude-opus-5")
+    mt.add_argument("--row", default="+self-validation")
+    mt.add_argument("--samples", type=int, default=1)
+    mt.add_argument("--resolver", choices=("mock", "source", "auto"), default="auto")
+    mt.add_argument("--no-cache", action="store_true")
+    mt.add_argument("--json", action="store_true")
+    mt.set_defaults(func=cmd_llm_triage)
+
+    mr = ms.add_parser("repair", help="propose a fix for a C3 run directory or C2 record")
+    mr.add_argument("target", help="path to a C3 run directory or C2 .json file")
+    mr.add_argument("--backend", default="anthropic:claude-opus-5")
+    mr.add_argument("--row", default="+self-validation")
+    mr.add_argument("--no-cache", action="store_true")
+    mr.add_argument("--json", action="store_true")
+    mr.set_defaults(func=cmd_llm_repair)
+
+    ui = sub.add_parser("ui", help="launch the Streamlit pipeline visualizer and dashboard")
+    ui.add_argument("--port", type=int, default=8501)
+    ui.add_argument("--headless", action="store_true")
+    ui.set_defaults(func=cmd_ui)
+
     return p
+
+
+def cmd_ui(args: argparse.Namespace) -> int:
+    """Launch the Streamlit dashboard over the C3 run store."""
+    import subprocess
+
+    app_path = Path(__file__).resolve().parent / "ui" / "app.py"
+    cmd = [
+        sys.executable,
+        "-m",
+        "streamlit",
+        "run",
+        str(app_path),
+        "--server.port",
+        str(args.port),
+    ]
+    if args.headless:
+        cmd.extend(["--server.headless", "true"])
+    return subprocess.call(cmd)
 
 
 def main(argv: list[str] | None = None) -> int:

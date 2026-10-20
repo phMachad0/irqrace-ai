@@ -22,7 +22,7 @@ concurrency, which does not apply under asymmetric preemption, so
 
 **Logic Rate is scored on effect, not text.** [[SkipAnalyzer (paper)]] compares
 patches to hand-written fixes and reports 97.3% on Null Dereference; its own
-stated limitation is that "logically correct" means an author agreed. Comparing
+stated limitation is that "logically correct" therefore means an author agreed. Comparing
 diffs textually would score formatting. :func:`logic_rate` instead compares
 what the patch *does* -- strategy, the interrupts it masks, and the region it
 covers -- against the reference fix, so two patches that protect the same
@@ -39,14 +39,23 @@ from __future__ import annotations
 
 import dataclasses
 import enum
+import functools
+import hashlib
+import json
 import re
-from typing import Any
+import shutil
+import subprocess
+import tempfile
+from pathlib import Path
+from typing import Any, Callable
 
 from pydantic import BaseModel, Field
 
+from irqrace import contracts
+from irqrace.llm.annotations import locate_suite
 from irqrace.llm.backends import ChatRequest
-from irqrace.llm.client import TriageClient, render_record
-from irqrace.llm.prompts import PromptConfig
+from irqrace.llm.client import MAX_TOKENS, Conversation, TriageClient, render_record
+from irqrace.llm.prompts import FULL, PromptConfig, _read
 
 
 class Strategy(str, enum.Enum):
@@ -127,10 +136,26 @@ REPAIR_TASK = (
 )
 
 
-class RepairClient:
-    """Runs the repair stage. Shares the backend seam with triage."""
+def default_repair_prompt() -> str:
+    """The contents of ``prompts/repair.md``."""
+    return _read("repair.md")
 
-    def __init__(self, config: PromptConfig, **kwargs: Any):
+
+@functools.lru_cache(maxsize=1)
+def _patch_schema_hash() -> str:
+    blob = json.dumps(Patch.model_json_schema(), sort_keys=True)
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
+def _repair_config_hash(config: PromptConfig, repair_prompt: str) -> str:
+    blob = f"repair:{config.hash()}:{hashlib.sha256(repair_prompt.encode('utf-8')).hexdigest()}"
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()[:16]
+
+
+class RepairClient:
+    """Runs the repair stage. Shares the backend seam and cache with triage."""
+
+    def __init__(self, config: PromptConfig = FULL, **kwargs: Any):
         # Composition over inheritance: repair reuses the triage client's
         # backend handling, accounting, caching and transcript writing, and
         # differs only in the prompt and the schema.
@@ -144,30 +169,114 @@ class RepairClient:
     def spend(self):
         return self._triage.spend
 
-    def repair(self, record: dict[str, Any], repair_prompt: str) -> Patch:
+    @property
+    def caveats(self) -> list[str]:
+        return self._triage.caveats
+
+    def repair(
+        self,
+        record: dict[str, Any],
+        repair_prompt: str | None = None,
+        *,
+        sample: int = 0,
+        run_dir: Path | None = None,
+    ) -> Patch:
         """Propose one patch. Raises rather than returning a partial fix."""
+        contracts.validate("c2", record, what=f"candidate {record.get('id')}")
+        prompt_text = (
+            repair_prompt if repair_prompt is not None else default_repair_prompt()
+        )
+        cfg_hash = _repair_config_hash(self._triage.config, prompt_text)
+        fingerprint = record["fingerprint"]
+
+        cached = self._triage.cache.get(
+            fingerprint,
+            cfg_hash,
+            self.backend.spec,
+            sample,
+            _patch_schema_hash(),
+        )
+        if cached is not None:
+            patch = Patch.model_validate(cached)
+            if run_dir is not None:
+                _write_repair_artifacts(run_dir, record["id"], patch)
+            return patch
+
+        self.spend.candidates += 1
+        system = f"{self._triage.config.system_prompt()}\n\n---\n\n{prompt_text}"
+        user_msg = f"{REPAIR_TASK}\n\n{render_record(record)}"
+
+        convo = Conversation(candidate_id=record["id"])
+        convo.add("user", user_msg, stage="repair", turn=0)
+
         response = self._triage._call(
             ChatRequest(
-                system=f"{self._triage.config.system_prompt()}\n\n---\n\n{repair_prompt}",
-                messages=[
-                    {
-                        "role": "user",
-                        "content": f"{REPAIR_TASK}\n\n{render_record(record)}",
-                    }
-                ],
+                system=system,
+                messages=[{"role": "user", "content": user_msg}],
                 schema=Patch.model_json_schema(),
                 schema_name="Patch",
+                max_tokens=MAX_TOKENS,
+                temperature=self._triage.temperature,
             )
         )
         if response.parsed is None:
             raise RuntimeError("the backend returned no structured patch")
-        return Patch.model_validate(response.parsed)
+
+        patch = Patch.model_validate(response.parsed)
+        convo.add(
+            "assistant",
+            patch.model_dump(mode="json"),
+            stage="repair",
+            structured=True,
+            backend=self.backend.spec,
+            structured_mode=(
+                response.structured_mode.value if response.structured_mode else None
+            ),
+        )
+
+        if run_dir is not None:
+            _write_repair_artifacts(run_dir, record["id"], patch, convo=convo)
+
+        self._triage.cache.put(
+            fingerprint,
+            cfg_hash,
+            self.backend.spec,
+            patch.model_dump(mode="json"),
+            sample,
+            _patch_schema_hash(),
+        )
+        return patch
+
+
+def _write_repair_artifacts(
+    run_dir: Path,
+    candidate_id: str,
+    patch: Patch,
+    *,
+    convo: Conversation | None = None,
+) -> None:
+    if convo is not None:
+        llm_dir = run_dir / "llm" / candidate_id
+        llm_dir.mkdir(parents=True, exist_ok=True)
+        with (llm_dir / "repair-turns.jsonl").open("w", encoding="utf-8") as fh:
+            for turn in convo.turns:
+                fh.write(json.dumps(turn, ensure_ascii=False) + "\n")
+
+    rep_dir = run_dir / "repair" / candidate_id
+    rep_dir.mkdir(parents=True, exist_ok=True)
+    diff_text = patch.diff if patch.diff.endswith("\n") else patch.diff + "\n"
+    (rep_dir / "patch.diff").write_text(diff_text, encoding="utf-8")
+    (rep_dir / "patch.json").write_text(
+        json.dumps(patch.model_dump(mode="json"), indent=2, ensure_ascii=False)
+        + "\n",
+        encoding="utf-8",
+    )
 
 
 # -- scoring ---------------------------------------------------------------
 
 #: A unified-diff hunk header. Used only to check the diff is a diff.
-_HUNK = re.compile(r"^@@ -\d+(?:,\d+)? \+\d+(?:,\d+)? @@", re.M)
+_HUNK = re.compile(r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@.*$", re.M)
 
 
 def is_wellformed_diff(diff: str) -> bool:
@@ -181,6 +290,141 @@ def is_wellformed_diff(diff: str) -> bool:
     )
 
 
+def apply_unified_diff(source_text: str, diff_text: str) -> str | None:
+    """Apply a unified diff to ``source_text`` in memory.
+
+    Returns the patched source text, or ``None`` if the diff is malformed or
+    its hunks do not apply cleanly within the file bounds.
+    """
+    if not is_wellformed_diff(diff_text):
+        return None
+    src_lines = source_text.splitlines()
+    diff_lines = diff_text.splitlines()
+
+    hunks: list[tuple[int, list[str]]] = []
+    current_start: int | None = None
+    current_body: list[str] = []
+
+    for line in diff_lines:
+        if line.startswith(("---", "+++", "diff ", "index ")):
+            continue
+        m = _HUNK.match(line)
+        if m:
+            if current_start is not None:
+                hunks.append((current_start, current_body))
+            current_start = int(m.group(1))
+            current_body = []
+            continue
+        if current_start is not None:
+            current_body.append(line)
+    if current_start is not None:
+        hunks.append((current_start, current_body))
+    if not hunks:
+        return None
+
+    out: list[str] = []
+    cursor = 0  # 0-based index into src_lines
+    for start_1based, body in hunks:
+        idx = max(0, start_1based - 1)
+        if idx < cursor or idx > len(src_lines):
+            return None
+        out.extend(src_lines[cursor:idx])
+        cursor = idx
+        for raw in body:
+            if not raw:
+                if cursor < len(src_lines) and src_lines[cursor] == "":
+                    out.append(src_lines[cursor])
+                    cursor += 1
+                continue
+            prefix, content = raw[0], raw[1:]
+            if prefix == " ":
+                if cursor >= len(src_lines):
+                    return None
+                out.append(src_lines[cursor])
+                cursor += 1
+            elif prefix == "-":
+                if cursor >= len(src_lines):
+                    return None
+                cursor += 1
+            elif prefix == "+":
+                out.append(content)
+            elif prefix == "\\":
+                continue
+            else:
+                return None
+
+    out.extend(src_lines[cursor:])
+    return "\n".join(out) + ("\n" if source_text.endswith("\n") else "")
+
+
+def make_compile_checker(
+    records_by_id: dict[str, dict[str, Any]],
+    *,
+    suite: Path | None = None,
+    cc: str | None = None,
+) -> Callable[[Patch], bool | None]:
+    """Build a ``compile_check`` callback for :func:`syntax_rate`.
+
+    Looks up a C compiler (`clang-14`, `clang`, or `gcc`) and the Racebench
+    source tree. When either is absent on the current machine, the returned
+    callable returns ``None`` so :func:`syntax_rate` reports ``None`` ("not
+    measured") rather than a vacuous pass.
+    """
+    compiler = cc or next(
+        (shutil.which(c) for c in ("clang-14", "clang", "gcc") if shutil.which(c)),
+        None,
+    )
+    suite_dir = suite or locate_suite()
+
+    # Map Patch object id or candidate lookup
+    patch_to_record: dict[int, dict[str, Any]] = {}
+
+    def _check(patch: Patch, record: dict[str, Any] | None = None) -> bool | None:
+        if compiler is None or suite_dir is None or not suite_dir.is_dir():
+            return None
+        rec = record or patch_to_record.get(id(patch))
+        if rec is None:
+            return None
+        rel = rec["accesses"][0]["source"]["file"]
+        src_path = suite_dir / rel
+        if not src_path.is_file():
+            return None
+        patched = apply_unified_diff(
+            src_path.read_text(encoding="utf-8", errors="replace"), patch.diff
+        )
+        if patched is None:
+            return False
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".c", encoding="utf-8", delete=False
+        ) as tmp:
+            tmp.write(patched)
+            tmp_path = Path(tmp.name)
+        try:
+            proc = subprocess.run(
+                [
+                    compiler,
+                    "-fsyntax-only",
+                    f"-I{suite_dir}",
+                    f"-I{src_path.parent}",
+                    str(tmp_path),
+                ],
+                stdin=subprocess.DEVNULL,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            return proc.returncode == 0
+        except (OSError, subprocess.SubprocessError):
+            return None
+        finally:
+            tmp_path.unlink(missing_ok=True)
+
+    _check.bind = lambda patches: patch_to_record.update(  # type: ignore[attr-defined]
+        {id(p): records_by_id[cid] for cid, p in patches.items() if cid in records_by_id}
+    )
+    return _check
+
+
 def syntax_rate(
     patches: dict[str, Patch], compile_check
 ) -> tuple[float | None, list[str]]:
@@ -192,6 +436,8 @@ def syntax_rate(
     reporting an unmeasured Syntax Rate of 100% is the same silent success the
     recall gate guards against.
     """
+    if hasattr(compile_check, "bind"):
+        compile_check.bind(patches)
     results, failed = [], []
     for cid, patch in patches.items():
         outcome = compile_check(patch)
@@ -224,10 +470,12 @@ def logic_rate(
         if ref is None:
             missed.append(f"{cid}: no reference fix")
             continue
+        irqs = set(patch.masked_irqs)
+        masks_all = -1 in irqs or irqs >= ref.masked_irqs
         ok = (
             (patch.strategy == ref.strategy
              or {patch.strategy, ref.strategy} <= equivalent)
-            and set(patch.masked_irqs) >= ref.masked_irqs
+            and masks_all
             and patch.covers_from_line <= ref.covers_from_line
             and patch.covers_to_line >= ref.covers_to_line
         )
@@ -265,11 +513,114 @@ def witness_problems(patch: Patch, record: dict[str, Any]) -> list[str]:
             f"the analysis says {remote!r}"
         )
     order = patch.witness.access_order
-    if sorted(order) != ["A1", "A2", "B"]:
-        problems.append(f"access order {order} is not a permutation of A1, B, A2")
-    elif order.index("B") != 1:
-        problems.append(
-            f"access order {order} does not place the remote access between the "
-            "local pair, so it does not describe an atomicity violation"
-        )
+    if record.get("class") == "race-pair":
+        if sorted(order) != ["A1", "B"]:
+            problems.append(f"access order {order} is not a permutation of A1, B")
+    else:
+        if sorted(order) != ["A1", "A2", "B"]:
+            problems.append(f"access order {order} is not a permutation of A1, B, A2")
+        elif order.index("B") != 1:
+            problems.append(
+                f"access order {order} does not place the remote access between the "
+                "local pair, so it does not describe an atomicity violation"
+            )
     return problems
+
+
+@dataclasses.dataclass(frozen=True)
+class RepairScore:
+    """Summary of a repair evaluation over the bug-point fixtures (Roadmap W7)."""
+
+    n_repaired: int
+    n_expected: int
+    wellformed_rate: float
+    malformed_diffs: tuple[str, ...]
+    witness_rate: float
+    witness_failures: dict[str, list[str]]
+    syntax_rate: float | None
+    syntax_failures: tuple[str, ...]
+    logic_rate: float
+    logic_missed: tuple[str, ...]
+
+    @property
+    def coverage(self) -> float:
+        return self.n_repaired / self.n_expected if self.n_expected else 1.0
+
+    @property
+    def complete(self) -> bool:
+        return self.n_repaired > 0 and self.coverage >= 1.0
+
+    def report(self) -> str:
+        lines = []
+        if not self.complete:
+            lines.append(
+                f"INCOMPLETE — {self.n_repaired}/{self.n_expected} bug points "
+                f"repaired ({self.coverage:.0%})."
+            )
+        syn_str = (
+            "unmeasured (no C compiler or suite on this machine)"
+            if self.syntax_rate is None
+            else f"{self.syntax_rate:.1%} ({self.n_repaired - len(self.syntax_failures)}/{self.n_repaired})"
+        )
+        lines += [
+            f"well-formed diff: {self.wellformed_rate:.1%} "
+            f"({self.n_repaired - len(self.malformed_diffs)}/{self.n_repaired})",
+            f"witness check:    {self.witness_rate:.1%} "
+            f"({self.n_repaired - len(self.witness_failures)}/{self.n_repaired} mechanically valid)",
+            f"Syntax Rate:      {syn_str}",
+            f"Logic Rate:       {self.logic_rate:.1%} "
+            f"({self.n_repaired - len(self.logic_missed)}/{self.n_repaired} match reference effect)",
+        ]
+        if self.witness_failures:
+            lines.append("  [!] witness problems:")
+            for cid, probs in self.witness_failures.items():
+                for p in probs:
+                    lines.append(f"      {cid}: {p}")
+        if self.logic_missed:
+            lines.append("  [!] logic rate misses:")
+            for m in self.logic_missed:
+                lines.append(f"      {m}")
+        return "\n".join(lines)
+
+
+def score_repairs(
+    patches: dict[str, Patch],
+    records_by_id: dict[str, dict[str, Any]],
+    references: dict[str, ReferenceFix],
+    *,
+    n_expected: int | None = None,
+    compile_check: Callable[[Patch], bool | None] | None = None,
+) -> RepairScore:
+    """Compute all W7 repair metrics over ``patches``."""
+    n = len(patches)
+    expected = len(references) if n_expected is None else n_expected
+
+    malformed = tuple(
+        cid for cid, p in patches.items() if not is_wellformed_diff(p.diff)
+    )
+    wf_rate = (n - len(malformed)) / n if n else 0.0
+
+    wit_fails: dict[str, list[str]] = {}
+    for cid, p in patches.items():
+        if cid in records_by_id:
+            probs = witness_problems(p, records_by_id[cid])
+            if probs:
+                wit_fails[cid] = probs
+    wit_rate = (n - len(wit_fails)) / n if n else 0.0
+
+    checker = compile_check or make_compile_checker(records_by_id)
+    syn_rate, syn_failed = syntax_rate(patches, checker)
+    log_rate, log_missed = logic_rate(patches, references)
+
+    return RepairScore(
+        n_repaired=n,
+        n_expected=expected,
+        wellformed_rate=wf_rate,
+        malformed_diffs=malformed,
+        witness_rate=wit_rate,
+        witness_failures=wit_fails,
+        syntax_rate=syn_rate,
+        syntax_failures=tuple(syn_failed),
+        logic_rate=log_rate,
+        logic_missed=tuple(log_missed),
+    )

@@ -23,6 +23,7 @@ dev = ["pytest>=6"]
 # uses a vendor SDK.
 llm = ["pydantic>=2.0"]
 llm-anthropic = ["pydantic>=2.0", "anthropic>=1.0"]
+ui = ["streamlit>=1.30", "pandas>=1.5"]
 
 [project.scripts]
 irqrace = "irqrace.cli:main"

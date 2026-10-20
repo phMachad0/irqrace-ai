@@ -1,7 +1,7 @@
 ---
 type: index
 tags: [wiki, index]
-updated: 2026-09-27
+updated: 2026-10-20
 ---
 
 # Index
@@ -11,7 +11,7 @@ Catalog of the wiki. Start at [[Overview]]; read [[Thesis Goal]] for what this v
 the LLM per `CLAUDE.md` — update on every ingest.
 
 **Counts**: 12 sources (5 concurrency, 7 LLM) · 4 tool pages + 7 baseline/infrastructure ·
-20 concepts · 4 benchmarks · 5 comparisons · 6 project pages.
+20 concepts · 4 benchmarks · 5 comparisons · 6 project pages · 5 implementation diary pages.
 
 ## Navigation
 
@@ -39,18 +39,19 @@ Criada e revisada ao fim de cada semana de implementação (ver `CLAUDE.md`).
 | [[Semana 2 — Ground Truth e Protocolo de Avaliação]] | W2 · 7–11 set | parser tolerante das anotações, conferência à mão, unidade de contagem, regra de casamento, errata |
 | [[Semana 3 — O Front End do Stage 1]] | W3 · 14–18 set | grafo de chamadas, alcançabilidade, may-alias, enumeração de acessos, `may_precede` |
 | [[Semana 4 — Derivação de Candidatos e o Recall Gate]] | W4 · 21–25 set | pares e trincas, as quatro formas não serializáveis, **recall gate 48/48**, M2 |
+| [[Semana 5 a 8 — Trilha B (Triagem, Ablação, Reparo e Integração C3-C4)]] | W1–W8 (Trilha B) · 26 set–20 out | os 20 *fixtures*, M1 (GO), *backends* agnósticos, 5 linhas de ablação, `SourceBackedResolver`, reparo com testemunha (W7) e integração C3/CLI (W8) |
 
 ## Implementation (`project-src/`)
 
 The tool itself, outside the wiki layer. Started 2026-08-31 (W1 of [[Roadmap]]). Track B started 2026-09-26 on branch
-`track-b/llm-integration`; **M1 answered GO** the same day (see `log.md`).
+`track-b/llm-integration`; **M1 answered GO** the same day, and all W1–W8 Track B code deliverables are complete (see `log.md`).
 
 | Path | What it is |
 | --- | --- |
 | `project-src/README.md` | status against the Roadmap, layout, how to build and run |
 | `project-src/contracts/` | **C1–C4 frozen as JSON Schema**, with a worked example of each and a synthetic C3 run directory |
 | `project-src/src/irqrace/` | Python: contract validation, C1 parser, bitcode build, SVF probe, run store |
-| `project-src/src/irqrace/llm/` | **Track B**: the triage and repair stage. Provider-neutral backends, four active ablation rows (progressive deferred), C4 resolver, scoring, the tolerant annotation reader |
+| `project-src/src/irqrace/llm/` | **Track B**: the triage and repair stage. Provider-neutral backends, five ablation rows, mock and source-backed C4 resolvers, scoring, repair harness & evaluator, C3 `RunStore` pipeline, tolerant annotation reader |
 | `project-src/fixtures/` | the 20 labelled context records — 10 bug points, 10 traps, six adversarial pairs |
 | `project-src/analysis/` | C++ over SVF: `irqrace-probe` ([[Dashboard Design]] R4, R7) and `irqrace-stage1` (reachability, shared locations, accesses, may-precede) |
 | `project-src/bench/configs/` | one generated C1 file per [[Racebench]] simple case (31) |

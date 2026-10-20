@@ -4,6 +4,7 @@
     python3 scripts/run-ablation.py --backend anthropic:claude-opus-5
     python3 scripts/run-ablation.py --rows simple --samples 1     # the W1 probe
     python3 scripts/run-ablation.py --backend ollama:qwen2.5-coder:32b
+    python3 scripts/run-ablation.py --rows +progressive --include-deferred --resolver source
 
 With no ``--rows`` it runs every active row of the LLift-shaped ablation and
 prints the table (Roadmap W5, milestone M3). With ``--rows simple`` and one
@@ -65,6 +66,7 @@ def load_env(path: Path = REPO / ".env") -> list[str]:
             loaded.append(key)
     return loaded
 
+
 from irqrace.llm.backends import BackendError, RefusalError, from_spec  # noqa: E402
 from irqrace.llm.cache import Cache  # noqa: E402
 from irqrace.llm.client import TriageClient  # noqa: E402
@@ -73,6 +75,7 @@ from irqrace.llm.prompts import ABLATION, BY_NAME, DEFERRED  # noqa: E402
 from irqrace.llm.resolver import (  # noqa: E402
     render_distribution,
     request_distribution,
+    resolver_for,
 )
 from irqrace.llm.scoring import (  # noqa: E402
     blocking_element_groups,
@@ -82,16 +85,34 @@ from irqrace.llm.scoring import (  # noqa: E402
 )
 
 
-def run_row(config, fixtures, backend, cache, samples, run_dir):
+def run_row(
+    config,
+    fixtures,
+    backend,
+    cache,
+    samples,
+    run_dir,
+    *,
+    resolver_mode="mock",
+    source_root=None,
+):
     """Returns (runs, excluded, client). One entry in ``runs`` per sample."""
     client = TriageClient(config, backend=backend, cache=cache)
     runs, excluded = [], []
     for sample in range(samples):
         triaged = []
         for fixture in fixtures:
+            resolver = resolver_for(
+                fixture.record, source_root=source_root, mode=resolver_mode
+            )
             try:
                 triaged.append(
-                    client.triage(fixture.record, sample=sample, run_dir=run_dir)
+                    client.triage(
+                        fixture.record,
+                        resolver=resolver,
+                        sample=sample,
+                        run_dir=run_dir,
+                    )
                 )
             except RefusalError as e:
                 excluded.append((fixture.candidate_id, str(e)))
@@ -106,6 +127,23 @@ def main() -> int:
     ap.add_argument("--backend", default="anthropic:claude-opus-5")
     ap.add_argument("--rows", nargs="*", help="row names; default is every active row")
     ap.add_argument("--samples", type=int, default=1, help=">1 measures consistency")
+    ap.add_argument(
+        "--resolver",
+        choices=("mock", "source", "auto"),
+        default="mock",
+        help="C4 resolver backend (default: mock; use 'source' with +progressive)",
+    )
+    ap.add_argument(
+        "--source-root",
+        type=Path,
+        default=None,
+        help="override Racebench 2.1_remarks directory for --resolver source",
+    )
+    ap.add_argument(
+        "--include-deferred",
+        action="store_true",
+        help="allow deferred rows such as +progressive when backed by a source resolver",
+    )
     ap.add_argument("--no-cache", action="store_true")
     ap.add_argument(
         "--cache-only",
@@ -130,16 +168,18 @@ def main() -> int:
         print(e, file=sys.stderr)
         return 2
 
+    known = {**BY_NAME, **(DEFERRED if args.include_deferred else {})}
     for r in args.rows or ():
-        if r in DEFERRED:
+        if r in DEFERRED and not args.include_deferred:
             print(
-                f"row {r!r} is deferred until the static pipeline exists; "
+                f"row {r!r} is deferred until the static pipeline exists "
+                "(pass --include-deferred --resolver source to run against C source); "
                 "see DEFERRED in irqrace/llm/prompts",
                 file=sys.stderr,
             )
             return 2
-        if r not in BY_NAME:
-            print(f"unknown row {r!r}; known: {', '.join(BY_NAME)}", file=sys.stderr)
+        if r not in known:
+            print(f"unknown row {r!r}; known: {', '.join(known)}", file=sys.stderr)
             return 2
 
     if args.cache_only:
@@ -154,7 +194,7 @@ def main() -> int:
 
     fixtures = load_all()
     configs = (
-        [BY_NAME[r] for r in args.rows] if args.rows else list(ABLATION)
+        [known[r] for r in args.rows] if args.rows else list(ABLATION)
     )
     cache = Cache(enabled=not args.no_cache)
 
@@ -169,7 +209,14 @@ def main() -> int:
     results = []
     for config in configs:
         runs, excluded, client = run_row(
-            config, fixtures, backend, cache, args.samples, args.run_dir
+            config,
+            fixtures,
+            backend,
+            cache,
+            args.samples,
+            args.run_dir,
+            resolver_mode=args.resolver,
+            source_root=args.source_root,
         )
         scored = [f for f in fixtures if f.candidate_id not in {c for c, _ in excluded}]
         # With several samples the reported verdict is the vote, not run 0:
@@ -179,9 +226,10 @@ def main() -> int:
 
         print(f"--- {config.name}  ({config.hash()})")
         print("    " + s.report().replace("\n", "\n    "))
-        if args.samples > 1:
-            agreement = consistency(runs)["__mean__"]
-            print(f"    consistency:      {agreement:.1%} over {args.samples} runs")
+        mean_consistency = None
+        if args.samples > 1 and any(runs):
+            mean_consistency = consistency(runs)["__mean__"]
+            print(f"    consistency:      {mean_consistency:.1%} over {args.samples} runs")
 
         violations = {
             t.candidate_id: v
@@ -245,10 +293,12 @@ def main() -> int:
                 "recall": s.recall,
                 "gate_passed": s.gate_passed,
                 "coverage": s.coverage,
-                "n_scored": s.n_candidates,
+                "n_scored": s.n_scored if hasattr(s, "n_scored") else s.n_candidates,
                 "n_expected": s.n_expected,
                 "trap_rejection": s.trap_rejection,
                 "inspection_ratio": s.inspection_ratio,
+                "consistency": mean_consistency,
+                "samples": args.samples,
                 "buckets": s.bucket_counts,
                 "harm_scored": s.harm_scored,
                 "blocking_element_groups": blocking_element_groups(final),
