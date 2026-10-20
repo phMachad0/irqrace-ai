@@ -92,6 +92,22 @@ def manifest_document(entries: list[dict]) -> dict:
     }
 
 
+def _same_fixture_content(disk_text: str, generated_record: dict) -> bool:
+    """Compare a fixture on disk with ``generated_record``, ignoring host path syntax
+    in ``subject.source_root`` (e.g. Windows ``C:\\...`` vs WSL ``/mnt/c/...``)."""
+    try:
+        disk_doc = json.loads(disk_text)
+    except json.JSONDecodeError:
+        return False
+    gen_doc = json.loads(json.dumps(generated_record))
+    if (
+        isinstance(disk_doc.get("subject"), dict)
+        and isinstance(gen_doc.get("subject"), dict)
+    ):
+        gen_doc["subject"]["source_root"] = disk_doc["subject"].get("source_root")
+    return disk_doc == gen_doc
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true", help="fail if the files are stale")
@@ -114,7 +130,9 @@ def main() -> int:
         text = json.dumps(record, indent=2, ensure_ascii=False) + "\n"
         path = OUT / name
         if args.check:
-            if not path.exists() or path.read_text(encoding="utf-8") != text:
+            if not path.exists() or not _same_fixture_content(
+                path.read_text(encoding="utf-8"), record
+            ):
                 stale.append(path.name)
         else:
             OUT.mkdir(parents=True, exist_ok=True)

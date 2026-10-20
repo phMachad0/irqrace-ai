@@ -71,6 +71,7 @@ def test_the_generated_fixtures_on_disk_are_current():
     repo = fixtures.FIXTURES_DIR.parent
     result = subprocess.run(
         [sys.executable, str(repo / "scripts" / "build-fixtures.py"), "--check"],
+        stdin=subprocess.DEVNULL,
         capture_output=True,
         text=True,
     )

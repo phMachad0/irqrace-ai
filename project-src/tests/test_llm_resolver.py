@@ -1,7 +1,7 @@
 """C4 — and the rule that a missing answer is never an empty one."""
 
-import pytest
 import json
+import pytest
 
 from irqrace import contracts
 from irqrace.llm.fixtures import load_all
@@ -9,9 +9,11 @@ from irqrace.llm.resolver import (
     RECALL_RULES,
     SUPPORTED_KINDS,
     RecordBackedResolver,
+    SourceBackedResolver,
     render_distribution,
     render_reply,
     request_distribution,
+    resolver_for,
 )
 
 RECORD = load_all()[0].record
@@ -141,3 +143,108 @@ def test_the_supported_kinds_match_the_c4_contract():
 def test_an_empty_log_reports_nothing_rather_than_dividing_by_zero():
     assert request_distribution([]) == {"requests": 0}
     assert "no context requests" in render_distribution({"requests": 0})
+
+
+# -- SourceBackedResolver (W4/W8 C4 resolver) ------------------------------
+
+
+SAMPLE_HEADER = """\
+#ifndef COMMON_H
+#define COMMON_H
+#define CRITICAL_ENTER() \\
+    disable_isr(1); \\
+    disable_isr(2)
+#define MAX_SLOTS 8
+
+typedef struct {
+    int count;
+    int flags;
+} ctrl_state_t;
+#endif
+"""
+
+SAMPLE_C = """\
+#include "common.h"
+
+volatile int shared_counter = 0;
+
+void helper_touch(void) {
+    int snap = shared_counter;
+    shared_counter = snap + 1;
+}
+
+void isr_2(void) {
+    helper_touch();
+    shared_counter = 0;
+}
+"""
+
+
+def test_source_backed_resolver_serves_from_source_tree(tmp_path):
+    (tmp_path / "common.h").write_text(SAMPLE_HEADER, encoding="utf-8")
+    src_dir = tmp_path / "svp_simple_001"
+    src_dir.mkdir()
+    (src_dir / "svp_simple_001_001.c").write_text(SAMPLE_C, encoding="utf-8")
+
+    r = SourceBackedResolver(RECORD, source_root=tmp_path)
+    assert r.served_by == "resolver"
+    assert r.has_sources
+
+    # 1. function_definition not in record, found in source tree
+    reply_fn = r.resolve(_req("function_definition", function="helper_touch"))
+    contracts.validate("c4-reply", reply_fn)
+    assert reply_fn["status"] == "ok"
+    assert reply_fn["served_by"] == "resolver"
+    assert "snap + 1" in reply_fn["payload"]["code"]
+
+    # 2. macro_expansion including multiline continuation
+    reply_macro = r.resolve(_req("macro_expansion", macro="CRITICAL_ENTER"))
+    contracts.validate("c4-reply", reply_macro)
+    assert reply_macro["status"] == "ok"
+    assert "disable_isr(2)" in reply_macro["payload"]["expansion"]
+
+    # 3. type_definition from header
+    reply_type = r.resolve(_req("type_definition", type_name="ctrl_state_t"))
+    contracts.validate("c4-reply", reply_type)
+    assert reply_type["status"] == "ok"
+    assert "int count;" in reply_type["payload"]["code"]
+
+    # 4. global_declaration from C file
+    reply_glob = r.resolve(_req("global_declaration", variable="shared_counter"))
+    contracts.validate("c4-reply", reply_glob)
+    assert reply_glob["status"] == "ok"
+    assert "volatile int shared_counter" in reply_glob["payload"]["code"]
+
+    # 5. all_accesses_to across the source tree returns status == "ok"
+    reply_acc = r.resolve(_req("all_accesses_to", variable="shared_counter"))
+    contracts.validate("c4-reply", reply_acc)
+    assert reply_acc["status"] == "ok"
+    kinds = {s["kind"] for s in reply_acc["payload"]["accesses"]}
+    assert {"read", "write"} <= kinds
+
+    # 6. all_call_paths finds call chain from flow entry to helper_touch
+    reply_paths = r.resolve(_req("all_call_paths", function="helper_touch"))
+    contracts.validate("c4-reply", reply_paths)
+    assert reply_paths["status"] == "ok"
+    assert reply_paths["payload"]["call_paths"]
+
+    # 7. missing symbol still carries recall_rule
+    reply_missing = r.resolve(_req("function_definition", function="rom_routine"))
+    contracts.validate("c4-reply", reply_missing)
+    assert reply_missing["status"] == "not_found"
+    assert reply_missing["recall_rule"] == RECALL_RULES["not_found"]
+
+
+def test_resolver_for_selects_mode_appropriately(tmp_path):
+    src_dir = tmp_path / "svp_simple_001"
+    src_dir.mkdir()
+    (src_dir / "svp_simple_001_001.c").write_text(SAMPLE_C, encoding="utf-8")
+
+    mock_r = resolver_for(RECORD, source_root=tmp_path, mode="mock")
+    assert type(mock_r) is RecordBackedResolver
+    src_r = resolver_for(RECORD, source_root=tmp_path, mode="source")
+    assert isinstance(src_r, SourceBackedResolver)
+    auto_r = resolver_for(RECORD, source_root=tmp_path, mode="auto")
+    assert isinstance(auto_r, SourceBackedResolver)
+    fallback_r = resolver_for(RECORD, source_root=tmp_path / "nonexistent", mode="auto")
+    assert type(fallback_r) is RecordBackedResolver

@@ -1,15 +1,29 @@
 """The repair stage: the witness requirement, and how the two rates score."""
 
+import json
 import pytest
 
+from irqrace.llm.backends import (
+    Backend,
+    Capabilities,
+    ChatRequest,
+    ChatResponse,
+    StructuredMode,
+    Usage,
+)
+from irqrace.llm.cache import Cache
 from irqrace.llm.fixtures import load_all
 from irqrace.llm.prompts import FULL
 from irqrace.llm.repair import (
     Patch,
+    RepairClient,
     Strategy,
     Witness,
+    apply_unified_diff,
     is_wellformed_diff,
     logic_rate,
+    make_compile_checker,
+    score_repairs,
     syntax_rate,
     witness_problems,
 )
@@ -24,6 +38,37 @@ DIFF = """@@ -31,3 +31,5 @@
    x = 1;
 +  enable_isr(1);
 """
+
+
+class FakeRepairBackend(Backend):
+    provider = "fake"
+
+    def __init__(self, patches=()):
+        super().__init__("v1")
+        self._patches = list(patches)
+        self.requests: list[ChatRequest] = []
+
+    @property
+    def capabilities(self):
+        return Capabilities(structured=StructuredMode.native_schema, prompt_caching=True)
+
+    def chat(self, request: ChatRequest) -> ChatResponse:
+        self.requests.append(request)
+        patch = self._patches.pop(0)
+        payload = patch.model_dump(mode="json") if isinstance(patch, Patch) else patch
+        usage = Usage(
+            input_tokens=800,
+            output_tokens=200,
+            cache_read_tokens=600,
+            price_in=5.0,
+            price_out=25.0,
+        )
+        return ChatResponse(
+            text=json.dumps(payload),
+            parsed=payload,
+            structured_mode=StructuredMode.native_schema,
+            usage=usage,
+        )
 
 
 def _patch(strategy=Strategy.mask_interval, irqs=(1,), lo=32, hi=35,
@@ -115,6 +160,12 @@ def test_masking_too_few_interrupts_does_not_match():
     assert rate == 0.0
 
 
+def test_masking_all_irqs_with_minus_one_covers_required_irqs():
+    cid = _id("svp_simple_001_001")
+    rate, _ = logic_rate({cid: _patch(irqs=(-1,), lo=32, hi=35)}, REFS)
+    assert rate == 1.0
+
+
 def test_extend_and_mask_interval_are_accepted_for_one_another():
     """Widening an existing section or opening a new one over the same region
     is a style difference, and the reference names only one of them."""
@@ -169,6 +220,14 @@ def test_a_diff_is_recognisable_as_one(diff, ok):
     assert is_wellformed_diff(diff) is ok
 
 
+def test_apply_unified_diff_patches_source():
+    original = "line 1\nline 2\nline 3\n"
+    diff = "@@ -1,3 +1,5 @@\n line 1\n+disable_isr(1);\n line 2\n+enable_isr(1);\n line 3\n"
+    patched = apply_unified_diff(original, diff)
+    assert patched is not None
+    assert "disable_isr(1);\nline 2\nenable_isr(1);" in patched
+
+
 # -- the witness -----------------------------------------------------------
 
 
@@ -200,6 +259,60 @@ def test_a_witness_that_does_not_interleave_is_caught():
         _patch(flow=remote, order=("A1", "A2", "B")), record
     )
     assert any("between the local pair" in p for p in problems)
+
+
+# -- RepairClient, caching, artifacts & score_repairs ----------------------
+
+
+def test_repair_client_caches_and_writes_artifacts(tmp_path):
+    f = next(f for f in FIXTURES if f.subject == "svp_simple_001_001" and f.is_real)
+    patch = _patch(
+        irqs=(1, 2),
+        lo=32,
+        hi=35,
+        flow=f.record["preemption"]["preempting_flow"],
+    )
+    backend = FakeRepairBackend([patch])
+    cache = Cache(tmp_path / "cache")
+    run_dir = tmp_path / "run"
+
+    client = RepairClient(FULL, backend=backend, cache=cache)
+    out1 = client.repair(f.record, run_dir=run_dir)
+    assert out1 == patch
+    assert client.spend.requests == 1
+    assert client.spend.candidates == 1
+    assert (run_dir / "repair" / f.candidate_id / "patch.diff").is_file()
+    assert (run_dir / "repair" / f.candidate_id / "patch.json").is_file()
+    assert (run_dir / "llm" / f.candidate_id / "repair-turns.jsonl").is_file()
+
+    # Second call hits cache without invoking the backend
+    client2 = RepairClient(FULL, backend=FakeRepairBackend([]), cache=cache)
+    out2 = client2.repair(f.record)
+    assert out2 == patch
+    assert client2.spend.requests == 0
+
+
+def test_score_repairs_aggregates_all_metrics():
+    f = next(f for f in FIXTURES if f.subject == "svp_simple_001_001" and f.is_real)
+    patch = _patch(
+        irqs=(1, 2),
+        lo=32,
+        hi=35,
+        flow=f.record["preemption"]["preempting_flow"],
+    )
+    records_by_id = {f.candidate_id: f.record}
+    score = score_repairs(
+        {f.candidate_id: patch},
+        records_by_id,
+        {f.candidate_id: REFS[f.candidate_id]},
+        compile_check=make_compile_checker(records_by_id),
+    )
+    assert score.n_repaired == 1
+    assert score.n_expected == 1
+    assert score.logic_rate == 1.0
+    assert score.wellformed_rate == 1.0
+    assert score.witness_rate == 1.0
+    assert "Logic Rate" in score.report()
 
 
 # -- the prompt ------------------------------------------------------------
