@@ -8,8 +8,10 @@ prints this.
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -20,6 +22,46 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_SVF_DIR = REPO_ROOT.parents[1] / "toolchain" / "SVF"
 
 PROBE_PATH = REPO_ROOT / "analysis" / "build" / "bin" / "irqrace-probe"
+
+_WIN_DRIVE_RE = re.compile(r"^([A-Za-z]):[\\/](.*)$")
+
+
+def to_wsl_arg(arg: str) -> str:
+    """Convert a Windows path argument (or -I<winpath>) to /mnt/<drive>/... for WSL."""
+    if arg.startswith("-I") and len(arg) > 2:
+        return "-I" + to_wsl_arg(arg[2:])
+    m = _WIN_DRIVE_RE.match(arg)
+    if m:
+        drive = m.group(1).lower()
+        rest = m.group(2).replace("\\", "/")
+        return f"/mnt/{drive}/{rest}"
+    return arg
+
+
+def run_toolchain_cmd(
+    cmd: list[str], *, timeout: int | None = None
+) -> subprocess.CompletedProcess[str]:
+    """Run a toolchain command natively on Linux or via ``wsl -e`` on Windows."""
+    if sys.platform == "win32":
+        first = Path(cmd[0]) if cmd else Path()
+        if not (first.suffix.lower() == ".exe" and first.exists()):
+            wsl_cmd = ["wsl", "-e", *[to_wsl_arg(str(a)) for a in cmd]]
+            return subprocess.run(
+                wsl_cmd,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=timeout,
+            )
+    return subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=timeout,
+    )
 
 
 @dataclass

@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from .config import Config
-from .toolchain import PROBE_PATH
+from .toolchain import PROBE_PATH, run_toolchain_cmd
 
 
 class ProbeError(RuntimeError):
@@ -37,7 +37,7 @@ def probe(bitcode: Path, cfg: Config | None = None, *, binary: Path | None = Non
             cmd += ["--primitive", p.function]
     cmd.append(str(bitcode))
 
-    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    proc = run_toolchain_cmd(cmd, timeout=timeout)
     if proc.returncode != 0:
         raise ProbeError(
             f"irqrace-probe failed ({proc.returncode}):\n{proc.stderr.strip()}"
