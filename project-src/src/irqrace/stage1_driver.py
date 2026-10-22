@@ -9,7 +9,7 @@ from typing import Any
 
 from .config import Config
 from .stage1 import derive_candidates
-from .toolchain import REPO_ROOT
+from .toolchain import REPO_ROOT, run_toolchain_cmd
 
 STAGE1_PATH = REPO_ROOT / "analysis" / "build" / "bin" / "irqrace-stage1"
 
@@ -40,7 +40,7 @@ def run_stage1(bitcode: Path, cfg: Config, *, binary: Path | None = None,
     cmd += ["--indirect-calls", cfg.analysis["indirect_calls"]]
     cmd.append(str(bitcode))
 
-    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    proc = run_toolchain_cmd(cmd, timeout=timeout)
     if proc.returncode != 0:
         raise Stage1Error(f"irqrace-stage1 failed ({proc.returncode}):\n"
                           f"{proc.stderr.strip()[:4000]}")

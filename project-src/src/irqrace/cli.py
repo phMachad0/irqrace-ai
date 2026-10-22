@@ -853,7 +853,18 @@ def build_parser() -> argparse.ArgumentParser:
     ui.add_argument("--headless", action="store_true")
     ui.set_defaults(func=cmd_ui)
 
+    gui = sub.add_parser("gui", help="launch the native Windows (Win32/Tkinter) MVP GUI")
+    gui.set_defaults(func=cmd_gui)
+
     return p
+
+
+def cmd_gui(args: argparse.Namespace) -> int:
+    """Launch the native Windows (Win32/Tkinter) MVP application."""
+    from .ui.desktop import main as desktop_main
+
+    desktop_main()
+    return 0
 
 
 def cmd_ui(args: argparse.Namespace) -> int:
