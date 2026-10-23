@@ -620,12 +620,17 @@ def cmd_llm_triage(args: argparse.Namespace) -> int:
             ]
             print(json.dumps(doc, indent=2, ensure_ascii=False))
             return 0
+        n_untriaged = summary["not_triaged"]
         print(
-            f"{summary['run_id']}: {summary['candidates_out']}/{summary['candidates_in']} "
-            f"triaged ({summary['backend']}, {summary['config']})"
+            f"{summary['run_id']}: {summary['candidates_out'] - n_untriaged}/"
+            f"{summary['candidates_in']} triaged ({summary['backend']}, {summary['config']})"
+            + (f"; {n_untriaged} NOT TRIAGED, kept as uncertain" if n_untriaged else "")
         )
         for t in summary["triages"]:
-            print(f"  [{t.bucket.value:<17}] {t.candidate_id}  conf={t.feasibility.confidence:.2f}")
+            if t.not_triaged:
+                print(f"  [{t.bucket.value:<17}] {t.candidate_id}  NOT TRIAGED: {t.not_triaged}")
+            else:
+                print(f"  [{t.bucket.value:<17}] {t.candidate_id}  conf={t.feasibility.confidence:.2f}")
         return 0
 
     if not target.is_file():

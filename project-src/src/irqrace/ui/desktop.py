@@ -50,7 +50,7 @@ from irqrace.llm.pipeline import prepare_context, read_triages, repair_store, tr
 from irqrace.llm.prompts import BY_NAME, DEFERRED, FULL
 from irqrace.llm.repair import RepairClient, apply_unified_diff, witness_problems
 from irqrace.llm.resolver import resolver_for
-from irqrace.llm.verdict import INSPECTION_ORDER, Bucket
+from irqrace.llm.verdict import INSPECTION_ORDER, Bucket, Triage
 from irqrace.probe import ProbeError, probe
 from irqrace.runstore import RunStore, find_runs
 from irqrace.stage1_driver import Stage1Error, stage1
@@ -483,7 +483,7 @@ class PipelineStepper:
         stages = {s["name"]: s["status"] for s in m.get("stages", [])}
         done = 0
         for key, _ in PIPELINE_STEPS:
-            if stages.get(key) == "ok":
+            if stages.get(key) in ("ok", "skipped"):
                 done += 1
             else:
                 break
@@ -643,71 +643,30 @@ class PipelineStepper:
         return id_map
 
     def _step_solver(self, log_fn) -> str:
+        """Stages 2 and 3 do not exist on this branch: record that, invent nothing.
+
+        Both stages are marked ``skipped`` with the reason, no ``stage2/`` or
+        ``solver/`` file is written, and nothing is dropped. The context step then
+        promotes the stage-1 records as they are, and those already say what is
+        missing: ``solver_result.verdict`` is ``not_run`` and the provenance marks
+        masking and the solver result ``unknown`` because those stages have not
+        run. That is what the LLM must see -- not a solver verdict nobody computed.
+        """
         assert self.store is not None
-        self.store.set_stage("stage2", "running")
-        self.store.set_stage("solver", "running")
-        s1_cands = self.store.read_candidates("stage1")
-
-        s2_dir = self.store.root / "stage2"
-        s2_dir.mkdir(parents=True, exist_ok=True)
-        solver_dir = self.store.root / "solver"
-        solver_dir.mkdir(parents=True, exist_ok=True)
-
-        id_map = self._map_template_candidate_ids()
-        tmpl_solver_map: dict[str, dict[str, Any]] = {}
-        if self.template_run and (self.template_run / "solver" / "results.jsonl").exists():
-            for line in (self.template_run / "solver" / "results.jsonl").read_text(encoding="utf-8").splitlines():
-                if line.strip():
-                    r = json.loads(line)
-                    mapped_cid = id_map.get(r["candidate_id"], r["candidate_id"])
-                    r_copy = dict(r)
-                    r_copy["candidate_id"] = mapped_cid
-                    tmpl_solver_map[mapped_cid] = r_copy
-
-        # Write stage2/candidates.jsonl and solver/results.jsonl matching current s1_cands
-        (s2_dir / "candidates.jsonl").write_text(
-            "\n".join(json.dumps(c) for c in s1_cands) + ("\n" if s1_cands else ""),
-            encoding="utf-8",
+        n = len(self.store.read_candidates("stage1"))
+        reason = (
+            "not implemented on this branch: stage 2 (masking and priority) and the "
+            "Z3 stage live on Track A; no candidate was filtered"
         )
-        solver_rows = []
-        for c in s1_cands:
-            cid = c["id"]
-            if cid in tmpl_solver_map:
-                solver_rows.append(tmpl_solver_map[cid])
-            else:
-                solver_rows.append(
-                    {
-                        "candidate_id": cid,
-                        "engine": "z3",
-                        "engine_version": "4.8.12",
-                        "reason": "timeout",
-                        "timeout_ms": 10000,
-                        "unconstrained": ["timing"],
-                        "verdict": "inconclusive",
-                        "wall_ms": 12,
-                    }
-                )
-        (solver_dir / "results.jsonl").write_text(
-            "\n".join(json.dumps(r) for r in solver_rows) + ("\n" if solver_rows else ""),
-            encoding="utf-8",
+        self.store.set_stage("stage2", "skipped", candidates_in=n, error=reason)
+        self.store.set_stage("solver", "skipped", candidates_in=n, error=reason)
+        self.store.log("warn", "solver", "stages-skipped", reason)
+        log_fn(
+            "  Stage 2 (máscara/prioridade) e Stage 3 (Z3) não existem nesta branch: "
+            f"etapas marcadas como 'skipped', nenhum dos {n} candidato(s) foi descartado, "
+            "e os registros seguem com máscara e solver 'unknown' / 'not_run'."
         )
-
-        n_unsat = sum(1 for r in solver_rows if r.get("verdict") == "unsat")
-        n_surv = len(s1_cands) - n_unsat
-
-        self.store.set_stage(
-            "stage2", "ok", wall_ms=45, candidates_in=len(s1_cands), candidates_out=len(s1_cands), dropped_with_proof=0
-        )
-        self.store.set_stage(
-            "solver",
-            "ok",
-            wall_ms=380,
-            candidates_in=len(s1_cands),
-            candidates_out=n_surv,
-            dropped_with_proof=n_unsat,
-        )
-        log_fn(f"  Filtro estático/Z3: {len(s1_cands)} entrada -> {n_unsat} provados UNSAT (descartados com prova), {n_surv} inconclusivos/sobreviventes.")
-        return f"{n_surv}/{len(s1_cands)} candidatos sobreviveram ({n_unsat} descartados com prova UNSAT)"
+        return f"Stage 2 e Z3 não executados (skipped); {n}/{n} candidatos seguem para a LLM sem filtro"
 
     def _step_context(self, log_fn) -> str:
         assert self.store is not None
@@ -792,11 +751,24 @@ class PipelineStepper:
             llm_dir = self.store.root / "llm"
             llm_dir.mkdir(parents=True, exist_ok=True)
 
-            triages = []
-            excluded: list[tuple[str, str]] = []
+            def _write_triages(items: list[Triage]) -> None:
+                ordered_so_far = sorted(items, key=lambda item: (item.rank_key, item.candidate_id))
+                with (llm_dir / "triage.jsonl").open("w", encoding="utf-8") as fh:
+                    for item in ordered_so_far:
+                        cand_dir = llm_dir / item.candidate_id
+                        cand_dir.mkdir(parents=True, exist_ok=True)
+                        verdict_doc = {**item.model_dump(mode="json"), "bucket": item.bucket.value}
+                        (cand_dir / "verdict.json").write_text(
+                            json.dumps(verdict_doc, indent=2, ensure_ascii=False) + "\n",
+                            encoding="utf-8",
+                        )
+                        fh.write(json.dumps(verdict_doc, ensure_ascii=False) + "\n")
+
+            triages: list[Triage] = []
+            n_answered = 0
             for idx, rec in enumerate(records, start=1):
                 if self.stop_requested:
-                    log_fn(f"  ⏹ Interrompido pelo usuário na Triagem ({len(triages)}/{total} concluídos).")
+                    log_fn(f"  ⏹ Interrompido pelo usuário na Triagem ({n_answered}/{total} concluídos).")
                     break
                 cid = rec["id"]
                 vname = (rec.get("variable") or {}).get("name") or (rec.get("symbol") or {}).get("name", "?")
@@ -815,6 +787,7 @@ class PipelineStepper:
                 try:
                     t = client.triage(rec, resolver=resolver, sample=0, run_dir=self.store.root)
                     triages.append(t)
+                    n_answered += 1
                     log_fn(
                         f"  ✔ [Candidato {idx}/{total}] {cid} concluído: "
                         f"bucket={t.bucket.value} (viabilidade={t.feasibility.verdict.value}, "
@@ -823,22 +796,15 @@ class PipelineStepper:
                 except InterruptedError:
                     log_fn(f"  ⏹ Interrompido pelo usuário durante chamada de API do candidato {cid}.")
                     break
-                except (RefusalError, BackendError, RuntimeError) as e:
-                    excluded.append((cid, str(e)))
-                    log_fn(f"  ✖ [Candidato {idx}/{total}] Falha na API para {cid}: {e}")
+                except RefusalError as e:
+                    triages.append(Triage.untriaged(rec, f"the model refused: {e}"))
+                    log_fn(f"  ✖ [Candidato {idx}/{total}] Recusa da API para {cid}; mantido como uncertain: {e}")
+                except (BackendError, RuntimeError) as e:
+                    triages.append(Triage.untriaged(rec, f"backend error: {e}"))
+                    log_fn(f"  ✖ [Candidato {idx}/{total}] Falha na API para {cid}; mantido como uncertain: {e}")
 
                 # Write incremental triage.jsonl so the GUI table updates after every candidate
-                ordered_so_far = sorted(triages, key=lambda item: (item.rank_key, item.candidate_id))
-                with (llm_dir / "triage.jsonl").open("w", encoding="utf-8") as fh:
-                    for item in ordered_so_far:
-                        cand_dir = llm_dir / item.candidate_id
-                        cand_dir.mkdir(parents=True, exist_ok=True)
-                        verdict_doc = {**item.model_dump(mode="json"), "bucket": item.bucket.value}
-                        (cand_dir / "verdict.json").write_text(
-                            json.dumps(verdict_doc, indent=2, ensure_ascii=False) + "\n",
-                            encoding="utf-8",
-                        )
-                        fh.write(json.dumps(verdict_doc, ensure_ascii=False) + "\n")
+                _write_triages(triages)
 
                 self._emit_event(
                     "api_candidate_progress",
@@ -851,15 +817,30 @@ class PipelineStepper:
                 )
 
             wall_ms = int((time.perf_counter() - started) * 1000)
-            if self.stop_requested and not triages:
+            if self.stop_requested and n_answered == 0:
                 msg = f"Triagem interrompida pelo usuário antes da conclusão (0/{total})."
                 self.store.set_stage("triage", "pending", wall_ms=wall_ms, error=msg)
                 return msg
 
-            if excluded and not triages:
-                msg = f"Todos os {len(excluded)} candidato(s) falharam na API: {excluded[0][1]}"
+            if n_answered == 0 and triages:
+                msg = f"Todos os {len(triages)} candidato(s) falharam na API: {triages[0].not_triaged}"
                 self.store.set_stage("triage", "failed", wall_ms=wall_ms, error=msg)
                 raise BackendError(msg)
+
+            # Triage never drops: a candidate the run did not reach stays in the
+            # report as uncertain, with the reason.
+            reached = {t.candidate_id for t in triages}
+            for rec in records:
+                if rec["id"] not in reached:
+                    triages.append(
+                        Triage.untriaged(rec, "the run was interrupted before this candidate was triaged")
+                    )
+            _write_triages(triages)
+            n_untriaged = sum(1 for t in triages if t.not_triaged)
+            for t in triages:
+                if t.not_triaged:
+                    self.store.log("warn", "triage", "candidate-not-triaged",
+                                   f"{t.candidate_id}: {t.not_triaged}", candidate_id=t.candidate_id)
 
             ordered = sorted(triages, key=lambda item: (item.rank_key, item.candidate_id))
             self.store.set_stage(
@@ -872,7 +853,12 @@ class PipelineStepper:
             )
             b_counts = {b.value: sum(1 for item in ordered if item.bucket is b) for b in INSPECTION_ORDER}
             log_fn(f"  Triagem concluída: {b_counts}")
-            return f"{len(ordered)}/{total} candidatos triados ({b_counts})"
+            if n_untriaged:
+                log_fn(f"  ⚠ {n_untriaged} candidato(s) sem veredicto da LLM, mantidos como 'uncertain' com o motivo.")
+            return (
+                f"{n_answered}/{total} candidatos triados ({b_counts})"
+                + (f"; {n_untriaged} sem veredicto, mantidos como uncertain" if n_untriaged else "")
+            )
 
         # Fast offline/cache mode from template run
         if self.template_run and (self.template_run / "llm" / "triage.jsonl").exists():
@@ -897,6 +883,28 @@ class PipelineStepper:
                     new_cdir = dst_llm / new_cid
                     if old_cdir.is_dir() and old_cid != new_cid and not new_cdir.exists():
                         old_cdir.replace(new_cdir)
+            # The reference run is another run: keep its verdicts only for this
+            # run's candidates, and keep every candidate it has no verdict for as
+            # uncertain rather than letting it vanish from the report.
+            records = prepare_context(self.store)
+            ours = {r["id"] for r in records}
+            triage_lines = [d for d in triage_lines if d["candidate_id"] in ours]
+            covered = {d["candidate_id"] for d in triage_lines}
+            for rec in records:
+                if rec["id"] not in covered:
+                    t = Triage.untriaged(
+                        rec,
+                        f"offline mode: the reference run {self.template_run.name} has no "
+                        "verdict for this candidate",
+                    )
+                    doc = {**t.model_dump(mode="json"), "bucket": t.bucket.value}
+                    (dst_llm / rec["id"]).mkdir(parents=True, exist_ok=True)
+                    (dst_llm / rec["id"] / "verdict.json").write_text(
+                        json.dumps(doc, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+                    )
+                    triage_lines.append(doc)
+                    self.store.log("warn", "triage", "candidate-not-triaged",
+                                   f"{rec['id']}: {t.not_triaged}", candidate_id=rec["id"])
             (dst_llm / "triage.jsonl").write_text(
                 "\n".join(json.dumps(d) for d in triage_lines) + ("\n" if triage_lines else ""),
                 encoding="utf-8",
@@ -920,28 +928,34 @@ class PipelineStepper:
             )
             real_n = sum(1 for d in triage_lines if d.get("bucket") == "likely_real")
             infeas_n = sum(1 for d in triage_lines if d.get("bucket") == "likely_infeasible")
+            missing_n = sum(1 for d in triage_lines if d.get("not_triaged"))
             log_fn(
-                f"  LLM (Cache Offline) avaliou {len(triage_lines)} candidatos: {real_n} 'likely_real' (defeito real), "
+                f"  LLM (Cache Offline, run de referência {self.template_run.name}) avaliou "
+                f"{len(triage_lines) - missing_n} candidatos: {real_n} 'likely_real' (defeito real), "
                 f"{infeas_n} 'likely_infeasible' (armadilha rejeitada)."
             )
-            return f"{len(triage_lines)} triados ({real_n} real, {infeas_n} inviável)"
+            if missing_n:
+                log_fn(f"  ⚠ {missing_n} candidato(s) sem veredicto no run de referência, mantidos como 'uncertain'.")
+            return (
+                f"{len(triage_lines) - missing_n} triados ({real_n} real, {infeas_n} inviável)"
+                + (f"; {missing_n} sem veredicto, mantidos como uncertain" if missing_n else "")
+            )
 
         ctx_files = list((self.store.root / "context").glob("*.json")) if (self.store.root / "context").exists() else []
-        self.store.set_stage(
-            "triage",
-            "ok",
-            wall_ms=10,
-            candidates_in=len(ctx_files),
-            candidates_out=0,
-            dropped_with_proof=0,
+        msg = (
+            "LLM não executada: 'Usar API de LLM Real' está desmarcado e não há run de referência "
+            f"para este caso. Os {len(ctx_files)} candidato(s) seguem em context/, sem veredicto."
         )
-        log_fn(
-            f"  [Modo Offline sem cache prévio para este caso] Marque 'Usar API de LLM Real' para triar {len(ctx_files)} candidato(s)."
-        )
+        self.store.set_stage("triage", "skipped", candidates_in=len(ctx_files), error=msg)
+        log_fn(f"  [Modo Offline sem run de referência] {msg}")
         return f"0/{len(ctx_files)} triados (ative 'Usar API de LLM Real' para novos programas)"
 
     def _step_repair(self, log_fn) -> str:
         assert self.store is not None
+        reverify_reason = (
+            "not implemented: re-verifying a patch means re-running stages 2 and 3 "
+            "on the patched program, and they do not exist on this branch"
+        )
         if self.use_live_llm:
             started = time.perf_counter()
             all_rows = {**BY_NAME, **DEFERRED}
@@ -1025,16 +1039,9 @@ class PipelineStepper:
                 candidates_out=n_rep,
                 dropped_with_proof=0,
             )
-            self.store.set_stage(
-                "reverify",
-                "ok",
-                wall_ms=210,
-                candidates_in=n_rep,
-                candidates_out=0,
-                dropped_with_proof=n_rep,
-            )
-            log_fn(f"  {n_rep}/{total} patch(es) gerados e reverificados.")
-            return f"{n_rep} correção(ões) gerada(s) com testemunha"
+            self.store.set_stage("reverify", "skipped", candidates_in=n_rep, error=reverify_reason)
+            log_fn(f"  {n_rep}/{total} patch(es) gerados. Reverificação não executada (stages 2 e 3 ausentes).")
+            return f"{n_rep} correção(ões) gerada(s) com testemunha, sem reverificação"
 
         if self.template_run and (self.template_run / "repair").exists():
             id_map = self._map_template_candidate_ids()
@@ -1061,18 +1068,20 @@ class PipelineStepper:
                 candidates_out=len(patches),
                 dropped_with_proof=0,
             )
-            self.store.set_stage(
-                "reverify",
-                "ok",
-                wall_ms=240,
-                candidates_in=len(patches),
-                candidates_out=0,
-                dropped_with_proof=len(patches),
+            self.store.set_stage("reverify", "skipped", candidates_in=len(patches), error=reverify_reason)
+            log_fn(
+                f"  {len(patches)} patch(es) com testemunha copiados do run de referência. "
+                "Reverificação não executada (stages 2 e 3 ausentes)."
             )
-            log_fn(f"  LLM gerou {len(patches)} patch(es) com testemunha de intercalação e reverificou.")
-            return f"{len(patches)} patch(es) de correção gerados e reverificados"
+            return f"{len(patches)} patch(es) de correção copiados, sem reverificação"
 
-        return "Nenhum candidato likely_real exigiu reparo."
+        msg = (
+            "Reparo não executado: 'Usar API de LLM Real' está desmarcado e não há run de "
+            "referência para este caso."
+        )
+        self.store.set_stage("repair", "skipped", error=msg)
+        log_fn(f"  [Modo Offline sem run de referência] {msg}")
+        return msg
 
 
 class IrqRaceWinApp:

@@ -27,6 +27,7 @@ the measured result.
 from __future__ import annotations
 
 import enum
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -209,6 +210,30 @@ class Triage(BaseModel):
     feasibility: FeasibilityAnswer
     harmfulness: HarmfulnessAnswer | None = None
     produced_by: Provenance | None = None
+    #: Why no model answered for this candidate, when none did. ``None`` on
+    #: every verdict a model gave.
+    not_triaged: str | None = None
+
+    @classmethod
+    def untriaged(cls, record: dict[str, Any], reason: str) -> "Triage":
+        """The verdict for a candidate the stage could not get an answer for.
+
+        A backend error, a refusal or an interrupted run is not evidence about
+        the candidate, so it must not remove it from the report: it lands in
+        ``uncertain`` -- inspected, never hidden -- with the reason attached.
+        Confidence 0 places it last within that bucket, below every candidate a
+        model actually looked at.
+        """
+        return cls(
+            candidate_id=record["id"],
+            fingerprint=record["fingerprint"],
+            feasibility=FeasibilityAnswer(
+                reasoning=f"Not triaged: {reason}",
+                verdict=Feasibility.uncertain,
+                confidence=0.0,
+            ),
+            not_triaged=reason,
+        )
 
     @property
     def bucket(self) -> Bucket:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import tkinter as tk
 from pathlib import Path
 
@@ -475,3 +476,109 @@ def test_universal_intro_splash(monkeypatch, tk_root) -> None:
 
 
 
+
+
+def _stepper(tmp_path: Path, **kw) -> PipelineStepper:
+    yaml_path = REPO_ROOT / "bench" / "configs" / "svp_simple_001_001.yaml"
+    raw = yaml.safe_load(yaml_path.read_text(encoding="utf-8"))
+    return PipelineStepper(yaml_path, resolve_c_source_files(raw), work_root=tmp_path, **kw)
+
+
+def _run_until(stepper: PipelineStepper, last_key: str) -> list[str]:
+    logs: list[str] = []
+    stepper.init_run()
+    while True:
+        key, _ = stepper.run_next_step(log_fn=logs.append)
+        if key == last_key:
+            return logs
+
+
+def test_stage2_and_the_solver_are_skipped_not_invented(tmp_path: Path) -> None:
+    """This branch has no stage 2 and no Z3. The step used to write a solver
+    verdict nobody computed ('inconclusive', 'timeout', 12 ms) for every
+    candidate, and fixed timings into the manifest."""
+    stepper = _stepper(tmp_path)
+    _run_until(stepper, "context")
+    store = stepper.store
+    stages = {s["name"]: s for s in store.read_manifest()["stages"]}
+
+    for name in ("stage2", "solver"):
+        assert stages[name]["status"] == "skipped"
+        assert stages[name]["error"]
+        assert stages[name].get("wall_ms") is None
+        assert not stages[name].get("dropped_with_proof")
+    assert not (store.root / "stage2" / "candidates.jsonl").exists()
+    assert not (store.root / "solver" / "results.jsonl").exists()
+
+    n = len(store.read_candidates("stage1"))
+    contexts = [json.loads(p.read_text()) for p in (store.root / "context").glob("*.json")]
+    assert len(contexts) == n
+    assert all(c["solver_result"]["verdict"] == "not_run" for c in contexts)
+    assert store.check() == []
+
+
+class _AlwaysFeasibleBackend:
+    """Answers every candidate feasible and harmful, except it fails, as a
+    rate-limited API would, on every request about one variable."""
+
+    def __init__(self, fail_for: str):
+        from irqrace.llm.backends import Backend
+
+        class _B(Backend):
+            provider = "fake"
+
+            def __init__(self):
+                super().__init__("v1")
+
+            @property
+            def capabilities(self):
+                from irqrace.llm.backends import Capabilities, StructuredMode
+                return Capabilities(structured=StructuredMode.native_schema)
+
+            def chat(self, request):
+                from irqrace.llm.backends import BackendError, ChatResponse, StructuredMode, Usage
+                if any(fail_for in str(m.get("content", "")) for m in request.messages):
+                    raise BackendError("HTTP 429: rate limited")
+                if "blocking_element" in request.schema.get("properties", {}):
+                    ans = {"reasoning": "r", "blocking_element": None,
+                           "verdict": "feasible", "confidence": 0.9}
+                else:
+                    ans = {"reasoning": "r", "criterion_matched": "feeds a branch",
+                           "verdict": "harmful", "confidence": 0.9}
+                return ChatResponse(text=json.dumps(ans), parsed=ans,
+                                    structured_mode=StructuredMode.native_schema,
+                                    usage=Usage(input_tokens=1, output_tokens=1))
+
+        self.backend = _B()
+
+
+def test_live_triage_keeps_every_candidate_when_the_api_fails_on_some(tmp_path, monkeypatch):
+    import irqrace.ui.desktop as desktop
+    from irqrace.llm.cache import Cache
+
+    # The variable block, not the bare name: every record now ships isr_2's
+    # body, and that body reads global_var.
+    fake = _AlwaysFeasibleBackend(fail_for='"name": "svp_simple_001_001_global_var"').backend
+    monkeypatch.setattr(desktop, "build_backend_from_config", lambda *a, **k: fake)
+    real_client = desktop.TriageClient
+    monkeypatch.setattr(desktop, "TriageClient",
+                        lambda cfg, backend: real_client(cfg, backend=backend, cache=Cache(enabled=False)))
+
+    stepper = _stepper(tmp_path, use_live_llm=True)
+    _run_until(stepper, "triage")
+    store = stepper.store
+
+    records = [json.loads(p.read_text()) for p in (store.root / "context").glob("*.json")]
+    failing = {r["id"] for r in records if r["variable"]["name"] == "svp_simple_001_001_global_var"}
+    assert failing and len(failing) < len(records)
+
+    lines = [json.loads(l) for l in (store.root / "llm" / "triage.jsonl").read_text().splitlines()]
+    assert {d["candidate_id"] for d in lines} == {r["id"] for r in records}
+    for d in lines:
+        if d["candidate_id"] in failing:
+            assert d["bucket"] == "uncertain" and "429" in d["not_triaged"]
+        else:
+            assert d["not_triaged"] is None
+    stage = {s["name"]: s for s in store.read_manifest()["stages"]}["triage"]
+    assert stage["status"] == "ok"
+    assert stage["candidates_in"] == stage["candidates_out"] == len(records)
