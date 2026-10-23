@@ -254,7 +254,7 @@ def _compute_run_funnel(store: RunStore) -> list[dict[str, Any]]:
     return [
         {
             "Estágio": "0. Build & Probe",
-            "Status": stages.get("build", {}).get("status", "ok"),
+            "Status": stages.get("build", {}).get("status", "pending"),
             "N_in": len(manifest.get("subject", {}).get("sources", [])),
             "N_out": probe_rep.get("globals_count", "-") if probe_rep else "-",
             "Redução (ΔN)": "-",
@@ -267,7 +267,7 @@ def _compute_run_funnel(store: RunStore) -> list[dict[str, Any]]:
         },
         {
             "Estágio": "1. Stage 1 (SVF + Co-exec)",
-            "Status": stages.get("stage1", {}).get("status", "ok"),
+            "Status": stages.get("stage1", {}).get("status", "pending"),
             "N_in": s1_analysis.get("accesses_count", "-") if s1_analysis else "-",
             "N_out": n_s1,
             "Redução (ΔN)": "Baseline",
@@ -280,7 +280,7 @@ def _compute_run_funnel(store: RunStore) -> list[dict[str, Any]]:
         },
         {
             "Estágio": "2. Stage 2 (Mask Filter)",
-            "Status": stages.get("stage2", {}).get("status", "ok"),
+            "Status": stages.get("stage2", {}).get("status", "pending"),
             "N_in": n_s1,
             "N_out": n_s2,
             "Redução (ΔN)": f"{(1 - n_s2 / n_s1) * 100:.1f}%" if n_s1 else "0.0%",
@@ -293,7 +293,7 @@ def _compute_run_funnel(store: RunStore) -> list[dict[str, Any]]:
         },
         {
             "Estágio": "3. Stage 3 (Z3 Solver)",
-            "Status": stages.get("solver", {}).get("status", "ok"),
+            "Status": stages.get("solver", {}).get("status", "pending"),
             "N_in": n_s2,
             "N_out": n_solver_out,
             "Redução (ΔN)": f"{(n_unsat / n_s2) * 100:.1f}%" if n_s2 else "0.0%",
@@ -310,7 +310,7 @@ def _compute_run_funnel(store: RunStore) -> list[dict[str, Any]]:
         },
         {
             "Estágio": "4. Contexto C2",
-            "Status": stages.get("context", {}).get("status", "ok"),
+            "Status": stages.get("context", {}).get("status", "pending"),
             "N_in": n_solver_out,
             "N_out": n_ctx,
             "Redução (ΔN)": "0.0%",
@@ -323,7 +323,7 @@ def _compute_run_funnel(store: RunStore) -> list[dict[str, Any]]:
         },
         {
             "Estágio": "5. LLM Stage A (Triage)",
-            "Status": stages.get("triage", {}).get("status", "ok"),
+            "Status": stages.get("triage", {}).get("status", "pending"),
             "N_in": n_ctx,
             "N_out": f"{n_triage} ({n_likely_real} real)" if n_triage else "-",
             "Redução (ΔN)": "Reordena fila",
@@ -344,7 +344,7 @@ def _compute_run_funnel(store: RunStore) -> list[dict[str, Any]]:
         },
         {
             "Estágio": "6. LLM Stage B (Repair)",
-            "Status": stages.get("repair", {}).get("status", "ok"),
+            "Status": stages.get("repair", {}).get("status", "pending"),
             "N_in": n_likely_real if n_triage else "-",
             "N_out": n_repaired if n_repaired else "-",
             "Redução (ΔN)": "-",
@@ -357,7 +357,7 @@ def _compute_run_funnel(store: RunStore) -> list[dict[str, Any]]:
         },
         {
             "Estágio": "7. Re-verify",
-            "Status": stages.get("reverify", {}).get("status", "ok"),
+            "Status": stages.get("reverify", {}).get("status", "pending"),
             "N_in": n_repaired if n_repaired else "-",
             "N_out": stages.get("reverify", {}).get("candidates_out", 0),
             "Redução (ΔN)": "100% eliminado",
@@ -637,6 +637,8 @@ def render_clickable_pipeline_blocks(manifest: dict[str, Any]) -> str:
             color, bg, dot = "#059669", "#ecfdf5", "🟢"
         elif status == "failed":
             color, bg, dot = "#dc2626", "#fef2f2", "🔴"
+        elif status == "skipped":
+            color, bg, dot = "#b45309", "#fffbeb", "🟠"
         else:
             color, bg, dot = "#64748b", "#f1f5f9", "⚪"
 

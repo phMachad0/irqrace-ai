@@ -7,6 +7,7 @@ from irqrace.config import Config
 from irqrace.llm import cache as cache_mod
 from irqrace.llm.backends import (
     Backend,
+    BackendError,
     Capabilities,
     ChatRequest,
     ChatResponse,
@@ -23,7 +24,13 @@ from irqrace.llm.pipeline import (
 )
 from irqrace.llm.prompts import FULL
 from irqrace.llm.repair import Patch, Strategy, Witness
-from irqrace.llm.verdict import Bucket, Feasibility, Harmfulness
+from irqrace.llm.verdict import (
+    Bucket,
+    Feasibility,
+    FeasibilityAnswer,
+    Harmfulness,
+    Triage,
+)
 from irqrace.runstore import RunStore
 
 FIXTURES = load_all()
@@ -220,3 +227,60 @@ def test_cli_llm_triage_and_repair_commands_over_cached_store(monkeypatch, tmp_p
     )
     assert rc2 == 0
     assert store2.check() == []
+
+
+class FlakyBackend(FakeBackend):
+    """Fails every request that carries one candidate's id, as a rate limit would."""
+
+    def __init__(self, answers=(), *, fail_for: str):
+        super().__init__(answers)
+        self.fail_for = fail_for
+
+    def chat(self, request: ChatRequest) -> ChatResponse:
+        if any(self.fail_for in str(m.get("content", "")) for m in request.messages):
+            raise BackendError("HTTP 429: rate limited")
+        return super().chat(request)
+
+
+def test_a_candidate_the_backend_fails_on_stays_in_the_report_as_uncertain(tmp_path):
+    """Triage never drops. A backend error is not evidence about a candidate, so
+    it must not take the candidate out of the report -- the run on 23 Oct lost
+    16 of 23 this way, silently, with the stage marked ok."""
+    store = _seed_store(tmp_path)
+    backend = FlakyBackend(
+        [_feas(Feasibility.feasible), _harm(Harmfulness.harmful)],
+        fail_for=TRAP.candidate_id,
+    )
+    summary = triage_store(
+        store, config=FULL, backend=backend, cache=Cache(enabled=False), resolver_mode="mock",
+    )
+
+    assert summary["candidates_in"] == summary["candidates_out"] == 2
+    assert summary["not_triaged"] == 1
+    by_id = {t.candidate_id: t for t in read_triages(store)}
+    assert by_id[BUG.candidate_id].not_triaged is None
+    lost = by_id[TRAP.candidate_id]
+    assert lost.bucket is Bucket.uncertain
+    assert "429" in lost.not_triaged
+    verdict = json.loads(
+        (store.root / "llm" / TRAP.candidate_id / "verdict.json").read_text(encoding="utf-8")
+    )
+    assert verdict["bucket"] == "uncertain" and "429" in verdict["not_triaged"]
+
+    events = [json.loads(l) for l in (store.root / "log.ndjson").read_text().splitlines()]
+    warned = [e for e in events if e["event"] == "candidate-not-triaged"]
+    assert [e["data"]["candidate_id"] for e in warned] == [TRAP.candidate_id]
+    stages = {s["name"]: s for s in store.read_manifest()["stages"]}
+    assert stages["triage"]["candidates_out"] == 2
+    assert store.check() == []
+
+
+def test_an_untriaged_candidate_ranks_last_within_uncertain():
+    real_uncertain = Triage(
+        candidate_id="c1", fingerprint="f" * 64,
+        feasibility=FeasibilityAnswer(
+            reasoning="r", verdict=Feasibility.uncertain, confidence=0.4),
+    )
+    untriaged = Triage.untriaged(TRAP.record, "backend error")
+    assert untriaged.bucket is Bucket.uncertain
+    assert sorted([untriaged, real_uncertain], key=lambda t: t.rank_key)[-1] is untriaged

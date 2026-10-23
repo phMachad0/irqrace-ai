@@ -185,6 +185,16 @@ def triage_store(
         if len(non_empty_runs) > 1
         else (non_empty_runs[0] if non_empty_runs else [])
     )
+    # A candidate no sample could triage stays in the report as uncertain, with
+    # the reason: a backend error is not evidence about the candidate.
+    answered = {t.candidate_id for t in final}
+    reasons = dict(excluded)
+    for rec in records:
+        if rec["id"] not in answered:
+            reason = reasons.get(rec["id"], "no verdict was produced")
+            final.append(Triage.untriaged(rec, reason))
+            store.log("warn", "triage", "candidate-not-triaged",
+                      f"{rec['id']}: {reason}", candidate_id=rec["id"])
     ordered = sorted(final, key=lambda t: (t.rank_key, t.candidate_id))
 
     llm_dir = store.root / "llm"
@@ -217,13 +227,16 @@ def triage_store(
         b.value: sum(1 for t in ordered if t.bucket is b)
         for b in INSPECTION_ORDER
     }
+    n_untriaged = sum(1 for t in ordered if t.not_triaged)
     store.log(
         "info",
         "triage",
         "triage-complete",
-        f"triaged {len(ordered)}/{len(records)} candidate(s) with {resolved_backend.spec} ({config.name})",
+        f"triaged {len(ordered) - n_untriaged}/{len(records)} candidate(s) with "
+        f"{resolved_backend.spec} ({config.name}); {n_untriaged} kept as uncertain "
+        "without a verdict",
         buckets=bucket_counts,
-        excluded=len(excluded),
+        not_triaged=n_untriaged,
     )
 
     return {
@@ -233,6 +246,7 @@ def triage_store(
         "candidates_in": len(records),
         "candidates_out": len(ordered),
         "buckets": bucket_counts,
+        "not_triaged": n_untriaged,
         "triages": ordered,
         "consistency": (
             consistency(non_empty_runs)["__mean__"]

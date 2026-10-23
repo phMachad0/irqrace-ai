@@ -136,9 +136,46 @@ class PDFReportBuilder:
         mid_x = self.MARGIN_LEFT + 280.0
         page.insert_text((mid_x, self.y + 14), f"Data da Execução: {now_str}", fontsize=8.5, fontname="helv", color=self.COLOR_TEXT)
         page.insert_text((mid_x, self.y + 28), f"Modelo de LLM:    {llm_adapter}:{llm_model}", fontsize=8.5, fontname="helv", color=self.COLOR_TEXT)
-        page.insert_text((mid_x, self.y + 42), "Status Geral:     Concluído com Verificação Fechada", fontsize=8.5, fontname="helv", color=self.COLOR_GREEN_TEXT)
+        overall, overall_color = self._overall_status()
+        page.insert_text((mid_x, self.y + 42), f"Status Geral:     {overall}", fontsize=8.5, fontname="helv", color=overall_color)
 
         self.y += box_h + 14
+
+    def _stage_status(self, key: str) -> str:
+        """A stage's status as the manifest records it; absent means pending.
+
+        Stage 2 and the solver share one row, and the row is only as done as
+        the less done of the two.
+        """
+        stages = self.data.get("stages", {})
+        st = stages.get(key, {}).get("status", "pending")
+        if key == "solver":
+            s2 = stages.get("stage2", {}).get("status", "pending")
+            for worse in ("failed", "running", "pending", "skipped"):
+                if worse in (st, s2):
+                    return worse
+        return st
+
+    def _status_label(self, st: str) -> tuple[str, tuple[float, float, float]]:
+        return {
+            "ok": ("OK", self.COLOR_GREEN_TEXT),
+            "failed": ("FALHOU", self.COLOR_RED_TEXT),
+            "skipped": ("NÃO EXECUTADO", self.COLOR_RED_TEXT),
+            "running": ("EM EXECUÇÃO", self.COLOR_MUTED),
+        }.get(st, ("PENDENTE", self.COLOR_MUTED))
+
+    def _overall_status(self) -> tuple[str, tuple[float, float, float]]:
+        keys = ("build", "stage1", "solver", "context", "triage", "repair")
+        statuses = {k: self._stage_status(k) for k in keys}
+        if "failed" in statuses.values():
+            return "Execução com falha", self.COLOR_RED_TEXT
+        if any(v in ("pending", "running") for v in statuses.values()):
+            return "Execução incompleta", self.COLOR_MUTED
+        names = {"solver": "Stage 2/Z3", "triage": "triagem", "repair": "reparo"}
+        skipped = [names.get(k, k) for k, v in statuses.items() if v == "skipped"]
+        if skipped:
+            return "Concluído sem " + ", ".join(skipped), self.COLOR_RED_TEXT
+        return "Concluído", self.COLOR_GREEN_TEXT
 
     def _draw_pipeline_stages_summary(self) -> None:
         self._check_space(110.0)
@@ -158,7 +195,7 @@ class PDFReportBuilder:
         stage_names = [
             ("build", "1. Build Bitcode (clang-14)", "Compilação whole.bc e probe de globais"),
             ("stage1", "2. Stage 1 (SVF May-Alias)", "Grafo de fluxo de controle e pares/triplas"),
-            ("solver", "3. Solver Z3 (Feasibility)", "Descartes sonoros por prova formal UNSAT"),
+            ("solver", "3. Stage 2 + Solver Z3", "Máscara/prioridade e prova formal UNSAT"),
             ("context", "4. Contexto C2 (Pack)", "Empacotamento de pilhas e masking"),
             ("triage", "5. LLM Triagem (Classificação)", "Avaliação de viabilidade e nocividade"),
             ("repair", "6. LLM Reparo & Reverificação", "Geração de patch com testemunha"),
@@ -174,19 +211,18 @@ class PDFReportBuilder:
         self.y += 16
 
         for idx, (skey, title, desc) in enumerate(stage_names):
-            s_info = stages.get(skey, {})
-            st = s_info.get("status", "ok" if skey != "repair" else "ok")
-            wall = s_info.get("wall_ms", 0)
+            st = self._stage_status(skey)
+            wall = stages.get(skey, {}).get("wall_ms")
 
             bg = self.COLOR_BG_HEADER if idx % 2 == 0 else (1.0, 1.0, 1.0)
             row_rect = pymupdf.Rect(self.MARGIN_LEFT, self.y, self.PAGE_WIDTH - self.MARGIN_RIGHT, self.y + 14)
             page.draw_rect(row_rect, color=self.COLOR_BORDER, fill=bg, width=0.5)
 
-            st_color = self.COLOR_GREEN_TEXT if st == "ok" else (self.COLOR_RED_TEXT if st == "failed" else self.COLOR_MUTED)
+            st_label, st_color = self._status_label(st)
             page.insert_text((self.MARGIN_LEFT + 6, self.y + 10), title, fontsize=7.5, fontname="helv", color=self.COLOR_TEXT)
             page.insert_text((self.MARGIN_LEFT + 175, self.y + 10), desc, fontsize=7.5, fontname="helv", color=self.COLOR_MUTED)
-            page.insert_text((self.MARGIN_LEFT + 375, self.y + 10), f"✔ {st.upper()}", fontsize=7.5, fontname="helv", color=st_color)
-            page.insert_text((self.MARGIN_LEFT + 445, self.y + 10), f"{wall} ms", fontsize=7.5, fontname="helv", color=self.COLOR_TEXT)
+            page.insert_text((self.MARGIN_LEFT + 375, self.y + 10), st_label, fontsize=7.5, fontname="helv", color=st_color)
+            page.insert_text((self.MARGIN_LEFT + 445, self.y + 10), f"{wall} ms" if wall is not None else "-", fontsize=7.5, fontname="helv", color=self.COLOR_TEXT)
             self.y += 14
 
         self.y += 14
@@ -211,6 +247,8 @@ class PDFReportBuilder:
         infeas_cands = sum(1 for c in candidates.values() if (c.get("triage") or {}).get("bucket") == "likely_infeasible")
         unsat_cands = sum(1 for c in candidates.values() if (c.get("solver") or {}).get("verdict") == "unsat")
         repairs_n = sum(1 for c in candidates.values() if c.get("repair"))
+        untriaged_n = sum(1 for c in candidates.values() if (c.get("triage") or {}).get("not_triaged"))
+        solver_ran = self._stage_status("solver") == "ok"
 
         # Inspection ratio: real defects / (real defects + traps looked at)
         insp_ratio = "1.00 (Ótimo)" if real_cands > 0 else "N/A"
@@ -221,8 +259,11 @@ class PDFReportBuilder:
 
         cards_data = [
             ("Total Candidatos", str(total_cands), "Extraídos no Stage 1"),
-            ("Provas UNSAT (Z3)", str(unsat_cands), "Descarte Formal Seguro"),
-            ("Defeitos Reais (LLM)", str(real_cands), f"{infeas_cands} armadilhas rejeitadas"),
+            ("Provas UNSAT (Z3)", str(unsat_cands) if solver_ran else "-",
+             "Descarte Formal Seguro" if solver_ran else "Z3 não executado"),
+            ("Defeitos Reais (LLM)", str(real_cands),
+             f"{infeas_cands} armadilhas rejeitadas"
+             + (f"; {untriaged_n} não triados" if untriaged_n else "")),
             ("Correções Geradas", str(repairs_n), "Com testemunha & patch"),
         ]
 
@@ -287,7 +328,10 @@ class PDFReportBuilder:
             accs = rec.get("accesses", [])
             lines_str = "(" + ",".join(str(a.get("source", {}).get("line", "?")) for a in accs) + ")"
 
-            if t_doc:
+            if t_doc and t_doc.get("not_triaged"):
+                feas = "não triado"
+                bucket = t_doc.get("bucket", "?")
+            elif t_doc:
                 feas = t_doc.get("feasibility", {}).get("verdict", "?")
                 bucket = t_doc.get("bucket", "?")
             elif s_doc and s_doc.get("verdict") == "unsat":
