@@ -261,6 +261,14 @@ with the date.
   rest a control-flow refinement of stage 1. Not comparable with IntRace's figure, which is on
   real-world data-race pairs; 19 of the 31 cases have no masking call at all. The real-world
   suite is the comparison that would mean something.
+- [ ] **How much of stage 3's imprecision is ordering?** Interference is havoc, so a trap that
+  is infeasible only because ISRs run in a fixed causal order (`svp_simple_028_001`: `isr_1`
+  clears the flag before unmasking `isr_2`) reaches the LLM as `sat`. Encoding the mask and the
+  activation order in the solver — a bounded interleaving of the flows in the run set — would
+  recover these at BMC's cost. Measure first: how many of the 16 traps reaching the LLM are of
+  this kind, and does the LLM stage separate them anyway? Blocks: nothing.
+- [ ] **Close stage 1's memory-intrinsic gap** ([[Soundness Assumptions]] A4) before the
+  real-world suite: `memcpy`/`memset` on shared buffers are accesses stage 1 does not enumerate.
 - [ ] **Does the split-critical-section atomicity violation occur in the wild?** The case that
   breaks the pair abstraction — both local accesses individually protected, the gap between
   them not — is constructed in [[Pair-Triple Unification]] but was not found in [[Racebench]].

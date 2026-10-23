@@ -583,3 +583,50 @@ code changed. Pages touched:
 [[Soundness Assumptions]], [[Contradictions]], [[Racebench]], [[Open Questions]],
 [[Interrupt Masking and Synchronization]], [[Roadmap]].
 
+## [2026-10-22] build | W6–W7 Track A — stage 3 (Z3), the full funnel, recall gate 48/48 on what reaches the LLM
+
+Same session as W5, on the branch now named `track-a/semanas-5-7`.
+
+**Stage 3 exists.** A new binary, `irqrace-stage3`, does symbolic execution over the LLVM IR
+with the Z3 C++ API — the only Z3 on this machine, and the stack decision for anything touching
+LLVM and SVF ([[Reimplementation Assessment]]). Python (`src/irqrace/stage3.py`) writes the query:
+stage 2's run sets moved onto instruction boundaries, so masking and priority reach the solver
+without being recomputed. The question is reachability only: A1, then B inside [A1, A2], then A2,
+on one memory cell ([[Path Feasibility Analysis]]).
+
+```
+solver: 436 in -> 383 sat, 0 inconclusive, 53 unsat (dropped with proof)  [29875 ms total]
+funnel: 566 -> 436 -> 383  [stage 1 2810 ms, stage 2 2468 ms, solver 29875 ms]
+RECALL GATE (stage3): 48/48 annotated bug points present -- PASS
+traps reported: 35/38 after stage 1, 30/38 after stage 2, 16/38 reaching the LLM
+```
+
+**The encoding over-approximates every execution** — memory as one byte array per SVF object,
+loops as one pass with their writes havocked at the header, interference as havoc of whatever a
+flow that may run there writes — so UNSAT is a proof and SAT is only "not refuted"; the C2
+`SolverResult` description now says so for Track B. The one assumption that is not an
+over-approximation is J6, a program free of undefined behaviour, and the two audited proofs that
+rest on it are named. [[Soundness Assumptions]] gains group J and A4 (stage 1 does not enumerate
+memory intrinsics: an honest gap, unexercised by Racebench).
+
+**Three solver bugs caught before any number was reported**, each with a mutation-tested
+regression test: a preemption just before A2 hid A2 and made a reachable trap UNSAT — the
+dangerous one; a volatile load counted as a write, so every Racebench ISR "wrote everything";
+a back edge crossed once in total instead of once per phase. Every UNSAT was then audited
+against the source.
+
+**An address projection** — every path to each access on its own, then "can the addresses
+coincide?" — is a relaxation, so its UNSAT is a proof; it refutes 36 of the 53 and keeps the run
+free of timeouts. **12.2% solver attrition against IntRace's 86.2%**: a thread-modular encoding
+cannot see traps that are infeasible only because of the order ISRs run in (028); recorded in
+[[Open Questions]].
+
+**Finding:** `svp_simple_020_001`'s trap `<R#37><W#44><R#40>` is reachable under the suite's
+README, hand-checked as a concrete interleaving — the second, after 001's ([[Contradictions]] #7,
+[[Racebench]]).
+
+328 tests pass. Diary: [[Semana 6 — O Stage 3, a Codificação]] and
+[[Semana 7 — O Stage 3, Busca e Verificação]] (a thematic split of one block);
+[[Semana 5 — O Stage 2, Prioridade e Máscara]] revised where its code changed. Pages touched:
+[[Path Feasibility Analysis]], [[Racebench]], [[Contradictions]], [[Open Questions]], [[Roadmap]].
+

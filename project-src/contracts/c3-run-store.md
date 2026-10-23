@@ -22,6 +22,10 @@ runs/<run_id>/
   stage2/masking.json        the masking analysis behind the verdicts, per flow and
                              per access -- for debugging and the explorer, not a contract
   solver/results.jsonl       one SolverResult per candidate id: unsat | sat | inconclusive
+  solver/query.txt           (W6-W7) the query handed to irqrace-stage3: flows, the run
+                             set at every instruction boundary, the candidates
+  solver/stats.json          per candidate: states explored, solver calls, wall time, and
+                             how an unsat was reached (address projection or full search)
   context/<cand_id>.json     the full C2 context record handed to Track B
   llm/<cand_id>/turns.jsonl  full conversation, including C4 requests and replies
   repair/<cand_id>/patch.diff

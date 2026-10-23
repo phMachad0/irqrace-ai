@@ -21,8 +21,9 @@ Calendar: **Mon 31 Aug – Fri 6 Nov 2026**, ten working weeks.
 > has less than roughly 15 hours a week, start from ladder rung 2, not from the full plan.
 
 > [!info] Status — 2026-10-22
-> **Track A: W1–W5 done** in `project-src/` — stage 2 exists and the recall gate is still
-> 48/48 after it ([[Semana 5 — O Stage 2, Prioridade e Máscara]]). The calendar is behind:
+> **Track A: W1–W7 done** in `project-src/` — stages 2 and 3 exist, and the recall gate is
+> 48/48 on what reaches the LLM ([[Semana 5 — O Stage 2, Prioridade e Máscara]],
+> [[Semana 7 — O Stage 3, Busca e Verificação]]). The calendar is behind:
 > by the dates on this page this is W8, M4 falls on Fri 23 Oct, and W6–W10 remain with two
 > weeks left to 6 Nov. The ladder's own trigger for rung 3 — *nothing solving by Fri 16
 > Oct* — has passed. Which rungs to take is Pedro's decision and is not made on this page.

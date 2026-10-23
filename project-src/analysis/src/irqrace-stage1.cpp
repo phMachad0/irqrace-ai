@@ -808,25 +808,31 @@ int main(int argc, char **argv) {
         }
         program << "], \"exit\": "
                 << (llvm::isa<llvm::ReturnInst>(bb.getTerminator()) ? "true" : "false")
-                << ", \"events\": [";
+                << ", \"n\": " << bb.size() << ", \"events\": [";
         unsigned ev = 0;
+        unsigned instIndex = 0;
         for (const llvm::Instruction &I : bb) {
+          // Position among ALL instructions of the block, intrinsics included:
+          // stage 3 addresses instructions by (function, block, index), and maps
+          // stage 2's points onto the boundaries between them.
+          const unsigned ii = instIndex++;
           SourceRange r = rangeOf(&I);
           std::ostringstream e;
           if (accessInsts.count(&I)) {
             pointOf[&I] = {bidx[&bb], ev};
-            e << "{\"k\": \"access\", \"line\": " << r.line << "}";
+            e << "{\"k\": \"access\", \"line\": " << r.line << ", \"i\": " << ii << "}";
           } else if (const auto *ci = llvm::dyn_cast<llvm::CallBase>(&I)) {
             if (ci->isInlineAsm()) {
               // Unrecognised by construction: it may write the interrupt
               // enable register, so stage 2 must not treat it as a no-op.
-              e << "{\"k\": \"asm\", \"line\": " << r.line << "}";
+              e << "{\"k\": \"asm\", \"line\": " << r.line << ", \"i\": " << ii << "}";
             } else {
               const auto *direct = llvm::dyn_cast<llvm::Function>(
                   ci->getCalledOperand()->stripPointerCasts());
               if (direct && direct->isIntrinsic())
                 continue; // llvm.dbg.* and friends: not program behaviour
-              e << "{\"k\": \"call\", \"line\": " << r.line << ", \"callees\": [";
+              e << "{\"k\": \"call\", \"line\": " << r.line << ", \"i\": " << ii
+                << ", \"callees\": [";
               const char *how = direct ? "direct" : "unresolved";
               bool cfirst = true;
               for (const CallEdge *ce : bySite[&I]) {

@@ -16,6 +16,48 @@ The design lives in the wiki one directory up:
 LLM may not.** Recall is the headline metric and it must be 100%; precision is
 traded away deliberately.
 
+## Status — end of W6–W7 (22 Oct 2026) · stage 3 (Z3)
+
+| W6–W7 item | State |
+| --- | --- |
+| Symbolic ISR summaries; splice at the preemption point; discharge path constraints | done — `analysis/src/irqrace-stage3.cpp`, symbolic execution over the LLVM IR with Z3 |
+| **Reachability only**, the solver's role kept to "prove impossible" | done — the query is "A1, then B inside [A1, A2], then A2, on one memory cell" |
+| Timeout and unsupported constructs → **`inconclusive`**, kept and passed on | done — never `sat`, never a drop; pinned by tests |
+| **The full funnel measured, with per-stage timings** | 566 → 436 → **383** reaching the LLM — see below |
+| **Recall gate still 100%** | **48/48 PASS**, taken on the context records |
+
+```
+stage 1: 566 candidates, 18.3 per subject (316 triples, 250 pairs)  [2810 ms total]
+stage 2: 436 kept (202 triples, 234 pairs), 130 dropped with proof (masking 23, no-path 62, priority 45)  [2468 ms total]
+solver: 436 in -> 383 sat, 0 inconclusive, 53 unsat (dropped with proof)  [29875 ms total]
+reaching the LLM: 383 (166 triples, 217 pairs), 12.4 per subject; solver attrition 12.2%
+RECALL GATE (stage3): 48/48 annotated bug points present -- PASS
+traps reported: 35/38 after stage 1, 30/38 after stage 2, 16/38 reaching the LLM (14 refuted by the solver)
+```
+
+**The encoding over-approximates every execution, so UNSAT is a proof and SAT is only "not
+refuted".** Memory is one byte array per SVF object; loops are one pass with everything they
+may write havocked at the header; at every instruction boundary where stage 2 says another
+flow may run, everything that flow may write is havocked; the preempting flow runs from its
+entry on the memory at the preemption point. A cheap **address projection** — every path to
+each access explored on its own, then "can the three addresses coincide?" — refutes index and
+dead-code traps before the full search runs.
+
+**12.2% against IntRace's 86.2%** is the honest gap of a thread-modular encoding: a trap whose
+infeasibility rests on *the order* in which ISRs run (028's flag that only `isr_1` clears, and
+only before it unmasks `isr_2`) looks feasible once every value another flow writes is
+havocked. Those reach the LLM marked `sat` with their `unconstrained` list.
+
+**Three bugs in the solver, caught before any number was reported** — by the recall gate and by
+auditing every UNSAT against the source: a volatile load counted as a write (every ISR then
+"wrote everything"); a preemption just before A2 that made A2 unselectable (an UNSAT on a
+reachable trap); a back edge crossed once in total instead of once per phase. Each has a
+mutation-tested regression test in `tests/test_stage3.py`.
+
+**One finding.** `svp_simple_020_001`'s trap `<R#37><W#44><R#40>` is reachable under the
+suite's README, like 001's — the label assumes `sum > para` and `sum < para` exclusive, but
+`isr_2` may change `para` inside the interval; hand-checked with a concrete interleaving.
+
 ## Status — end of W5 (22 Oct 2026) · stage 2
 
 | W5 item | State |
@@ -118,7 +160,8 @@ six lines above where it is.
 | **SVF lists its globals** | done — `irqrace probe` |
 
 Not started at the end of W1: stage 2, the Z3 stage, the LLM stage, the dashboard. As of
-W5, stage 2 exists; the Z3 stage, the LLM stage and the dashboard are still to come.
+W5, stage 2 exists; as of W6–W7, the Z3 stage too. The LLM stage and the dashboard live on
+Track B's branch, `track-b/llm-integration`.
 
 ## Layout
 
@@ -127,11 +170,13 @@ contracts/        C1-C4: the frozen schemas, plus one worked example of each
   examples/       svp_simple_001_001 -- one real bug point, two planted traps,
                   one stage-2 drop record, and run-fixture/, a C3 run directory
 src/irqrace/      the Python half: contracts, config, build, probe, run store,
-                  stage-1 derivation, the masking analysis (masking.py) and stage 2
+                  stage-1 derivation, the masking analysis (masking.py), stage 2,
+                  and the stage-3 driver (stage3.py)
 analysis/         the C++ half: SVF-based analysis binaries
                   irqrace-probe   what the build produced, C1 vs bitcode (R4, R7)
                   irqrace-stage1  reachability, shared locations, accesses, may-precede,
                                   and the event CFG stage 2's masking analysis reads
+                  irqrace-stage3  path feasibility: symbolic execution over the IR, Z3
 bench/configs/    one generated C1 file per Racebench simple case (31)
 bench/racebench-errata.yaml   12 curated corrections to the annotations, with evidence
 scripts/          toolchain setup
@@ -168,6 +213,14 @@ irqrace bench gen-configs && irqrace bench build-all --probe
 
 ```bash
 irqrace probe bench/configs/svp_simple_001_001.yaml
+```
+
+```bash
+irqrace stage3-all
+```
+
+```bash
+irqrace stage3 bench/configs/svp_simple_001_001.yaml -v
 ```
 
 ```bash

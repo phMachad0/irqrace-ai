@@ -152,7 +152,14 @@ two parts of one primary artifact.
   way `isr_2` may preempt between lines 43 and 44.
 
 This project's stage 2 follows the README and **keeps** the candidate, so a sound tool's
-trap-rejection ceiling on the suite is below 38/38. The label is not corrected
+trap-rejection ceiling on the suite is below 38/38.
+
+**A second instance**, found by stage 3 on 2026-10-22: `svp_simple_020_001_global_var
+<R#37><W#44><R#40>` is labelled a false positive because the guards at lines 36 and 39
+(`sum > para`, `sum < para`) look exclusive. But `isr_1` — whose write at line 44 is the B —
+sets the flag and unmasks irq 2, and `isr_2` then sets `para = 11` before line 39 is evaluated.
+With `para = 0` and `sum = 2` the two reads both execute. Hand-checked as a concrete
+interleaving, not inferred from a SAT verdict. The label is not corrected
 ([[Soundness Assumptions]] I4), for the reason the errata gives for `svp_simple_019_001`.
 
 **Why the published tools agree with the label — partly verified.** [[BMC4AV (paper)]] reports

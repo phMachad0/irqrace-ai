@@ -198,6 +198,10 @@ class RunStore:
             return []
         return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
 
+    def read_contexts(self) -> list[dict[str, Any]]:
+        """Every context record: the candidates that reach Track B."""
+        return [json.loads(p.read_text()) for p in sorted((self.root / "context").glob("*.json"))]
+
     def write_context(self, record: dict[str, Any], *, validate: bool = True) -> Path:
         if validate:
             contracts.validate("c2", record, what=f"context record {record.get('id')}")

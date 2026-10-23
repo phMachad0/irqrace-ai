@@ -246,7 +246,7 @@
 
     "SolverResult": {
       "type": "object",
-      "description": "Z3 path-feasibility verdict. UNSAT is a proof of impossibility and is the ONLY licence to discard a candidate. 'inconclusive' must never be collapsed into either decided outcome (Pipeline Design, 'Z3 and path feasibility').",
+      "description": "Z3 path-feasibility verdict. UNSAT is a proof of impossibility and is the ONLY licence to discard a candidate. 'inconclusive' must never be collapsed into either decided outcome (Pipeline Design, 'Z3 and path feasibility'). Clarified 2026-10-22 (W6-W7): the encoding over-approximates every execution, so 'sat' means NOT REFUTED -- the witness in 'assignment' may not be a real execution wherever the encoding left values unconstrained, which 'unconstrained' lists. A consumer must never read 'sat' as a confirmed defect.",
       "required": ["verdict"],
       "additionalProperties": false,
       "properties": {

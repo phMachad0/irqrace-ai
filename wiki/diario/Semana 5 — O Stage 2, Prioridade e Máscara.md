@@ -10,6 +10,7 @@ status: draft
 
 **Período planejado:** 28 set–2 out 2026 · **implementado em:** 22 out 2026 · **Trilha A** ·
 [[Roadmap]] W5. Página anterior: [[Semana 4 — Derivação de Candidatos e o Recall Gate]].
+Próxima: [[Semana 6 — O Stage 3, a Codificação]].
 
 > [!note] Sobre as datas
 > O [[Roadmap]] põe esta semana em 28 set–2 out. O último commit da semana 4 é de 27 set e o
@@ -614,4 +615,14 @@ Ainda não existem: o estágio Z3, a etapa de LLM, o dashboard, e o campo `criti
 - **O cronograma.** Pelo calendário do [[Roadmap]] esta é a semana 8, e o gatilho do degrau 3 da
   escada de corte (*nada resolvendo até 16 out*) já passou.
 
-Página anterior: [[Semana 4 — Derivação de Candidatos e o Recall Gate]].
+> [!note] Revisado em 22 out 2026, nas semanas 6–7
+> O código desta semana mudou em dois pontos, nenhum deles nos trechos citados acima: o
+> `irqrace-stage1` passou a emitir, em cada evento do CFG, o índice da instrução (`"i"`) e, em cada
+> bloco, o número de instruções (`"n"`), que o stage 3 usa para traduzir os conjuntos de execução
+> do stage 2 em fronteiras entre instruções; e `irqrace stage2-all` passou a compartilhar o laço de
+> avaliação com o novo `stage3-all`, com a saída mostrada na seção 2 inalterada. O estágio Z3 que
+> esta página dava como inexistente está em [[Semana 6 — O Stage 3, a Codificação]] e
+> [[Semana 7 — O Stage 3, Busca e Verificação]].
+
+Página anterior: [[Semana 4 — Derivação de Candidatos e o Recall Gate]]. Próxima:
+[[Semana 6 — O Stage 3, a Codificação]].

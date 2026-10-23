@@ -35,6 +35,7 @@ merely asserted.
 | A2 | Every access maps back to a source range, because the build carries `-g` and keeps `DILocation`. | An access with no `DebugLoc` cannot enter a context record. Where one is genuinely absent the enclosing function's line is used and the record is marked `overapproximated` — **the candidate is never dropped**, because an imprecise location is recoverable by a reader and a missing candidate is not. | `build.py` refuses to build without `-g`; `irqrace-stage1` warns `source-range-recovered` |
 | A2b | **Prologue argument spills are not accesses.** At `-O0` clang stores each parameter into an alloca in the entry block, with no `DebugLoc`. | Those stores have no source-level existence, and the alloca they write is the parameter's own slot — any real sharing of that value appears at the loads and stores that follow. Skipping them is what keeps A2 honest rather than papered over. | `irqrace-stage1.cpp` |
 | A3 | `-O0 -Xclang -disable-O0-optnone` preserves the program's access structure. Optimisation is not applied, so no access is folded away. | Building at `-O1` or above would let the optimiser delete or merge accesses that a real target would perform. Not currently supported. | C1 `subject.build.flags` |
+| A4 | **Accesses are loads and stores.** Stage 1 enumerates `LoadInst` and `StoreInst` only; memory intrinsics (`llvm.memcpy`, `llvm.memset`, `llvm.memmove`) are not enumerated as accesses. | *An honest gap, found while writing stage 3* — which does model them, as havoc of their destination. A `memset` of a shared buffer in an ISR is an access stage 1 never reports, so no candidate is formed from it. No Racebench simple case calls one; real firmware does. To close before the real-world suite. | `irqrace-stage1.cpp` |
 
 ## B. Entry points and the call graph
 
@@ -117,6 +118,24 @@ merely asserted.
 | I3 | `svp_simple_019_001`'s bug/trap **labels** are as shipped. | The weakest entry on this page. Its annotations predate an edit that inserted `enable_isr(1)` into two guarded blocks — a semantically significant change — so the labels may be as stale as the line numbers. Not corrected, because correcting a label is re-deciding the ground truth rather than reading it. Open. | [[Open Questions]] |
 | I4 | `svp_simple_001_001`'s first trap, `<W#43><R#63><W#44>`, is **labelled as shipped** — a false positive — although under the suite's own arrival model it is reachable (F8). | Not a recall risk: the analysis keeps it, so the disagreement costs trap rejection, not recall. It means the trap-rejection ceiling for a sound tool on this suite is below 38. Recorded, not corrected, for the same reason as I3. | [[Contradictions]] #7 |
 
+## J. Path feasibility (stage 3)
+
+Added 2026-10-22 (W6–W7). The solver's verdict is the only one that may discard a candidate,
+so the encoding must over-approximate **every** execution: every entry here is a place where
+it does so, and the one place it relies on the program being well defined.
+
+| # | Assumption | How it can hide a defect | Where |
+| --- | --- | --- | --- |
+| J1 | **Memory is one byte array per SVF object**, and a pointer is *(object, offset)*. A load or store through a pointer is a case split over its may-points-to set; an unresolved pointer reads a fresh value, and storing through one havocs all of memory. | Inherits C2: a points-to set SVF left incomplete is a store the encoding never makes, and a value it never changes. | `irqrace-stage3.cpp`, `load`, `store` |
+| J2 | **A loop is one pass**, with everything it may write — its callees included — havocked at the header. Back edges are cut while looking for A1 or B, and crossed **at most once per phase** between A1 and A2. | Havoc over-approximates any number of iterations. Crossing once in total instead of once per phase refutes a real violation whose preemption and A2 lie in two later iterations; pinned by `test_the_back_edge_is_crossed_once_per_phase`. Irreducible control flow is `inconclusive`. | `Executor::go` |
+| J3 | **Interference is havoc**: at every instruction boundary where stage 2 says a flow may run, everything that flow may write is havocked before its next use. Masking enters stage 3 only through those run sets, so J3 inherits F1–F9. | A write set that misses something is a value the encoding wrongly keeps. A **volatile load is not a write** — LLVM's `mayWriteToMemory()` says it is, and reading it that way made every Racebench ISR "write everything" until fixed; pinned by `test_a_volatile_read_is_not_a_write`. | `Executor::interfere`, `Facts::instWrites` |
+| J4 | **The preempting flow runs from its entry, on the memory at the preemption point**, until B; what it does after B is not modelled, and everything the run set may write is havocked when the preempted flow resumes. | Dropping the rest of B's flow only removes constraints. A preemption point immediately before A2 must leave A2 selectable — the bug `test_a_preemption_just_before_a2_does_not_hide_a2` pins. | `Executor::splice` |
+| J5 | **An ISR's view of memory on entry is unconstrained**; the main task starts from the global initializers, with interference applied from its first instruction. | Starting an ISR from initializers would be wrong in the unsound direction: it may fire anywhere. Startup code that writes globals before `main` is assumed to be the initializers. | `Executor::explore` |
+| J6 | **The program has no undefined behaviour the analysis must follow.** A dereference of a pointer holding none of its points-to targets — null included — touches no object; a call through such a pointer does not happen; accesses stay inside their object; integer arithmetic wraps. | *The recall-relevant one.* A program with UB may do anything, and the encoding does not. Two audited Racebench UNSATs rest on it: `svp_simple_029_001`'s pair (45, 83), where `ptr_SetTmData` is still NULL, and `svp_simple_009_001`'s pair (26, 44), where `p` is. | `irqrace-stage3.cpp` |
+| J7 | **A triple is a conflict on one memory cell**: the byte ranges of A1, B and A2 must pairwise overlap. | This is C1b's normalisation made precise — what stage 1 could not separate, stage 3 proves apart. It is what refutes `001`'s trap 2 (element 1000 against 9999) and `010`'s (struct fields at 0 and 4). | `Executor::overlap` |
+| J8 | **`sat` means not refuted.** A SAT witness is an execution of the over-approximate encoding, not of the program. | Reading SAT as confirmation is the precision-side mistake; the record's `unconstrained` list says what the witness may have invented. Stated in the C2 `SolverResult` description since W6–W7. | `stage3.py`; `common.defs.schema.json` |
+| J9 | **The address projection is a relaxation**: every path to each access explored on its own, with ordering and shared values dropped; UNSAT there refutes the query. | Sound for the same reason a pair is weaker than a triple. It is what keeps index traps from timing out: 001 went from 14 s to 0.6 s. | `Executor::projectionRefutes` |
+
 ## Where this list is checked
 
 An assumption that only lives on a page decays. These are the mechanical checks
@@ -128,7 +147,11 @@ that currently hold parts of it up:
 - `runstore.check` enforces **H1** on every run.
 - `tests/test_masking.py` pins **F1–F9** and **H1d** one rule per test, on hand-built
   programs, and `tests/test_stage2.py` checks the Racebench cases that motivated them.
-- `runstore.check` enforces **H1d**'s drop records on every run.
+- `runstore.check` enforces **H1d**'s drop records on every run, and **H1** for the solver:
+  a stage-2 candidate without a context record must have an `unsat`.
+- `tests/test_stage3.py` compiles small C programs and pins **J2**, **J3**, **J4**, **J6**,
+  **J7** and **H2** one rule per test; three of those tests are mutation-checked against the
+  bugs they were written for.
 - The C2 schema makes **F1**, **F2** and **H2** structural — there is no field to
   express the unsound alternative.
 - **G2** is exercised by `svp_simple_029_001` and six other annotated triples.

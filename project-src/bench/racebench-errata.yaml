@@ -23,6 +23,13 @@ curated: 2026-09-10
 curated_by: hand verification against the case sources; see docs/groundtruth-handcount.md
 
 notes:
+  svp_simple_006_001: >
+    Source patched in the local checkout, 2026-10-22, not an annotation
+    correction: line 30 read `for (int j = 0; i < 5; j++)`, whose condition never
+    changes, so the inner loop never exits with i == 0 and the annotated bug
+    point's A2 (line 35, guarded by i == 4) is dead code. A sound solver refutes
+    it. Patched to `j < 5`, the evident intent, in 2.1_remarks/ and 2.1/
+    (racebench `git diff` shows it); results on an unpatched checkout give 47/48.
   svp_simple_019_001: >
     Every annotation in this case is offset, and the offsets are reconstructible
     rather than arbitrary. In the main task the accesses to global_var1 sit at
