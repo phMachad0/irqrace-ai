@@ -47,6 +47,7 @@ class Cache:
         model: str,
         sample: int = 0,
         schema_hash: str = "",
+        evidence_hash: str = "",
     ) -> str:
         """The cache entry's filename stem.
 
@@ -64,10 +65,17 @@ class Cache:
         readability **and** suffixed with a hash of the original, because two
         distinct specs can slug to the same string and a cache collision would
         serve one model's verdict as another's.
+
+        ``evidence_hash`` covers **what the model was shown** -- the rendered
+        record minus per-run timing. The fingerprint names a candidate, not the
+        evidence about it: a stage 1 fix that started shipping the source bodies
+        left every fingerprint unchanged, and the cache went on serving verdicts
+        the model had given without seeing a line of code.
         """
         slug = re.sub(r"[^A-Za-z0-9._-]+", "-", model).strip("-")[:48]
         digest = hashlib.sha256(model.encode("utf-8")).hexdigest()[:8]
         suffix = f".{schema_hash[:8]}" if schema_hash else ""
+        suffix += f".{evidence_hash[:8]}" if evidence_hash else ""
         return f"{fingerprint[:16]}.{config_hash}.{slug}-{digest}{suffix}.{sample}"
 
     def _path(self, key: str) -> Path:
@@ -80,11 +88,14 @@ class Cache:
         model: str,
         sample: int = 0,
         schema_hash: str = "",
+        evidence_hash: str = "",
     ) -> dict[str, Any] | None:
         if not self.enabled:
             return None
         path = self._path(
-            self.key(fingerprint, config_hash, model, sample, schema_hash)
+            self.key(
+                fingerprint, config_hash, model, sample, schema_hash, evidence_hash
+            )
         )
         if not path.exists():
             self.misses += 1
@@ -100,12 +111,15 @@ class Cache:
         value: dict[str, Any],
         sample: int = 0,
         schema_hash: str = "",
+        evidence_hash: str = "",
     ) -> None:
         if not self.enabled:
             return
         self.dir.mkdir(parents=True, exist_ok=True)
         path = self._path(
-            self.key(fingerprint, config_hash, model, sample, schema_hash)
+            self.key(
+                fingerprint, config_hash, model, sample, schema_hash, evidence_hash
+            )
         )
         path.write_text(
             json.dumps(value, indent=2, sort_keys=True, ensure_ascii=False),

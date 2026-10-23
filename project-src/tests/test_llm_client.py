@@ -265,6 +265,30 @@ def test_the_cache_returns_an_equal_triage_without_a_second_call(tmp_path):
     assert second.model_dump() == first.model_dump()
 
 
+def test_the_cache_misses_when_the_evidence_changes_under_one_fingerprint(tmp_path):
+    """The fingerprint names a candidate, not what the model saw. A verdict
+    given without the source bodies must not be served once they are shipped."""
+    cache = Cache(tmp_path)
+    fake = FakeBackend(answers=[_feas(), _harm(), _feas(), _harm()])
+    client = TriageClient(BY_NAME["+decomposition"], backend=fake, cache=cache)
+    client.triage({**RECORD, "enclosing_source": []})
+    calls = len(fake.requests)
+    client.triage(RECORD)
+    assert len(fake.requests) > calls
+
+
+def test_the_cache_survives_a_rerun_that_only_changes_solver_timing(tmp_path):
+    cache = Cache(tmp_path)
+    fake = FakeBackend(answers=[_feas(), _harm()])
+    client = TriageClient(BY_NAME["+decomposition"], backend=fake, cache=cache)
+    solver = {"engine": "z3", "verdict": "inconclusive", "reason": "timeout",
+              "timeout_ms": 10000, "unconstrained": ["timing"], "wall_ms": 12}
+    client.triage({**RECORD, "solver_result": solver})
+    calls = len(fake.requests)
+    client.triage({**RECORD, "solver_result": {**solver, "wall_ms": 340}})
+    assert len(fake.requests) == calls
+
+
 def test_the_transcript_is_written_where_c3_says(tmp_path):
     fake = FakeBackend(answers=[_feas(), _harm()])
     _client(BY_NAME["+decomposition"], fake).triage(RECORD, run_dir=tmp_path)

@@ -54,7 +54,13 @@ from pydantic import BaseModel, Field
 from irqrace import contracts
 from irqrace.llm.annotations import locate_suite
 from irqrace.llm.backends import ChatRequest
-from irqrace.llm.client import MAX_TOKENS, Conversation, TriageClient, render_record
+from irqrace.llm.client import (
+    MAX_TOKENS,
+    Conversation,
+    TriageClient,
+    evidence_hash,
+    render_record,
+)
 from irqrace.llm.prompts import FULL, PromptConfig, _read
 
 
@@ -189,12 +195,15 @@ class RepairClient:
         cfg_hash = _repair_config_hash(self._triage.config, prompt_text)
         fingerprint = record["fingerprint"]
 
+        evidence = evidence_hash(record)
+
         cached = self._triage.cache.get(
             fingerprint,
             cfg_hash,
             self.backend.spec,
             sample,
             _patch_schema_hash(),
+            evidence,
         )
         if cached is not None:
             patch = Patch.model_validate(cached)
@@ -244,6 +253,7 @@ class RepairClient:
             patch.model_dump(mode="json"),
             sample,
             _patch_schema_hash(),
+            evidence,
         )
         return patch
 

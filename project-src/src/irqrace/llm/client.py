@@ -113,6 +113,19 @@ def render_record(record: dict[str, Any]) -> str:
     return "\n".join(parts)
 
 
+def evidence_hash(record: dict[str, Any]) -> str:
+    """Identity of what the model is shown about *record*, for the cache key.
+
+    The rendered record, minus ``solver_result.wall_ms``: timing differs on every
+    run and changes no answer, so keeping it would defeat the cache's purpose of
+    surviving a re-run of the analyzer.
+    """
+    shown = json.loads(json.dumps(record))
+    if isinstance(shown.get("solver_result"), dict):
+        shown["solver_result"].pop("wall_ms", None)
+    return hashlib.sha256(render_record(shown).encode("utf-8")).hexdigest()
+
+
 FEASIBILITY_TASK = (
     "Decide whether the reported interleaving can actually occur in this "
     "program. Reason about the specific flows, priorities and masking state in "
@@ -178,9 +191,11 @@ class TriageClient:
         contracts.validate("c2", record, what=f"candidate {record.get('id')}")
         fingerprint = record["fingerprint"]
 
+        evidence = evidence_hash(record)
+
         cached = self.cache.get(
             fingerprint, self.config.hash(), self.backend.spec, sample,
-            _verdict_schema_hash(),
+            _verdict_schema_hash(), evidence,
         )
         if cached is not None:
             return Triage.model_validate(cached)
@@ -209,6 +224,7 @@ class TriageClient:
             triage.model_dump(mode="json"),
             sample,
             _verdict_schema_hash(),
+            evidence,
         )
         return triage
 
