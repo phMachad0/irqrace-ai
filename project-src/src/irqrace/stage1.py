@@ -53,11 +53,27 @@ def _rel(path: str, root: str) -> str:
         return path
 
 
-def _source_lines(file: str) -> list[str]:
-    try:
-        return Path(file).read_text(encoding="utf-8", errors="replace").splitlines()
-    except OSError:
-        return []
+def _source_lines(file: str, root: str = ".") -> list[str]:
+    """The lines of *file*, or ``[]`` when it cannot be found.
+
+    Debug info may name a file relative to the compilation directory, which the
+    analysis does not emit: clang splits ``/a/b/racebench/x.c`` into directory
+    ``/a/b`` and filename ``racebench/x.c``. Such a name resolves against no
+    fixed directory, so try the working directory, then ``root`` and each of its
+    ancestors. Without this the record silently ships no source at all.
+    """
+    path = Path(file)
+    if path.is_absolute():
+        candidates = [path]
+    else:
+        base = Path(root).resolve()
+        candidates = [path, base / path, *(d / path for d in base.parents)]
+    for c in candidates:
+        try:
+            return c.read_text(encoding="utf-8", errors="replace").splitlines()
+        except OSError:
+            continue
+    return []
 
 
 class Deriver:
@@ -79,10 +95,13 @@ class Deriver:
 
     # -- helpers ---------------------------------------------------------
 
-    def _snippet(self, file: str, line: int) -> str:
+    def _lines(self, file: str) -> list[str]:
         if file not in self._file_cache:
-            self._file_cache[file] = _source_lines(file)
-        lines = self._file_cache[file]
+            self._file_cache[file] = _source_lines(file, self.root)
+        return self._file_cache[file]
+
+    def _snippet(self, file: str, line: int) -> str:
+        lines = self._lines(file)
         return lines[line - 1].strip() if 1 <= line <= len(lines) else ""
 
     def _range(self, r: dict[str, Any]) -> dict[str, Any]:
@@ -152,9 +171,7 @@ class Deriver:
             info = self.functions.get(name)
             if not info or not info.get("line_start"):
                 continue
-            if info["file"] not in self._file_cache:
-                self._file_cache[info["file"]] = _source_lines(info["file"])
-            lines = self._file_cache[info["file"]]
+            lines = self._lines(info["file"])
             start, end = info["line_start"], min(info["line_end"] + 1, len(lines))
             if not lines or start > len(lines):
                 continue
