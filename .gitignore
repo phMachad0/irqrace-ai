@@ -5,6 +5,7 @@
 
 # Python
 __pycache__/
+.venv/
 *.py[cod]
 *.egg-info/
 .pytest_cache/
@@ -28,3 +29,4 @@ runs/
 
 # Monografia: saída do LaTeX
 monografia/build/
+TCC_PCS_EPUSP_2023/

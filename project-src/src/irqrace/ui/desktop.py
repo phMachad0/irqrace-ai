@@ -19,6 +19,7 @@ import json
 import os
 import queue
 import shutil
+import subprocess
 import sys
 import threading
 import time
@@ -2903,10 +2904,19 @@ class IrqRaceWinApp:
                 f"Deseja abrir o arquivo PDF agora?",
             )
             if open_now:
-                import os
-                os.startfile(str(out_pdf))
+                _open_with_default_app(out_pdf)
         except Exception as e:
             messagebox.showerror("Erro ao Exportar PDF", f"Falha ao gerar relatório PDF:\n{e}")
+
+
+def _open_with_default_app(path: Path) -> None:
+    """Open *path* in the OS default viewer. `os.startfile` exists only on Windows."""
+    if sys.platform == "win32":
+        os.startfile(str(path))
+    elif sys.platform == "darwin":
+        subprocess.Popen(["open", str(path)])
+    else:
+        subprocess.Popen(["xdg-open", str(path)])
 
 
 def _find_monografia_figura(filename: str) -> Path | None:

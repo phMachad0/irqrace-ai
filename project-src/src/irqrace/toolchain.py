@@ -61,7 +61,21 @@ def run_toolchain_cmd(
         encoding="utf-8",
         errors="replace",
         timeout=timeout,
+        env=_toolchain_env(),
     )
+
+
+def _toolchain_env() -> dict[str, str]:
+    """The environment for SVF-linked binaries, with ``SVF_DIR`` filled in.
+
+    SVF finds ``ExtAPI.json`` through a path baked into ``libSvfCore`` at build
+    time, then ``$SVF_DIR``. The baked-in path goes stale when the SVF checkout
+    moves, and the probe then aborts -- so fall back to the default checkout.
+    """
+    env = dict(os.environ)
+    if not env.get("SVF_DIR") and DEFAULT_SVF_DIR.is_dir():
+        env["SVF_DIR"] = str(DEFAULT_SVF_DIR)
+    return env
 
 
 @dataclass
