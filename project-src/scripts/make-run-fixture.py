@@ -36,7 +36,8 @@ def main() -> int:
 
     bug = json.loads((EXAMPLES / "c2-bugpoint.json").read_text())
     trap = json.loads((EXAMPLES / "c2-trap.json").read_text())
-    for rec in (bug, trap):
+    index_trap = json.loads((EXAMPLES / "c2-trap-array-index.json").read_text())
+    for rec in (bug, trap, index_trap):
         rec["emitted_by"]["run_id"] = RUN_ID
 
     # Stage 1 knows nothing about masking or preemption yet; those fields are
@@ -50,34 +51,38 @@ def main() -> int:
         r["emitted_by"]["stage"] = "stage1"
         return r
 
-    store.append_candidates("stage1", [as_stage1(bug), as_stage1(trap)])
-    store.append_candidates("stage2", [bug, trap])
+    store.append_candidates("stage1", [as_stage1(r) for r in (bug, trap, index_trap)])
+    store.append_candidates("stage2", [bug, trap, index_trap])
 
-    # The trap is exactly what a solver is for: one critical section covers the
-    # whole interval, so the interleaving is provably impossible and UNSAT is a
-    # licence to discard it. The bug point stays inconclusive and goes on to the
-    # LLM -- which is the population Track B actually sees.
+    # Until W5 this fixture had the solver return UNSAT on `trap`, on the
+    # reasoning that one critical section covers its interval. That reasoning
+    # assumed isr_1 always starts with irq 2 masked; under Racebench's arrival
+    # model it may not (docs/masking-semantics.md, "Correction"), so the
+    # interleaving is reachable and a correct solver says SAT. The UNSAT example
+    # is now `index_trap`, where it is true: B reads element 1000, A2 writes only
+    # element 9999. The bug point stays inconclusive and goes on to the LLM --
+    # which is the population Track B actually sees.
     results = [
         {"candidate_id": bug["id"], "verdict": "inconclusive", "engine": "z3",
          "engine_version": "4.8.12", "reason": "timeout",
          "unconstrained": ["timing"], "wall_ms": 10000, "timeout_ms": 10000},
-        {"candidate_id": trap["id"], "verdict": "unsat", "engine": "z3",
+        {"candidate_id": trap["id"], "verdict": "sat", "engine": "z3",
+         "engine_version": "4.8.12", "reason": None, "assignment": None,
+         "unconstrained": ["timing"], "wall_ms": 37, "timeout_ms": 10000},
+        {"candidate_id": index_trap["id"], "verdict": "unsat", "engine": "z3",
          "engine_version": "4.8.12", "reason": None, "wall_ms": 42, "timeout_ms": 10000},
     ]
     with (store.root / "solver" / "results.jsonl").open("w", encoding="utf-8") as fh:
         for r in results:
             fh.write(contracts.canonical_json(r) + "\n")
 
-    # Only the inconclusive candidate gets a context record. The discarded one
-    # does not, and `runstore check` accepts that only because there is an
-    # `unsat` line naming it.
-    bug["solver_result"] = {
-        "verdict": "inconclusive", "engine": "z3", "engine_version": "4.8.12",
-        "reason": "timeout", "unconstrained": ["timing"],
-        "wall_ms": 10000, "timeout_ms": 10000,
-    }
-    bug["emitted_by"]["stage"] = "stage3"
-    store.write_context(bug)
+    # SAT and inconclusive both get a context record and go on to triage. The
+    # discarded one does not, and `runstore check` accepts that only because
+    # there is an `unsat` line naming it.
+    for rec, res in ((bug, results[0]), (trap, results[1])):
+        rec["solver_result"] = {k: v for k, v in res.items() if k != "candidate_id"}
+        rec["emitted_by"]["stage"] = "stage3"
+        store.write_context(rec)
 
     m = store.read_manifest()
     m["created"] = "2026-08-31T12:00:00Z"
@@ -94,12 +99,12 @@ def main() -> int:
     m["stages"] = [
         {"name": "build",  "status": "ok", "wall_ms": 120},
         {"name": "stage1", "status": "ok", "wall_ms": 340, "candidates_in": None,
-         "candidates_out": 2, "dropped_with_proof": 0},
-        {"name": "stage2", "status": "ok", "wall_ms": 55, "candidates_in": 2,
-         "candidates_out": 2, "dropped_with_proof": 0},
-        {"name": "solver", "status": "ok", "wall_ms": 10042, "candidates_in": 2,
-         "candidates_out": 1, "dropped_with_proof": 1},
-        {"name": "context", "status": "ok", "candidates_in": 1, "candidates_out": 1},
+         "candidates_out": 3, "dropped_with_proof": 0},
+        {"name": "stage2", "status": "ok", "wall_ms": 55, "candidates_in": 3,
+         "candidates_out": 3, "dropped_with_proof": 0},
+        {"name": "solver", "status": "ok", "wall_ms": 10079, "candidates_in": 3,
+         "candidates_out": 2, "dropped_with_proof": 1},
+        {"name": "context", "status": "ok", "candidates_in": 2, "candidates_out": 2},
         {"name": "triage", "status": "pending"},
         {"name": "repair", "status": "pending"},
         {"name": "reverify", "status": "pending"},

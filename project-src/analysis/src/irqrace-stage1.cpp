@@ -735,6 +735,128 @@ int main(int argc, char **argv) {
     }
   }
 
+  // ---- program model, for stage 2 ---------------------------------------
+  //
+  // Stage 2's masking analysis runs in Python over a compact event CFG: for
+  // each function, its basic blocks in order, their successors, and the ordered
+  // events that matter to interrupt state -- accesses, calls, masking
+  // primitives, inline assembly. Nothing between two events changes the mask,
+  // so the state is constant there and the events are all the dataflow needs.
+  //
+  // It covers every function with a body reachable from any flow, INCLUDING
+  // the externals stage 1 treats as transparent. `init` touches no shared
+  // memory, but it calls `enable_isr(-1)`: a model that is transparent for
+  // accesses is not thereby transparent for the interrupt mask.
+  std::set<const llvm::Function *> maskReach;
+  {
+    std::deque<const llvm::Function *> work;
+    for (const FlowSpec &f : cfg.flows)
+      if (llvm::Function *fn = M->getFunction(f.entry))
+        if (!fn->isDeclaration() && maskReach.insert(fn).second)
+          work.push_back(fn);
+    while (!work.empty()) {
+      const llvm::Function *f = work.front();
+      work.pop_front();
+      for (const CallEdge &e : cg.edgesOf(f)) {
+        if (e.callee->isDeclaration() ||
+            cfg.maskingPrimitives.count(e.callee->getName().str()))
+          continue;
+        if (maskReach.insert(e.callee).second)
+          work.push_back(e.callee);
+      }
+    }
+  }
+
+  std::set<const llvm::Instruction *> accessInsts;
+  for (const Access &a : accesses)
+    accessInsts.insert(a.inst);
+  // Where each access sits in the event CFG: (block index, event index).
+  std::map<const llvm::Instruction *, std::pair<unsigned, unsigned>> pointOf;
+
+  std::ostringstream program;
+  {
+    std::vector<const llvm::Function *> fns(maskReach.begin(), maskReach.end());
+    std::sort(fns.begin(), fns.end(), [](const llvm::Function *a, const llvm::Function *b) {
+      return a->getName() < b->getName();
+    });
+    bool ffirst = true;
+    for (const llvm::Function *fn : fns) {
+      std::map<const llvm::Instruction *, std::vector<const CallEdge *>> bySite;
+      for (const CallEdge &e : cg.edgesOf(fn))
+        bySite[e.site].push_back(&e);
+      std::map<const llvm::BasicBlock *, unsigned> bidx;
+      unsigned n = 0;
+      for (const llvm::BasicBlock &bb : *fn)
+        bidx[&bb] = n++;
+
+      std::string file;
+      if (const llvm::DISubprogram *sp = fn->getSubprogram())
+        file = sp->getFilename().str();
+      program << (ffirst ? "\n    " : ",\n    ") << "{\"name\": "
+              << q(fn->getName().str()) << ", \"file\": " << q(file)
+              << ", \"blocks\": [";
+      ffirst = false;
+
+      bool bfirst = true;
+      for (const llvm::BasicBlock &bb : *fn) {
+        program << (bfirst ? "\n      " : ",\n      ") << "{\"succ\": [";
+        bfirst = false;
+        bool sfirst = true;
+        for (const llvm::BasicBlock *s : llvm::successors(&bb)) {
+          program << (sfirst ? "" : ", ") << bidx[s];
+          sfirst = false;
+        }
+        program << "], \"exit\": "
+                << (llvm::isa<llvm::ReturnInst>(bb.getTerminator()) ? "true" : "false")
+                << ", \"events\": [";
+        unsigned ev = 0;
+        for (const llvm::Instruction &I : bb) {
+          SourceRange r = rangeOf(&I);
+          std::ostringstream e;
+          if (accessInsts.count(&I)) {
+            pointOf[&I] = {bidx[&bb], ev};
+            e << "{\"k\": \"access\", \"line\": " << r.line << "}";
+          } else if (const auto *ci = llvm::dyn_cast<llvm::CallBase>(&I)) {
+            if (ci->isInlineAsm()) {
+              // Unrecognised by construction: it may write the interrupt
+              // enable register, so stage 2 must not treat it as a no-op.
+              e << "{\"k\": \"asm\", \"line\": " << r.line << "}";
+            } else {
+              const auto *direct = llvm::dyn_cast<llvm::Function>(
+                  ci->getCalledOperand()->stripPointerCasts());
+              if (direct && direct->isIntrinsic())
+                continue; // llvm.dbg.* and friends: not program behaviour
+              e << "{\"k\": \"call\", \"line\": " << r.line << ", \"callees\": [";
+              const char *how = direct ? "direct" : "unresolved";
+              bool cfirst = true;
+              for (const CallEdge *ce : bySite[&I]) {
+                e << (cfirst ? "" : ", ") << q(ce->callee->getName().str());
+                cfirst = false;
+                how = ce->resolution;
+              }
+              // Constant arguments, so stage 2 can read `disable_isr(2)`
+              // without knowing in advance which argument names the interrupt.
+              e << "], \"resolution\": " << q(how) << ", \"args\": [";
+              for (unsigned i = 0; i < ci->arg_size(); ++i) {
+                if (const auto *c = llvm::dyn_cast<llvm::ConstantInt>(ci->getArgOperand(i)))
+                  e << (i ? ", " : "") << c->getSExtValue();
+                else
+                  e << (i ? ", " : "") << "null";
+              }
+              e << "]}";
+            }
+          } else {
+            continue;
+          }
+          program << (ev ? ", " : "") << e.str();
+          ++ev;
+        }
+        program << "]}";
+      }
+      program << "\n    ]}";
+    }
+  }
+
   // ---- emit -------------------------------------------------------------
   std::ostringstream out;
   out << "{\n  \"tool\": \"irqrace-stage1\",\n  \"svf\": \"2.7\",\n";
@@ -814,7 +936,16 @@ int main(int argc, char **argv) {
         << ", \"source\": " << emitRange(a.src)
         << ", \"source_recovered\": " << (a.sourceRecovered ? "true" : "false")
         << ", \"in_loop\": " << (a.inLoop ? "true" : "false")
-        << ", \"loop_headers\": [";
+        << ", \"point\": ";
+    // Every access's function is in the program model by construction (stage
+    // 1's reachability is a subset of it). A null here is a bug that stage 2
+    // refuses to paper over, not a default position.
+    if (auto pit = pointOf.find(a.inst); pit != pointOf.end())
+      out << "{\"block\": " << pit->second.first << ", \"event\": "
+          << pit->second.second << "}";
+    else
+      out << "null";
+    out << ", \"loop_headers\": [";
     bool f2 = true;
     for (const SourceRange &h : a.loopHeaders) {
       out << (f2 ? "" : ", ") << emitRange(h);
@@ -840,6 +971,9 @@ int main(int argc, char **argv) {
 
   out << "  \"may_precede\": [" << precede.str() << (precedeCount ? "\n  " : "")
       << "],\n";
+
+  out << "  \"program\": {\"functions\": [" << program.str()
+      << (maskReach.empty() ? "" : "\n  ") << "]},\n";
 
   if (cg.overApproximatedSites)
     warn("warn", "indirect-calls-overapproximated",

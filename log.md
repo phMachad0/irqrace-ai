@@ -522,3 +522,64 @@ implying two phases.
 implementation the corresponding page must be created, and it must be revised whenever that
 week's code changes in a later iteration — a diary page describing code that no longer exists
 teaches the wrong thing to whoever reads it while writing the thesis.
+
+## [2026-10-22] build | W5 Track A — stage 2, recall gate 48/48 after the first filter
+
+Pedro asked for the state of Track A to be checked and the work carried forward. Checked first:
+toolchain healthy, 203/203 tests, `irqrace stage1-all` reproducing the W4 numbers exactly
+(566 candidates, 48/48, 35/38 traps). The calendar is behind — the last commit is 27 Sep and
+by the [[Roadmap]]'s dates this is W8 — which the Roadmap now states in a status callout
+without deciding which de-scoping rungs to take.
+
+**Stage 2 exists.** `irqrace-stage1` now also emits an event CFG; `src/irqrace/masking.py` is an
+abstract interpreter over it, `src/irqrace/stage2.py` makes the decisions.
+
+```
+stage 2: 436 kept (202 triples, 234 pairs), 130 dropped with proof (masking 23, no-path 62, priority 45)
+attrition: 23.0% overall -- triples 36.1%, pairs 6.4%; of which concurrency: 12.0%
+RECALL GATE (stage2): 48/48 annotated bug points present -- PASS
+traps reported: 35/38 after stage 1, 30/38 after stage 2
+runstore check: 31/31 runs conform to C3 (rule 6)
+```
+
+**The mask is shared hardware, so masking is a whole-program question.** Four rules, each now in
+[[Soundness Assumptions]] with a synthetic test: masked only on every path (F1); at every point
+another flow may fire, the state may take whatever that flow leaves behind, persistence after
+return taken as a union (F7); an ISR starts in the union of every state it may preempt (F8);
+nested activations judged from the state they fired in (F9). Every value carries its origin, so
+each verdict is explained in the context record. The fixpoint is the least one, and an
+unconverged iterate is never returned — revising the direction `docs/masking-semantics.md` had
+prescribed in W1, with the reasoning kept on that page.
+
+**Every drop is a proof.** `stage2/dropped.jsonl`, with a schema (`c3-drop-record`), carries the
+reason, the argument with source lines, and the assumption identifiers it relies on.
+`runstore check` now fails a run in which a stage-1 candidate vanished without one.
+
+**Findings.**
+
+1. **A planted trap is reachable under the suite's own README.** `svp_simple_001_001`'s
+   `<W#43><R#63><W#44>`: `isr_1` may start with irq 2 unmasked — before `main`'s
+   `disable_isr(2)`, or after an earlier activation of itself. Stage 2 keeps it. The W1 fixtures
+   had asserted it provably infeasible and reported the *local* masking view per access; both
+   now carry what stage 2 emits, and the run fixture's UNSAT example moved to the file's second
+   trap, where it is true. Label not changed: [[Contradictions]] #7, assumption I4. BMC4AV's local
+   source explains one of the two routes (CBMC `--isr` inserts ISR calls only before conflicting
+   accesses); the other is an [[Open Questions]] item.
+2. **A failing test taught the second route**: the analysis was right, the expectation wrong.
+3. **A context-free nesting rule hid three traps** (`svp_simple_027/028/030`, `isr_3`); judging
+   nested activations from their firing state rejects them. Found by auditing kept traps, not by
+   the gate — it was a precision loss.
+4. **62 `no-path` drops are stage 1's cross-function may-precede refined**, not concurrency;
+   reported separately. All audited by hand in 008, 022, 029, 031.
+5. **12% against IntRace's 54.2%** is not a comparison: 19 of 31 cases never mask.
+
+**E3** gains evidence: the README says an interrupt preempts "the main program or lower-level
+interrupts", which excludes same-level preemption. Not yet confirmed as a decision; G2c stays
+open. Contract changes for Track B — per-access masking now means the sound view, a new drop
+file, a new fixture — are listed in the diary for the Monday sync.
+
+275 tests pass. New diary page: [[Semana 5 — O Stage 2, Prioridade e Máscara]]; [[Semana 4 — Derivação de Candidatos e o Recall Gate]] revised where its
+code changed. Pages touched:
+[[Soundness Assumptions]], [[Contradictions]], [[Racebench]], [[Open Questions]],
+[[Interrupt Masking and Synchronization]], [[Roadmap]].
+

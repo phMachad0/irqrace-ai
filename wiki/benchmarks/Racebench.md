@@ -2,7 +2,7 @@
 type: benchmark
 tags: [wiki, benchmark]
 sources: ["[[Racebench (documentation)]]", "[[IntRace (paper)]]", "[[NIChecker (paper)]]", "[[BMC4AV (paper)]]"]
-updated: 2026-08-31
+updated: 2026-10-22
 status: solid
 ---
 
@@ -234,6 +234,26 @@ reading any Racebench result:
 2. Every tool in this literature is optimizing against a scoring function that priced recall
    at zero — which is the backdrop to [[BMC4AV (paper)]]'s finding that a "100% precision"
    tool had a 39.4% hit rate ([[Precision Metrics]]).
+
+### One trap is reachable under the README's own semantics
+
+Found by this project's stage 2, 2026-10-22. `svp_simple_001_001`'s first trap,
+`global_var <W#43><R#63><W#44>`, is labelled a false positive because irq 2 is masked by `main`
+until `isr_1` unmasks it after both writes — but the README lets `isr_1` fire whenever it is
+enabled, any number of times, so it may *start* with irq 2 unmasked (before `main`'s
+`disable_isr(2)`, or after an earlier activation of itself). The interleaving is reachable. The
+label is kept as shipped and the conflict is [[Contradictions]] #7; the practical consequence is
+that **a sound tool cannot reject all 38 traps** on this suite, and a tool that does is using a
+narrower arrival model than the README states.
+
+### What this project's stage 2 does with the traps
+
+Stage 2 (priority and masking, [[Pipeline Design]]) on the 31 simple cases, 2026-10-22: **all 48
+bug points survive**, and 5 of the 35 traps stage 1 reports are rejected with a proof —
+`svp_simple_003_001` trap 1, `026` trap 1, and the `isr_3` traps of `027`, `028` and `030`, all
+of them one critical section covering the interval that nothing able to run there can reopen.
+The remaining 30 are value-, guard- or index-dependent (stage 3's job) or, in one case, not
+actually a trap (above). Only 12 of the 31 cases call a masking primitive at all.
 
 ## Results reported on it
 

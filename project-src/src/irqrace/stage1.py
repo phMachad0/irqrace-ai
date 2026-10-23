@@ -125,6 +125,12 @@ class Deriver:
                 "is_one_of_many": a["call_path"]["is_one_of_many"],
             },
         }
+        if a.get("point"):
+            # Back-pointer into the event CFG of stage1/accesses.json, so stage 2
+            # can place the access without re-matching source lines. Outside the
+            # fingerprint, and not shown to the model (C2 Access.ir).
+            rec["ir"] = {"function": a["function"], "block": a["point"]["block"],
+                         "index": a["point"]["event"], "access": a["id"]}
         return rec
 
     def _loop_context(self, a: dict[str, Any]) -> dict[str, Any]:

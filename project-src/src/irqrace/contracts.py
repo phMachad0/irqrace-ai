@@ -23,6 +23,7 @@ SCHEMAS = {
     "c2": "c2-context-record.schema.json",
     "c3-manifest": "c3-manifest.schema.json",
     "c3-log-event": "c3-log-event.schema.json",
+    "c3-drop": "c3-drop-record.schema.json",
     "c4-request": "c4-context-request.schema.json",
     "c4-reply": "c4-context-reply.schema.json",
     "common": "common.defs.schema.json",

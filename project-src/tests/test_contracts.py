@@ -17,6 +17,8 @@ CASES = [
     ("c1", "c1-svp_simple_001_001.yaml"),
     ("c2", "c2-bugpoint.json"),
     ("c2", "c2-trap.json"),
+    ("c2", "c2-trap-array-index.json"),
+    ("c3-drop", "c3-drop-example.json"),
     ("c3-manifest", "c3-manifest-example.json"),
     ("c4-request", "c4-context-request-example.json"),
     ("c4-reply", "c4-context-reply-example.json"),
@@ -37,6 +39,8 @@ def test_example_conforms(schema, name):
 @pytest.mark.parametrize("schema,name", CASES)
 def test_example_declares_matching_schema_version(schema, name):
     doc = _load(name)
+    if "schema_version" not in doc:  # drop records are lines, not documents
+        return
     expected = {"c1": "c1/", "c2": "c2/", "c3-manifest": "c3/",
                 "c4-request": "c4/", "c4-reply": "c4/"}[schema]
     assert doc["schema_version"].startswith(expected)

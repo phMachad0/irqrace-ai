@@ -90,7 +90,7 @@
           "wall_ms": { "type": ["integer", "null"] },
           "candidates_in": { "type": ["integer", "null"] },
           "candidates_out": { "type": ["integer", "null"] },
-          "dropped_with_proof": { "type": ["integer", "null"], "description": "Only the solver may be non-zero here." },
+          "dropped_with_proof": { "type": ["integer", "null"], "description": "Only stage2 and solver may be non-zero here, and only behind a proof: stage2 writes one line per drop to stage2/dropped.jsonl (c3-drop-record), solver an unsat verdict. (Before W5 this said only the solver; Soundness Assumptions H1 always allowed stage 2 to drop with a proof, and C3 rule 6 already required its line.)" },
           "error": { "type": ["string", "null"] }
         }
       }

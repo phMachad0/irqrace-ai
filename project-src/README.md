@@ -16,6 +16,50 @@ The design lives in the wiki one directory up:
 LLM may not.** Recall is the headline metric and it must be 100%; precision is
 traded away deliberately.
 
+## Status — end of W5 (22 Oct 2026) · stage 2
+
+| W5 item | State |
+| --- | --- |
+| Block model `(T, I, S, p)`; priority check with **larger = higher** | done — `config.can_preempt` + nesting (`masking.may_preempt`) |
+| Timing left unconstrained | done — every record says `timing: unconstrained` |
+| Masking dataflow: masked only if masked on **every** path | done — `src/irqrace/masking.py`, three-valued with origins |
+| Point property for pairs, **interval property for triples** | done — interval = every point on every path A₁→A₂, callees included |
+| Equal-priority and arrival-model decisions explicit, in the manifest | done — plus `triple_interval: single-activation` (G2c) |
+| **Attrition measured against IntRace's 54.2%** | 23.0% overall, 12.0% from concurrency — see below |
+| **Recall gate still 100%** | **48/48 PASS** after stage 2 |
+
+```
+stage 1: 566 candidates (316 triples, 250 pairs)
+stage 2: 436 kept (202 triples, 234 pairs), 130 dropped with proof
+         (priority 45, masking 23, no-path 62)
+attrition: 23.0% overall -- triples 36.1%, pairs 6.4%
+  of which concurrency (priority + masking): 12.0%
+RECALL GATE (stage2): 48/48 annotated bug points present -- PASS
+traps reported: 35/38 after stage 1, 30/38 after stage 2
+runstore check: 31/31 runs conform to C3 (rule 6)
+```
+
+**Every drop is a proof.** Each one writes a line to `stage2/dropped.jsonl` with its reason, the
+argument in prose with the source lines, and the Soundness Assumptions it relies on;
+`irqrace runstore check` fails a run where a stage-1 candidate vanished without one.
+
+**Against IntRace's 54.2%:** not comparable, and the gap is expected. IntRace's figure is on
+data-race pairs in real-world subjects, which mask far more than Racebench does; 19 of the 31
+cases here have no masking call at all, so their pairs can only fall to priority, and a pair
+between a task and an ISR never does. `no-path` (62) is not a concurrency result: it is stage
+1's over-approximate cross-function may-precede, refined on the flow's supergraph.
+
+**The masking analysis is whole-program, because the mask is shared hardware.** An ISR that
+preempts an interval and unmasks an interrupt breaks the local flow's proof; an ISR starts in
+the union of every state it may preempt; a nested activation is judged from the state it
+fired in. Each rule has a synthetic test in `tests/test_masking.py`.
+
+**One finding, recorded rather than fixed** (`docs/masking-semantics.md`, "Correction").
+`svp_simple_001_001`'s first trap, `<W#43><R#63><W#44>`, is reachable under the suite's own
+README: `isr_1` may start with irq 2 unmasked, before main's `disable_isr(2)` or after an
+earlier activation of itself. Stage 2 keeps it. The W1 fixtures had asserted it was provably
+infeasible; they now carry what stage 2 really emits.
+
 ## Status — end of W3–W4 (18 Sep 2026) · **Milestone M2**
 
 | W3–W4 item | State |
@@ -73,19 +117,21 @@ six lines above where it is.
 | **The config loads for one case** | done — for all 31, generated from the suite README |
 | **SVF lists its globals** | done — `irqrace probe` |
 
-Not started: stage 2 (masking and the concurrency filter), the Z3 stage, the LLM
-stage, the dashboard.
+Not started at the end of W1: stage 2, the Z3 stage, the LLM stage, the dashboard. As of
+W5, stage 2 exists; the Z3 stage, the LLM stage and the dashboard are still to come.
 
 ## Layout
 
 ```
 contracts/        C1-C4: the frozen schemas, plus one worked example of each
-  examples/       svp_simple_001_001 -- one real bug point, one planted trap,
-                  and run-fixture/, a hand-written C3 run directory
-src/irqrace/      the Python half: contracts, config, build, probe, run store
+  examples/       svp_simple_001_001 -- one real bug point, two planted traps,
+                  one stage-2 drop record, and run-fixture/, a C3 run directory
+src/irqrace/      the Python half: contracts, config, build, probe, run store,
+                  stage-1 derivation, the masking analysis (masking.py) and stage 2
 analysis/         the C++ half: SVF-based analysis binaries
                   irqrace-probe   what the build produced, C1 vs bitcode (R4, R7)
-                  irqrace-stage1  reachability, shared locations, accesses, may-precede
+                  irqrace-stage1  reachability, shared locations, accesses, may-precede,
+                                  and the event CFG stage 2's masking analysis reads
 bench/configs/    one generated C1 file per Racebench simple case (31)
 bench/racebench-errata.yaml   12 curated corrections to the annotations, with evidence
 scripts/          toolchain setup
@@ -125,8 +171,19 @@ irqrace probe bench/configs/svp_simple_001_001.yaml
 ```
 
 ```bash
+irqrace stage2-all
+```
+
+```bash
+irqrace stage2 bench/configs/svp_simple_001_001.yaml -v
+```
+
+```bash
 python3 -m pytest tests -q
 ```
+
+If `python3` on your `PATH` is not the interpreter `irqrace` was installed with (a PlatformIO
+virtualenv, say), run the tests as `/usr/bin/python3 -m pytest tests -q`.
 
 ## The contracts
 

@@ -14,7 +14,13 @@ runs/<run_id>/
     whole.bc                 linked whole-program bitcode
     build.log
   stage1/candidates.jsonl    C2 records, stage1 (no masking, no solver verdict)
+  stage1/accesses.json       irqrace-stage1's raw output: shared objects, accesses,
+                             may-precede, and (W5) the event CFG stage 2 reads
   stage2/candidates.jsonl    C2 records, stage2 (masking + preemption filled in)
+  stage2/dropped.jsonl       one c3-drop-record per candidate stage 2 discarded:
+                             reason, proof, and the assumptions it relies on
+  stage2/masking.json        the masking analysis behind the verdicts, per flow and
+                             per access -- for debugging and the explorer, not a contract
   solver/results.jsonl       one SolverResult per candidate id: unsat | sat | inconclusive
   context/<cand_id>.json     the full C2 context record handed to Track B
   llm/<cand_id>/turns.jsonl  full conversation, including C4 requests and replies
@@ -38,6 +44,8 @@ runs/<run_id>/
    `stage1/candidates.jsonl` and absent from `stage2/candidates.jsonl` must have a stage-2
    line explaining the proof; a candidate absent from `context/` must have an `unsat` in
    `solver/results.jsonl`. Anything else is a silent recall loss and the lint must catch it.
+   *Clarified 2026-10-22 (W5):* the stage-2 line lives in `stage2/dropped.jsonl` and conforms
+   to `c3-drop-record.schema.json`. `irqrace runstore check` enforces both halves of this rule.
 7. **Runs are immutable once `manifest.stages[*].status` are all terminal.** Re-analysis after
    a repair is a *new run*, cross-linked from `repair/`, which is what makes the regression
    check in the re-verification step a diff between two runs.

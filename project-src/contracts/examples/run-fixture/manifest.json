@@ -23,7 +23,8 @@
     "indirect_calls": "signature-matched-address-taken",
     "allow_same_statement_a1_a2": true,
     "counting_unit": "per-triple-instance",
-    "match_rule": "same-subject-same-location-same-ordered-lines"
+    "match_rule": "same-subject-same-location-same-ordered-lines",
+    "triple_interval": "single-activation"
   },
   "solver": {
     "enabled": true,
@@ -42,30 +43,30 @@
       "status": "ok",
       "wall_ms": 340,
       "candidates_in": null,
-      "candidates_out": 2,
+      "candidates_out": 3,
       "dropped_with_proof": 0
     },
     {
       "name": "stage2",
       "status": "ok",
       "wall_ms": 55,
-      "candidates_in": 2,
-      "candidates_out": 2,
+      "candidates_in": 3,
+      "candidates_out": 3,
       "dropped_with_proof": 0
     },
     {
       "name": "solver",
       "status": "ok",
-      "wall_ms": 10042,
-      "candidates_in": 2,
-      "candidates_out": 1,
+      "wall_ms": 10079,
+      "candidates_in": 3,
+      "candidates_out": 2,
       "dropped_with_proof": 1
     },
     {
       "name": "context",
       "status": "ok",
-      "candidates_in": 1,
-      "candidates_out": 1
+      "candidates_in": 2,
+      "candidates_out": 2
     },
     {
       "name": "triage",

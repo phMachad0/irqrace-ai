@@ -2,7 +2,7 @@
 type: project
 tags: [wiki, project, roadmap]
 sources: ["[[IntRace (paper)]]", "[[LLift (paper)]]", "[[SkipAnalyzer (paper)]]"]
-updated: 2026-08-27
+updated: 2026-10-22
 status: draft
 ---
 
@@ -19,6 +19,15 @@ Calendar: **Mon 31 Aug – Fri 6 Nov 2026**, ten working weeks.
 > [[IntRace (tool)]]'s three stages, a full LLM pipeline and a UI in ten weeks. It is achievable
 > only because the de-scoping ladder at the end is used early rather than late. If either person
 > has less than roughly 15 hours a week, start from ladder rung 2, not from the full plan.
+
+> [!info] Status — 2026-10-22
+> **Track A: W1–W5 done** in `project-src/` — stage 2 exists and the recall gate is still
+> 48/48 after it ([[Semana 5 — O Stage 2, Prioridade e Máscara]]). The calendar is behind:
+> by the dates on this page this is W8, M4 falls on Fri 23 Oct, and W6–W10 remain with two
+> weeks left to 6 Nov. The ladder's own trigger for rung 3 — *nothing solving by Fri 16
+> Oct* — has passed. Which rungs to take is Pedro's decision and is not made on this page.
+> Track B's work lives on the `track-b/llm-integration` branch (last commit 22 Oct, "Tool
+> MVP") and is not summarised on `main`.
 
 ## The idea that makes parallel work possible
 

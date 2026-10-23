@@ -1,7 +1,7 @@
 ---
 type: index
 tags: [wiki, index]
-updated: 2026-09-18
+updated: 2026-10-22
 ---
 
 # Index
@@ -22,8 +22,8 @@ the LLM per `CLAUDE.md` — update on every ingest.
 | [[Pipeline Design]] | the static half: each borrowed technique, and fix validation |
 | [[LLM Stage Design]] | the LLM half: architecture, context record, prompt design, evaluation plan |
 | [[Dashboard Design]] | the UI: Streamlit over a headless core, 45 numbered requirements, run store layout |
-| [[Soundness Assumptions]] | **the list the no-false-negatives claim is relative to** — 27 entries, each with how it could hide a defect |
-| [[Roadmap]] | 10-week plan to 6 Nov: static / LLM / UI tracks, four contracts, five milestones, de-scoping ladder |
+| [[Soundness Assumptions]] | **the list the no-false-negatives claim is relative to** — 45 entries, each with how it could hide a defect; six added in W5 (F6–F9, H1d, I4) |
+| [[Roadmap]] | 10-week plan to 6 Nov: static / LLM / UI tracks, four contracts, five milestones, de-scoping ladder; status callout as of 22 Oct |
 | [[Synthesis]] | what the four sources collectively say; working thesis statement |
 | [[Open Questions]] | sources to acquire, empirical questions a TCC could answer |
 
@@ -39,6 +39,7 @@ Criada e revisada ao fim de cada semana de implementação (ver `CLAUDE.md`).
 | [[Semana 2 — Ground Truth e Protocolo de Avaliação]] | W2 · 7–11 set | parser tolerante das anotações, conferência à mão, unidade de contagem, regra de casamento, errata |
 | [[Semana 3 — O Front End do Stage 1]] | W3 · 14–18 set | grafo de chamadas, alcançabilidade, may-alias, enumeração de acessos, `may_precede` |
 | [[Semana 4 — Derivação de Candidatos e o Recall Gate]] | W4 · 21–25 set | pares e trincas, as quatro formas não serializáveis, **recall gate 48/48**, M2 |
+| [[Semana 5 — O Stage 2, Prioridade e Máscara]] | W5 · planejada 28 set–2 out, feita 22 out | máscara como problema de programa inteiro, ponto fixo, toda remoção uma prova, **48/48 depois do stage 2**, a armadilha do 001 que é alcançável |
 
 ## Implementation (`project-src/`)
 
@@ -47,11 +48,13 @@ The tool itself, outside the wiki layer. Started 2026-08-31 (W1 of [[Roadmap]]).
 | Path | What it is |
 | --- | --- |
 | `project-src/README.md` | status against the Roadmap, layout, how to build and run |
-| `project-src/contracts/` | **C1–C4 frozen as JSON Schema**, with a worked example of each and a synthetic C3 run directory |
+| `project-src/contracts/` | **C1–C4 frozen as JSON Schema**, with a worked example of each and a synthetic C3 run directory; W5 adds the stage-2 drop record (`c3-drop-record.schema.json`) |
 | `project-src/src/irqrace/` | Python: contract validation, C1 parser, bitcode build, SVF probe, run store |
-| `project-src/analysis/` | C++ over SVF: `irqrace-probe` ([[Dashboard Design]] R4, R7) and `irqrace-stage1` (reachability, shared locations, accesses, may-precede) |
+| `project-src/analysis/` | C++ over SVF: `irqrace-probe` ([[Dashboard Design]] R4, R7) and `irqrace-stage1` (reachability, shared locations, accesses, may-precede, and the event CFG stage 2 reads) |
+| `project-src/src/irqrace/masking.py` | **W5**: the interrupt-mask abstract interpreter — every-path masking, interference, ISR entry states, least fixpoint, origins |
+| `project-src/src/irqrace/stage2.py` | **W5**: stage 2 — point property for pairs, interval property for triples, context-sensitive nesting, a proof for every drop |
 | `project-src/bench/configs/` | one generated C1 file per [[Racebench]] simple case (31) |
-| `project-src/docs/masking-semantics.md` | why per-flow interval masking drops a real bug point |
+| `project-src/docs/masking-semantics.md` | why per-flow interval masking drops a real bug point — and the W5 correction: the neighbouring trap is reachable |
 | `project-src/docs/toolchain-notes.md` | SVF/LLVM pairing, the `optnone` trap, the K&R-prototype call-graph trap |
 | `project-src/docs/evaluation-protocol.md` | counting unit, match rule, what is reported and what is gated |
 | `project-src/docs/groundtruth-handcount.md` | the five hand-counted cases certifying the annotation parser |
@@ -137,6 +140,6 @@ Raw clippings live in `Clippings/`, PDFs in `raw/`. Both are immutable.
 | --- | --- |
 | [[Tool Capability Matrix]] | all four tools side by side, feature by feature |
 | [[Reported Results Across Papers]] | every headline number with its ground truth, hardware, and whether it was re-run |
-| [[Contradictions]] | six open conflicts, chief among them 37/47 vs 94 violations |
+| [[Contradictions]] | seven open conflicts, chief among them 37/47 vs 94 violations; #7 a Racebench trap its own README makes reachable |
 | [[Reimplementation Assessment]] | study order, what to reimplement, the stack, and verified artifact availability |
 | [[LLM Integration Patterns]] | seven LLM sources by attach point; what each buys and costs |

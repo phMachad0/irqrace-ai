@@ -2,14 +2,15 @@
 type: project
 tags: [wiki, project, diario, pt-br]
 sources: ["[[Roadmap]]", "[[Pair-Triple Unification]]", "[[Pipeline Design]]", "[[Soundness Assumptions]]"]
-updated: 2026-09-18
+updated: 2026-10-22
 status: draft
 ---
 
 # Semana 4 — Derivação de Candidatos e o Recall Gate
 
 **Período:** 21–25 set 2026 · **Trilha A** · Segunda metade de [[Roadmap]] W3–W4 ·
-**Marco M2**. Página anterior: [[Semana 3 — O Front End do Stage 1]].
+**Marco M2**. Página anterior: [[Semana 3 — O Front End do Stage 1]]. Próxima:
+[[Semana 5 — O Stage 2, Prioridade e Máscara]].
 
 > [!note] Lembrete sobre a divisão
 > W3–W4 é um bloco único no [[Roadmap]] e foi implementado de uma vez. A separação entre esta
@@ -303,3 +304,15 @@ o conjunto de candidatos:
 - **E3** — uma ISR pode preemptar a si mesma? Hoje o padrão é *não*, e é a única suposição da
   lista que não é segura para recall.
 - **G2c** — um intervalo `[A₁, A₂]` pode atravessar duas ativações do mesmo fluxo?
+
+> [!note] Revisado em 22 out 2026, na semana 5
+> O código desta semana mudou em três pontos, nenhum deles nos trechos citados acima:
+> os registros C2 do stage 1 ganharam `accesses[].ir`, um ponteiro de volta para a posição do
+> acesso no CFG de eventos (fora do *fingerprint*; os ids não mudam); `irqrace stage1-all` passou
+> a rodar também o `runstore check` em cada execução e imprime uma linha a mais no fim; e a saída
+> mostrada na seção 1 continua idêntica. As duas decisões pendentes acima ganharam evidência nova
+> — ver [[Semana 5 — O Stage 2, Prioridade e Máscara]], §14. A sobre-aproximação da seção 4(b)
+> (dois pontos de chamada contam como repetição) é refinada pelo stage 2 quando os dois pontos são
+> exclusivos, como no `isr_1` do `svp_simple_029_001`.
+
+Próxima página: [[Semana 5 — O Stage 2, Prioridade e Máscara]].

@@ -2,7 +2,7 @@
 type: synthesis
 tags: [wiki, open-questions]
 sources: ["[[SDRacer (paper)]]", "[[IntRace (paper)]]", "[[NIChecker (paper)]]", "[[BMC4AV (paper)]]"]
-updated: 2026-09-10
+updated: 2026-10-22
 status: draft
 ---
 
@@ -65,6 +65,16 @@ with the date.
   repository alone; would need the suite's history or its authors. Blocks: nothing, but it is a
   stated threat to validity.
 
+- [ ] **Is `svp_simple_001_001`'s first trap a trap?** Found by stage 2, 2026-10-22: under the
+  README's arrival model `<W#43><R#63><W#44>` is reachable, two ways ([[Contradictions]] #7).
+  Kept as shipped ([[Soundness Assumptions]] I4). Worth one more pass over the other 37 traps
+  with the same question — does the label assume an ISR's entry state? — since the answer
+  sets the ceiling on trap rejection that a sound tool can reach. Blocks: nothing.
+- [ ] **What arrival model do BMC4AV and NIChecker actually implement?** Both report rejecting
+  the trap above. BMC4AV's local source inserts ISR calls only before conflicting shared
+  accesses (CBMC `--isr`), which removes the first route; how the second (two activations) is
+  excluded was not found. Cheap to settle with the artifacts in hand, and it decides whether
+  their trap-rejection figures were bought with a narrower model than the suite states.
 - [ ] **Decide whether equal-priority flows can preempt each other.** `svp_real_002` and
   `wdt_pci_1` both have same-priority ISR pairs, and no formal model in any of the four papers
   covers the case ([[Asymmetric Preemption]]). The recall-safe default is *yes, either may
@@ -75,6 +85,14 @@ with the date.
   preempt itself? May it fire more than once inside one interval `[A₁, A₂]`? [[SDRacer (tool)]]
   excludes reentrant interrupts and [[NIChecker (tool)]] bounds ISR executions, so the corpus
   does not agree. Affects which triples exist at all. Blocks: candidate derivation.
+  *Partly answered 2026-10-22 (W5).* Stage 2 implements the README's model as stated:
+  **unbounded arrival** — an ISR may fire at every point where it is unmasked, any number of
+  times, so it starts in the union of every state it may preempt ([[Soundness Assumptions]]
+  F8). On re-entrancy the same README says an interrupt may preempt "the main program or
+  **lower-level** interrupts", which excludes same-level preemption, so E3's default
+  (*no self-preemption*) reads the subject for Racebench. Still to confirm as a decision, and
+  it does not settle G2c — whether an interval may span two activations of the same flow, a
+  question about the definition of an atomicity violation more than about arrival.
 - [x] ~~**Write the soundness assumption list as a page.**~~ Done 2026-09-10:
   [[Soundness Assumptions]]. Nine groups, 27 entries, each giving the assumption, **how it could
   hide a defect**, and where it is implemented or checked. Four entries are honest gaps —
@@ -238,6 +256,11 @@ with the date.
   backward slice — but how much slice is enough for an LLM to judge feasibility, and does the
   answer scale with program size? [[Program Slicing]] argues for layering rather than dumping
   the slice; that needs testing.
+- [x] ~~**How large is stage 2's attrition here, against IntRace's 54.2%?**~~ Measured
+  2026-10-22 on Racebench: 23.0% overall, **12.0% from concurrency** (priority + masking), the
+  rest a control-flow refinement of stage 1. Not comparable with IntRace's figure, which is on
+  real-world data-race pairs; 19 of the 31 cases have no masking call at all. The real-world
+  suite is the comparison that would mean something.
 - [ ] **Does the split-critical-section atomicity violation occur in the wild?** The case that
   breaks the pair abstraction — both local accesses individually protected, the gap between
   them not — is constructed in [[Pair-Triple Unification]] but was not found in [[Racebench]].
