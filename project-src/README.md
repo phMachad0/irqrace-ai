@@ -53,6 +53,7 @@ it here rather than cite it.
 | `anthropic:claude-opus-5` | Claude, via the official SDK — the only adapter with prompt caching |
 | `openai:gpt-4o` | any OpenAI-compatible endpoint: OpenAI, Groq, Together, OpenRouter, LiteLLM, vLLM, LM Studio — set `IRQRACE_OPENAI_BASE_URL` |
 | `ollama:qwen2.5-coder:32b` | a local model |
+| `claude-cli:sonnet` | Claude through `claude -p` (Claude Code, non-interactive) on your Pro/Max login — drawn from the plan's usage limits, not billed per token; unpriced in every cost column |
 
 The generic adapters speak plain HTTP from the standard library. Depending on
 one vendor's SDK to talk to a local vLLM server would be backwards, and it

@@ -61,6 +61,12 @@ def _ollama(model: str, **kw: Any) -> Backend:
     return OllamaBackend(model, **kw)
 
 
+def _claude_cli(model: str, **kw: Any) -> Backend:
+    from irqrace.llm.backends.claude_cli_backend import ClaudeCLIBackend
+
+    return ClaudeCLIBackend(model, **kw)
+
+
 #: ``provider -> factory``. The OpenAI entry is the generic one: point
 #: ``IRQRACE_OPENAI_BASE_URL`` at Groq, Together, OpenRouter, LiteLLM, vLLM or
 #: LM Studio and it serves them all, so most "new provider" requests need no
@@ -69,6 +75,9 @@ REGISTRY: dict[str, Callable[..., Backend]] = {
     "anthropic": _anthropic,
     "openai": _openai,
     "ollama": _ollama,
+    # Claude Code's `claude -p`: the user's Pro/Max subscription instead of API
+    # credits. Same models as `anthropic:`, different account and billing.
+    "claude-cli": _claude_cli,
 }
 
 DEFAULT_SPEC = "anthropic:claude-opus-5"

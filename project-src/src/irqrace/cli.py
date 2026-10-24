@@ -554,7 +554,10 @@ def cmd_llm_backends(args: argparse.Namespace) -> int:
             "openai:gpt-4o, ollama:qwen2.5-coder:32b)\n"
             "any OpenAI-compatible endpoint - Groq, Together, OpenRouter, "
             "LiteLLM, vLLM, LM Studio —\nis reachable as 'openai:<model>' with "
-            "IRQRACE_OPENAI_BASE_URL set."
+            "IRQRACE_OPENAI_BASE_URL set.\n"
+            "'claude-cli:<model>' (e.g. claude-cli:sonnet) runs `claude -p` on "
+            "your Claude Pro/Max login:\ndrawn from the plan's usage limits, "
+            "not billed per token."
         )
         return 0
 

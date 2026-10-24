@@ -110,6 +110,20 @@ LLM_PROVIDER_PRESETS: dict[str, dict[str, Any]] = {
             "deepseek-coder-v2:16b",
         ],
     },
+    "Claude Code CLI (assinatura Pro/Max)": {
+        # `claude -p` on the user's subscription login: drawn from the plan's
+        # usage limits, no API key and no per-token billing. No endpoint either --
+        # the CLI is the endpoint.
+        "adapter": "claude-cli",
+        "base_url": "",
+        "models": [
+            "sonnet",
+            "opus",
+            "haiku",
+            "claude-opus-5-5",
+            "claude-sonnet-5-5",
+        ],
+    },
     "Anthropic (Claude SDK)": {
         "adapter": "anthropic",
         "base_url": "https://api.anthropic.com",
@@ -303,6 +317,11 @@ def build_backend_from_config(
         if api_key:
             os.environ["ANTHROPIC_API_KEY"] = api_key
         return from_spec(f"anthropic:{model}")
+    if adapter == "claude-cli":
+        # No key and no URL: the CLI signs in with the subscription. The key
+        # field is ignored on purpose -- the backend strips API credentials so
+        # a stray ANTHROPIC_API_KEY cannot turn a plan run into a billed one.
+        return from_spec(f"claude-cli:{model}", timeout_s=timeout_s, stop_checker=stop_checker)
     return from_spec(f"{adapter}:{model}")
 
 
@@ -1281,7 +1300,7 @@ class IrqRaceWinApp:
         adapter_cb = ttk.Combobox(
             r0,
             textvariable=self.llm_adapter_var,
-            values=["openai", "ollama", "anthropic"],
+            values=["openai", "ollama", "anthropic", "claude-cli"],
             state="readonly",
             width=14,
         )
@@ -1631,7 +1650,7 @@ class IrqRaceWinApp:
             )
             return False
 
-        if not model or not base_url:
+        if not model or (not base_url and adapter != "claude-cli"):
             messagebox.showerror(
                 "Configuração de LLM Obrigatória",
                 "Por favor, informe a URL do endpoint e o Modelo da LLM.",

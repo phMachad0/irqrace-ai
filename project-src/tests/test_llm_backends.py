@@ -222,7 +222,7 @@ def test_base_url_comes_from_the_environment(monkeypatch):
 
 
 def test_every_backend_declares_its_caveats():
-    for spec in ("anthropic:claude-opus-5", "openai:gpt-4o", "ollama:llama3"):
+    for spec in ("anthropic:claude-opus-5", "openai:gpt-4o", "ollama:llama3", "claude-cli:sonnet"):
         backend = from_spec(spec)
         assert isinstance(backend.capabilities.caveats(), list)
 
@@ -348,3 +348,182 @@ def test_a_dns_blip_is_retried_not_an_exclusion(monkeypatch):
     with pytest.raises(BackendError):
         backend.chat(_request())
     assert calls["n"] > 2, "the DNS failure was not retried"
+
+
+# -- claude-cli: `claude -p` on the subscription login ----------------------
+
+
+def _cli_result(**over):
+    """The shape `claude -p --output-format json` prints, trimmed to what we read."""
+    doc = {
+        "type": "result",
+        "subtype": "success",
+        "is_error": False,
+        "result": json.dumps(ANSWER),
+        "structured_output": ANSWER,
+        "stop_reason": "tool_use",
+        "api_error_status": None,
+        "total_cost_usd": 0.0123,
+        "usage": {
+            "input_tokens": 12,
+            "output_tokens": 34,
+            "cache_creation_input_tokens": 1200,
+            "cache_read_input_tokens": 0,
+        },
+        "modelUsage": {"claude-sonnet-5-5": {}},
+    }
+    doc.update(over)
+    return doc
+
+
+class _Runner:
+    def __init__(self, doc=None, code=0, stdout=None, stderr=""):
+        self.out = stdout if stdout is not None else json.dumps(doc or _cli_result())
+        self.code, self.stderr = code, stderr
+        self.calls = []
+
+    def __call__(self, argv, **kw):
+        import os
+
+        self.calls.append({"argv": argv, **kw, "cwd_existed": os.path.isdir(kw["cwd"])})
+        return self.code, self.out, self.stderr
+
+
+def _cli(runner, model="sonnet"):
+    from irqrace.llm.backends.claude_cli_backend import ClaudeCLIBackend
+
+    return ClaudeCLIBackend(model, runner=runner)
+
+
+def test_claude_cli_is_registered_as_a_fourth_provider():
+    backend = from_spec("claude-cli:claude-sonnet-5-5")
+    assert backend.spec == "claude-cli:claude-sonnet-5-5"
+    caps = backend.capabilities
+    assert caps.structured is StructuredMode.native_schema
+    assert not caps.temperature
+
+
+def test_claude_cli_returns_the_schema_validated_object_unpriced():
+    """`structured_output` is what the CLI validated; usage is drawn from the plan,
+    so cost is None -- the CLI's total_cost_usd is a list-price estimate, not a
+    charge, and must not land in a cost column."""
+    resp = _cli(_Runner()).chat(_request())
+    assert resp.parsed == ANSWER
+    assert resp.structured_mode is StructuredMode.native_schema
+    assert (resp.usage.input_tokens, resp.usage.output_tokens) == (12, 34)
+    assert resp.usage.cache_write_tokens == 1200
+    assert resp.usage.cost_usd() is None
+
+
+def test_claude_cli_records_the_model_an_alias_resolved_to():
+    backend = _cli(_Runner(), model="sonnet")
+    backend.chat(_request())
+    assert backend.spec == "claude-cli:sonnet"
+    assert backend.resolved_model == "claude-sonnet-5-5"
+
+
+def test_claude_cli_call_is_a_plain_model_call_not_an_agent_session():
+    """Claude Code's own prompt, tools, MCP, skills, hooks and the project's
+    CLAUDE.md must not reach the model -- only the triage prompt."""
+    runner = _Runner()
+    _cli(runner).chat(_request())
+    call = runner.calls[0]
+    argv = call["argv"]
+
+    def value(flag):
+        return argv[argv.index(flag) + 1]
+
+    assert argv[1] == "-p"
+    assert value("--model") == "sonnet"
+    assert value("--output-format") == "json"
+    assert value("--system-prompt") == "sys"
+    assert value("--tools") == ""
+    assert value("--setting-sources") == ""
+    assert {"--strict-mcp-config", "--disable-slash-commands", "--no-session-persistence"} <= set(argv)
+    assert "--bare" not in argv  # it would refuse the subscription login
+    assert json.loads(value("--json-schema")) == SCHEMA
+    assert call["stdin"] == "go"
+    # An empty directory of its own, so no CLAUDE.md is discovered; gone afterwards.
+    assert call["cwd_existed"]
+    from pathlib import Path
+
+    assert not Path(call["cwd"]).exists()
+    assert Path(call["cwd"]).resolve() != Path.cwd().resolve()
+
+
+def test_claude_cli_never_bills_an_api_key_that_happens_to_be_set(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-should-not-be-used")
+    monkeypatch.setenv("ANTHROPIC_AUTH_TOKEN", "also-not")
+    runner = _Runner()
+    _cli(runner).chat(_request())
+    env = runner.calls[0]["env"]
+    assert "ANTHROPIC_API_KEY" not in env and "ANTHROPIC_AUTH_TOKEN" not in env
+
+
+def test_claude_cli_free_prose_turn_has_no_schema_flag():
+    runner = _Runner(_cli_result(result="OK, claude-sonnet-5-5", structured_output=None))
+    resp = _cli(runner).chat(_request(schema=None))
+    assert "--json-schema" not in runner.calls[0]["argv"]
+    assert resp.text == "OK, claude-sonnet-5-5"
+    assert resp.parsed is None and resp.structured_mode is None
+
+
+def test_claude_cli_falls_back_to_the_result_text_when_no_structured_output():
+    runner = _Runner(_cli_result(structured_output=None, result=f"```json\n{json.dumps(ANSWER)}\n```"))
+    assert _cli(runner).chat(_request()).parsed == ANSWER
+
+
+def test_claude_cli_error_is_a_backend_error_with_the_cli_message():
+    runner = _Runner(
+        _cli_result(is_error=True, api_error_status=429,
+                    result="Claude AI usage limit reached", structured_output=None),
+        code=1,
+    )
+    with pytest.raises(BackendError, match=r"HTTP 429.*usage limit"):
+        _cli(runner).chat(_request())
+
+
+def test_claude_cli_refusal_is_a_refusal_not_a_verdict():
+    from irqrace.llm.backends import RefusalError
+
+    runner = _Runner(_cli_result(stop_reason="refusal", result="I can't help with that",
+                                 structured_output=None))
+    with pytest.raises(RefusalError):
+        _cli(runner).chat(_request())
+
+
+def test_claude_cli_without_json_output_points_at_the_login():
+    runner = _Runner(stdout="Invalid API key · Please run /login", code=1)
+    with pytest.raises(BackendError, match="/login"):
+        _cli(runner).chat(_request())
+
+
+def test_claude_cli_renders_a_multi_turn_request_as_one_transcript():
+    from irqrace.llm.backends.claude_cli_backend import _render_messages
+
+    text = _render_messages([
+        {"role": "user", "content": "first"},
+        {"role": "assistant", "content": "reply"},
+        {"role": "user", "content": "second"},
+    ])
+    assert '<turn role="user">\nfirst' in text and '<turn role="assistant">\nreply' in text
+    assert text.rstrip().endswith("second")
+
+
+def test_claude_cli_process_honours_stop_and_timeout(tmp_path):
+    import sys
+
+    from irqrace.llm.backends.claude_cli_backend import _run
+
+    slow = [sys.executable, "-c", "import sys, time; sys.stdin.read(); time.sleep(30)"]
+    with pytest.raises(InterruptedError):
+        _run(slow, stdin="x", env={}, cwd=str(tmp_path), timeout_s=20, stop_checker=lambda: True)
+    with pytest.raises(BackendError, match="timed out"):
+        _run(slow, stdin="x", env={}, cwd=str(tmp_path), timeout_s=0.1, stop_checker=None)
+
+
+def test_claude_cli_missing_executable_says_how_to_fix_it(tmp_path):
+    from irqrace.llm.backends.claude_cli_backend import _run
+
+    with pytest.raises(BackendError, match="IRQRACE_CLAUDE_CLI"):
+        _run(["/nonexistent/claude"], stdin="", env={}, cwd=str(tmp_path), timeout_s=5, stop_checker=None)
