@@ -13,7 +13,7 @@ from conftest import ERRATA, EXAMPLES, SUITE
 
 from irqrace.evaluation import (
     COUNTING_UNIT, MATCH_RULE, RACEBENCH_SIMPLE_BUG_POINTS, RACEBENCH_SIMPLE_TRAPS,
-    inspection_ratio, match_subject, match_suite, normalise_variable, pair_coverage,
+    inspection_ratio, match_subject, match_suite, normalise_variable,
 )
 from irqrace.groundtruth import load_suite
 
@@ -127,31 +127,6 @@ def test_a_wrong_line_does_not_match(gt):
     r = match_subject(gt.by_case("svp_simple_001_001").bugs, [moved],
                       subject="svp_simple_001_001")
     assert r.bugs_detected == 0
-
-
-def test_pair_candidates_do_not_count_toward_triple_recall(gt):
-    as_pair = copy.deepcopy(BUG)
-    as_pair["class"] = "race-pair"
-    as_pair["accesses"] = as_pair["accesses"][:2]
-    r = match_subject(gt.by_case("svp_simple_001_001").bugs, [as_pair],
-                      subject="svp_simple_001_001")
-    assert r.bugs_detected == 0
-
-
-def test_pair_coverage_is_reported_separately(gt):
-    ann = gt.by_case("svp_simple_001_001").bugs[0]
-    a1, b, a2 = ann.lines
-
-    def pair(l1, l2):
-        p = copy.deepcopy(BUG)
-        p["class"] = "race-pair"
-        p["accesses"] = p["accesses"][:2]
-        p["accesses"][0]["source"]["line"] = l1
-        p["accesses"][1]["source"]["line"] = l2
-        return p
-
-    assert pair_coverage(ann, [pair(a1, b), pair(b, a2)]) is True
-    assert pair_coverage(ann, [pair(a1, b)]) is False
 
 
 # -- the gate ---------------------------------------------------------------

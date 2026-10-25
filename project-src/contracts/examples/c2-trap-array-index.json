@@ -336,7 +336,7 @@
       }
     ]
   },
-  "schema_version": "c2/1.0.0",
+  "schema_version": "c2/2.0.0",
   "solver_result": {
     "engine": "z3",
     "verdict": "not_run"

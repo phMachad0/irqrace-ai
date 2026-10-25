@@ -1,8 +1,8 @@
 ---
 type: project
 tags: [wiki, project, diario, pt-br]
-sources: ["[[Roadmap]]", "[[Pipeline Design]]", "[[Soundness Assumptions]]", "[[IntRace (paper)]]", "[[Pair-Triple Unification]]"]
-updated: 2026-10-22
+sources: ["[[Roadmap]]", "[[Pipeline Design]]", "[[Soundness Assumptions]]", "[[IntRace (paper)]]", "[[Triples Only]]"]
+updated: 2026-10-24
 status: draft
 ---
 
@@ -11,6 +11,11 @@ status: draft
 **Período planejado:** 28 set–2 out 2026 · **implementado em:** 22 out 2026 · **Trilha A** ·
 [[Roadmap]] W5. Página anterior: [[Semana 4 — Derivação de Candidatos e o Recall Gate]].
 Próxima: [[Semana 6 — O Stage 3, a Codificação]].
+
+> [!note] Revisado em 24 out 2026
+> Desde esta data o projeto trabalha com uma única classe de candidato, a trinca de violação de
+> atomicidade ([[Triples Only]]). Esta página descreve o código como ele é hoje; a saída da
+> seção 2 e as contagens de descartes foram refeitas com ele.
 
 > [!note] Sobre as datas
 > O [[Roadmap]] põe esta semana em 28 set–2 out. O último commit da semana 4 é de 27 set e o
@@ -24,30 +29,30 @@ Próxima: [[Semana 6 — O Stage 3, a Codificação]].
 | Modelo de blocos `(T, I, S, p)`; prioridade com **maior = mais alta** | feito — `config.can_preempt` + `masking.may_preempt` (aninhamento) |
 | Timing sem restrição | feito — todo registro diz `timing: unconstrained` |
 | Máscara por dataflow: mascarada só se mascarada em **todo** caminho | feito — `src/irqrace/masking.py` |
-| Propriedade de ponto para pares, **de intervalo para trincas** | feito — o intervalo é todo ponto de todo caminho de A₁ a A₂, incluindo funções chamadas |
+| **Propriedade de intervalo**: mascarada em todo o `[A₁, A₂]` | feito — o intervalo é todo ponto de todo caminho de A₁ a A₂, incluindo funções chamadas |
 | Decisões de prioridade igual e de modelo de chegada explícitas, no manifesto | feito — e mais `triple_interval: single-activation` (G2c) |
-| **Pronto quando:** attrition medida contra os 54,2% do IntRace | 23,0% no total, **12,0% por concorrência** (§10) |
+| **Pronto quando:** attrition medida contra os 54,2% do IntRace | 36,1% no total, **16,5% por concorrência** (§10) |
 | **Pronto quando:** recall gate continua 100% | **48/48** depois do stage 2 |
 
 ## 2. Resultado
 
 ```
 31/31 subjects analysed
-stage 1: 566 candidates, 18.3 per subject (316 triples, 250 pairs)  [2376 ms total]
-stage 2: 436 kept (202 triples, 234 pairs), 130 dropped with proof (masking 23, no-path 62, priority 45)  [2126 ms total]
-attrition: 23.0% overall -- triples 36.1%, pairs 6.4%; 0-45% per subject
-  of which concurrency (priority + masking): 12.0%; no-path is stage 1's cross-function may-precede refined, not a concurrency result
-  for scale: IntRace reports 54.2% (33-63% per project) for its stage 2, on data-race pairs in real-world subjects
+stage 1: 316 candidates, 10.2 per subject  [1688 ms total]
+stage 2: 202 kept, 114 dropped with proof (masking 7, no-path 62, priority 45)  [1286 ms total]
+attrition: 36.1% overall; 0-62% per subject
+  of which concurrency (priority + masking): 16.5%; no-path is stage 1's cross-function may-precede refined, not a concurrency result
+  for scale: IntRace reports 54.2% (33-63% per project) for its stage 2, on another candidate class, in real-world subjects
 RECALL GATE (stage2): 48/48 annotated bug points present -- PASS
 traps reported: 35/38 after stage 1, 30/38 after stage 2 (5 rejected by stage 2)
-inspection ratio: 0.29 mean over 31 subject(s) whose bug points were all found
+inspection ratio: 0.63 mean over 31 subject(s) whose bug points were all found
 runstore check: 31/31 runs conform to C3 (rule 6: nothing vanished without a proof)
 ```
 
 **O portão de recall continua em 48 de 48** depois do primeiro estágio que tem permissão para
-descartar alguma coisa. Cada um dos 130 descartes deixa uma prova escrita (§9). Nos 31 sujeitos
-os dois estágios somam cerca de 4,5 s de análise (2,4 s o stage 1, 2,1 s o stage 2, com variação entre execuções), e 275
-testes passam.
+descartar alguma coisa. Cada um dos 114 descartes deixa uma prova escrita (§9). Nos 31 sujeitos
+os dois estágios somam cerca de 3 s de análise (1,7 s o stage 1, 1,3 s o stage 2, com variação
+entre execuções); ao fim desta semana, 275 testes passavam.
 
 ## 3. Conceitos desta semana
 
@@ -71,10 +76,9 @@ Ao contrário de um *lock*, a máscara é **um único registrador de hardware co
 todos os fluxos**: o que uma ISR faz com ela continua valendo depois que ela retorna. Esse fato
 é a origem de todos os achados desta semana.
 
-**Propriedade de ponto e propriedade de intervalo.** Para um **par** `(A, B)` a pergunta é: o
-fluxo de B pode rodar *no instante* de A? Para uma **trinca** `(A₁, B, A₂)`: o fluxo de B pode
-rodar *em algum ponto* entre A₁ e A₂? São perguntas diferentes, e uma não se deduz da outra
-([[Pair-Triple Unification]]).
+**Propriedade de intervalo.** Para uma trinca `(A₁, B, A₂)` a pergunta é: o fluxo de B pode
+rodar *em algum ponto* entre A₁ e A₂? O estado em A₁ e em A₂ não responde isso: mascarada nos
+dois acessos não quer dizer mascarada entre eles.
 
 **Análise de fluxo de dados (*dataflow analysis*).** Uma técnica que calcula, para cada ponto
 do programa, um fato que vale em toda execução que passa por ali — aqui, "quais interrupções
@@ -325,10 +329,7 @@ devolver uma resposta parcial. Nos 31 sujeitos ela converge em 3 a 6 rodadas.
 
 ## 9. As decisões: o que fica e o que sai, e a prova de cada descarte
 
-**Pares — propriedade de ponto.** `(A, B)` sobrevive se o fluxo de B pode rodar enquanto o
-fluxo de A está em A, ou o contrário.
-
-**Trincas — propriedade de intervalo.** `(A₁, B, A₂)` sobrevive se o fluxo de B pode rodar em
+**A propriedade de intervalo decide.** `(A₁, B, A₂)` sobrevive se o fluxo de B pode rodar em
 *algum* ponto de *algum* caminho de A₁ a A₂, diretamente ou aninhado dentro de outro fluxo que
 roda ali. O intervalo é calculado no supergrafo do fluxo:
 
@@ -380,7 +381,7 @@ Os três motivos de descarte:
 | Motivo | Quantos | O que prova |
 | --- | --- | --- |
 | `priority` | 45 | o fluxo de B nunca roda enquanto o de A₁ está ativo — quase sempre `main` como B entre dois acessos de uma ISR |
-| `masking` | 23 | podia por prioridade, mas a interrupção dele está mascarada em todo o intervalo, e nada que roda ali a desmascara |
+| `masking` | 7 | podia por prioridade, mas a interrupção dele está mascarada em todo o intervalo, e nada que roda ali a desmascara |
 | `no-path` | 62 | não existe caminho de A₁ a A₂ numa ativação do fluxo (§10d) |
 
 ## 10. Os achados
@@ -490,7 +491,7 @@ entrada dele justamente para poderem ser reconcretizados por ponto de disparo.
 ```
 
 Onde a recursão encontra a si mesma (prioridades iguais, reentrância), cai na resposta global, que
-é correta. Resultado: **5 armadilhas rejeitadas em vez de 2**, 12 descartes a mais, portão ainda
+é correta. Resultado: **5 armadilhas rejeitadas em vez de 2**, 3 descartes a mais, portão ainda
 em 48/48. A versão global era correta, só cega: perda de precisão, não de recall — e por isso foi
 achada auditando armadilhas, não pelo portão. A suposição ficou em **F9**.
 
@@ -530,16 +531,15 @@ descarte estava certo; a justificativa, não. Corrigida para "nenhum deles deixa
 ao retornar, e `isr_1` não pode rodar aninhada em nenhum deles". Uma prova é texto que alguém vai
 ler na monografia, e um texto errado sobre um veredito certo ensina a coisa errada.
 
-### (f) 12% contra 54,2%: não é comparável, e a diferença era esperada
+### (f) 16,5% contra 54,2%: não é comparável, e a diferença era esperada
 
-O IntRace reporta 54,2% (33–63% por projeto) para o seu stage 2, sobre **pares de *data race*
-em programas reais**. Aqui:
+O IntRace reporta 54,2% (33–63% por projeto) para o seu stage 2, sobre **outra classe de
+candidato, em programas reais**. Aqui:
 
-- **19 dos 31 casos não chamam nenhuma primitiva de máscara**, então seus pares só poderiam cair
-  por prioridade — e um par entre a tarefa e uma ISR nunca cai por prioridade, porque a ISR
-  sempre pode preemptar a tarefa. Por isso só 6,4% dos pares saem.
-- A maior parte dos descartes por concorrência é de **trincas** com B em `main` entre dois
-  acessos de uma ISR (`priority`, 45).
+- **19 dos 31 casos não chamam nenhuma primitiva de máscara**, então neles uma trinca só cai por
+  prioridade ou por falta de caminho — nunca por máscara.
+- A maior parte dos descartes por concorrência é de trincas com B em `main` entre dois acessos de
+  uma ISR (`priority`, 45): a tarefa nunca preempta uma ISR.
 
 A comparação que significaria alguma coisa é a da [[Real-World Program Benchmark]] (W9).
 

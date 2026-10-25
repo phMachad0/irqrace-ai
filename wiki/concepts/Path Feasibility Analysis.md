@@ -2,7 +2,7 @@
 type: concept
 tags: [wiki, concept]
 sources: ["[[IntRace (paper)]]", "[[SDRacer (paper)]]"]
-updated: 2026-10-22
+updated: 2026-10-24
 status: draft
 ---
 
@@ -76,9 +76,9 @@ over-approximate every execution**, because here UNSAT discards:
   the addresses coincide?" — a relaxation, so UNSAT there is a proof, and it is what makes index
   traps cheap.
 
-On [[Racebench]]: 436 candidates in, 53 refuted, 383 reach the LLM; **12.2% attrition against
-IntRace's 86.2%** — different subjects (real-world against 37–97-line cases), different
-candidate classes (pairs only against pairs and triples), and IntRace's encoding is not stated
-to be an over-approximation. The 48 bug points all survive.
+On [[Racebench]]: 202 candidates in, 36 refuted, 166 reach the LLM; **17.8% attrition against
+IntRace's 86.2%** — different subjects (real-world against 37–97-line cases), a different
+candidate class, and IntRace's encoding is not stated to be an over-approximation. The 48 bug
+points all survive.
 
 Related: [[Symbolic Execution]], [[Bounded Model Checking]], [[Precision Metrics]].

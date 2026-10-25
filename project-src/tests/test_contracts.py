@@ -46,6 +46,20 @@ def test_example_declares_matching_schema_version(schema, name):
     assert doc["schema_version"].startswith(expected)
 
 
+def test_a_two_access_record_is_not_a_candidate():
+    """C2 2.0.0: every candidate is a triple. A record with two accesses, or with
+    any other class, is refused rather than carried along."""
+    rec = _load("c2-bugpoint.json")
+    short = json.loads(json.dumps(rec))
+    short["accesses"] = short["accesses"][:2]
+    with pytest.raises(contracts.ContractError, match="accesses"):
+        contracts.validate("c2", short)
+    other = json.loads(json.dumps(rec))
+    other["class"] = "something-else"
+    with pytest.raises(contracts.ContractError, match="class"):
+        contracts.validate("c2", other)
+
+
 def test_every_schema_loads_and_is_a_valid_metaschema():
     for name in contracts.SCHEMAS:
         contracts.validator(name).check_schema(contracts.load_schema(name))

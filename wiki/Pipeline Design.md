@@ -2,7 +2,7 @@
 type: project
 tags: [wiki, project]
 sources: ["[[IntRace (paper)]]", "[[NIChecker (paper)]]", "[[SDRacer (paper)]]", "[[BMC4AV (paper)]]"]
-updated: 2026-08-27
+updated: 2026-10-24
 status: draft
 ---
 
@@ -12,7 +12,7 @@ How each borrowed technique works and what it has to become in the tool describe
 [[Thesis Goal]]. The literature-facing accounts live on the concept pages; this page is the
 engineering reading. Study order and stack are in [[Reimplementation Assessment]].
 
-The pipeline: **build to whole-program bitcode → shared front end → pair and triple candidates →
+The pipeline: **build to whole-program bitcode → shared front end → triple candidates →
 concurrency filter → Z3 feasibility → context capture → LLM triage → LLM repair → fix
 validation.** Only the *filters* may discard
 candidates, and only by proving impossibility ([[Soundness and False Negatives]]).
@@ -107,8 +107,7 @@ subtrees of reachable accesses, and the loss is invisible in the output
 ### Scale
 
 Candidates grow faster than linearly in reachable code: for one shared location with `m`
-accesses in one flow and `n` in another, there are `m·n` pairs and on the order of `m²·n`
-triples. The reachability bound above is the main mitigation; the [[Path Feasibility Analysis]]
+accesses in one flow and `n` in another, there are on the order of `m²·n` triples. The reachability bound above is the main mitigation; the [[Path Feasibility Analysis]]
 stage is the other, and it is why that stage is mandatory rather than optional.
 
 Precedent that this is achievable: UBITect analysed the **whole Linux kernel** and produced
@@ -140,8 +139,9 @@ Concretely, four sub-problems:
    function, the call path from the entry point, the `DILocation` source range, and whether
    the access sits inside a loop (see loop handling below). This record is not a by-product —
    it is the raw material for the context capture the LLM stage consumes.
-4. **Candidate derivation.** Pairs and triples are derived separately from the same access
-   set, per [[Pair-Triple Unification]]. Do not derive triples by joining confirmed pairs.
+4. **Candidate derivation.** Triples `(A₁, B, A₂)`: A₁ and A₂ in one flow with A₁ able to
+   precede A₂, B in another flow, in one of the four unserializable shapes. The only
+   candidate class since 2026-10-24 ([[Triples Only]]).
 
 Expect roughly **208 candidates per real program** at this point — IntRace's measured figure,
 and the budget to plan the rest of the pipeline against.
@@ -150,7 +150,7 @@ and the budget to plan the rest of the pipeline against.
 
 IntRace's cheap filter, which removes **54.2%** of stage-1 candidates for a fraction of the
 runtime. Each flow becomes a block `(T, I, S, p)` — name, interrupt status, timing, priority —
-and pairs whose blocks provably cannot overlap are discarded. Three components matter here,
+and candidates whose blocks provably cannot overlap are discarded. Three components matter here,
 and one of them does not:
 
 **Priority.** A flow can only be preempted by a strictly higher-priority flow. The convention
@@ -179,9 +179,9 @@ point, any number of times, at unspecified moments. Assuming a timing model the 
 not guarantee is an unsound filter, so leave `S` unconstrained unless a subject genuinely
 documents its timing.
 
-**The interval/instant split.** For pair candidates the query is "can `B` run at the instant of
-`A`?" For triple candidates it is "can `B` run anywhere in `[A₁, A₂]`?" Run both; do not
-answer one and infer the other ([[Pair-Triple Unification]]).
+**The interval property decides.** The query is "can `B` run anywhere in `[A₁, A₂]`?" —
+masked at A₁ and masked at A₂ does not mean masked in between, so the state at each access is
+evidence and never the answer.
 
 ## Loop handling — and why [[Loop Abstraction]] is mostly not your problem
 
@@ -297,4 +297,4 @@ extended critical section is a latency change, and latency is a correctness prop
 **Recommended loop**: re-run own analysis (certificate + regression check) → if inconclusive,
 CBMC or `bmc4av` on the sliced program → overhead and control-flow check → report.
 
-Related: [[Pair-Triple Unification]], [[Program Slicing]], [[Soundness and False Negatives]].
+Related: [[Triples Only]], [[Program Slicing]], [[Soundness and False Negatives]].

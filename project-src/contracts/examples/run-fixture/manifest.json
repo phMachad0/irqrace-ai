@@ -2,7 +2,7 @@
   "schema_version": "c3/1.0.0",
   "run_id": "run-fixture",
   "created": "2026-08-31T12:00:00Z",
-  "tool_version": "0.1.0",
+  "tool_version": "0.2.0",
   "git_revision": null,
   "subject": {
     "name": "svp_simple_001_001",
@@ -11,7 +11,7 @@
       "svp_simple_001/svp_simple_001_001.c"
     ]
   },
-  "config_hash": "4f96624c5e3e104961374068a3744e353949f6a4b86420ea636f7592c60071cb",
+  "config_hash": "2a75d81ae3e061bce9176d5f53870c60c18130956a566c11d682bf8ce9e78a2c",
   "semantics": {
     "priority_convention": "larger-is-higher",
     "equal_priority_preemption": true,

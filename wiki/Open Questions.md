@@ -2,7 +2,7 @@
 type: synthesis
 tags: [wiki, open-questions]
 sources: ["[[SDRacer (paper)]]", "[[IntRace (paper)]]", "[[NIChecker (paper)]]", "[[BMC4AV (paper)]]"]
-updated: 2026-10-22
+updated: 2026-10-24
 status: draft
 ---
 
@@ -44,8 +44,8 @@ with the date.
   bug/trap clash, so kinds add failure modes and no discrimination, and 20 annotated accesses
   name a line that both reads and writes. Variable *names* are not required either, since 12
   annotations name the location through an alias (`*p`, `*ptr_var`, `global_array[1]`) that the
-  may-alias analysis is supposed to resolve. Per [[Pair-Triple Unification]], the recall gate is
-  measured on triples only; pair candidates get a separate *pair coverage* number.
+  may-alias analysis is supposed to resolve. Candidates and annotations are both triples
+  ([[Triples Only]]).
   `project-src/docs/evaluation-protocol.md`.
 - [x] ~~**Validate the ground-truth parser by hand.**~~ Done 2026-09-10. The tolerant parser
   reproduces **48 bug points and 38 traps** and agrees with a hand count of the five most
@@ -76,7 +76,7 @@ with the date.
   excluded was not found. Cheap to settle with the artifacts in hand, and it decides whether
   their trap-rejection figures were bought with a narrower model than the suite states.
 - [ ] **Decide whether equal-priority flows can preempt each other.** `svp_real_002` and
-  `wdt_pci_1` both have same-priority ISR pairs, and no formal model in any of the four papers
+  `wdt_pci_1` both have two ISRs sharing a priority, and no formal model in any of the four papers
   covers the case ([[Asymmetric Preemption]]). The recall-safe default is *yes, either may
   preempt*, but it must be a stated assumption because it changes the candidate set. Blocks:
   stage 2.
@@ -224,8 +224,9 @@ with the date.
 - [ ] **Cross-class case study**: `i2c`-family and `shortprint` programs appear in both the
   data-race and atomicity-violation literatures. Do the two analyses report defects on the
   same variables? Nobody has checked.
-- [ ] **What would a unified detector cost?** Nothing in the corpus detects both defect
-  classes in one pass, though the pipelines share their first two stages.
+- [x] ~~**What would a unified detector cost?**~~ Closed 2026-10-24 for this project: the tool
+  detects atomicity violations only ([[Triples Only]]). Still open for the field — nothing in
+  the corpus detects both defect classes in one pass.
 
 ## LLM stage questions
 
@@ -248,18 +249,17 @@ with the date.
 
 ## Method questions for the tool being built
 
-- [x] ~~What is the union pattern set?~~ Answered in [[Pair-Triple Unification]]: derive pairs
-  and triples separately from one access enumeration; include `(R,W,W)`; never derive triples by
-  joining confirmed pairs.
-- [ ] **What exactly goes in the context record?** Variable, access pair/triple with source
+- [x] ~~What is the pattern set?~~ The four unserializable triple shapes, `(R,W,W)` included
+  ([[Soundness Assumptions]] H1b; [[Triples Only]]).
+- [ ] **What exactly goes in the context record?** Variable, access triple with source
   ranges, call stacks, ISR identity and priority, masking state along the path, and a `dg`
   backward slice — but how much slice is enough for an LLM to judge feasibility, and does the
   answer scale with program size? [[Program Slicing]] argues for layering rather than dumping
   the slice; that needs testing.
 - [x] ~~**How large is stage 2's attrition here, against IntRace's 54.2%?**~~ Measured
-  2026-10-22 on Racebench: 23.0% overall, **12.0% from concurrency** (priority + masking), the
-  rest a control-flow refinement of stage 1. Not comparable with IntRace's figure, which is on
-  real-world data-race pairs; 19 of the 31 cases have no masking call at all. The real-world
+  on Racebench: 36.1% overall, **16.5% from concurrency** (priority + masking), the rest a
+  control-flow refinement of stage 1. Not comparable with IntRace's figure, which is on another
+  candidate class in real-world subjects; 19 of the 31 cases have no masking call at all. The real-world
   suite is the comparison that would mean something.
 - [ ] **How much of stage 3's imprecision is ordering?** Interference is havoc, so a trap that
   is infeasible only because ISRs run in a fixed causal order (`svp_simple_028_001`: `isr_1`
@@ -269,11 +269,10 @@ with the date.
   this kind, and does the LLM stage separate them anyway? Blocks: nothing.
 - [ ] **Close stage 1's memory-intrinsic gap** ([[Soundness Assumptions]] A4) before the
   real-world suite: `memcpy`/`memset` on shared buffers are accesses stage 1 does not enumerate.
-- [ ] **Does the split-critical-section atomicity violation occur in the wild?** The case that
-  breaks the pair abstraction — both local accesses individually protected, the gap between
-  them not — is constructed in [[Pair-Triple Unification]] but was not found in [[Racebench]].
-  Finding a real instance would justify the extra triple machinery; failing to find one is also
-  worth reporting.
+- [ ] **Does the split-critical-section atomicity violation occur in the wild?** Both local
+  accesses individually protected, the gap between them not — the case only the interval
+  property gets right — was not found in [[Racebench]]. Finding a real instance would show it
+  matters in practice; failing to find one is also worth reporting.
 - [ ] **On the solver's residue, where do solver and LLM agree?** Now a characterisation
   question rather than an either/or, since Z3 is fixed in the pipeline. Does the model ever
   contradict an `UNSAT` proof? That would be a prompt or context-record defect and is worth

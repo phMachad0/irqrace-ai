@@ -2,7 +2,7 @@
 type: concept
 tags: [wiki, concept]
 sources: ["[[IntRace (paper)]]", "[[NIChecker (paper)]]", "[[BMC4AV (paper)]]", "[[SDRacer (paper)]]", "[[Racebench (documentation)]]"]
-updated: 2026-08-20
+updated: 2026-10-24
 status: draft
 ---
 
@@ -50,8 +50,9 @@ at the matching stage, and a single front end can generate both.
 
 It does **not** follow that the triples can be discarded. The feasibility question differs —
 an instant for a pair, an interval for a triple — and an atomicity violation whose two local
-accesses sit in separate critical sections has no constituent race at all. Derive both sets
-from one access enumeration; never derive one from the other.
+accesses sit in separate critical sections has no constituent race at all. A detector of both
+classes must derive both sets from one access enumeration, never one from the other; this
+project derives triples only ([[Triples Only]]).
 
 ## Measured distribution
 

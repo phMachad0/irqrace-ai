@@ -10,15 +10,15 @@
     "candidate_id": { "type": "string", "pattern": "^c[0-9a-f]{16}$" },
     "fingerprint": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
     "stage": { "const": "stage2" },
-    "class": { "enum": ["race-pair", "atomicity-triple"] },
+    "class": { "const": "atomicity-triple" },
     "pattern": { "type": "string" },
     "variable": { "type": "string" },
-    "lines": { "type": "array", "items": { "type": "integer", "minimum": 1 }, "minItems": 2, "maxItems": 3 },
+    "lines": { "type": "array", "items": { "type": "integer", "minimum": 1 }, "minItems": 3, "maxItems": 3 },
     "local_flow": { "$ref": "common.defs.schema.json#/$defs/FlowId" },
     "remote_flow": { "$ref": "common.defs.schema.json#/$defs/FlowId" },
     "reason": {
       "enum": ["priority", "masking", "no-path"],
-      "description": "'priority' = B's flow can never run while the local flow is active (E1, E2, E3, E5). 'masking' = it could on priority, but its interrupt is masked at every point of every path of the interval (or at the access, for a pair), after every mask change a flow able to run there could make (F1-F9). 'no-path' = no control-flow path leads from A1 to A2 within one activation (H1c), which stage 1's cross-function may-precede over-approximated."
+      "description": "'priority' = B's flow can never run while the local flow is active (E1, E2, E3, E5). 'masking' = it could on priority, but its interrupt is masked at every point of every path of the interval, after every mask change a flow able to run there could make (F1-F9). 'no-path' = no control-flow path leads from A1 to A2 within one activation (H1c), which stage 1's cross-function may-precede over-approximated."
     },
     "proof": { "type": "string", "minLength": 1, "description": "The argument, in prose, with the source lines it rests on." },
     "relies_on": {

@@ -84,9 +84,9 @@ Deliberately before any analysis, because everything downstream is measured agai
 - Entry points from config; per-flow interprocedural reachability.
 - Shared-location identification via SVF **may**-alias.
 - Access enumeration: flow, R/W, enclosing function, call path, `DILocation`, loop context.
-- Candidate derivation — **pairs and triples from one access set**
-  ([[Pair-Triple Unification]]). Triples need intra-flow CFG ordering and must allow
-  `A₁ = A₂` inside a loop.
+- Candidate derivation — **triples from one access set**. Triples need intra-flow CFG
+  ordering and must allow `A₁ = A₂` inside a loop. (Since 2026-10-24 the only candidate class:
+  [[Triples Only]].)
 - Emit C2 records and C3 run directories.
 - **Done when**: `candidates.jsonl` exists for all 31 cases and the **recall gate passes — all
   48 bug points present**. Report the candidate count without embarrassment; compare to
@@ -96,8 +96,8 @@ Deliberately before any analysis, because everything downstream is measured agai
 ### W5 · 28 Sep – 2 Oct · Stage 2
 - Block model `(T, I, S, p)`; priority check with **larger = higher**
   ([[Contradictions]] #3); timing left unconstrained.
-- Masking dataflow: masked only if masked on **every** path. Point property for pairs,
-  **interval property for triples** — masked throughout `[A₁, A₂]` on all paths.
+- Masking dataflow: masked only if masked on **every** path, and the **interval property**
+  decides — masked throughout `[A₁, A₂]` on all paths.
 - Equal-priority and arrival-model decisions made explicit and recorded in the manifest.
 - **Done when**: attrition measured against IntRace's 54.2%; recall gate still 100%.
 

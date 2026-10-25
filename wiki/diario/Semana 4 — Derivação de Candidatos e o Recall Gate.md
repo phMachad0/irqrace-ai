@@ -1,8 +1,8 @@
 ---
 type: project
 tags: [wiki, project, diario, pt-br]
-sources: ["[[Roadmap]]", "[[Pair-Triple Unification]]", "[[Pipeline Design]]", "[[Soundness Assumptions]]"]
-updated: 2026-10-22
+sources: ["[[Roadmap]]", "[[Triples Only]]", "[[Pipeline Design]]", "[[Soundness Assumptions]]"]
+updated: 2026-10-24
 status: draft
 ---
 
@@ -16,18 +16,24 @@ status: draft
 > W3–W4 é um bloco único no [[Roadmap]] e foi implementado de uma vez. A separação entre esta
 > página e a anterior é temática.
 
+> [!note] Revisado em 24 out 2026
+> Desde esta data o projeto trabalha com uma única classe de candidato, a trinca de violação de
+> atomicidade ([[Triples Only]]). Esta página descreve o código como ele é hoje; a saída da
+> seção 1 e os relatórios citados foram refeitos com ele.
+
 ## 1. Resultado
 
 ```
 31/31 subjects analysed
-candidates: 566 total, 18.3 per subject (316 triples, 250 pairs)
+candidates: 316 total, 10.2 per subject
 RECALL GATE: 48/48 annotated bug points present -- PASS
-traps reported: 35/38     inspection ratio: 0.30 mean
+traps reported: 35/38 (expected to be high; stage 1 does not filter)
+inspection ratio: 0.58 mean over 31 subject(s) whose bug points were all found
 ```
 
 **O portão de recall passou: 48 de 48.** É o critério de pronto do bloco e o Marco M2.
 
-Sobre o número de candidatos: 18,3 por sujeito contra os ~208 por programa que o
+Sobre o número de candidatos: 10,2 por sujeito contra os ~208 por programa que o
 [[IntRace (paper)]] reporta **não é uma vitória de precisão**. Estes são casos de 37 a 97 linhas
 e o número do IntRace é sobre programas reais. O número que importa aqui é o portão.
 
@@ -56,50 +62,25 @@ As outras quatro são serializáveis: `(R,R,*)` não muda estado; `(W,R,R)` — 
 aparecem em algum lugar do conjunto reportado. É a afirmação central do TCC transformada em algo
 checável a cada execução.
 
-## 3. Pares e trincas saem do **mesmo** conjunto de acessos
+## 3. As trincas
 
-Esta é a regra de [[Pair-Triple Unification]] e é fácil de violar sem perceber, porque as duas
-coisas parecem relacionadas:
-
-> Uma trinca **nunca** é construída juntando pares confirmados, e um par **nunca** é inferido de
-> uma trinca. São duas perguntas diferentes sobre um único conjunto de acessos.
-
-### Pares
+Cada candidato é uma trinca `(A₁, B, A₂)`: `A₁` e `A₂` no mesmo fluxo, `B` em outro, os três na
+mesma posição compartilhada. Em `project-src/src/irqrace/stage1.py`:
 
 ```python
-def race_pairs(self) -> list[dict[str, Any]]:
-    for obj_id, obj in self.objects.items():
-        accs = [a for a in self.analysis["accesses"] if a["object"] == obj_id]
-        for i, a in enumerate(accs):
-            for b in accs[i + 1:]:
-                if a["flow"] == b["flow"]:
-                    continue
-                if a["kind"] == "read" and b["kind"] == "read":
-                    continue
-                ...
-```
-
-Duas condições: fluxos **diferentes**, e pelo menos uma escrita — leitura contra leitura não é
-condição de corrida.
-
-A ordem dentro do par é **canônica, não semântica**. No estágio 1 nada se sabe sobre quem
-preempta quem; `A₁` é o acesso do fluxo de menor prioridade puramente para que o mesmo par não
-seja emitido duas vezes.
-
-### Trincas
-
-```python
-for a1 in locals_:
-    for a2 in locals_:
-        if (a1["id"], a2["id"]) not in self.precede:
-            continue
-        if a1["id"] == a2["id"] and not allow_same:
-            continue
-        for b in remotes:
-            shape = (a1["kind"], b["kind"], a2["kind"])
-            if shape not in UNSERIALIZABLE:
-                continue
-            out.append(self._record("atomicity-triple", ..., obj))
+                for a1 in locals_:
+                    for a2 in locals_:
+                        if (a1["id"], a2["id"]) not in self.precede:
+                            continue
+                        if a1["id"] == a2["id"] and not allow_same:
+                            continue
+                        for b in remotes:
+                            shape = (a1["kind"], b["kind"], a2["kind"])
+                            if shape not in UNSERIALIZABLE:
+                                continue
+                            out.append(self._record(
+                                [("A1", a1["id"]), ("B", b["id"]), ("A2", a2["id"])],
+                                obj))
 ```
 
 `A₁` e `A₂` vêm do mesmo fluxo e têm que estar na relação `may_precede`; `B` vem de qualquer
@@ -271,8 +252,8 @@ contagem e a regra de casamento usadas:
   "ground_truth": "racebench-2.1_remarks + curated errata",
   "bug_points": 1, "bugs_detected": 1, "recall_gate": true,
   "traps": 4, "traps_reported": 4,
-  "candidates_reported": 15,
-  "inspection_ratio": 0.2666666666666667
+  "candidates_reported": 5,
+  "inspection_ratio": 0.8
 }
 ```
 
@@ -309,8 +290,7 @@ o conjunto de candidatos:
 > O código desta semana mudou em três pontos, nenhum deles nos trechos citados acima:
 > os registros C2 do stage 1 ganharam `accesses[].ir`, um ponteiro de volta para a posição do
 > acesso no CFG de eventos (fora do *fingerprint*; os ids não mudam); `irqrace stage1-all` passou
-> a rodar também o `runstore check` em cada execução e imprime uma linha a mais no fim; e a saída
-> mostrada na seção 1 continua idêntica. As duas decisões pendentes acima ganharam evidência nova
+> a rodar também o `runstore check` em cada execução e imprime uma linha a mais no fim. As duas decisões pendentes acima ganharam evidência nova
 > — ver [[Semana 5 — O Stage 2, Prioridade e Máscara]], §14. A sobre-aproximação da seção 4(b)
 > (dois pontos de chamada contam como repetição) é refinada pelo stage 2 quando os dois pontos são
 > exclusivos, como no `isr_1` do `svp_simple_029_001`.

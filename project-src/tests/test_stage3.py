@@ -102,12 +102,15 @@ def test_a_volatile_read_is_not_a_write(tmp_path):
 volatile int a[10];
 void t_main(void) {
   for (int i = 0; i < 10; i++)
-    if (i == 7) a[i] = 1;            /* W */
+    if (i == 7) {
+      a[i] = 1;                      /* W1 */
+      a[i] = 2;                      /* W2 */
+    }
 }
 void t_isr_1(void) { int r = a[3];   /* R */ }
 """
     store = run_c(tmp_path, body)
-    assert verdict(store, line_of(body, "/* W */"), line_of(body, "/* R */"))["verdict"] == "unsat"
+    assert verdict(store, *(line_of(body, m) for m in ("/* W1 */", "/* R */", "/* W2 */")))["verdict"] == "unsat"
 
 
 def test_a_preemption_just_before_a2_does_not_hide_a2(tmp_path):
@@ -200,12 +203,15 @@ def test_an_unreachable_guard_refutes(tmp_path):
 volatile int x;
 void t_main(void) {
   for (int i = 0; i < 10; i++)
-    if (i == 11) x = 1;              /* W */
+    if (i == 11) {
+      x = 1;                         /* W1 */
+      x = 2;                         /* W2 */
+    }
 }
 void t_isr_1(void) { int r = x;      /* R */ }
 """
     store = run_c(tmp_path, body)
-    assert verdict(store, line_of(body, "/* W */"), line_of(body, "/* R */"))["verdict"] == "unsat"
+    assert verdict(store, *(line_of(body, m) for m in ("/* W1 */", "/* R */", "/* W2 */")))["verdict"] == "unsat"
 
 
 def test_a_global_nobody_writes_keeps_its_initializer(tmp_path):
@@ -214,11 +220,16 @@ def test_a_global_nobody_writes_keeps_its_initializer(tmp_path):
     body = """\
 volatile int flag = 0;
 volatile int x;
-void t_main(void) { if (flag == 1) x = 1;   /* W */ }
-void t_isr_1(void) { int r = x;              /* R */ }
+void t_main(void) {
+  if (flag == 1) {
+    x = 1;                           /* W1 */
+    x = 2;                           /* W2 */
+  }
+}
+void t_isr_1(void) { int r = x;      /* R */ }
 """
     store = run_c(tmp_path, body)
-    assert verdict(store, line_of(body, "/* W */"), line_of(body, "/* R */"))["verdict"] == "unsat"
+    assert verdict(store, *(line_of(body, m) for m in ("/* W1 */", "/* R */", "/* W2 */")))["verdict"] == "unsat"
 
 
 def test_a_flow_that_may_run_breaks_the_initializer(tmp_path):
@@ -226,36 +237,43 @@ def test_a_flow_that_may_run_breaks_the_initializer(tmp_path):
     body = """\
 volatile int flag = 0;
 volatile int x;
-void t_main(void) { if (flag == 1) x = 1;   /* W */ }
-void t_isr_1(void) { int r = x;              /* R */ }
+void t_main(void) {
+  if (flag == 1) {
+    x = 1;                           /* W1 */
+    x = 2;                           /* W2 */
+  }
+}
+void t_isr_1(void) { int r = x;      /* R */ }
 void t_isr_2(void) { flag = 1; }
 """
     store = run_c(tmp_path, body, flows=("main", "isr_1", "isr_2"))
-    assert verdict(store, line_of(body, "/* W */"), line_of(body, "/* R */"))["verdict"] == "sat"
+    assert verdict(store, *(line_of(body, m) for m in ("/* W1 */", "/* R */", "/* W2 */")))["verdict"] == "sat"
 
 
 def test_masking_shields_a_value_from_interference(tmp_path):
     """Interference comes from stage 2's run sets, so it respects masking: isr_1
     writes the flag, but it is masked between main's `flag = 0` and the guard,
     and isr_2 -- which may run there -- does not write it."""
-    masked = """\
+    body = """\
 volatile int flag;
 volatile int x;
 void t_main(void) {
   disable_isr(1);
   flag = 0;
-  if (flag == 1) x = 1;              /* W */
+  if (flag == 1) {
+    x = 1;                           /* W1 */
+    x = 2;                           /* W2 */
+  }
   enable_isr(1);
 }
 void t_isr_1(void) { flag = 1; }
 void t_isr_2(void) { int r = x;      /* R */ }
 """
-    store = run_c(tmp_path, masked, flows=("main", "isr_1", "isr_2"))
-    assert verdict(store, line_of(masked, "/* W */"), line_of(masked, "/* R */"))["verdict"] == "unsat"
-    unmasked = masked.replace("  disable_isr(1);\n", "")
-    store = run_c(tmp_path / "u", unmasked, flows=("main", "isr_1", "isr_2"))
-    assert verdict(store, line_of(unmasked, "/* W */"),
-                   line_of(unmasked, "/* R */"))["verdict"] == "sat"
+    store = run_c(tmp_path, body, flows=("main", "isr_1", "isr_2"))
+    assert verdict(store, *(line_of(body, m) for m in ("/* W1 */", "/* R */", "/* W2 */")))["verdict"] == "unsat"
+    body = body.replace("  disable_isr(1);\n", "")
+    store = run_c(tmp_path / "u", body, flows=("main", "isr_1", "isr_2"))
+    assert verdict(store, *(line_of(body, m) for m in ("/* W1 */", "/* R */", "/* W2 */")))["verdict"] == "sat"
 
 
 def test_dead_code_is_refuted_and_fixing_the_typo_flips_it(tmp_path):
@@ -289,12 +307,16 @@ void t_isr_1(void) { v = 0;          /* W */ }
 def test_recursion_is_inconclusive_never_a_drop(tmp_path):
     body = """\
 volatile int x;
-void f(int n) { if (n) f(n - 1); x = 1;   /* W */ }
+void f(int n) {
+  if (n) f(n - 1);
+  x = 1;                             /* W1 */
+  x = 2;                             /* W2 */
+}
 void t_main(void) { f(3); }
-void t_isr_1(void) { int r = x;           /* R */ }
+void t_isr_1(void) { int r = x;      /* R */ }
 """
     store = run_c(tmp_path, body)
-    r = verdict(store, line_of(body, "/* W */"), line_of(body, "/* R */"))
+    r = verdict(store, *(line_of(body, m) for m in ("/* W1 */", "/* R */", "/* W2 */")))
     assert r["verdict"] in ("inconclusive", "sat")
     if r["verdict"] == "inconclusive":
         assert r["reason"].startswith("unsupported-construct:recursion")
@@ -304,11 +326,14 @@ void t_isr_1(void) { int r = x;           /* R */ }
 def test_a_timeout_is_inconclusive_and_the_candidate_reaches_the_llm(tmp_path):
     body = """\
 volatile int x;
-void t_main(void) { x = 1;            /* W */ }
-void t_isr_1(void) { int r = x;       /* R */ }
+void t_main(void) {
+  x = 1;                             /* W1 */
+  x = 2;                             /* W2 */
+}
+void t_isr_1(void) { int r = x;      /* R */ }
 """
     store = run_c(tmp_path, body, timeout_ms=0)
-    r = verdict(store, line_of(body, "/* W */"), line_of(body, "/* R */"))
+    r = verdict(store, *(line_of(body, m) for m in ("/* W1 */", "/* R */", "/* W2 */")))
     assert r["verdict"] == "inconclusive" and r["reason"] == "timeout"
     ctx = store.read_contexts()
     assert ctx and all(c["solver_result"]["verdict"] == "inconclusive" for c in ctx)

@@ -2,7 +2,7 @@
 type: concept
 tags: [wiki, concept]
 sources: ["[[IntRace (paper)]]", "[[NIChecker (paper)]]", "[[BMC4AV (paper)]]", "[[SDRacer (paper)]]", "[[Racebench (documentation)]]"]
-updated: 2026-08-20
+updated: 2026-10-24
 status: draft
 ---
 
@@ -109,7 +109,11 @@ instant of A?"*, and for a triple it is *"can B execute anywhere in the interval
 [A₁, A₂]?"*. The interval question is strictly weaker — satisfiable in strictly more cases —
 so answering the pair question and inferring the triple answer loses defects.
 
-## The recommendation
+## What a detector of both classes would need
+
+> [!note] This project chose differently, 2026-10-24
+> The tool derives triples only ([[Triples Only]]). The section below stands as the analysis of
+> what a single detector of both classes requires; it no longer describes this project's design.
 
 Unify the **front end**, keep **both candidate sets**, and never derive one from the other.
 

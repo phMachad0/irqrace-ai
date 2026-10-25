@@ -4,11 +4,10 @@
 // discard a candidate -- and only an UNSAT one (wiki/Pipeline Design.md, "Z3
 // and path feasibility"; Soundness Assumptions H1, H2).
 //
-// The question, for a triple (A1, B, A2) with A1 and A2 in flow F and B in H:
+// The question, for a candidate (A1, B, A2) with A1 and A2 in flow F and B in H:
 // is there an execution in which F reaches A1, H runs from its entry to B while
 // F is somewhere between A1 and A2, and F then reaches A2 -- the three accesses
-// touching the same memory? For a pair (A, B): can H reach B while F is at A?
-// This is REACHABILITY ONLY. Whether the interleaving is harmful, or even
+// touching the same memory? This is REACHABILITY ONLY. Whether the interleaving is harmful, or even
 // unserializable, is not the solver's question (Roadmap W6-W7).
 //
 // The encoding is built to OVER-approximate the executions of the program, so
@@ -108,10 +107,7 @@ struct Target {
 
 struct Candidate {
   std::string id;
-  bool triple = false;
-  Target a1, b, a2;
-  // Pairs: which flow preempts which. "AB": B's flow at A's point; "BA": the reverse.
-  std::vector<std::string> dirs;
+  Target a1, b, a2; // A1 and A2 in the preempted flow, B in the preempting one
 };
 
 struct Query {
@@ -177,23 +173,17 @@ bool readQuery(const std::string &path, Query &qy, std::string &err) {
       auto &vec = qy.runAt[{flow, w[2], b}];
       if (vec.size() <= hi) vec.resize(hi + 1, -1);
       for (unsigned j = lo; j <= hi; ++j) vec[j] = id;
-    } else if (k == "cand" && w.size() >= 3) {
-      Candidate c;
-      c.id = w[1];
-      if (w[2] == "triple" && w.size() == 15) {
-        c.triple = true;
-        c.a1 = target(w[3], w[4], w[5], w[6]);
-        c.b = target(w[7], w[8], w[9], w[10]);
-        c.a2 = target(w[3], w[11], w[12], w[13]);
-        c.dirs = {w[14]};
-      } else if (w[2] == "pair" && w.size() == 12) {
-        c.a1 = target(w[3], w[4], w[5], w[6]);
-        c.b = target(w[7], w[8], w[9], w[10]);
-        c.dirs = split(w[11], ',');
-      } else {
+    } else if (k == "cand") {
+      // cand <id> <flow> <fnA1> <bA1> <iA1> <flowB> <fnB> <bB> <iB> <fnA2> <bA2> <iA2>
+      if (w.size() != 13) {
         err = "malformed candidate line: " + line;
         return false;
       }
+      Candidate c;
+      c.id = w[1];
+      c.a1 = target(w[2], w[3], w[4], w[5]);
+      c.b = target(w[6], w[7], w[8], w[9]);
+      c.a2 = target(w[2], w[10], w[11], w[12]);
       qy.cands.push_back(c);
     } else {
       err = "unrecognised query line: " + line;
@@ -438,12 +428,10 @@ private:
 // ---------------------------------------------------------------------------
 
 enum class Phase {
-  SeekA1,     // triple: base flow, before A1
-  SeekSplice, // triple: base flow, after A1, before the preemption
+  SeekA1,     // the preempted flow, before A1
+  SeekSplice, // the preempted flow, after A1, before the preemption
   SeekB,      // the preempting flow, from its entry, looking for B
-  SeekA2,     // triple: base flow resumed, looking for A2
-  PairSeekA,  // pair: base flow, looking for its access
-  PairAfterA, // pair: just executed it; preempt at this boundary or not at all
+  SeekA2,     // the preempted flow resumed, looking for A2
   Collect,    // projection: every path from a flow's entry to one access
 };
 
@@ -541,13 +529,9 @@ public:
       if (!unsupported.empty()) res.reason = "unsupported-construct:" + *unsupported.begin();
       return res;
     }
-    for (const std::string &dir : cand.dirs) {
-      Target base = cand.a1, remote = cand.b;
-      if (!cand.triple && dir == "BA") std::swap(base, remote);
-      Outcome o = explore(cand, base, remote, states);
-      if (o == Outcome::Sat) { sat = true; witness = lastWitness; break; }
-      if (o == Outcome::Stopped) exhausted = false;
-    }
+    Outcome o = explore(cand, cand.a1, cand.b, states);
+    if (o == Outcome::Sat) { sat = true; witness = lastWitness; }
+    if (o == Outcome::Stopped) exhausted = false;
     res.states = states;
     res.solverCalls = solverCalls;
     res.unconstrained = notes;
@@ -1002,19 +986,16 @@ private:
 
   bool projectionRefutes(const Candidate &c, unsigned &states) {
     Target a1 = c.a1, b = c.b, a2 = c.a2;
-    if (!resolve(a1) || !resolve(b) || (c.triple && !resolve(a2))) return false;
+    if (!resolve(a1) || !resolve(b) || !resolve(a2)) return false;
     z3::expr e1 = C.bool_val(true), eb = C.bool_val(true), e2 = C.bool_val(true);
     unsigned s1 = 0, sb = 0, s2 = 0;
     if (!project(a1, e1, s1, states)) return false;
     Addr p1{*projVar, s1};
     if (!project(b, eb, sb, states)) return false;
     Addr pb{*projVar, sb};
-    z3::expr goal = e1 && eb && overlap(p1, pb);
-    if (c.triple) {
-      if (!project(a2, e2, s2, states)) return false;
-      Addr p2{*projVar, s2};
-      goal = goal && e2 && overlap(pb, p2) && overlap(p1, p2);
-    }
+    if (!project(a2, e2, s2, states)) return false;
+    Addr p2{*projVar, s2};
+    z3::expr goal = e1 && eb && e2 && overlap(p1, pb) && overlap(pb, p2) && overlap(p1, p2);
     std::vector<z3::expr> none;
     return solve(none, &goal) == z3::unsat;
   }
@@ -1030,7 +1011,7 @@ private:
     remoteFlow = remote.flow;
     const llvm::Function *entry = facts.M.getFunction(qy.flowEntries.at(baseFlow));
     if (!entry || entry->isDeclaration()) { unsupported.insert("missing-entry"); return Outcome::Exhausted; }
-    if (!resolve(baseT) || !resolve(remoteT) || (c.triple && !resolveA2())) {
+    if (!resolve(baseT) || !resolve(remoteT) || !resolveA2()) {
       unsupported.insert("unresolved-target");
       return Outcome::Exhausted;
     }
@@ -1042,7 +1023,7 @@ private:
     // initializers.
     init.initMode = qy.flowKinds.at(baseFlow) == "task";
     if (!init.initMode) notes.insert("isr-entry-state");
-    init.phase = c.triple ? Phase::SeekA1 : Phase::PairSeekA;
+    init.phase = Phase::SeekA1;
 
     std::vector<State> work;
     work.push_back(std::move(init));
@@ -1098,11 +1079,6 @@ private:
           splice(st, rid, fr);
           continue;
         }
-        if (st.phase == Phase::PairAfterA && act.flow == baseFlow) {
-          if (!runs(baseFlow, rid, remoteFlow)) return false;
-          splice(st, rid, fr);
-          continue;
-        }
         fr.boundaryDone = true;
       }
 
@@ -1114,7 +1090,7 @@ private:
 
       if (!fr.targetDone) {
         bool handled = false;
-        if (decide(st, work, I, act, fr, rid, handled)) return true;
+        if (decide(st, work, I, act, fr, handled)) return true;
         if (handled) continue;
       }
       if (!execute(st, work, I, fr)) return false;
@@ -1123,7 +1099,7 @@ private:
 
   /// Fork decisions at a target instruction. Returns true on SAT.
   bool decide(State &st, std::vector<State> &work, const llvm::Instruction *I,
-              Activation &act, Frame &fr, int rid, bool &handled) {
+              Activation &act, Frame &fr, bool &handled) {
     if (st.phase == Phase::Collect && act.flow == collectFlow && I == collectI) {
       State skip = st;
       skip.acts.back().frames.back().targetDone = true;
@@ -1163,17 +1139,6 @@ private:
       skip.acts.back().frames.back().targetDone = true;
       work.push_back(std::move(skip));
       st.remote = addrOf(I, fr);
-      if (!cand->triple) {
-        z3::expr goal = overlap(*st.first, *st.remote);
-        z3::model m(C);
-        if (solve(st.pc, &goal, &m) == z3::sat) {
-          lastWitness = witness(st, I);
-          return true;
-        }
-        handled = true;
-        st.acts.clear();
-        return false;
-      }
       // A1 and B must touch the same memory; refute early when they cannot.
       {
         z3::expr ab = overlap(*st.first, *st.remote);
@@ -1189,24 +1154,6 @@ private:
       // One crossing per back edge per phase: the preemption and A2 may each
       // lie in a later iteration than the one before them.
       st.crossed.clear();
-      handled = true;
-      return false;
-    }
-    if (act.flow == baseFlow && st.phase == Phase::PairSeekA && I == baseT.I) {
-      State skip = st;
-      skip.acts.back().frames.back().targetDone = true;
-      work.push_back(std::move(skip));
-      st.first = addrOf(I, fr);
-      // Preempted just before the access...
-      if (runs(baseFlow, rid, remoteFlow)) {
-        State before = st;
-        splice(before, rid, before.acts.back().frames.back());
-        work.push_back(std::move(before));
-      }
-      // ... or just after it.
-      fr.targetDone = true;
-      if (!execute(st, work, I, fr)) { handled = true; st.acts.clear(); return false; }
-      st.phase = Phase::PairAfterA;
       handled = true;
       return false;
     }

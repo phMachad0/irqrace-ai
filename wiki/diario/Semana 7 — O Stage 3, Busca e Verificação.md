@@ -2,7 +2,7 @@
 type: project
 tags: [wiki, project, diario, pt-br]
 sources: ["[[Roadmap]]", "[[Pipeline Design]]", "[[Path Feasibility Analysis]]", "[[Soundness Assumptions]]", "[[IntRace (paper)]]", "[[Racebench]]"]
-updated: 2026-10-22
+updated: 2026-10-24
 status: draft
 ---
 
@@ -11,6 +11,11 @@ status: draft
 **Período planejado:** 12–16 out 2026 (segunda metade do bloco W6–W7) · **implementado em:**
 22 out 2026 · **Trilha A** · [[Roadmap]] W6–W7. Página anterior:
 [[Semana 6 — O Stage 3, a Codificação]].
+
+> [!note] Revisado em 24 out 2026
+> Desde esta data o projeto trabalha com uma única classe de candidato, a trinca de violação de
+> atomicidade ([[Triples Only]]). Esta página descreve o código como ele é hoje; a saída da seção 1,
+> as contagens e os tempos foram refeitos com ele.
 
 > [!note] Sobre a divisão
 > W6–W7 é um bloco único no [[Roadmap]], implementado de uma vez. A
@@ -22,24 +27,27 @@ status: draft
 
 ```
 31/31 subjects analysed
-stage 1: 566 candidates, 18.3 per subject (316 triples, 250 pairs)  [2810 ms total]
-stage 2: 436 kept (202 triples, 234 pairs), 130 dropped with proof (masking 23, no-path 62, priority 45)  [2468 ms total]
-solver: 436 in -> 383 sat, 0 inconclusive, 53 unsat (dropped with proof)  [29875 ms total]
-reaching the LLM: 383 (166 triples, 217 pairs), 12.4 per subject; solver attrition 12.2%
-  for scale: IntRace reports 86.2% (41-93%) for its feasibility stage, on real-world subjects and data-race pairs
-funnel: 566 -> 436 -> 383  [stage 1 2810 ms, stage 2 2468 ms, solver 29875 ms]
-slowest subjects in the solver: svp_simple_019_001 14239 ms, svp_simple_024_001 2615 ms, svp_simple_003_001 1573 ms
+stage 1: 316 candidates, 10.2 per subject  [1727 ms total]
+stage 2: 202 kept, 114 dropped with proof (masking 7, no-path 62, priority 45)  [1325 ms total]
+attrition: 36.1% overall; 0-62% per subject
+  of which concurrency (priority + masking): 16.5%; no-path is stage 1's cross-function may-precede refined, not a concurrency result
+  for scale: IntRace reports 54.2% (33-63% per project) for its stage 2, on another candidate class, in real-world subjects
+solver: 202 in -> 166 sat, 0 inconclusive, 36 unsat (dropped with proof)  [17636 ms total]
+reaching the LLM: 166, 5.4 per subject; solver attrition 17.8%
+  for scale: IntRace reports 86.2% (41-93%) for its feasibility stage, on another candidate class, in real-world subjects
+funnel: 316 -> 202 -> 166  [stage 1 1727 ms, stage 2 1325 ms, solver 17636 ms]
+slowest subjects in the solver: svp_simple_019_001 7582 ms, svp_simple_024_001 2358 ms, svp_simple_003_001 1127 ms
 RECALL GATE (stage3): 48/48 annotated bug points present -- PASS
 traps reported: 35/38 after stage 1, 30/38 after stage 2, 16/38 reaching the LLM (14 refuted by the solver)
-inspection ratio: 0.34 mean over 31 subject(s) whose bug points were all found
+inspection ratio: 0.84 mean over 31 subject(s) whose bug points were all found
 runstore check: 31/31 runs conform to C3 (rule 6: nothing vanished without a proof)
 ```
 
-**O funil inteiro está medido** — 566 → 436 → 383 candidatos chegando ao LLM, com tempo por estágio
+**O funil inteiro está medido** — 316 → 202 → 166 candidatos chegando ao LLM, com tempo por estágio
 —, e **o portão de recall continua em 48/48**, agora tomado sobre os registros de contexto, isto é,
 sobre o que a Trilha B de fato recebe. É o critério de pronto do bloco.
 
-Dos 53 `unsat`, 36 saíram da projeção de endereços (§4) e 17 da busca completa. Nenhum candidato
+Dos 36 `unsat`, 27 saíram da projeção de endereços (§4) e 9 da busca completa. Nenhum candidato
 ficou `inconclusive`.
 
 ## 2. Conceitos desta semana
@@ -70,12 +78,10 @@ As fases de um estado, em `analysis/src/irqrace-stage3.cpp`:
 
 ```cpp
 enum class Phase {
-  SeekA1,     // triple: base flow, before A1
-  SeekSplice, // triple: base flow, after A1, before the preemption
+  SeekA1,     // the preempted flow, before A1
+  SeekSplice, // the preempted flow, after A1, before the preemption
   SeekB,      // the preempting flow, from its entry, looking for B
-  SeekA2,     // triple: base flow resumed, looking for A2
-  PairSeekA,  // pair: base flow, looking for its access
-  PairAfterA, // pair: just executed it; preempt at this boundary or not at all
+  SeekA2,     // the preempted flow resumed, looking for A2
   Collect,    // projection: every path from a flow's entry to one access
 };
 ```
@@ -123,10 +129,10 @@ sobreponham, e esquece o que pode ter mudado:
 O veredito é `unsat` só se a busca terminou **sem** estourar tempo nem orçamento, sem construção
 não suportada e sem nenhuma resposta `unknown` do Z3.
 
-## 4. Desempenho: de 20 segundos por caso a menos de um
+## 4. Desempenho
 
-A primeira versão correta levava até 20 s num caso e estourava o timeout de 10 s em candidatos
-simples. Quatro mudanças, todas sem custo de corretude:
+A primeira versão correta estourava o timeout de 10 s em candidatos simples. Quatro mudanças,
+todas sem custo de corretude:
 
 **Um desvio, uma pergunta.** A condição de caminho já é satisfazível quando se chega ao desvio; se
 um lado é impossível, o outro é possível sem perguntar. Quando os dois podem ser, o lado falso segue
@@ -189,16 +195,12 @@ Tudo o que a pergunta completa permite, a projeção também permite, então o `
 (**J9**). Ela refuta de cara as armadilhas de índice e de guarda impossível — exatamente as que a
 busca completa levava mais tempo para esgotar.
 
-| Caso | solver novo a cada pergunta | solver incremental | incremental + projeção |
-| --- | --- | --- | --- |
-| `svp_simple_001_001` | 5,4 s | 14,3 s, um timeout | **0,65 s**, 6 `unsat` pela projeção |
-| `svp_simple_019_001` | 20,2 s, um timeout | **4,1 s** | 14,2 s |
-| os 31 casos | 47,6 s, 1 `inconclusive` | — | 44 s, nenhum `inconclusive` |
-
-Nenhuma das três versões é a melhor em tudo. O solver incremental acumula termos de array que pesam
-em cada pergunta do `001`; a projeção não ajuda no `019`, cujas armadilhas dependem de valores que
-`main` e a ISR compartilham, e o custo dela se soma ao da busca. A combinação final é a que não deixa
-nenhum candidato `inconclusive`; o `019` é o caso a otimizar se o tempo vier a importar.
+Durante o desenvolvimento as versões foram comparadas caso a caso, e nenhuma era a melhor em
+tudo. O solver incremental acumula termos de array que pesam em cada pergunta do `001`: com ele, e
+sem a projeção, um candidato do `001` estourava o timeout. A projeção não ajuda no `019`, cujas
+armadilhas dependem de valores que `main` e a ISR compartilham, e o custo dela se soma ao da busca.
+A combinação final é a única em que nenhum candidato fica `inconclusive`. Com ela, hoje, o `001`
+leva 0,4 s, o `019` — o mais lento — 7,6 s, e o solver soma 17,6 s nos 31 casos.
 
 ## 5. Os três bugs que a verificação pegou
 
@@ -206,13 +208,18 @@ Nenhum número desta página foi reportado antes de os três estarem corrigidos 
 teste. Os três testes foram **testados por mutação**: com o bug reintroduzido, cada um falha.
 
 ```
-mutation 1: volatile load counted as write
-1 failed, 53 deselected in 0.46s
-mutation 2: one flag for both decisions
-1 failed, 53 deselected in 0.35s
-mutation 3: one crossing in total
-1 failed, 53 deselected in 0.47s
+mutation 1 (volatile):
+1 failed, 52 deselected in 0.49s
+mutation 2 (one flag):
+1 failed, 52 deselected in 0.36s
+mutation 3 (one crossing):
+1 failed, 52 deselected in 0.48s
+mutation 4 (no interference):
+2 failed, 51 deselected in 0.52s
 ```
+
+A quarta mutação não corresponde a um bug encontrado: desligar a interferência inteira faz falhar
+os dois testes em que um fluxo concorrente muda o valor de uma guarda.
 
 ### (a) Uma decisão escondia a outra — um `unsat` errado
 
@@ -281,8 +288,8 @@ A correção é o `st.crossed.clear()` do trecho da §3. Teste:
 ## 6. A auditoria de cada `unsat`
 
 O portão só cobre os 48 *bug points*. Um `unsat` errado num candidato não anotado é uma perda de
-recall que o portão não vê. Por isso auditei contra o fonte todos os vereditos `unsat` — 55 numa
-execução intermediária, 53 na final. Todos têm um motivo verificável no código:
+recall que o portão não vê. Por isso auditei contra o fonte todos os vereditos `unsat` — os 36 de
+hoje estão entre eles. Todos têm um motivo verificável no código:
 
 | Motivo | Exemplos |
 | --- | --- |
@@ -291,8 +298,7 @@ execução intermediária, 53 na final. Todos têm um motivo verificável no có
 | global que ninguém escreve | `003` (`global_flag1 = 0`), `004` (`condition3 = 1`), `005` (`global_condition = 0`) |
 | campos diferentes de uma `struct` | `010` (`header` no deslocamento 0, `data` no 4) |
 | ponteiro reapontado | `011` (`*u` passa de `var2` para `var3`), `009` (`m` reapontado pela própria ISR antes de ler) |
-| relação que só `main` pode mudar | `019`, a armadilha 1 e o par (40, 67) (os `para` só são escritos por `main`, antes das duas guardas) |
-| ponteiro nulo (**J6**) | `029` par (45, 83), `009` par (26, 44) |
+| relação que só `main` pode mudar | `019`, a armadilha 1 (os `para` só são escritos por `main`, antes das duas guardas) |
 
 Um deles era o *bug point* do `svp_simple_006_001`, que no fonte publicado está em código morto por
 causa de um erro de digitação na condição de um laço; o caso é analisado com o fonte corrigido, como
@@ -326,11 +332,11 @@ da do `001` ([[Contradictions]] #7).
 
 ## 8. 12% contra 86%, e o que a codificação não vê
 
-O [[IntRace (paper)]] reporta 86,2% de remoção no seu estágio de viabilidade; aqui são 12,2%. Três
+O [[IntRace (paper)]] reporta 86,2% de remoção no seu estágio de viabilidade; aqui são 17,8%. Três
 razões, só a última sobre o método:
 
-- sujeitos diferentes (programas reais contra casos de 37 a 97 linhas) e classes diferentes (só pares
-  contra pares e trincas);
+- sujeitos diferentes (programas reais contra casos de 37 a 97 linhas) e classes de candidato
+  diferentes;
 - o IntRace não diz que a sua codificação sobre-aproxima — e a daqui precisa, porque descarta;
 - **a codificação é thread-modular.** Cada fluxo vê os outros só pelo que eles podem escrever. Uma
   armadilha que é inviável por causa da *ordem* em que as ISRs rodam parece viável. O exemplo é o
@@ -370,12 +376,12 @@ irqrace stage3-all
 
 ## 11. Estado ao fim do bloco
 
-328 testes. Os 53 novos desta semana estão em `tests/test_stage3.py`: 12 sobre programas C
+327 testes hoje. Os 53 deste bloco estão em `tests/test_stage3.py`: 12 sobre programas C
 compilados com o mesmo clang, uma regra de corretude por teste; 31 com o portão em cada caso do
-Racebench; e 10 com vereditos específicos que esta página argumenta. A suíte inteira leva cerca de 90
+Racebench; e 10 com vereditos específicos que esta página argumenta. A suíte inteira leva cerca de 80
 s.
 
-[[Soundness Assumptions]] tem agora 55 entradas: o grupo **J** (J1–J9) e a **A4** desta semana. A
+[[Soundness Assumptions]] tem hoje 56 entradas: o grupo **J** (J1–J9) e a **A4** deste bloco, e a **H1e**, que declara a classe de defeito coberta. A
 **J6** — o programa não tem comportamento indefinido que a análise precise seguir — é a única que
 não é sobre-aproximação, e as duas provas do Racebench que dependem dela estão nomeadas lá.
 

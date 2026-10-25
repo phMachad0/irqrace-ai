@@ -170,13 +170,12 @@ corrections:
       annotate that very line as `<W#33>`, so the annotator's own entries
       contradict this one.
 
-      There is a second, independent reason to believe the correction. Every
-      other annotated triple in the suite projects onto two access pairs that
-      each contain at least one write -- the empirical half of the argument in
-      [[Pair-Triple Unification]]. Read literally, this entry is (W,R,R), whose
-      second projection (B, A2) is (R,R): two reads, which no race detector can
-      flag and no atomicity violation can arise from. It is the only annotation
-      in the suite with that property, and the correction removes it.
+      There is a second, independent reason to believe the correction. In
+      every other annotated triple in the suite, B conflicts with both ends:
+      each of (A1, B) and (B, A2) involves a write. Read literally, this entry
+      is (W,R,R), whose (B, A2) is (R,R): two reads, which cannot conflict, so
+      no atomicity violation can arise from it. It is the only annotation in
+      the suite with that property, and the correction removes it.
 
   - case: svp_simple_017_001
     kind: trap

@@ -59,7 +59,7 @@
 
     "AccessRole": {
       "enum": ["A1", "B", "A2"],
-      "description": "Position in the candidate. Pairs use A1 (local) and B (remote). Triples use A1, B, A2 with B in the preempting flow (wiki/concepts/Pair-Triple Unification.md)."
+      "description": "Position in the candidate: A1 and A2 in the preempted flow, B in the preempting one."
     },
 
     "LoopContext": {
@@ -142,7 +142,7 @@
 
     "IntervalMaskingState": {
       "type": "object",
-      "description": "Masking over the interval [A1, A2] of a triple: an interrupt is masked over the interval only if it is masked at every point of every path from A1 to A2. Point property for pairs, interval property for triples (Pipeline Design, stage 2).",
+      "description": "Masking over the interval [A1, A2] of a triple: an interrupt is masked over the interval only if it is masked at every point of every path from A1 to A2. This, not the state at either access, is what decides a candidate (Pipeline Design, stage 2).",
       "required": ["from_role", "to_role", "disabled_throughout", "unknown"],
       "additionalProperties": false,
       "properties": {

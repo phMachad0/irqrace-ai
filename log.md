@@ -630,3 +630,38 @@ README, hand-checked as a concrete interleaving — the second, after 001's ([[C
 [[Semana 5 — O Stage 2, Prioridade e Máscara]] revised where its code changed. Pages touched:
 [[Path Feasibility Analysis]], [[Racebench]], [[Contradictions]], [[Open Questions]], [[Roadmap]].
 
+## [2026-10-24] direction | triples only — one candidate class
+
+Pedro decided that the tool generates, filters and reports **one candidate class, the
+atomicity-violation triple** — recorded in [[Triples Only]], the one project page that describes
+what was removed. The code of every stage, the contracts, the project documentation, the diary
+(W1–W7) and the `wiki/codigo/` pages were rewritten to it. Per Pedro's scope decisions the
+literature pages keep describing what the papers do, with only the sentences about this
+project's design changed, and the historical records — this log's earlier entries and the
+2026-10-23 meeting notes — are kept as they were.
+
+**Contracts**: C1 `c1/2.0.0` (`analysis.candidate_classes` removed), C2 `c2/2.0.0` (`class`
+constant, exactly three accesses, `pattern` one of the four unserializable shapes), C3's drop
+record narrowed; the fingerprint is unchanged, so every triple keeps its id and Track B's cache
+stays valid. Tool `0.2.0`.
+
+**Regression check**: every triple result — ids, stage-2 decisions and masking states, solver
+verdicts, matches against the ground truth — compared subject by subject against a snapshot
+taken before the change: **zero differences across the 31 cases**. The rewritten stage-3 tests
+were mutation-checked again, plus a fourth mutation (no interference) that two tests catch.
+
+```
+funnel: 316 -> 202 -> 166  [stage 1 1727 ms, stage 2 1325 ms, solver 17636 ms]
+RECALL GATE (stage3): 48/48 annotated bug points present -- PASS
+traps reported: 35/38 after stage 1, 30/38 after stage 2, 16/38 reaching the LLM
+```
+
+The cost in recall is stated, not hidden: a defect needing only one access in each flow is out
+of scope by decision — [[Soundness Assumptions]] H1e — and the race-detection papers' numbers no
+longer have a counterpart here. 327 tests pass. Track B's refactor is GitHub issue
+[phMachad0/irqrace-ai#1](https://github.com/phMachad0/irqrace-ai/issues/1), assigned to Lucas.
+Pages touched: [[Thesis Goal]], [[Pipeline Design]], [[LLM Stage Design]], [[Dashboard Design]],
+[[Roadmap]], [[Soundness Assumptions]], [[Open Questions]], [[Path Feasibility Analysis]],
+[[Pair-Triple Unification]], [[Access Interleaving Patterns]], [[Soundness and False Negatives]],
+[[Data Race]], [[Reimplementation Assessment]], all seven diary pages, `CLAUDE.md`.
+

@@ -5,12 +5,10 @@ pipeline has to obey from stage 2 onward, and the concrete case that proves it.
 
 ## The rule
 
-Stage 2 asks two questions about interrupt masking, and they are different
-questions ([[Pair-Triple Unification]]):
-
-* **point property**, for pairs — is interrupt *n* masked *at* access `A`?
-* **interval property**, for triples — is interrupt *n* masked *throughout*
-  `[A₁, A₂]`?
+Stage 2 asks one masking question of every candidate, the **interval
+property**: is interrupt *n* masked *throughout* `[A₁, A₂]`? What holds at `A₁`
+or at `A₂` alone is recorded as evidence and never answers it — masked at both
+accesses does not mean masked in between.
 
 The recall-safe direction is stated in [[Pipeline Design]]: an interrupt counts
 as masked at a point **only if it is masked on every path reaching that point**.

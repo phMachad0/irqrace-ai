@@ -2,7 +2,7 @@
 type: project
 tags: [wiki, project, diario, pt-br]
 sources: ["[[Roadmap]]", "[[Pipeline Design]]", "[[Path Feasibility Analysis]]", "[[Soundness Assumptions]]", "[[IntRace (paper)]]"]
-updated: 2026-10-22
+updated: 2026-10-24
 status: draft
 ---
 
@@ -11,6 +11,10 @@ status: draft
 **Período planejado:** 5–9 out 2026 (primeira metade do bloco W6–W7) · **implementado em:**
 22 out 2026 · **Trilha A** · [[Roadmap]] W6–W7. Página anterior:
 [[Semana 5 — O Stage 2, Prioridade e Máscara]]. Próxima: [[Semana 7 — O Stage 3, Busca e Verificação]].
+
+> [!note] Revisado em 24 out 2026
+> Desde esta data o projeto trabalha com uma única classe de candidato, a trinca de violação de
+> atomicidade ([[Triples Only]]). Esta página descreve o código como ele é hoje.
 
 > [!note] Sobre a divisão entre esta página e a próxima
 > W6–W7 é um bloco único no [[Roadmap]] e foi implementado de uma vez, no mesmo dia que a semana
@@ -25,7 +29,7 @@ status: draft
 | Resumos simbólicos das ISRs; *splice* no ponto de preempção; descarregar as restrições de caminho | feito — `analysis/src/irqrace-stage3.cpp`, execução simbólica sobre o IR LLVM com Z3 |
 | **Só alcançabilidade**, nunca "não serializável"; o solver só serve para provar impossível | feito — a pergunta é a da §3 |
 | Timeout e construção não suportada → **`inconclusive`**, mantido e repassado, nunca `SAT`, nunca descartado | feito — §7, com testes |
-| **Pronto quando:** o funil inteiro medido — stage 1 → stage 2 → Z3 → LLM — com tempos por estágio | feito — 566 → 436 → **383** ([[Semana 7 — O Stage 3, Busca e Verificação|semana 7]], §8) |
+| **Pronto quando:** o funil inteiro medido — stage 1 → stage 2 → Z3 → LLM — com tempos por estágio | feito — 316 → 202 → **166** ([[Semana 7 — O Stage 3, Busca e Verificação|semana 7]], §1) |
 | **Pronto quando:** recall gate continua 100% | **48/48**, medido sobre os registros que chegam ao LLM |
 
 ## 2. Conceitos desta semana
@@ -70,8 +74,6 @@ Para uma trinca `(A₁, B, A₂)`, com A₁ e A₂ no fluxo F e B no fluxo H:
 > Existe uma execução em que F chega a A₁, depois H roda desde a sua entrada até B enquanto F está
 > em algum ponto entre A₁ e A₂, e depois F chega a A₂ — com os três acessos tocando a mesma
 > célula de memória?
-
-Para um par `(A, B)`: H pode chegar a B enquanto F está em A?
 
 É **só alcançabilidade**. Se a interleaving é danosa, ou mesmo não serializável, não é pergunta do
 solver: isso já foi filtrado estruturalmente no stage 1 (as quatro formas não serializáveis,
@@ -252,9 +254,9 @@ Os três veredictos, em `src/irqrace/stage3.py`:
 
 ```python
 * ``unsat`` -- no execution of the over-approximate encoding reaches A1, then B
-  inside [A1, A2] (or B at A, for a pair), then A2, touching one memory cell.
-  Since every real execution is an execution of the encoding, none of those does
-  either. A proof, and the only licence to drop.
+  inside [A1, A2], then A2, touching one memory cell. Since every real execution
+  is an execution of the encoding, none of those does either. A proof, and the
+  only licence to drop.
 * ``sat`` -- the encoding has such an execution. **Not** a confirmation: the
   encoding havocs everything a concurrently running flow may write, and
   everything a loop may write, so a SAT witness may be spurious. The record's
@@ -278,10 +280,9 @@ comportamento indefinido que a análise precise seguir (**J6**). Desreferenciar 
 aponta para nenhum dos seus alvos possíveis — nulo inclusive — não toca objeto nenhum; chamar por
 um ponteiro assim não acontece; acessos ficam dentro do seu objeto; aritmética inteira dá a volta.
 
-Dois `unsat` auditados no Racebench dependem disso: no `svp_simple_029_001`, o par (45, 83), em que
-`ptr_SetTmData` ainda é `NULL` quando `main` está no laço de inicialização; no `svp_simple_009_001`, o
-par (26, 44), em que `p` ainda é `NULL` na linha 26. Um programa com UB pode fazer qualquer coisa, e
-a codificação não faz.
+Nenhum `unsat` do Racebench depende disso: todos foram auditados contra o fonte, e cada um tem
+como motivo um índice, uma guarda, um inicializador ou um ponteiro reapontado (semana 7, §6). Um
+programa com UB pode fazer qualquer coisa, e a codificação não faz.
 
 ## 10. Como reproduzir
 

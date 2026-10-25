@@ -16,13 +16,10 @@ overlap. Rebuilt here for recall, which changes three things:
 * **Masking is a whole-program question**, answered by :mod:`irqrace.masking`:
   another flow may run inside an interval and unmask what the local flow masked.
 
-The two questions are kept apart, as [[Pair-Triple Unification]] requires:
-
-* **pairs -- the point property.** ``(A, B)`` survives if B's flow may run while
-  A's flow is at A, or the other way round.
-* **triples -- the interval property.** ``(A1, B, A2)`` survives if B's flow may
-  run at *any* point of *any* path from A1 to A2 in A1's flow -- callees on the
-  path included, directly or nested inside another flow that runs there.
+**The interval property decides.** ``(A1, B, A2)`` survives if B's flow may run
+at *any* point of *any* path from A1 to A2 in A1's flow -- callees on the path
+included, directly or nested inside another flow that runs there. What holds at
+A1 or at A2 alone is recorded as evidence, and never decides.
 
 "May run while F is at p" (:meth:`Concurrency.run`) is: every flow whose
 interrupt is not masked at p (after interference) and that may preempt F on
@@ -393,14 +390,13 @@ class Stage2:
         return (f"{high.id} has priority {high.priority}, lower than {low.id}'s "
                 f"{low.priority}, and only a strictly higher priority preempts (E1)")
 
-    def _priority_relies(self, high: Flow, low: Flow, *, triple: bool = False) -> list[str]:
-        out = set(RELIES_PRIORITY)
+    def _priority_relies(self, high: Flow, low: Flow) -> list[str]:
+        # G2c: the interval lies within one activation of the local flow.
+        out = set(RELIES_PRIORITY) | {"G2c"}
         if high.priority == low.priority:
             out.add("E2")
         if low.is_isr:
             out.add("E5")
-        if triple:
-            out.add("G2c")  # the interval lies within one activation of the local flow
         return sorted(out)
 
     def _irq_name(self, flow: Flow) -> str:
@@ -486,7 +482,7 @@ class Stage2:
             return Verdict(
                 keep=False, preemption=self._preemption(H, F, None), per_access=per_access,
                 interval=interval, reason="priority", any_masking=any_masking,
-                relies_on=self._priority_relies(H, F, triple=True),
+                relies_on=self._priority_relies(H, F),
                 proof=(f"{H.id} can never run while {F.id} is active, so B cannot fall "
                        f"between line {l1} and line {l2}: "
                        f"{self._why_not_by_priority(H, F)}."))
@@ -547,68 +543,10 @@ class Stage2:
         return not masked(entry[self.m.idx[n]]) and bool(
             set(entry[self.m.idx[n]]) & cells[n])
 
-    # -- pairs -----------------------------------------------------------
-
-    def _pair(self, rec: dict[str, Any]) -> Verdict:
-        by_role = {a["role"]: a for a in rec["accesses"]}
-        a, b = self._access(by_role["A1"]), self._access(by_role["B"])
-        L, H = self.flows[a["flow"]], self.flows[b["flow"]]
-        la, lb = by_role["A1"]["source"]["line"], by_role["B"]["source"]["line"]
-        ca, cb = self.m.state(L.id, self._pre(a)), self.m.state(H.id, self._pre(b))
-        per_access = {"A1": self._masking_state(ca), "B": self._masking_state(cb)}
-        any_masking = any(st["disabled"] for st in per_access.values())
-
-        for high, low, c, line, other_line in ((H, L, ca, la, lb), (L, H, cb, lb, la)):
-            if high.id in self.c.run(low.id, c):
-                depth = 1 if c is None else self.c.depth(low.id, c, high.id)
-                note = (f"{high.id} may run while {low.id} is at line {line}"
-                        + (f" (nesting depth {depth})" if depth else ""))
-                if c is not None and high.irq in self.m.idx:
-                    cell = c[self.m.idx[high.irq]]
-                    if masked(cell):
-                        note += (f", nested inside another flow: irq {high.irq} itself is "
-                                 f"masked there by {_cite(origins(cell, D))}")
-                    else:
-                        note += (f": irq {high.irq} is not masked on every path there; "
-                                 f"it may be enabled by {_cite(origins(cell, E, U))}")
-                return Verdict(
-                    keep=True, preemption=self._preemption(high, low, depth),
-                    per_access=per_access, any_masking=any_masking,
-                    notes=[{"fact": "masking.per_access", "status": "overapproximated",
-                            "note": note + "."}])
-
-        if H.id not in self.c.static_run[L.id] and L.id not in self.c.static_run[H.id]:
-            return Verdict(
-                keep=False, preemption=self._preemption(H, L, None), per_access=per_access,
-                reason="priority", any_masking=any_masking,
-                relies_on=sorted(set(self._priority_relies(H, L))
-                                 | set(self._priority_relies(L, H))),
-                proof=(f"Neither flow can run while the other is active: "
-                       f"{self._why_not_by_priority(H, L)}; and "
-                       f"{self._why_not_by_priority(L, H)}."))
-
-        reasons = []
-        for high, low, c, line in ((H, L, ca, la), (L, H, cb, lb)):
-            if high.id not in self.c.static_run[low.id]:
-                reasons.append(f"{high.id} never runs while {low.id} is active: "
-                               f"{self._why_not_by_priority(high, low)}")
-            else:
-                cell = c[self.m.idx[high.irq]] if c is not None else frozenset()
-                reasons.append(
-                    f"{high.id} may preempt {low.id} on priority, but "
-                    f"{self._irq_name(high)} is masked at line {line} on every path, even "
-                    f"after every mask change a flow able to run there could make "
-                    f"(masked by {_cite(origins(cell, D))}), and no flow that may run "
-                    f"there unmasks it")
-        return Verdict(
-            keep=False, preemption=self._preemption(H, L, None), per_access=per_access,
-            reason="masking", any_masking=any_masking, relies_on=sorted(RELIES_MASKING),
-            proof="; ".join(reasons) + ".")
-
     # -- records ---------------------------------------------------------
 
     def judge(self, rec: dict[str, Any]) -> Verdict:
-        return self._triple(rec) if rec["class"] == "atomicity-triple" else self._pair(rec)
+        return self._triple(rec)
 
     def _enrich(self, rec: dict[str, Any], v: Verdict) -> dict[str, Any]:
         out = copy.deepcopy(rec)
@@ -655,9 +593,6 @@ class Stage2:
         }
 
     def run(self, candidates: Iterable[dict[str, Any]]) -> Stage2Result:
-        # Pairs and triples are judged independently, from the same analysis:
-        # a pair's verdict never decides a triple's, nor the reverse
-        # ([[Pair-Triple Unification]]).
         kept, dropped = [], []
         for rec in candidates:
             v = self.judge(rec)
@@ -733,17 +668,10 @@ def stage2(cfg: Config, store) -> dict[str, Any]:
                  if reasons else ""),
               rounds=result.report["rounds"])
 
-    def count(recs, cls):
-        return sum(1 for r in recs if r["class"] == cls)
-
     return {
         "in": len(candidates),
         "kept": len(result.kept),
         "dropped": len(result.dropped),
-        "triples_in": count(candidates, "atomicity-triple"),
-        "triples_kept": count(result.kept, "atomicity-triple"),
-        "pairs_in": count(candidates, "race-pair"),
-        "pairs_kept": count(result.kept, "race-pair"),
         "reasons": reasons,
         "rounds": result.report["rounds"],
         "wall_ms": wall,

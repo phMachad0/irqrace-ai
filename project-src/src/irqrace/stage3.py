@@ -17,9 +17,9 @@ This module is the bookkeeping around it:
 What a verdict means, precisely:
 
 * ``unsat`` -- no execution of the over-approximate encoding reaches A1, then B
-  inside [A1, A2] (or B at A, for a pair), then A2, touching one memory cell.
-  Since every real execution is an execution of the encoding, none of those does
-  either. A proof, and the only licence to drop.
+  inside [A1, A2], then A2, touching one memory cell. Since every real execution
+  is an execution of the encoding, none of those does either. A proof, and the
+  only licence to drop.
 * ``sat`` -- the encoding has such an execution. **Not** a confirmation: the
   encoding havocs everything a concurrently running flow may write, and
   everything a loop may write, so a SAT witness may be spurious. The record's
@@ -48,7 +48,6 @@ STAGE3_PATH = REPO_ROOT / "analysis" / "build" / "bin" / "irqrace-stage3"
 #: `inconclusive`, never a verdict.
 MAX_STATES = 40000
 
-ROLES = ("A1", "B", "A2")
 
 
 class Stage3Error(RuntimeError):
@@ -96,22 +95,10 @@ def build_query(analysis: dict[str, Any], cfg: Config, candidates: list[dict[str
 
     for rec in candidates:
         by_role = {a["role"]: accesses[a["ir"]["access"]] for a in rec["accesses"]}
-        roles = ROLES if rec["class"] == "atomicity-triple" else ROLES[:2]
-        where = {r: _instruction(prog, by_role[r]) for r in roles}
-        if rec["class"] == "atomicity-triple":
-            (f1, b1, i1), (fb, bb, ib), (f2, b2, i2) = where["A1"], where["B"], where["A2"]
-            out.append(f"cand {rec['id']} triple {by_role['A1']['flow']} {f1} {b1} {i1} "
-                       f"{by_role['B']['flow']} {fb} {bb} {ib} {f2} {b2} {i2} AB")
-        else:
-            (fa, ba, ia), (fb, bb, ib) = where["A1"], where["B"]
-            low, high = by_role["A1"]["flow"], by_role["B"]["flow"]
-            dirs = []
-            if high in c.run(low, m.state(low, s2._pre(by_role["A1"]))):
-                dirs.append("AB")
-            if low in c.run(high, m.state(high, s2._pre(by_role["B"]))):
-                dirs.append("BA")
-            out.append(f"cand {rec['id']} pair {low} {fa} {ba} {ia} {high} {fb} {bb} {ib} "
-                       f"{','.join(dirs) or 'AB,BA'}")
+        (f1, b1, i1), (fb, bb, ib), (f2, b2, i2) = (
+            _instruction(prog, by_role[r]) for r in ("A1", "B", "A2"))
+        out.append(f"cand {rec['id']} {by_role['A1']['flow']} {f1} {b1} {i1} "
+                   f"{by_role['B']['flow']} {fb} {bb} {ib} {f2} {b2} {i2}")
     return "\n".join(out) + "\n"
 
 
@@ -239,6 +226,4 @@ def stage3(cfg: Config, store, bitcode: Path) -> dict[str, Any]:
         if st["method"]:
             methods[st["method"]] = methods.get(st["method"], 0) + 1
     return {"in": len(candidates), "verdicts": counts, "kept": len(kept), "methods": methods,
-            "dropped": counts.get("unsat", 0), "wall_ms": wall,
-            "triples_kept": sum(1 for r in kept if r["class"] == "atomicity-triple"),
-            "pairs_kept": sum(1 for r in kept if r["class"] == "race-pair")}
+            "dropped": counts.get("unsat", 0), "wall_ms": wall}

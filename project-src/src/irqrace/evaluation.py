@@ -33,7 +33,7 @@ point no matter how good the analyzer is.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Iterable, Sequence
+from typing import Any, Sequence
 
 from .candidate import ROLE_ORDER
 from .groundtruth import Annotation, SuiteGroundTruth
@@ -132,15 +132,13 @@ def match_subject(
 ) -> SubjectReport:
     """Match one subject's reported candidates against its annotations.
 
-    Only ``atomicity-triple`` candidates take part. The ground truth is
-    triple-shaped, and scoring pair candidates against it is exactly the
-    vocabulary confusion the wiki flags in [[IntRace (paper)]], which reports
-    triples under a two-access name ([[Pair-Triple Unification]]). Pair coverage
-    is a separate number; see :func:`pair_coverage`.
+    Both sides are triples: the ground truth is annotated as access triples, and
+    every candidate is one ([[Triples Only]]). The rank of a match is its
+    position in the reported order, which feeds the Inspection Ratio.
     """
     report = SubjectReport(subject=subject)
-    triples = [c for c in candidates if c.get("class") == "atomicity-triple"]
-    report.candidates_reported = len(candidates)
+    triples = list(candidates)
+    report.candidates_reported = len(triples)
 
     by_lines: dict[tuple[int, ...], list[tuple[int, dict[str, Any]]]] = {}
     for rank, c in enumerate(triples):
@@ -165,20 +163,6 @@ def match_subject(
 
     report.unmatched_candidates = len(triples) - len(consumed)
     return report
-
-
-def pair_coverage(annotation: Annotation, candidates: Iterable[dict[str, Any]]) -> bool:
-    """Is this triple covered by the reported *pair* candidates?
-
-    A triple ``(A1, B, A2)`` is pair-covered when both of its projections,
-    ``(A1, B)`` and ``(B, A2)``, appear among the reported race pairs. Reported
-    alongside triple recall, never instead of it: a detector that finds both
-    pairs has not necessarily found the atomicity violation, which is the whole
-    argument of [[Pair-Triple Unification]].
-    """
-    pairs = {candidate_lines(c) for c in candidates if c.get("class") == "race-pair"}
-    a1, b, a2 = annotation.lines
-    return (a1, b) in pairs and (b, a2) in pairs
 
 
 def inspection_ratio(report: SubjectReport) -> float | None:

@@ -217,8 +217,7 @@ def cmd_stage1(args: argparse.Namespace) -> int:
     except (BuildError, Stage1Error) as e:
         return _err(str(e))
 
-    print(f"{cfg.name}: {summary['candidates']} candidates "
-          f"({summary['triples']} triples, {summary['pairs']} pairs) from "
+    print(f"{cfg.name}: {summary['candidates']} candidates from "
           f"{summary['accesses']} accesses to {summary['objects']} shared object(s)")
     for w in summary["warnings"]:
         print(f"  ! [{w.get('severity', 'warn')}] {w['code']}: {w['message']}")
@@ -241,11 +240,9 @@ def cmd_stage2(args: argparse.Namespace) -> int:
     print(f"{cfg.name}: stage 1 {s1['candidates']} candidates -> stage 2 {s2['kept']} "
           f"kept, {s2['dropped']} dropped with proof "
           f"({', '.join(f'{k} {v}' for k, v in sorted(s2['reasons'].items())) or 'none'})")
-    print(f"  triples {s2['triples_in']} -> {s2['triples_kept']}, "
-          f"pairs {s2['pairs_in']} -> {s2['pairs_kept']}; masking fixpoint in "
-          f"{s2['rounds']} round(s), {s2['wall_ms']} ms")
+    print(f"  masking fixpoint in {s2['rounds']} round(s), {s2['wall_ms']} ms")
     for d in store.read_drops() if args.verbose else []:
-        print(f"  - {d['candidate_id']} {d['class']} {d['pattern']} {d['lines']} "
+        print(f"  - {d['candidate_id']} {d['pattern']} {d['lines']} "
               f"[{d['reason']}] {d['proof']}")
     print(f"  {store.root}")
     return 0
@@ -274,7 +271,7 @@ def cmd_stage3(args: argparse.Namespace) -> int:
             r = json.loads(line)
             c = by_id[r["candidate_id"]]
             lines = [a["source"]["line"] for a in c["accesses"]]
-            print(f"  - {r['candidate_id']} {c['class']:<16} {c.get('pattern', ''):<3} "
+            print(f"  - {r['candidate_id']} {c.get('pattern', ''):<3} "
                   f"{lines} {r['verdict']}{' (' + r['reason'] + ')' if r.get('reason') else ''}"
                   f"  {r['wall_ms']} ms")
     print(f"  {store.root}")
@@ -297,13 +294,13 @@ def _bench_run(args: argparse.Namespace, through: str) -> int:
     if not configs:
         return _err(f"no configurations in {args.configs}")
     gt = load_suite(Path(args.suite), Path(args.errata))
-    s3tot = {"in": 0, "kept": 0, "ms": 0, "t": 0, "p": 0}
+    s3tot = {"in": 0, "kept": 0, "ms": 0}
     verdicts: dict[str, int] = {}
     traps_s3 = 0
     slowest: list[tuple[int, str]] = []
 
     rows, failures, problems = [], [], []
-    tot = {"s1": 0, "s1t": 0, "s1p": 0, "s2": 0, "s2t": 0, "s2p": 0}
+    tot = {"s1": 0, "s2": 0}
     reasons: dict[str, int] = {}
     bugs_found = bugs_total = traps_total = traps_s1 = traps_s2 = 0
     per_subject_attrition = []
@@ -338,8 +335,6 @@ def _bench_run(args: argparse.Namespace, through: str) -> int:
             s3tot["in"] += s3["in"]
             s3tot["kept"] += s3["kept"]
             s3tot["ms"] += s3["wall_ms"]
-            s3tot["t"] += s3.get("triples_kept", 0)
-            s3tot["p"] += s3.get("pairs_kept", 0)
             slowest.append((s3["wall_ms"], cfg.name))
         (store.root / "eval" / "report.json").write_text(
             json.dumps(report_json(rep, stage=through), indent=2, ensure_ascii=False) + "\n")
@@ -351,16 +346,12 @@ def _bench_run(args: argparse.Namespace, through: str) -> int:
         traps_s1 += rep1.traps_reported
         traps_s2 += rep2.traps_reported
         tot["s1"] += s1["candidates"]
-        tot["s1t"] += s1["triples"]
-        tot["s1p"] += s1["pairs"]
         stage_ms = {st["name"]: st.get("wall_ms") or 0
                     for st in store.read_manifest()["stages"]}
         t_s1 += stage_ms.get("stage1", 0)
         if s2 is not None:
             t_s2 += s2["wall_ms"]
             tot["s2"] += s2["kept"]
-            tot["s2t"] += s2["triples_kept"]
-            tot["s2p"] += s2["pairs_kept"]
             for k, v in s2["reasons"].items():
                 reasons[k] = reasons.get(k, 0) + v
             if s2["in"]:
@@ -376,14 +367,11 @@ def _bench_run(args: argparse.Namespace, through: str) -> int:
                   f"traps {rep1.traps_reported}->{rep2.traps_reported}->{rep.traps_reported}"
                   f"/{len(rep.trap_matches)}  [{s3['wall_ms']} ms]")
         elif s2 is None:
-            print(f"[{gate}] {cfg.name:<20} {s1['candidates']:>5} cand "
-                  f"({s1['triples']:>4}t {s1['pairs']:>3}p)  "
+            print(f"[{gate}] {cfg.name:<20} {s1['candidates']:>5} cand  "
                   f"bugs {rep.bugs_detected}/{len(rep.bug_matches)}  "
                   f"traps {rep.traps_reported}/{len(rep.trap_matches)}")
         else:
-            print(f"[{gate}] {cfg.name:<20} {s1['candidates']:>4} -> {s2['kept']:>3} cand "
-                  f"({s2['triples_in']:>3}t->{s2['triples_kept']:>3}t "
-                  f"{s2['pairs_in']:>3}p->{s2['pairs_kept']:>3}p)  "
+            print(f"[{gate}] {cfg.name:<20} {s1['candidates']:>4} -> {s2['kept']:>3} cand  "
                   f"bugs {rep.bugs_detected}/{len(rep.bug_matches)}  "
                   f"traps {rep1.traps_reported}->{rep.traps_reported}/{len(rep.trap_matches)}")
         for m in rep.bug_matches:
@@ -395,17 +383,13 @@ def _bench_run(args: argparse.Namespace, through: str) -> int:
     print()
     print(f"{n}/{len(configs)} subjects analysed")
     if n and through == "stage1":
-        # Kept byte-for-byte as W3-W4 printed it: the README and the W4 diary
-        # quote these lines.
-        print(f"candidates: {tot['s1']} total, {tot['s1'] / n:.1f} per subject "
-              f"({tot['s1t']} triples, {tot['s1p']} pairs)")
+        print(f"candidates: {tot['s1']} total, {tot['s1'] / n:.1f} per subject")
     elif n:
-        print(f"stage 1: {tot['s1']} candidates, {tot['s1'] / n:.1f} per subject "
-              f"({tot['s1t']} triples, {tot['s1p']} pairs)  [{t_s1} ms total]")
+        print(f"stage 1: {tot['s1']} candidates, {tot['s1'] / n:.1f} per subject  "
+              f"[{t_s1} ms total]")
     if through in ("stage2", "stage3") and n:
         dropped = tot["s1"] - tot["s2"]
-        print(f"stage 2: {tot['s2']} kept ({tot['s2t']} triples, {tot['s2p']} pairs), "
-              f"{dropped} dropped with proof "
+        print(f"stage 2: {tot['s2']} kept, {dropped} dropped with proof "
               f"({', '.join(f'{k} {v}' for k, v in sorted(reasons.items())) or 'none'})"
               f"  [{t_s2} ms total]")
 
@@ -414,26 +398,24 @@ def _bench_run(args: argparse.Namespace, through: str) -> int:
         lo = min(per_subject_attrition, default=0)
         hi = max(per_subject_attrition, default=0)
         concurrency = reasons.get("priority", 0) + reasons.get("masking", 0)
-        print(f"attrition: {pct(dropped, tot['s1'])} overall -- triples "
-              f"{pct(tot['s1t'] - tot['s2t'], tot['s1t'])}, pairs "
-              f"{pct(tot['s1p'] - tot['s2p'], tot['s1p'])}; "
+        print(f"attrition: {pct(dropped, tot['s1'])} overall; "
               f"{100 * lo:.0f}-{100 * hi:.0f}% per subject")
         print(f"  of which concurrency (priority + masking): "
               f"{pct(concurrency, tot['s1'])}; no-path is stage 1's cross-function "
               f"may-precede refined, not a concurrency result")
         print("  for scale: IntRace reports 54.2% (33-63% per project) for its stage 2, "
-              "on data-race pairs in real-world subjects")
+              "on another candidate class, in real-world subjects")
     if through == "stage3" and n:
         def pct3(a, b):
             return f"{100 * a / b:.1f}%" if b else "n/a"
         print(f"solver: {s3tot['in']} in -> {verdicts.get('sat', 0)} sat, "
               f"{verdicts.get('inconclusive', 0)} inconclusive, {verdicts.get('unsat', 0)} unsat "
               f"(dropped with proof)  [{s3tot['ms']} ms total]")
-        print(f"reaching the LLM: {s3tot['kept']} ({s3tot['t']} triples, {s3tot['p']} pairs), "
+        print(f"reaching the LLM: {s3tot['kept']}, "
               f"{s3tot['kept'] / n:.1f} per subject; solver attrition "
               f"{pct3(verdicts.get('unsat', 0), s3tot['in'])}")
         print("  for scale: IntRace reports 86.2% (41-93%) for its feasibility stage, on "
-              "real-world subjects and data-race pairs")
+              "another candidate class, in real-world subjects")
         print(f"funnel: {tot['s1']} -> {tot['s2']} -> {s3tot['kept']}  "
               f"[stage 1 {t_s1} ms, stage 2 {t_s2} ms, solver {s3tot['ms']} ms]")
         slow = sorted(slowest, reverse=True)[:3]

@@ -17,7 +17,7 @@ four; that is the point, and it is why it is small.
 
 ## Versioning
 
-Every instance document carries `schema_version` (`c1/1.0.0`, `c2/1.0.0`, …). **C2 is the
+Every instance document carries `schema_version` (`c1/2.0.0`, `c2/2.0.0`, `c3/1.0.0`, `c4/1.0.0`). **C2 is the
 critical one** — it is the seam between the two people. The Roadmap's stated response to
 contract churn is to freeze C2 by decree and *version it rather than renegotiate it*, so:
 
@@ -40,9 +40,10 @@ so it cannot be quietly reversed in code:
 1. **Masking is three-valued** (`disabled` / `enabled` / `unknown`), and an interrupt is
    `disabled` only if it is disabled on *every* path. There is deliberately no boolean
    `is_masked` field to reach for ([[Pipeline Design]], stage 2).
-2. **The interval property is separate from the point property.** Triples carry
-   `masking.interval`; pairs do not. Answering one and inferring the other is the mistake
-   [[Pair-Triple Unification]] exists to prevent.
+2. **The interval property is a field of its own.** `masking.interval` says whether an
+   interrupt is masked throughout `[A1, A2]`; `masking.per_access` says what holds at each
+   access. Neither is inferred from the other: masked at A1 and at A2 does not mean masked in
+   between.
 3. **The solver verdict has four values, not two** — `unsat`, `sat`, `inconclusive`,
    `not_run` — and `inconclusive` requires a `reason`. Collapsing it into either decided
    outcome loses exactly the information the LLM stage exists to exploit.

@@ -72,7 +72,6 @@ def stage1(cfg: Config, store, bitcode: Path) -> dict[str, Any]:
     candidates = derive_candidates(analysis, cfg)
     n = store.append_candidates("stage1", candidates)
 
-    triples = sum(1 for c in candidates if c["class"] == "atomicity-triple")
     store.set_stage(
         "stage1", "ok",
         candidates_out=n,
@@ -82,13 +81,10 @@ def stage1(cfg: Config, store, bitcode: Path) -> dict[str, Any]:
         wall_ms=int((time.perf_counter() - t0) * 1000),
     )
     store.log("info", "stage1", "candidates-derived",
-              f"{n} candidates ({triples} triples, {n - triples} pairs) over "
-              f"{len(analysis['accesses'])} accesses to "
+              f"{n} candidates over {len(analysis['accesses'])} accesses to "
               f"{len(analysis['objects'])} shared object(s)")
     return {
         "candidates": n,
-        "triples": triples,
-        "pairs": n - triples,
         "accesses": len(analysis["accesses"]),
         "objects": len(analysis["objects"]),
         "warnings": analysis.get("warnings", []),

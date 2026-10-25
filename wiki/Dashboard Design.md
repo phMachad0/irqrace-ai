@@ -123,7 +123,7 @@ The most valuable screen, because this is the hand-written configuration file
 
 ### C. Analysis settings
 
-- **R13 (MUST)** Select the pattern set: race pairs and each triple shape independently,
+- **R13 (MUST)** Select the pattern set: each triple shape independently,
   with `(R,W,W)` **included by default** and a visible warning if it is switched off, since
   excluding a pattern is a definitional false negative ([[Contradictions]] #2).
 - **R14 (MUST)** Configure the Z3 stage: per-candidate timeout, and the policy on timeout — with
@@ -154,7 +154,7 @@ The most valuable screen, because this is the hand-written configuration file
 The core screen, and the one where the project's central rule is either honoured or quietly
 broken.
 
-- **R23 (MUST)** List every candidate with filters on class (pair/triple), pattern, variable,
+- **R23 (MUST)** List every candidate with filters on pattern, variable,
   flows involved, solver verdict, and LLM bucket; sortable by LLM rank.
 - **R24 (MUST)** **Nothing is hidden by default.** Candidates the solver *proved* impossible are
   shown in a separate, collapsed section **with the proof**, not deleted. Candidates the LLM
@@ -162,14 +162,14 @@ broken.
   not* ([[LLM Triage]]), and a UI that hides low-ranked candidates by default reimplements the
   filter the design rejects.
 - **R25 (MUST)** Detail view rendering the full context record ([[LLM Stage Design]]): variable,
-  the access pair or triple, the flows and priorities, call paths from each entry point, masking
+  the access triple, the flows and priorities, call paths from each entry point, masking
   state at each access and across the interval, loop context, the solver verdict, and
   provenance — which facts are proven, which come from the configuration file, which are
   unknown.
 - **R26 (MUST)** Source viewer with the accesses highlighted, showing the preempted flow and the
   preempting ISR side by side. This is the single most useful thing the UI can do that a text
   report cannot.
-- **R27 (SHOULD)** Group candidates by variable and by flow pair, since one variable typically
+- **R27 (SHOULD)** Group candidates by variable and by preempted/preempting flows, since one variable typically
   generates many candidates and they are triaged together.
 - **R28 (SHOULD)** Let a user mark a candidate as confirmed / rejected / unsure, persisted with
   the run. These labels are the ground truth for every evaluation, and for balanced few-shot

@@ -12,8 +12,8 @@
 // and the reason to start from it). Masking is stage 2's job and path
 // feasibility is stage 3's. Nothing here discards a candidate.
 //
-// Candidate derivation itself -- pairs and triples from this one access set --
-// happens in Python, on top of the `may_precede` relation this tool emits. The
+// Candidate derivation itself -- the triples (A1, B, A2) built from this access
+// set -- happens in Python, on top of the `may_precede` relation this tool emits. The
 // split follows the stack decision in wiki/comparisons/Reimplementation
 // Assessment.md: C++ for anything touching LLVM and SVF, Python for the
 // bookkeeping.
@@ -707,9 +707,9 @@ int main(int argc, char **argv) {
 
   // ---- may-precede, within a flow --------------------------------------
   //
-  // Only ordered pairs inside one flow are emitted: this is the relation
-  // triple derivation needs, and it is quadratic, so it is not computed
-  // across flows where it would be meaningless anyway.
+  // The relation is emitted only within one flow: that is what triple
+  // derivation needs (A1 before A2, both in the preempted flow), and it is
+  // quadratic, so it is not computed across flows where it would mean nothing.
   std::ostringstream precede;
   bool pfirst = true;
   unsigned precedeCount = 0;

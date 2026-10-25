@@ -2,7 +2,7 @@
 type: project
 tags: [wiki, project, diario, pt-br]
 sources: ["[[Roadmap]]", "[[Pipeline Design]]", "[[IntRace (paper)]]", "[[Soundness Assumptions]]"]
-updated: 2026-09-18
+updated: 2026-10-24
 status: draft
 ---
 
@@ -19,6 +19,10 @@ Página anterior: [[Semana 2 — Ground Truth e Protocolo de Avaliação]].
 > enumeração de acessos); lá a derivação de candidatos, a emissão dos registros e o portão de
 > recall.
 
+> [!note] Revisado em 24 out 2026
+> Desde esta data o projeto trabalha com uma única classe de candidato, a trinca de violação de
+> atomicidade ([[Triples Only]]). Esta página descreve o código como ele é hoje.
+
 ## 1. O que o bloco tinha que entregar
 
 | Item do Roadmap | Onde está |
@@ -26,7 +30,7 @@ Página anterior: [[Semana 2 — Ground Truth e Protocolo de Avaliação]].
 | Pontos de entrada a partir da configuração; alcançabilidade interprocedural por fluxo | esta página |
 | Identificação de posições compartilhadas via **may**-alias do SVF | esta página |
 | Enumeração de acessos: fluxo, R/W, função, caminho de chamada, `DILocation`, contexto de laço | esta página |
-| Derivação de candidatos — pares **e** trincas de um só conjunto de acessos | [[Semana 4 — Derivação de Candidatos e o Recall Gate]] |
+| Derivação de candidatos — trincas a partir do conjunto de acessos | [[Semana 4 — Derivação de Candidatos e o Recall Gate]] |
 | Emitir registros C2 e diretórios C3 | [[Semana 4 — Derivação de Candidatos e o Recall Gate]] |
 | **Critério de pronto:** `candidates.jsonl` para os 31 casos, recall 48/48 | [[Semana 4 — Derivação de Candidatos e o Recall Gate]] |
 
@@ -72,10 +76,10 @@ SVF, Python para orquestração e bookkeeping** — as bibliotecas são C++ e *b
 
 ```
 irqrace-stage1 (C++/SVF)           stage1.py (Python)
-  grafo de chamadas                  derivação de pares
-  alcançabilidade por fluxo   ──►    derivação de trincas
-  posições compartilhadas            registros C2
-  enumeração de acessos              run store C3
+  grafo de chamadas                  derivação de trincas
+  alcançabilidade por fluxo   ──►    registros C2
+  posições compartilhadas            run store C3
+  enumeração de acessos
   relação may_precede
         │
         └── accesses.json
@@ -351,8 +355,8 @@ Entre funções diferentes, dentro do mesmo fluxo, **super-aproxima-se para verd
 ```
 
 Olhando o `may_precede` do caso 001 dá para conferir tudo o que foi dito acima: `[0,0]` está lá
-(a escrita da linha 32 está num laço); `[1,0]` não está (os dois laços são sequenciais); e o par
-entre os dois braços do `if/else` da `isr_2` também não está.
+(a escrita da linha 32 está num laço); `[1,0]` não está (os dois laços são sequenciais); e
+nenhum dos dois braços do `if/else` da `isr_2` aparece precedendo o outro.
 
 ## 10. Estado ao fim desta metade
 

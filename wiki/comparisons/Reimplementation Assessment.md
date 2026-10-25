@@ -2,7 +2,7 @@
 type: comparison
 tags: [wiki, comparison]
 sources: ["[[SDRacer (paper)]]", "[[IntRace (paper)]]", "[[NIChecker (paper)]]", "[[BMC4AV (paper)]]"]
-updated: 2026-08-27
+updated: 2026-10-24
 status: draft
 ---
 
@@ -181,9 +181,8 @@ BMC4AV's Racebench ground truth is now traceable to the benchmark's own annotati
    against the **48** measured bug points — target **recall 100%**, and report the candidate
    count without embarrassment.
 4. Add stage 2, measuring attrition against IntRace's reported 54.2% as a sanity check.
-5. Design the context record and the candidate derivation — pairs *and* triples, from one
-   access set, per [[Pair-Triple Unification]]. This is where the data-race/atomicity
-   unification actually happens, and it is not a matter of merging pattern sets.
+5. Design the context record and the candidate derivation — triples, from one access set
+   ([[Triples Only]]).
 6. Add stage 3 (Z3). It is required, not optional, and everything downstream is sized by it.
 7. Only then: LLM triage on the solver's residue, LLM repair, CBMC re-verification
    ([[LLM Stage Design]]).

@@ -111,16 +111,16 @@ def is_masked(m, c, n):
 
 
 def candidate(a, *specs):
-    """A minimal C2 record over the accesses at (flow, line), in role order."""
-    roles = ("A1", "B", "A2") if len(specs) == 3 else ("A1", "B")
+    """A minimal C2 record over the accesses at (flow, line), in role order A1, B, A2."""
+    assert len(specs) == 3
     out = []
-    for role, (flow, line) in zip(roles, specs):
+    for role, (flow, line) in zip(("A1", "B", "A2"), specs):
         x = next(x for x in a["accesses"] if x["flow"] == flow and x["source"]["line"] == line)
         out.append({"role": role, "kind": x["kind"], "flow": flow, "function": x["function"],
                     "source": {"file": "t.c", "line": line}, "ir": {"access": x["id"]}})
     rec = {
-        "schema_version": "c2/1.0.0", "id": "", "fingerprint": "0" * 64,
-        "class": "atomicity-triple" if len(specs) == 3 else "race-pair",
+        "schema_version": "c2/2.0.0", "id": "", "fingerprint": "0" * 64,
+        "class": "atomicity-triple",
         "pattern": "".join("R" if o["kind"] == "read" else "W" for o in out),
         "subject": {"name": "t"}, "variable": {"name": "v", "declared_type": "int"},
         "accesses": out, "flows": [], "provenance": {"entries": []},
@@ -330,17 +330,18 @@ def test_one_critical_section_covering_the_interval_is_dropped_with_a_proof():
     assert {"F1", "F2", "F7", "F8", "H1d", "G2c"} <= set(v.relies_on)
 
 
-def test_split_critical_sections_drop_both_pairs_but_keep_the_triple():
-    """The case that breaks the pair abstraction (Pair-Triple Unification): each
-    access is protected, so neither race pair survives -- but the ISR fits in
-    the gap between the sections, so the atomicity violation does."""
+def test_split_critical_sections_keep_the_triple():
+    """Each access sits in its own critical section, and the ISR fits in the
+    unprotected gap between them (LLM Stage Design, D#1 pattern table): masked
+    at A1 and masked at A2, yet not masked throughout -- the interval property
+    decides, and the triple survives."""
     cfg = config("main", "isr_1")
     fns = (straight("main", dis(1), acc(10, "read"), en(1, line=11),
                     dis(1, line=12), acc(13, "read"), en(1)),
            straight("isr_1", acc(20)))
-    assert not judge(cfg, fns, ("main", 10), ("isr_1", 20)).keep
-    assert not judge(cfg, fns, ("main", 13), ("isr_1", 20)).keep
-    assert judge(cfg, fns, ("main", 10), ("isr_1", 20), ("main", 13)).keep
+    v = judge(cfg, fns, ("main", 10), ("isr_1", 20), ("main", 13))
+    assert 1 in v.per_access["A1"]["disabled"] and 1 in v.per_access["A2"]["disabled"]
+    assert v.keep and 1 not in v.interval["disabled_throughout"]
 
 
 def test_a_lower_priority_flow_cannot_fall_inside_a_higher_ones_interval():

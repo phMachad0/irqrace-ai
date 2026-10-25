@@ -138,7 +138,7 @@ def test_stage2_records_are_c2_and_keep_their_ids(tmp_path):
         assert rec["fingerprint"] == s1[rec["id"]]["fingerprint"]
         assert rec["emitted_by"]["stage"] == "stage2"
         assert "preemption" in rec and "masking" in rec
-        assert (rec["class"] == "atomicity-triple") == ("interval" in rec["masking"])
+        assert rec["class"] == "atomicity-triple" and "interval" in rec["masking"]
     report = json.loads((store.root / "stage2" / "masking.json").read_text())
     assert report["rounds"] >= 1 and set(report["flows"]) == {"main", "isr_1"}
 

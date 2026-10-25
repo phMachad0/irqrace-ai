@@ -2,7 +2,7 @@
 type: concept
 tags: [wiki, concept]
 sources: ["[[SDRacer (paper)]]", "[[IntRace (paper)]]", "[[NIChecker (paper)]]", "[[BMC4AV (paper)]]", "[[Racebench (documentation)]]"]
-updated: 2026-08-23
+updated: 2026-10-24
 status: draft
 ---
 
@@ -73,9 +73,9 @@ filter.
 Projecting atomicity violations onto their constituent access pairs is sound at the *matching*
 stage but not after a masking filter: two accesses each protected by their own critical
 section admit no race, while an ISR can still land in the gap between them. Detecting only
-pairs therefore loses exactly those violations. Derive pairs and triples separately from one
-access set, and give each its own feasibility query — instant for pairs, interval for triples
-([[Pair-Triple Unification]]).
+pairs therefore loses exactly those violations ([[Pair-Triple Unification]]). Deriving triples
+directly, and judging them by the interval property, does not have this failure mode — which is
+what this project does ([[Triples Only]]).
 
 ### 6. Uncovered concurrency shapes
 - **Equal-priority ISRs.** `svp_real_002` in [[Racebench]] gives two ISRs the same priority,

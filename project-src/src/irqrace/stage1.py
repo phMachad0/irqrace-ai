@@ -4,11 +4,9 @@ The C++ half (`analysis/src/irqrace-stage1.cpp`) walks the bitcode and produces
 the access set plus the intra-flow ``may_precede`` relation. This module turns
 that into C2 context records.
 
-**Pairs and triples are derived separately from the same access set.** A triple
-is never built by joining confirmed pairs, and a pair is never inferred from a
-triple: they are different queries over one set of accesses
-([[Pair-Triple Unification]]). Deriving one from the other is the mistake that
-page exists to prevent, and it is easy to make because the two look related.
+**Every candidate is an atomicity-violation triple** ``(A1, B, A2)``: A1 and A2
+in one flow with A1 able to precede A2, B in another flow, all three on one
+shared location, in one of the four unserializable shapes ([[Triples Only]]).
 
 Nothing here filters on interrupt state, priority, masking or path feasibility.
 Stage 1 deliberately ignores all of it so that nothing is missed
@@ -218,14 +216,14 @@ class Deriver:
             },
         }
 
-    def _record(self, cls: str, roles: list[tuple[str, int]],
+    def _record(self, roles: list[tuple[str, int]],
                 obj: dict[str, Any]) -> dict[str, Any]:
         acc_ids = [i for _, i in roles]
         flows = sorted({self.accesses[i]["flow"] for i in acc_ids})
         rec: dict[str, Any] = {
-            "schema_version": "c2/1.0.0",
+            "schema_version": "c2/2.0.0",
             "id": "", "fingerprint": "0" * 64,
-            "class": cls,
+            "class": "atomicity-triple",
             "subject": {
                 "name": self.cfg.name,
                 "source_root": str(self.root),
@@ -259,11 +257,8 @@ class Deriver:
             "provenance": self._provenance(acc_ids, obj),
             "emitted_by": {"tool_version": TOOL_VERSION, "stage": "stage1"},
         }
-        if cls == "atomicity-triple":
-            a1, _, a2 = acc_ids
-            rec["loop_context"]["a1_a2_same_statement"] = a1 == a2
-        else:
-            rec["loop_context"]["a1_a2_same_statement"] = None
+        a1, _, a2 = acc_ids
+        rec["loop_context"]["a1_a2_same_statement"] = a1 == a2
         rec["pattern"] = "".join(
             "R" if self.accesses[i]["kind"] == "read" else "W" for _, i in roles)
         return stamp_identity(rec)
@@ -280,34 +275,12 @@ class Deriver:
             "used_as_index": None,
             "call_path_depth_max": max(
                 len(self.accesses[i]["call_path"]["frames"]) for i in acc_ids),
-            "same_statement_a1_a2": len(acc_ids) == 3 and acc_ids[0] == acc_ids[2],
+            "same_statement_a1_a2": acc_ids[0] == acc_ids[2],
             "priority_gap": max(prios) - min(prios),
             "any_masking_present": False,  # stage 2 fills this in
         }
 
     # -- derivation ------------------------------------------------------
-
-    def race_pairs(self) -> list[dict[str, Any]]:
-        """Two accesses to one location, in two different flows, at least one a
-        write. Order within the pair is canonical, not semantic: at stage 1
-        nothing is known about who preempts whom, so A1 is the access in the
-        lower-priority flow purely so that the same pair is never emitted twice.
-        """
-        out: list[dict[str, Any]] = []
-        for obj_id, obj in self.objects.items():
-            accs = [a for a in self.analysis["accesses"] if a["object"] == obj_id]
-            for i, a in enumerate(accs):
-                for b in accs[i + 1:]:
-                    if a["flow"] == b["flow"]:
-                        continue
-                    if a["kind"] == "read" and b["kind"] == "read":
-                        continue
-                    lo, hi = sorted(
-                        (a, b),
-                        key=lambda x: (self.flows[x["flow"]].priority, x["flow"], x["id"]))
-                    out.append(self._record(
-                        "race-pair", [("A1", lo["id"]), ("B", hi["id"])], obj))
-        return out
 
     def atomicity_triples(self) -> list[dict[str, Any]]:
         """A1 and A2 in one flow with A1 able to precede A2, B in another.
@@ -340,18 +313,12 @@ class Deriver:
                             if shape not in UNSERIALIZABLE:
                                 continue
                             out.append(self._record(
-                                "atomicity-triple",
                                 [("A1", a1["id"]), ("B", b["id"]), ("A2", a2["id"])],
                                 obj))
         return out
 
     def derive(self) -> list[dict[str, Any]]:
-        classes = self.cfg.analysis["candidate_classes"]
-        out: list[dict[str, Any]] = []
-        if "atomicity-triple" in classes:
-            out += self.atomicity_triples()
-        if "race-pair" in classes:
-            out += self.race_pairs()
+        out = self.atomicity_triples()
         seen: set[str] = set()
         unique = []
         for rec in out:

@@ -1,7 +1,7 @@
 # irqrace
 
-A static analyzer that finds **data races and atomicity violations in
-interrupt-driven embedded C with no false negatives**, emits a rich per-candidate
+A static analyzer that finds **atomicity violations in interrupt-driven embedded C
+with no false negatives**, emits a rich per-candidate
 context record, and hands the residue to an LLM stage that triages, repairs and
 re-verifies. Detect → contextualize → triage → repair → re-verify.
 
@@ -16,6 +16,32 @@ The design lives in the wiki one directory up:
 LLM may not.** Recall is the headline metric and it must be 100%; precision is
 traded away deliberately.
 
+## Status — 24 Oct 2026 · one candidate class
+
+Since 2026-10-24 the tool generates, filters and reports **atomicity-violation triples only**
+([Triples Only](../wiki/Triples%20Only.md)). Contracts C1 and C2 are at `2.0.0`, and the tool at
+`0.2.0`. Every triple result — candidate ids, stage-2 decisions and masking states, solver
+verdicts, matches against the ground truth — is identical to the run before the change, subject
+by subject. The numbers in the sections below are re-measured with the current code.
+
+```
+31/31 subjects analysed
+stage 1: 316 candidates, 10.2 per subject  [1727 ms total]
+stage 2: 202 kept, 114 dropped with proof (masking 7, no-path 62, priority 45)  [1325 ms total]
+attrition: 36.1% overall; 0-62% per subject
+  of which concurrency (priority + masking): 16.5%; no-path is stage 1's cross-function may-precede refined, not a concurrency result
+  for scale: IntRace reports 54.2% (33-63% per project) for its stage 2, on another candidate class, in real-world subjects
+solver: 202 in -> 166 sat, 0 inconclusive, 36 unsat (dropped with proof)  [17636 ms total]
+reaching the LLM: 166, 5.4 per subject; solver attrition 17.8%
+  for scale: IntRace reports 86.2% (41-93%) for its feasibility stage, on another candidate class, in real-world subjects
+funnel: 316 -> 202 -> 166  [stage 1 1727 ms, stage 2 1325 ms, solver 17636 ms]
+slowest subjects in the solver: svp_simple_019_001 7582 ms, svp_simple_024_001 2358 ms, svp_simple_003_001 1127 ms
+RECALL GATE (stage3): 48/48 annotated bug points present -- PASS
+traps reported: 35/38 after stage 1, 30/38 after stage 2, 16/38 reaching the LLM (14 refuted by the solver)
+inspection ratio: 0.84 mean over 31 subject(s) whose bug points were all found
+runstore check: 31/31 runs conform to C3 (rule 6: nothing vanished without a proof)
+```
+
 ## Status — end of W6–W7 (22 Oct 2026) · stage 3 (Z3)
 
 | W6–W7 item | State |
@@ -23,14 +49,12 @@ traded away deliberately.
 | Symbolic ISR summaries; splice at the preemption point; discharge path constraints | done — `analysis/src/irqrace-stage3.cpp`, symbolic execution over the LLVM IR with Z3 |
 | **Reachability only**, the solver's role kept to "prove impossible" | done — the query is "A1, then B inside [A1, A2], then A2, on one memory cell" |
 | Timeout and unsupported constructs → **`inconclusive`**, kept and passed on | done — never `sat`, never a drop; pinned by tests |
-| **The full funnel measured, with per-stage timings** | 566 → 436 → **383** reaching the LLM — see below |
+| **The full funnel measured, with per-stage timings** | 316 → 202 → **166** reaching the LLM — see above |
 | **Recall gate still 100%** | **48/48 PASS**, taken on the context records |
 
 ```
-stage 1: 566 candidates, 18.3 per subject (316 triples, 250 pairs)  [2810 ms total]
-stage 2: 436 kept (202 triples, 234 pairs), 130 dropped with proof (masking 23, no-path 62, priority 45)  [2468 ms total]
-solver: 436 in -> 383 sat, 0 inconclusive, 53 unsat (dropped with proof)  [29875 ms total]
-reaching the LLM: 383 (166 triples, 217 pairs), 12.4 per subject; solver attrition 12.2%
+solver: 202 in -> 166 sat, 0 inconclusive, 36 unsat (dropped with proof)  [17636 ms total]
+reaching the LLM: 166, 5.4 per subject; solver attrition 17.8%
 RECALL GATE (stage3): 48/48 annotated bug points present -- PASS
 traps reported: 35/38 after stage 1, 30/38 after stage 2, 16/38 reaching the LLM (14 refuted by the solver)
 ```
@@ -43,7 +67,7 @@ entry on the memory at the preemption point. A cheap **address projection** — 
 each access explored on its own, then "can the three addresses coincide?" — refutes index and
 dead-code traps before the full search runs.
 
-**12.2% against IntRace's 86.2%** is the honest gap of a thread-modular encoding: a trap whose
+**17.8% against IntRace's 86.2%** is the honest gap of a thread-modular encoding: a trap whose
 infeasibility rests on *the order* in which ISRs run (028's flag that only `isr_1` clears, and
 only before it unmasks `isr_2`) looks feasible once every value another flow writes is
 havocked. Those reach the LLM marked `sat` with their `unconstrained` list.
@@ -65,19 +89,18 @@ suite's README, like 001's — the label assumes `sum > para` and `sum < para` e
 | Block model `(T, I, S, p)`; priority check with **larger = higher** | done — `config.can_preempt` + nesting (`masking.may_preempt`) |
 | Timing left unconstrained | done — every record says `timing: unconstrained` |
 | Masking dataflow: masked only if masked on **every** path | done — `src/irqrace/masking.py`, three-valued with origins |
-| Point property for pairs, **interval property for triples** | done — interval = every point on every path A₁→A₂, callees included |
+| **Interval property**: masked throughout `[A₁, A₂]` | done — interval = every point on every path A₁→A₂, callees included |
 | Equal-priority and arrival-model decisions explicit, in the manifest | done — plus `triple_interval: single-activation` (G2c) |
-| **Attrition measured against IntRace's 54.2%** | 23.0% overall, 12.0% from concurrency — see below |
+| **Attrition measured against IntRace's 54.2%** | 36.1% overall, 16.5% from concurrency — see below |
 | **Recall gate still 100%** | **48/48 PASS** after stage 2 |
 
 ```
-stage 1: 566 candidates (316 triples, 250 pairs)
-stage 2: 436 kept (202 triples, 234 pairs), 130 dropped with proof
-         (priority 45, masking 23, no-path 62)
-attrition: 23.0% overall -- triples 36.1%, pairs 6.4%
-  of which concurrency (priority + masking): 12.0%
+stage 1: 316 candidates, 10.2 per subject
+stage 2: 202 kept, 114 dropped with proof (masking 7, no-path 62, priority 45)
+attrition: 36.1% overall; 0-62% per subject
+  of which concurrency (priority + masking): 16.5%
 RECALL GATE (stage2): 48/48 annotated bug points present -- PASS
-traps reported: 35/38 after stage 1, 30/38 after stage 2
+traps reported: 35/38 after stage 1, 30/38 after stage 2 (5 rejected by stage 2)
 runstore check: 31/31 runs conform to C3 (rule 6)
 ```
 
@@ -86,9 +109,9 @@ argument in prose with the source lines, and the Soundness Assumptions it relies
 `irqrace runstore check` fails a run where a stage-1 candidate vanished without one.
 
 **Against IntRace's 54.2%:** not comparable, and the gap is expected. IntRace's figure is on
-data-race pairs in real-world subjects, which mask far more than Racebench does; 19 of the 31
-cases here have no masking call at all, so their pairs can only fall to priority, and a pair
-between a task and an ISR never does. `no-path` (62) is not a concurrency result: it is stage
+another candidate class in real-world subjects, which mask far more than Racebench does; 19 of
+the 31 cases here have no masking call at all, so a candidate there can only fall to priority or
+to no-path. `no-path` (62) is not a concurrency result: it is stage
 1's over-approximate cross-function may-precede, refined on the flow's supergraph.
 
 **The masking analysis is whole-program, because the mask is shared hardware.** An ISR that
@@ -109,20 +132,20 @@ infeasible; they now carry what stage 2 really emits.
 | Entry points from config; per-flow interprocedural reachability | done |
 | Shared-location identification via SVF **may**-alias | done — base-object normalised, stack objects in scope |
 | Access enumeration: flow, R/W, function, call path, `DILocation`, loop context | done |
-| Candidate derivation — pairs *and* triples from one access set | done — `may_precede` from the CFG; `A₁ = A₂` allowed in a loop |
+| Candidate derivation — triples from one access set | done — `may_precede` from the CFG; `A₁ = A₂` allowed in a loop |
 | Emit C2 records and C3 run directories | done |
 | **`candidates.jsonl` for all 31 cases** | done |
 | **Recall gate — all 48 bug points present** | **48/48 PASS** |
 
 ```
 31/31 subjects analysed
-candidates: 566 total, 18.3 per subject (316 triples, 250 pairs)
+candidates: 316 total, 10.2 per subject
 RECALL GATE: 48/48 annotated bug points present -- PASS
 traps reported: 35/38 (expected to be high; stage 1 does not filter)
-inspection ratio: 0.30 mean
+inspection ratio: 0.58 mean over 31 subject(s) whose bug points were all found
 ```
 
-18.3 candidates per subject against IntRace's ~208 per program is not a precision
+10.2 candidates per subject against IntRace's ~208 per program is not a precision
 win: these are 37–97 line cases and IntRace's figure is for real-world subjects.
 The number to keep is the gate.
 
@@ -254,9 +277,9 @@ short version:
   instead of being handed a precomputed slice.
 
 Five recall decisions are made structural in those schemas rather than left to
-code: masking is three-valued, the interval property is separate from the point
-property, the solver verdict has four values including `inconclusive`,
-`provenance` is mandatory, and there is no `slice` field.
+code: masking is three-valued, the interval property is a field of its own, the
+solver verdict has four values including `inconclusive`, `provenance` is
+mandatory, and there is no `slice` field.
 
 ## Two findings from W1
 
