@@ -1,0 +1,448 @@
+---
+type: project
+tags: [wiki, project, diario, pt-br]
+sources: ["[[Roadmap]]", "[[Pipeline Design]]", "[[LLM Stage Design]]", "[[Triples Only]]", "[[Soundness Assumptions]]", "[[Racebench]]", "[[LLM Triage]]", "[[Precision Metrics]]"]
+updated: 2026-10-26
+status: draft
+---
+
+# Semana 8 — Integração das Trilhas A e B
+
+**Período planejado:** 19–23 out 2026 · **feito em:** 23–26 out 2026 · **Trilha B**, sobre o
+`track-b/llm-integration` · [[Roadmap]] W8 (*Integration*, marco M4). Páginas anteriores:
+[[Semana 5 a 8 — Trilha B (Triagem, Ablação, Reparo e Integração C3-C4)]] (a Trilha B até a W8)
+e [[Semana 7 — O Stage 3, Busca e Verificação]] (a Trilha A).
+
+> [!note] O que esta página cobre
+> A semana em que a Trilha B deixou de rodar sobre *fixtures* e sobre estágios simulados e passou a
+> rodar sobre o que a Trilha A produz de verdade. Ela começou com um relatório PDF cujas
+> classificações não faziam sentido e terminou com o *merge* da `main` (a Trilha A das semanas 5–7),
+> a [[Triples Only|decisão de usar só trincas]] aplicada à Trilha B e o aplicativo desktop rodando os
+> stages 2 e 3 reais. No caminho, quase tudo que estava errado era o mesmo defeito em lugares
+> diferentes: **um resultado que ninguém calculou, apresentado como se tivesse sido calculado.**
+
+## 1. O que a semana devia entregar
+
+O [[Roadmap]] dá a W8 duas vezes, uma por trilha. Os itens e o estado ao fim da semana:
+
+| Item do Roadmap (W8) | Estado | Onde |
+| --- | --- | --- |
+| Registros de contexto reais substituem os *fixtures* | **pronto** — desktop e CLI triam os registros que o stage 3 escreve | `ui/desktop.py`, `llm/pipeline.py` |
+| O *resolver* C4 atrás do protocolo da Trilha B, sobre candidatos reais | **pronto, com uma correção** — `masking_state_at` quebrava em registros do stage 1 (§3.8) | `llm/resolver.py` |
+| Execução ponta a ponta no Racebench com o pipeline da Trilha B | **parcial** — ponta a ponta em `svp_simple_001_001` (build → stage 3 → triagem); a triagem dos 31 casos ainda não rodou | `ui/desktop.py`, `irqrace llm triage` |
+| Refazer os números sobre o resíduo pós-Z3, sem reaproveitar os dos *fixtures* | **não feito** — a avaliação por estágio existe (§3.7), falta a bateria de triagem | `run_evaluation.py` |
+| Marco M4 | **parcial** | — |
+
+Fora do Roadmap, mas feito nesta semana porque a integração dependia disso: a correção do caminho
+do código-fonte (§3.1), a chave do *cache* (§3.2), a triagem que não descarta (§3.3), um quarto
+*backend* de LLM (§3.4) e a remoção de tudo que fingia a análise estática (§3.6).
+
+## 2. Conceitos usados nesta página
+
+**Registro de contexto (C2).** O documento JSON que descreve um candidato para a LLM: a variável
+compartilhada, os três acessos com arquivo e linha, os fluxos (a tarefa `main` e as ISRs, as
+rotinas de interrupção), o estado da máscara de interrupções, o veredito do *solver* e
+`enclosing_source`, o corpo das funções que contêm os acessos. É o contrato entre as trilhas
+(`contracts/c2-context-record.schema.json`).
+
+**Trinca (A₁, B, A₂).** O único tipo de candidato desde 24 out: dois acessos `A₁` e `A₂` do mesmo
+fluxo e um acesso remoto `B`, de outro fluxo, que cai entre eles. Se essa intercalação produz um
+estado que nenhuma execução sequencial produziria, é uma [[Atomicity Violation|violação de
+atomicidade]]. Antes existiam também os pares (*race pairs*), dois acessos em fluxos diferentes; eles
+saíram do projeto ([[Triples Only]]).
+
+**Stage 2 e stage 3.** Os dois filtros da Trilha A. O stage 2 decide, por prioridade e máscara de
+interrupções, se o fluxo de `B` pode mesmo rodar entre `A₁` e `A₂`; o stage 3 codifica o programa
+para o *solver* Z3 e pergunta se a intercalação é alcançável. Os dois podem **descartar** um
+candidato, mas só com prova: o stage 2 grava a prova em texto em `stage2/dropped.jsonl`, e o stage 3
+só descarta com `unsat` (o Z3 provou que a intercalação é impossível). `sat` quer dizer "não
+refutado", não "bug confirmado".
+
+**Ground truth, recall gate e armadilhas.** O [[Racebench]] anota, em cada caso, os *bug points*
+(trincas reais, 48 nos 31 casos simples) e as armadilhas (*traps*, trincas que parecem bug e não são,
+38). O *recall gate* é a regra do projeto: todo *bug point* anotado tem de chegar ao relatório
+(48/48). "Armadilhas vivas" é quantas armadilhas ainda estão na lista depois de um estágio.
+
+**Inspection Ratio (IR).** A fração da lista ordenada que alguém precisa ler para encontrar todos os
+*bug points*: `(posição do último bug + 1) / tamanho da lista`. Só é definido quando todo bug foi
+detectado ([[Precision Metrics]]).
+
+**Bucket.** O grupo em que a triagem coloca o candidato: `likely_real`, `uncertain`,
+`likely_benign`, `likely_infeasible`. Os *buckets* só ordenam a leitura; **nenhum candidato sai do
+relatório por causa da LLM** — só uma prova tira um candidato.
+
+**Cache de respostas da LLM.** Um diretório (`.llm-cache/`) com uma resposta por arquivo, para não
+pagar de novo a mesma pergunta. A chave do arquivo diz o que conta como "a mesma pergunta".
+
+**DWARF e `comp_dir`.** O DWARF é o formato das informações de depuração que o `clang -g` grava no
+*bitcode*: para cada instrução, de que arquivo e linha ela veio. O nome do arquivo pode vir partido
+em duas partes, o diretório de compilação (`comp_dir`) e um caminho relativo a ele.
+
+**Merge e conflito.** Integrar no `track-b` os *commits* da `main`. Quando os dois lados mudaram o
+mesmo trecho, o git não escolhe sozinho e marca um conflito, que é resolvido à mão.
+
+## 3. O que foi feito, na ordem em que aconteceu
+
+### 3.1. O relatório que não fazia sentido — a LLM nunca tinha visto código
+
+O ponto de partida foi um PDF do desktop para `svp_simple_001_001` (23 out). A trinca do bug,
+`(32, 55, 35)`, estava na lista mas saiu `uncertain`; o par `(32, 60)` saiu `likely_real` e ganhou
+*patch*; e os *patches* citavam `compute(i)`, `some_value` e `N`, que não existem no arquivo.
+
+A causa principal: **`enclosing_source` estava vazio em todos os 23 registros.** O `clang` gravou o
+arquivo como `directory: /home/pedro/Documentos/tcc` mais `filename: racebench/2.1_remarks/...`, o
+stage 1 só emite o *filename*, e o Python abria esse caminho relativo a partir de `project-src`, não
+achava, e engolia o erro. O modelo triou e "corrigiu" código que nunca leu. A correção:
+
+`project-src/src/irqrace/stage1.py`
+```python
+def _source_lines(file: str, root: str = ".") -> list[str]:
+    """The lines of *file*, or ``[]`` when it cannot be found.
+
+    Debug info may name a file relative to the compilation directory, which the
+    analysis does not emit: clang splits ``/a/b/racebench/x.c`` into directory
+    ``/a/b`` and filename ``racebench/x.c``. Such a name resolves against no
+    fixed directory, so try the working directory, then ``root`` and each of its
+    ancestors. Without this the record silently ships no source at all.
+    """
+    path = Path(file)
+    if path.is_absolute():
+        candidates = [path]
+    else:
+        base = Path(root).resolve()
+        candidates = [path, base / path, *(d / path for d in base.parents)]
+    for c in candidates:
+        try:
+            return c.read_text(encoding="utf-8", errors="replace").splitlines()
+        except OSError:
+            continue
+    return []
+```
+
+Os ids dos candidatos não mudaram, porque o *fingerprint* cobre a localização dos acessos, não o
+código. Isso importa para o próximo problema.
+
+### 3.2. O cache servia as respostas antigas
+
+Com o código-fonte nos registros, o app continuou mostrando as mesmas classificações. A chave do
+*cache* era `(fingerprint, configuração de prompt, modelo, schema)`, e o *fingerprint* não tinha
+mudado: o *cache* devolvia as respostas que o modelo deu **sem** ver o código. A chave passou a
+incluir um *hash* do que o modelo vê:
+
+`project-src/src/irqrace/llm/client.py`
+```python
+def evidence_hash(record: dict[str, Any]) -> str:
+    """Identity of what the model is shown about *record*, for the cache key.
+
+    The rendered record, minus ``solver_result.wall_ms``: timing differs on every
+    run and changes no answer, so keeping it would defeat the cache's purpose of
+    surviving a re-run of the analyzer.
+    """
+    shown = json.loads(json.dumps(record))
+    if isinstance(shown.get("solver_result"), dict):
+        shown["solver_result"].pop("wall_ms", None)
+    return hashlib.sha256(render_record(shown).encode("utf-8")).hexdigest()
+```
+
+O tempo do *solver* fica de fora de propósito: muda a cada execução e não muda a resposta.
+
+### 3.3. A triagem descartava candidatos em silêncio
+
+Rodada de novo com o código-fonte (CLI, 23 out), a triagem levou 67 minutos e terminou com status
+`ok` e **7 de 23** candidatos; os outros 16 tinham ido para uma lista `excluded` por erro de API
+(provável limite de taxa, com o app rodando ao mesmo tempo na mesma chave), sem motivo gravado. No
+app, mais tarde, foram 3 de 13. Isso fere a regra central do projeto — a LLM não descarta — e agora
+um candidato sem resposta continua no relatório, como `uncertain`, com o motivo:
+
+`project-src/src/irqrace/llm/verdict.py`
+```python
+    def untriaged(cls, record: dict[str, Any], reason: str) -> "Triage":
+        """The verdict for a candidate the stage could not get an answer for.
+
+        A backend error, a refusal or an interrupted run is not evidence about
+        the candidate, so it must not remove it from the report: it lands in
+        ``uncertain`` -- inspected, never hidden -- with the reason attached.
+        Confidence 0 places it last within that bucket, below every candidate a
+        model actually looked at.
+        """
+        return cls(
+            candidate_id=record["id"],
+            fingerprint=record["fingerprint"],
+            feasibility=FeasibilityAnswer(
+                reasoning=f"Not triaged: {reason}",
+                verdict=Feasibility.uncertain,
+                confidence=0.0,
+            ),
+            not_triaged=reason,
+```
+
+`project-src/src/irqrace/llm/pipeline.py`
+```python
+    # A candidate no sample could triage stays in the report as uncertain, with
+    # the reason: a backend error is not evidence about the candidate.
+    answered = {t.candidate_id for t in final}
+    reasons = dict(excluded)
+    for rec in records:
+        if rec["id"] not in answered:
+            reason = reasons.get(rec["id"], "no verdict was produced")
+            final.append(Triage.untriaged(rec, reason))
+            store.log("warn", "triage", "candidate-not-triaged",
+                      f"{rec['id']}: {reason}", candidate_id=rec["id"])
+```
+
+O mesmo vale para o *loop* próprio do desktop, para o botão *Stop* no meio da triagem e para o modo
+*offline*. Se **todos** falham, a etapa termina `failed`: isso é explícito, não silencioso.
+
+Duas observações sobre a qualidade das respostas daquela rodada, que continuam valendo e estão em
+aberto: com o código à vista, o modelo marcou a trinca do bug como `likely_benign` porque
+"`reader1` nunca é usado" — verdade no código do Racebench, cujos leitores são variáveis mortas, mas
+o gabarito conta a leitura do valor intermediário como o bug (o `log.md` registra a decisão de 27 set
+de não pontuar nocividade no Racebench); e acertou a armadilha 2 pelo motivo errado, porque o
+`enable_isr(2)` estava na `isr_1`, fora do `enclosing_source`. Com o stage 2 real, esse fato chega
+pronto ao modelo em `masking.interval.reenabled_within_interval_by`.
+
+### 3.4. Um quarto *backend*: `claude -p` na assinatura
+
+`claude-cli:<modelo>` chama o Claude Code em modo não interativo, com o *login* da assinatura Pro/Max
+em vez de créditos de API: o consumo entra no limite do plano, sem cobrança por *token*. A CLI
+valida a resposta contra o JSON Schema (`structured_output`), então o nível de saída estruturada é o
+mesmo dos outros *backends*. A chamada é isolada para que só o prompt da triagem chegue ao modelo:
+
+`project-src/src/irqrace/llm/backends/claude_cli_backend.py`
+```python
+    def _argv(self, request: ChatRequest) -> list[str]:
+        exe = shutil.which(self.executable) or self.executable
+        argv = [
+            exe, "-p",
+            "--model", self.model,
+            "--output-format", "json",
+            "--system-prompt", request.system,
+            "--tools", "",
+            "--strict-mcp-config",
+            "--disable-slash-commands",
+            "--setting-sources", "",
+            "--no-session-persistence",
+        ]
+        if request.schema is not None:
+            argv += ["--json-schema", json.dumps(request.schema)]
+        return argv
+```
+
+O processo roda numa pasta temporária vazia (sem `CLAUDE.md`), e as credenciais de API saem do
+ambiente, para que uma chave esquecida não transforme uma rodada do plano em cobrança:
+
+```python
+def _subscription_env() -> dict[str, str]:
+    env = dict(os.environ)
+    for var in _API_AUTH_VARS:
+        env.pop(var, None)
+    return env
+```
+
+A flag `--bare` faria quase tudo isso de uma vez, mas ela recusa o *login* da assinatura. Testado ao
+vivo: 2 chamadas com `claude-cli:haiku` na *fixture* do bug de `svp_simple_001`, 40 s.
+
+### 3.5. Os stages 2 e 3 eram simulados — e a primeira correção foi só dizer isso
+
+O desktop tinha uma etapa "Stage 2 & 3" que copiava os candidatos do stage 1 para `stage2/` e
+escrevia, para **todo** candidato, um resultado do Z3 inventado (`"verdict": "inconclusive"`,
+`"reason": "timeout"`, `"wall_ms": 12`), com tempos fixos de 45 e 380 ms no *manifest*. O PDF
+mostrava "Solver Z3 · OK · 380 ms". A reverificação dos *patches* também era marcada `ok`, com
+`dropped_with_proof` igual ao número de *patches*.
+
+Como a Trilha A ainda não estava integrada, a primeira correção (24 out) não ligou nada: marcou as
+etapas como `skipped`, com o motivo, e deixou os registros do stage 1 chegarem ao modelo como eram
+(`solver_result: not_run`, máscara `unknown`). Um teste de integração local com a Trilha A (23 out,
+desfeito no mesmo dia, documentado fora do repositório) já tinha mostrado o funil real
+`23 → 19 → 13` nesse caso, ainda com pares.
+
+### 3.6. O *merge* da `main` e a remoção do que fingia a análise estática
+
+Com a Trilha A na `main` (PR #2), o `track-b` recebeu o *merge* (`be88e35`). O código mergeou
+sozinho; os conflitos foram só de documentação (`index.md`, `log.md`, o README e três páginas da
+wiki, estas só no `updated:`), resolvidos como união, com a `main` como referência onde as versões se
+sobrepunham, como a [[Triples Only|Issue #1]] pedia. O binário `irqrace-probe`, que a `main` deixou de
+versionar, saiu do índice e ficou no disco.
+
+Depois do *merge*, a etapa "Stage 2 & 3" do desktop chama as mesmas funções que `irqrace stage3`:
+
+`project-src/src/irqrace/ui/desktop.py`
+```python
+        log_fn("  Stage 2: análise de máscara de interrupções e prioridade (ponto fixo)...")
+        s2 = stage2(self.cfg, self.store)
+        reasons = ", ".join(f"{k}: {v}" for k, v in sorted(s2["reasons"].items())) or "nenhum"
+        log_fn(
+            f"  Stage 2: {s2['in']} entrada -> {s2['kept']} mantidos, "
+            f"{s2['dropped']} descartados com prova ({reasons}) [{s2['wall_ms']} ms]"
+        )
+        for d in self.store.read_drops():
+            log_fn(f"    - {d['candidate_id']} {d['pattern']} {d['lines']} [{d['reason']}]")
+
+        log_fn("  Stage 3: execução simbólica sobre o IR com Z3...")
+        s3 = stage3(self.cfg, self.store, bitcode)
+```
+
+A etapa de contexto deixou de apagar `context/` e reconstruir os registros, porque isso jogaria fora
+o veredito e a nota de proveniência que o stage 3 escreve. E foi removido tudo que apresentava
+resultados de análise estática que ninguém calculou:
+
+- **`scripts/seed-showcase-run.py`**, que escrevia `stage2/`, `solver/`, triagem, *diffs* sintéticos
+  e reverificação `ok` para os 31 casos — inclusive marcando candidatos `unsat` por heurística, ou
+  seja, inventando provas.
+- **No dashboard**, a tabela do funil por estágio — exportável em Markdown/LaTeX "para o TCC" —
+  acrescentava "(100%)" a todo *recall*, supunha 1 bug e 2 armadilhas quando não havia relatório,
+  contava todo `unsat` como armadilha e mostrava a reverificação como "PASS / 100% eliminado /
+  Verificado". A página inicial afirmava "48/48 bugs", "Zero falsos negativos" e "80%–95%" de
+  rejeição de armadilhas, para qualquer conjunto de *runs*. O painel de reparo dizia que todo
+  *patch* tinha sido reverificado.
+- **No PDF**, um Inspection Ratio fixo em "1.00 (Ótimo)" (calculado e nunca exibido) e
+  `likely_infeasible` chamado de "armadilhas rejeitadas".
+
+### 3.7. A avaliação por estágio, calculada
+
+No lugar dos números fixos, um módulo pequeno avalia um *run* estágio a estágio contra a *ground
+truth*, com a mesma regra de casamento do `irqrace stage3-all`
+(`project-src/src/irqrace/run_evaluation.py`). Ele avalia os candidatos do stage 1, os do stage 2, os
+registros que chegam à LLM e, quando a triagem rodou, os mesmos registros **na ordem da triagem** — a
+triagem não descarta nada, então o que ela muda é a ordem, que é o que o Inspection Ratio mede. Um
+caso sem *ground truth* nesta máquina não recebe número nenhum; um estágio que não rodou mostra "-".
+
+Conferido contra os `eval/report.json` que a Trilha A gravou nos 31 casos: **0 divergências**, e os
+totais reproduzem o funil dela — *recall* 48/48, armadilhas vivas 35 → 30 → 16 de 38.
+
+No desktop, ponta a ponta em `svp_simple_001_001`:
+
+| Estágio | Candidatos | Recall | Armadilhas vivas | IR |
+| --- | --- | --- | --- | --- |
+| Stage 1 | 14 | 1/1 | 2/2 | 0,29 |
+| Stage 2 (4 descartes por prioridade) | 10 | 1/1 | 2/2 | 0,40 |
+| Chegam à LLM (4 `unsat` no Z3) | 6 | 1/1 | 1/2 | 1,00 |
+
+O IR sobe porque a lista encolhe e o bug fica por último nela: com 6 candidatos, é preciso ler todos.
+
+### 3.8. Um bug real que o *run* falso escondia
+
+Depois de apagar o *showcase*, o teste que percorre o dashboard passou a abrir o primeiro *run* real
+da lista, que só tinha o stage 1, e quebrou: o *resolver* C4 de `masking_state_at` lia
+`access["masking"]`, e um registro do stage 1 ainda não tem máscara. Enquanto o dashboard abria o
+*run* fabricado, que tinha máscara inventada, isso nunca apareceu. Agora a máscara não calculada é
+respondida como `unsupported` — "trate como desconhecido, prefira `uncertain`" — e nunca como
+habilitada ou desabilitada:
+
+`project-src/src/irqrace/llm/resolver.py`
+```python
+    def _masking_at(self, args: dict[str, Any]) -> tuple[dict[str, Any], str]:
+        line, file = args.get("line"), args.get("file")
+        per_role = {
+            m["role"]: m["state"]
+            for m in (self.record.get("masking") or {}).get("per_access", [])
+        }
+        for access in self.record["accesses"]:
+            src = access["source"]
+            if src["line"] == line and (file is None or src["file"] == file):
+                state = access.get("masking") or per_role.get(access["role"])
+                if state is None:
+                    # A stage-1 record: stage 2 has not computed masking yet.
+                    # The state is unknown, not enabled and not disabled.
+                    return {}, "unsupported"
+                return {
+                    "file": src["file"],
+                    "line_start": line,
+                    "line_end": line,
+                    "masking": state,
+                }, "ok"
+```
+
+### 3.9. Só trincas na Trilha B (Issue #1)
+
+A parte da [[Triples Only|decisão de 24 out]] que cabia à Trilha B (`bda61f2`):
+
+- **Fixtures**: o gerador emite `c2/2.0.0` e as 20 foram regeneradas. Todas já eram trincas, então
+  só a versão mudou — exceto `svp_simple_006-trap-2`, cujo código passou a ter o `j < 5` que a Trilha
+  A corrigiu no Racebench local (errata de 22 out). Era a *fixture* que o teste de "fixtures
+  atualizadas" acusava havia dias.
+- **Prompts**: `base.md` só define a trinca; `repair.md` perdeu a estratégia `mask_access` e a regra
+  de escopo dos pares.
+- **Reparo**: `mask_access` saiu do vocabulário fechado — numa trinca ela protege uma ponta e deixa o
+  intervalo onde o acesso remoto cai, então nunca foi um reparo válido aqui:
+
+`project-src/src/irqrace/llm/repair.py`
+```python
+class Strategy(str, enum.Enum):
+    """The closed repair vocabulary. No mutex, by construction."""
+
+    #: disable_isr(n) before A1, enable_isr(n) after A2.
+    mask_interval = "mask_interval"
+    #: Widen a critical section that already exists nearby.
+    extend_section = "extend_section"
+    #: Merge two adjacent sections whose gap is the defect.
+    merge_sections = "merge_sections"
+```
+
+- **Interface**: o desktop, o PDF e o dashboard falam em "trincas (A1, B, A2)", não em pares e
+  triplas.
+
+## 4. Achados e decisões
+
+1. **O mesmo defeito, em seis lugares.** Stage 2 e Z3 simulados, reverificação `ok` sem execução,
+   o script do *showcase*, o funil do dashboard, os KPIs da página inicial, o IR do PDF. Em todos, um
+   número com aparência de medição. O critério para remover foi um só: se ninguém calculou, não pode
+   aparecer como calculado — aparece "-" ou "não executado".
+2. **Dados falsos escondem bugs reais.** O *showcase* fabricado escondia o `KeyError` do *resolver*
+   (§3.8); os estágios simulados escondiam que o modelo nunca tinha visto código (§3.1).
+3. **Corrigir uma etapa pode invalidar o *cache* sem que ele perceba.** O *fingerprint* identifica o
+   candidato, não a evidência sobre ele (§3.2).
+4. **Decisão revertida, registrada:** a reverificação foi primeiro marcada `skipped` com o motivo
+   "os stages 2 e 3 não existem nesta branch". Agora eles existem; o motivo passou a ser o que de
+   fato falta (aplicar o *patch*, recompilar, rodar os stages 1–3 de novo e mapear o candidato pelas
+   linhas deslocadas). Ela continua `skipped`.
+
+## 5. Como reproduzir
+
+Dentro de `project-src/`, com a *venv* do projeto:
+
+```bash
+.venv/bin/python -m pytest -q tests
+```
+
+```bash
+.venv/bin/irqrace contracts validate
+```
+
+```bash
+.venv/bin/irqrace stage3-all
+```
+
+```bash
+.venv/bin/irqrace llm triage runs/<run_id> --backend claude-cli:sonnet
+```
+
+```bash
+.venv/bin/python desktop_app.py
+```
+
+```bash
+.venv/bin/irqrace ui
+```
+
+## 6. Estado ao fim da semana
+
+**582 testes passando, nenhum falhando** — a primeira suíte inteiramente verde no `track-b` (a falha
+da *fixture* desatualizada sumiu com a §3.9). O desktop roda build → stage 1 → stage 2 → stage 3 →
+contexto sobre um caso real (conferido em `svp_simple_001_001`, §3.7), e a triagem e o reparo
+operam sobre o que esses estágios produzem — nos testes, com um *backend* simulado; ao vivo, depois
+do *merge*, ainda não. O relatório e o dashboard só mostram números medidos.
+
+Falta:
+
+- **a triagem dos 31 casos sobre o resíduo pós-Z3** (166 trincas), que é o número que o M4 pede — e
+  não os números dos *fixtures*;
+- **a reverificação dos *patches*** (W9), hoje `skipped`;
+- `feeds_branch` e `used_as_index` saem sempre `null`, e o modelo ora lê isso como "não", ora inventa
+  evidência;
+- decidir o critério de nocividade diante dos leitores mortos do Racebench (§3.3);
+- o modo *offline* do desktop ainda copia a triagem e o reparo de um *run* anterior do mesmo caso;
+  não finge a análise estática, mas finge a LLM.
+
+Página anterior: [[Semana 7 — O Stage 3, Busca e Verificação]] · Trilha B até a W8:
+[[Semana 5 a 8 — Trilha B (Triagem, Ablação, Reparo e Integração C3-C4)]].

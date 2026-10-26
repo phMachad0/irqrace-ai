@@ -2,7 +2,7 @@
 type: project
 tags: [wiki, project, diario, pt-br]
 sources: ["[[Roadmap]]", "[[LLM Stage Design]]", "[[Prompt Architecture]]", "[[LLM Triage]]", "[[LLM-Assisted Repair]]", "[[LLift (paper)]]", "[[IRIS (paper)]]", "[[SkipAnalyzer (paper)]]", "[[SDRacer (paper)]]", "[[SAST-Genius (paper)]]"]
-updated: 2026-10-20
+updated: 2026-10-26
 status: solid
 ---
 
@@ -12,6 +12,14 @@ status: solid
 
 > [!note] Nota sobre o agrupamento
 > A Trilha B iniciou em `track-b/llm-integration` após o congelamento dos contratos C1–C4 e avançou até fechar todos os entregáveis de código de W1 a W8 (conjunto de *fixtures*, *seam* agnóstico a provedor, arquitetura de *prompts* em cinco linhas de ablação, *resolver* C4 sobre árvore de código-fonte C, estágio de reparo com testemunha obrigatória e integração ponta a ponta sobre o *run store* C3). Esta página documenta toda a engenharia da Trilha B.
+
+> [!note] Revisado em 26 out 2026
+> Esta página descreve a Trilha B como ela estava em 20 out. Desde então: o projeto usa só trincas
+> ([[Triples Only]]), e a estratégia de reparo `mask_access`, que só servia a pares, saiu do
+> vocabulário — a §3.3 cita o código como ele é hoje; a triagem não descarta mais candidatos por erro
+> de API; os registros passaram a levar o código-fonte, que antes saía vazio; e a §3.4 hoje roda
+> sobre os stages 2 e 3 reais da Trilha A, depois do *merge* da `main`. Tudo isso está em
+> [[Semana 8 — Integração das Trilhas A e B]]. As contagens de testes da §6 são as de 20 out.
 
 ## 1. Entregáveis do Roadmap (Trilha B, W1–W8)
 
@@ -107,11 +115,17 @@ Arquivo: `project-src/src/irqrace/llm/repair.py`
 class Strategy(str, enum.Enum):
     """The closed repair vocabulary. No mutex, by construction."""
 
+    #: disable_isr(n) before A1, enable_isr(n) after A2.
     mask_interval = "mask_interval"
-    mask_access = "mask_access"
+    #: Widen a critical section that already exists nearby.
     extend_section = "extend_section"
+    #: Merge two adjacent sections whose gap is the defect.
     merge_sections = "merge_sections"
 ```
+
+Até 26 out o vocabulário tinha também `mask_access`, "mascarar um único acesso", válida só para
+pares. Numa trinca ela protege uma ponta e deixa o intervalo onde o acesso remoto cai; com o projeto
+usando só trincas, ela saiu ([[Semana 8 — Integração das Trilhas A e B]], §3.9).
 
 No cálculo de `logic_rate`, mascarar todas as interrupções (`-1`) ou um superconjunto das IRQs exigidas pela referência sobre um intervalo `[covers_from_line, covers_to_line]` que contenha o intervalo de referência conta como logicamente correto, enquanto a justificativa de latência (`latency_note`) é exigida pelo schema:
 
@@ -166,3 +180,5 @@ A função `prepare_context(store)` promove candidatos sobreviventes de `stage2`
 ## 6. Estado ao fim da implementação da Trilha B
 
 **243 testes passando** (sendo **202 testes** dedicados à Trilha B em `tests/test_llm_*.py`), cobrindo contratos, *fixtures*, *backends*, *cache*, *prompts*, *scoring*, `RecordBackedResolver`, `SourceBackedResolver`, `RepairClient`, `score_repairs` e o pipeline C3 ponta a ponta (`prepare_context`, `triage_store`, `repair_store` e subcomandos CLI). Todo o código da Trilha B previsto no [[Roadmap]] (W1–W8) está implementado e pronto para as baterias de execução com chaves de API ou modelos locais.
+
+Próxima página: [[Semana 8 — Integração das Trilhas A e B]].

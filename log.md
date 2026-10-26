@@ -1436,3 +1436,52 @@ only with a proof* — found two places where stage 3 could answer `unsat` witho
 Racebench: all 202 solver verdicts identical to the snapshot taken before the fix; funnel
 316 → 202 → 166, recall gate 48/48. 329 tests pass. Pages touched: [[Soundness Assumptions]] (B2),
 [[Semana 7 — O Stage 3, Busca e Verificação]] (§5 (d), (e), §11).
+
+
+## [2026-10-26] build | W8 Track B — integration with Track A, triples only, nothing faked
+
+Track B's side of W8, done 23–26 Oct on `track-b/llm-integration`. Diary:
+[[Semana 8 — Integração das Trilhas A e B]].
+
+**The triage had never seen the code.** A desktop PDF for `svp_simple_001_001` ranked the bug
+triple `uncertain` and repaired code that does not exist (`compute(i)`, `some_value`). Every C2
+record had `enclosing_source: []`: clang splits the source path into `comp_dir` plus a relative
+name, stage 1 emits only the name, and the reader swallowed the miss. Fixed in `stage1.py`; ids
+unchanged. The result cache then kept serving the answers given without source, because its key was
+the fingerprint, which names the candidate and not the evidence; the key now carries a hash of the
+rendered record minus solver timing.
+
+**The triage dropped candidates silently.** A backend error put the candidate on an `excluded` list
+with no reason written, and the stage still ended `ok`: 7 of 23 reached the report on one run, 3 of 13
+on another. A candidate with no answer now stays as `uncertain` with `not_triaged` set and a warning
+in the log ([[LLM Triage]]: the model never drops). All failing is still a `failed` stage.
+
+**A fourth backend, `claude-cli:<model>`** — `claude -p` on the Pro/Max subscription, drawn from
+the plan's limits instead of billed per token; isolated from Claude Code's own prompt, tools,
+hooks and the vault's `CLAUDE.md`; API keys stripped from its environment; unpriced in every cost
+column.
+
+**Merge of `main`** (Track A W5–W7 and the triples-only change). Code merged cleanly; conflicts
+only in documentation, resolved as unions with `main` as the reference. Then Issue #1 on Track B:
+fixtures at `c2/2.0.0`, prompts define only the triple, `mask_access` out of the repair vocabulary
+(on a triple it protects an endpoint and leaves the gap), UI wording.
+
+**Everything that faked static analysis is gone.** The desktop's "Stage 2 & 3" step had copied
+stage 1 into `stage2/` and written an invented solver verdict (`inconclusive`, `timeout`, 12 ms) for
+every candidate; it was first marked `skipped`, and after the merge runs the real `stage2()` and
+`stage3()`. Also removed: `scripts/seed-showcase-run.py`, which wrote stage-2, solver (including
+`unsat` by heuristic), triage and re-verification outputs for all 31 cases; the dashboard's
+per-stage funnel, exported "for the TCC", which appended "(100%)" to every recall and showed
+re-verification as passed; the fixed "48/48", "zero false negatives" and "80%–95%" KPIs; a fixed
+Inspection Ratio in the PDF. They are replaced by `run_evaluation.py`, a per-stage evaluation
+with the bench's match rule — checked against Track A's 31 reports, 0 mismatches, 48/48, traps
+35 → 30 → 16 of 38. Re-verification stays `skipped` with the real reason (W9).
+
+**A bug the fabricated data hid:** the C4 resolver's `masking_state_at` raised on a stage-1 record,
+which has no masking yet; it now answers `unsupported` (treat as unknown).
+
+State: 582 tests pass, none fail — the first fully green suite on this branch. Missing for M4: the
+triage of the 166-triple post-Z3 residue across the 31 cases, re-reported rather than borrowed from
+the fixtures. Pages touched: [[Semana 8 — Integração das Trilhas A e B]] (new),
+[[Semana 5 a 8 — Trilha B (Triagem, Ablação, Reparo e Integração C3-C4)]] (revision note, §3.3
+requoted), [[Semana 7 — O Stage 3, Busca e Verificação]] (next-page link), `index.md`.

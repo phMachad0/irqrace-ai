@@ -1,7 +1,7 @@
 ---
 type: index
 tags: [wiki, index]
-updated: 2026-10-24
+updated: 2026-10-26
 ---
 
 # Index
@@ -11,7 +11,7 @@ Catalog of the wiki. Start at [[Overview]]; read [[Thesis Goal]] for what this v
 the LLM per `CLAUDE.md` — update on every ingest.
 
 **Counts**: 12 sources (5 concurrency, 7 LLM) · 4 tool pages + 7 baseline/infrastructure ·
-20 concepts · 4 benchmarks · 5 comparisons · 7 project pages · 8 implementation diary pages.
+20 concepts · 4 benchmarks · 5 comparisons · 7 project pages · 9 implementation diary pages.
 
 ## Navigation
 
@@ -44,6 +44,7 @@ Criada e revisada ao fim de cada semana de implementação (ver `CLAUDE.md`).
 | [[Semana 6 — O Stage 3, a Codificação]] | W6 · planejada 5–9 out, feita 22 out | execução simbólica sobre o IR, memória por objeto, havoc em laços e por interferência, o splice, o que `sat` quer dizer |
 | [[Semana 7 — O Stage 3, Busca e Verificação]] | W7 · planejada 12–16 out, feita 22 out | a busca, a projeção de endereços, três bugs pegos e testados por mutação, a auditoria dos `unsat`, **funil 316 → 202 → 166 e 48/48** |
 | [[Semana 5 a 8 — Trilha B (Triagem, Ablação, Reparo e Integração C3-C4)]] | W1–W8 (Trilha B) · 26 set–20 out | os 20 *fixtures*, M1 (GO), *backends* agnósticos, 5 linhas de ablação, `SourceBackedResolver`, reparo com testemunha (W7) e integração C3/CLI (W8) |
+| [[Semana 8 — Integração das Trilhas A e B]] | W8 · planejada 19–23 out, feita 23–26 out | código-fonte nos registros, chave do *cache* pela evidência, triagem que não descarta, `claude-cli`, *merge* da `main`, só trincas na Trilha B, stages 2 e 3 reais no desktop e a remoção de tudo que fingia a análise estática |
 
 ## Implementation (`project-src/`)
 
