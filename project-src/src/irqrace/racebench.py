@@ -26,6 +26,8 @@ import re
 from pathlib import Path
 from typing import Any
 
+from .config import SCHEMA_VERSION
+
 CASE_RE = re.compile(r"^svp_simple_(\d{3})_001\.c$")
 HANDLER_RE = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)\s*/\s*(-?\d+)\s*/\s*(-?\d+)")
 
@@ -118,7 +120,7 @@ def config_for(row: dict[str, Any], suite_root: Path) -> dict[str, Any]:
         )
 
     return {
-        "schema_version": "c1/1.0.0",
+        "schema_version": SCHEMA_VERSION,
         "subject": {
             "name": row["name"],
             "source_root": str(suite_root),

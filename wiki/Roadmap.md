@@ -2,7 +2,7 @@
 type: project
 tags: [wiki, project, roadmap]
 sources: ["[[IntRace (paper)]]", "[[LLift (paper)]]", "[[SkipAnalyzer (paper)]]"]
-updated: 2026-08-27
+updated: 2026-10-22
 status: draft
 ---
 
@@ -19,6 +19,16 @@ Calendar: **Mon 31 Aug – Fri 6 Nov 2026**, ten working weeks.
 > [[IntRace (tool)]]'s three stages, a full LLM pipeline and a UI in ten weeks. It is achievable
 > only because the de-scoping ladder at the end is used early rather than late. If either person
 > has less than roughly 15 hours a week, start from ladder rung 2, not from the full plan.
+
+> [!info] Status — 2026-10-22
+> **Track A: W1–W7 done** in `project-src/` — stages 2 and 3 exist, and the recall gate is
+> 48/48 on what reaches the LLM ([[Semana 5 — O Stage 2, Prioridade e Máscara]],
+> [[Semana 7 — O Stage 3, Busca e Verificação]]). The calendar is behind:
+> by the dates on this page this is W8, M4 falls on Fri 23 Oct, and W6–W10 remain with two
+> weeks left to 6 Nov. The ladder's own trigger for rung 3 — *nothing solving by Fri 16
+> Oct* — has passed. Which rungs to take is Pedro's decision and is not made on this page.
+> Track B's work lives on the `track-b/llm-integration` branch (last commit 22 Oct, "Tool
+> MVP") and is not summarised on `main`.
 
 ## The idea that makes parallel work possible
 
@@ -74,9 +84,9 @@ Deliberately before any analysis, because everything downstream is measured agai
 - Entry points from config; per-flow interprocedural reachability.
 - Shared-location identification via SVF **may**-alias.
 - Access enumeration: flow, R/W, enclosing function, call path, `DILocation`, loop context.
-- Candidate derivation — **pairs and triples from one access set**
-  ([[Pair-Triple Unification]]). Triples need intra-flow CFG ordering and must allow
-  `A₁ = A₂` inside a loop.
+- Candidate derivation — **triples from one access set**. Triples need intra-flow CFG
+  ordering and must allow `A₁ = A₂` inside a loop. (Since 2026-10-24 the only candidate class:
+  [[Triples Only]].)
 - Emit C2 records and C3 run directories.
 - **Done when**: `candidates.jsonl` exists for all 31 cases and the **recall gate passes — all
   48 bug points present**. Report the candidate count without embarrassment; compare to
@@ -86,8 +96,8 @@ Deliberately before any analysis, because everything downstream is measured agai
 ### W5 · 28 Sep – 2 Oct · Stage 2
 - Block model `(T, I, S, p)`; priority check with **larger = higher**
   ([[Contradictions]] #3); timing left unconstrained.
-- Masking dataflow: masked only if masked on **every** path. Point property for pairs,
-  **interval property for triples** — masked throughout `[A₁, A₂]` on all paths.
+- Masking dataflow: masked only if masked on **every** path, and the **interval property**
+  decides — masked throughout `[A₁, A₂]` on all paths.
 - Equal-priority and arrival-model decisions made explicit and recorded in the manifest.
 - **Done when**: attrition measured against IntRace's 54.2%; recall gate still 100%.
 

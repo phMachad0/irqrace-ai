@@ -28,7 +28,7 @@ import yaml
 
 from . import contracts
 
-SCHEMA_VERSION = "c1/1.0.0"
+SCHEMA_VERSION = "c1/2.0.0"
 
 #: Defaults applied on load. Kept in one place and checked against the schema's
 #: own ``default`` annotations by ``tests/test_contracts.py``, so the two cannot
@@ -64,7 +64,6 @@ DEFAULTS: dict[str, Any] = {
     "analysis": {
         "alias": "may",
         "indirect_calls": "signature-matched-address-taken",
-        "candidate_classes": ["race-pair", "atomicity-triple"],
         "allow_same_statement_a1_a2": True,
         "solver": {"enabled": True, "timeout_ms": 10000, "on_timeout": "inconclusive"},
     },

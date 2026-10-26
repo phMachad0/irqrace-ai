@@ -2,7 +2,7 @@
 type: concept
 tags: [wiki, concept]
 sources: ["[[SDRacer (paper)]]", "[[IntRace (paper)]]", "[[NIChecker (paper)]]", "[[Racebench (documentation)]]"]
-updated: 2026-08-31
+updated: 2026-10-22
 status: draft
 ---
 
@@ -77,5 +77,32 @@ The planted false positive immediately below it in the same file is the mirror i
 masked until line 46, *after* both writes. The two candidates differ only in where the interval
 sits relative to that one line, so an implementation that gets one right and the other wrong is
 guessing rather than modelling the interval property.
+
+**Correction, 2026-10-22.** The trap half of the paragraph above does not survive a sound
+implementation. It assumes `isr_1` always *starts* with irq 2 masked, which the arrival model
+in [[Racebench]]'s own README does not grant: `isr_1` may fire before `main`'s
+`disable_isr(2)`, or a second time after its own `enable_isr(2)` has persisted. The two
+candidates do differ only in where the interval sits relative to line 46 — but that makes the
+bug point *more* clearly real, not the trap infeasible. Recorded as [[Contradictions]] #7.
+
+## What the implementation had to model
+
+Building stage 2 (`project-src/src/irqrace/masking.py`) turned the paragraphs above into four
+rules, each in [[Soundness Assumptions]]:
+
+- **Masked on every path** (F1), with three values and no boolean to reach for.
+- **Interference** (F2, F7). At every point where another flow may fire, the state may also
+  take any value that flow can leave behind. Whether hardware restores the mask on return is
+  platform-specific, so the union is taken: an ISR's enables can break a proof, its disables
+  never make one.
+- **ISR entry** (F8). An ISR begins in the union of the states at every point it may fire, in
+  every flow — the rule the trap above violates.
+- **Nested activations** (F9). An ISR nested inside an interval started inside it, so what may
+  run inside *that* activation is decided from the state where it fired. Using its global
+  entry state is sound but kept three masking-protected traps in `svp_simple_027/028/030`.
+
+The analysis also carries the **origin** of every value — the `disable_isr(2)` at line 28,
+the `enable_isr(2)` at line 46 of `isr_1` — so a proof can be stated and a doubt explained,
+which is what the [[LLM Stage Design]] context record needs.
 
 Related: [[Asymmetric Preemption]], [[Path Feasibility Analysis]], [[Interrupt Nesting]].

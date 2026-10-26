@@ -2,7 +2,7 @@
 type: concept
 tags: [wiki, concept]
 sources: ["[[SDRacer (paper)]]", "[[IntRace (paper)]]", "[[Racebench (documentation)]]"]
-updated: 2026-08-20
+updated: 2026-10-24
 status: solid
 ---
 
@@ -44,6 +44,7 @@ That overlap is now precise rather than suggestive: all 48 bug points project on
 pairs with at least one write, so every annotated atomicity violation *contains* races. The
 converse fails — an atomicity violation can exist with no constituent race when the two local
 accesses sit in separate critical sections — so the classes overlap without coinciding.
-[[Pair-Triple Unification]] works this out and draws the design consequence.
+[[Pair-Triple Unification]] works this out. This project detects the atomicity violations only
+([[Triples Only]]).
 
 Related: [[Access Interleaving Patterns]], [[Asymmetric Preemption]], [[Precision Metrics]].

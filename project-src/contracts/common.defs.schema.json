@@ -59,7 +59,7 @@
 
     "AccessRole": {
       "enum": ["A1", "B", "A2"],
-      "description": "Position in the candidate. Pairs use A1 (local) and B (remote). Triples use A1, B, A2 with B in the preempting flow (wiki/concepts/Pair-Triple Unification.md)."
+      "description": "Position in the candidate: A1 and A2 in the preempted flow, B in the preempting one."
     },
 
     "LoopContext": {
@@ -142,7 +142,7 @@
 
     "IntervalMaskingState": {
       "type": "object",
-      "description": "Masking over the interval [A1, A2] of a triple: an interrupt is masked over the interval only if it is masked at every point of every path from A1 to A2. Point property for pairs, interval property for triples (Pipeline Design, stage 2).",
+      "description": "Masking over the interval [A1, A2] of a triple: an interrupt is masked over the interval only if it is masked at every point of every path from A1 to A2. This, not the state at either access, is what decides a candidate (Pipeline Design, stage 2).",
       "required": ["from_role", "to_role", "disabled_throughout", "unknown"],
       "additionalProperties": false,
       "properties": {
@@ -246,7 +246,7 @@
 
     "SolverResult": {
       "type": "object",
-      "description": "Z3 path-feasibility verdict. UNSAT is a proof of impossibility and is the ONLY licence to discard a candidate. 'inconclusive' must never be collapsed into either decided outcome (Pipeline Design, 'Z3 and path feasibility').",
+      "description": "Z3 path-feasibility verdict. UNSAT is a proof of impossibility and is the ONLY licence to discard a candidate. 'inconclusive' must never be collapsed into either decided outcome (Pipeline Design, 'Z3 and path feasibility'). Clarified 2026-10-22 (W6-W7): the encoding over-approximates every execution, so 'sat' means NOT REFUTED -- the witness in 'assignment' may not be a real execution wherever the encoding left values unconstrained, which 'unconstrained' lists. A consumer must never read 'sat' as a confirmed defect.",
       "required": ["verdict"],
       "additionalProperties": false,
       "properties": {

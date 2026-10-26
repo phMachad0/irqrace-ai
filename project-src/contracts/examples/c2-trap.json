@@ -1,5 +1,5 @@
 {
-  "schema_version": "c2/1.0.0",
+  "schema_version": "c2/2.0.0",
   "id": "c14ac4fbd506db23d",
   "fingerprint": "14ac4fbd506db23def206ab2ef4b1689601ae7299eaf55af2ec47a3139e52a4d",
   "class": "atomicity-triple",
@@ -50,11 +50,10 @@
         "is_one_of_many": false
       },
       "masking": {
-        "disabled": [
-          2
-        ],
+        "disabled": [],
         "enabled": [
-          1
+          1,
+          2
         ],
         "unknown": []
       }
@@ -119,11 +118,10 @@
         "is_one_of_many": false
       },
       "masking": {
-        "disabled": [
-          2
-        ],
+        "disabled": [],
         "enabled": [
-          1
+          1,
+          2
         ],
         "unknown": []
       }
@@ -156,23 +154,33 @@
     }
   ],
   "preemption": {
-    "preempting_flow": "isr_2",
-    "preempted_flow": "isr_1",
-    "priority_relation": "strictly-higher",
     "equal_priority_assumed_preemptible": null,
-    "nesting_depth": 2,
+    "nesting_depth": 1,
+    "preempted_flow": "isr_1",
+    "preempting_flow": "isr_2",
+    "priority_relation": "strictly-higher",
     "timing": "unconstrained"
   },
   "masking": {
+    "interval": {
+      "disabled_throughout": [],
+      "enabled_somewhere": [
+        1,
+        2
+      ],
+      "from_role": "A1",
+      "reenabled_within_interval_by": [],
+      "to_role": "A2",
+      "unknown": []
+    },
     "per_access": [
       {
         "role": "A1",
         "state": {
-          "disabled": [
-            2
-          ],
+          "disabled": [],
           "enabled": [
-            1
+            1,
+            2
           ],
           "unknown": []
         }
@@ -191,50 +199,15 @@
       {
         "role": "A2",
         "state": {
-          "disabled": [
-            2
-          ],
+          "disabled": [],
           "enabled": [
-            1
+            1,
+            2
           ],
           "unknown": []
         }
       }
-    ],
-    "interval": {
-      "from_role": "A1",
-      "to_role": "A2",
-      "disabled_throughout": [
-        2
-      ],
-      "enabled_somewhere": [
-        1
-      ],
-      "unknown": [],
-      "reenabled_within_interval_by": [],
-      "critical_sections": [
-        {
-          "irqs": [
-            2
-          ],
-          "begin": {
-            "file": "svp_simple_001/svp_simple_001_001.c",
-            "line": 28,
-            "column": 0,
-            "end_line": 28,
-            "snippet": "disable_isr(2);"
-          },
-          "end": {
-            "file": "svp_simple_001/svp_simple_001_001.c",
-            "line": 46,
-            "column": 0,
-            "end_line": 46,
-            "snippet": "enable_isr(2);"
-          },
-          "covers_interval": true
-        }
-      ]
-    }
+    ]
   },
   "call_paths": [
     {
@@ -351,9 +324,14 @@
         "note": "module-level global"
       },
       {
-        "fact": "masking.interval.disabled_throughout",
-        "status": "proven",
-        "note": "main disables irq 2 at line 28 and isr_1 re-enables it at line 46, after both writes; no flow that may run inside [43, 44] re-enables it, so irq 2 is masked throughout. This is the planted-trap shape: ONE critical section covering the whole interval."
+        "fact": "preemption",
+        "note": "priorities from the C1 file, larger number = higher priority; nesting=True, equal_priority_preemption=True, isr_reentrant=False, timing unconstrained",
+        "status": "assumed_from_config"
+      },
+      {
+        "fact": "masking.interval",
+        "note": "isr_2 may run within [line 43, line 44] of isr_1, at nesting depth 1; irq 2 is not masked on every path there; it may be enabled by: the initial state (masking.initial_state = all-enabled); enable_isr(-1) at line 25 in init; enable_isr(2) at line 46 in svp_simple_001_001_isr_1; isr_1 may itself start with irq 2 unmasked: an ISR begins in the state of whatever point it preempted, and isr_1 may fire wherever irq 2 is unmasked -- including before any masking call in the flows it preempts (F8).",
+        "status": "overapproximated"
       },
       {
         "fact": "solver_result",

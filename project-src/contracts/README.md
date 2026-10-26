@@ -17,7 +17,7 @@ four; that is the point, and it is why it is small.
 
 ## Versioning
 
-Every instance document carries `schema_version` (`c1/1.0.0`, `c2/1.0.0`, …). **C2 is the
+Every instance document carries `schema_version` (`c1/2.0.0`, `c2/2.0.0`, `c3/1.0.0`, `c4/1.0.0`). **C2 is the
 critical one** — it is the seam between the two people. The Roadmap's stated response to
 contract churn is to freeze C2 by decree and *version it rather than renegotiate it*, so:
 
@@ -40,9 +40,10 @@ so it cannot be quietly reversed in code:
 1. **Masking is three-valued** (`disabled` / `enabled` / `unknown`), and an interrupt is
    `disabled` only if it is disabled on *every* path. There is deliberately no boolean
    `is_masked` field to reach for ([[Pipeline Design]], stage 2).
-2. **The interval property is separate from the point property.** Triples carry
-   `masking.interval`; pairs do not. Answering one and inferring the other is the mistake
-   [[Pair-Triple Unification]] exists to prevent.
+2. **The interval property is a field of its own.** `masking.interval` says whether an
+   interrupt is masked throughout `[A1, A2]`; `masking.per_access` says what holds at each
+   access. Neither is inferred from the other: masked at A1 and at A2 does not mean masked in
+   between.
 3. **The solver verdict has four values, not two** — `unsat`, `sat`, `inconclusive`,
    `not_run` — and `inconclusive` requires a `reason`. Collapsing it into either decided
    outcome loses exactly the information the LLM stage exists to exploit.
@@ -67,7 +68,22 @@ The C2 example is the annotated bug point of `svp_simple_001_001`:
 `svp_simple_001_001_global_array <W#32>,<R#55>,<W#35>` — a real `(W,R,W)` atomicity violation
 where the main task writes the array in two separate loops and `isr_2` reads it in between.
 The trap in the same file, `svp_simple_001_001_global_var <W#43><R#63><W#44>`, is
-`examples/c2-trap.json`: `isr_1` writes the variable twice and `isr_2` reads it, but `isr_2`
-has *higher* priority and is masked by `disable_isr(2)` in the main task until `isr_1` itself
-calls `enable_isr(2)` — after both writes. Having both a real defect and its neighbouring trap
-as fixtures is what makes schema gaps show up while they are cheap to fix.
+`examples/c2-trap.json`: `isr_1` writes the variable twice and `isr_2` reads it. The suite
+labels it a false positive on the reasoning that irq 2 stays masked until `isr_1` calls
+`enable_isr(2)` after both writes. **Since W5 the fixture records what stage 2 actually finds**:
+`isr_1` may itself start with irq 2 unmasked — before main's `disable_isr(2)`, or after an
+earlier activation of itself — so the interleaving is reachable and the candidate is kept
+(`docs/masking-semantics.md`, "Correction"). The label is not changed; the disagreement is
+recorded in the wiki's Contradictions page.
+
+`examples/c2-trap-array-index.json` is the file's *second* trap,
+`<W#32><R#60><W#35>`: stage 2 keeps it (irq 2 is unmasked in the interval, as for the bug
+point), and it is the run fixture's UNSAT example, because `B` reads element 1000 and `A₂`
+writes only element 9999 — a fact about indices that stage 2 cannot see and stage 3 can prove.
+
+`examples/c3-drop-example.json` is one line of `stage2/dropped.jsonl`: `svp_simple_003_001`'s
+first trap, rejected by stage 2 because both reads sit under `disable_isr(1)` and nothing that
+may run there unmasks irq 1.
+
+Having both a real defect and its neighbouring traps as fixtures is what makes schema gaps show
+up while they are cheap to fix — and, in W5, what made a wrong semantic claim show up too.

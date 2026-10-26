@@ -52,9 +52,6 @@ externals:
 analysis:
   alias: may
   indirect_calls: signature-matched-address-taken
-  candidate_classes:
-  - race-pair
-  - atomicity-triple
   allow_same_statement_a1_a2: true
   solver:
     enabled: true
@@ -62,7 +59,7 @@ analysis:
     on_timeout: inconclusive
 output:
   run_root: runs
-schema_version: c1/1.0.0
+schema_version: c1/2.0.0
 flows:
 - id: main
   kind: task
