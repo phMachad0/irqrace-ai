@@ -2,7 +2,7 @@
 type: project
 tags: [wiki, project, diario, pt-br]
 sources: ["[[Roadmap]]", "[[Pipeline Design]]", "[[Path Feasibility Analysis]]", "[[Soundness Assumptions]]", "[[IntRace (paper)]]", "[[Racebench]]"]
-updated: 2026-10-24
+updated: 2026-10-25
 status: draft
 ---
 
@@ -16,6 +16,10 @@ status: draft
 > Desde esta data o projeto trabalha com uma única classe de candidato, a trinca de violação de
 > atomicidade ([[Triples Only]]). Esta página descreve o código como ele é hoje; a saída da seção 1,
 > as contagens e os tempos foram refeitos com ele.
+
+> [!note] Revisado em 25 out 2026
+> Uma revisão da branch achou dois pontos em que o stage 3 podia dar `unsat` sem prova. Os dois
+> estão corrigidos e descritos no fim da §5, em (d) e (e). Nenhum veredito do Racebench mudou.
 
 > [!note] Sobre a divisão
 > W6–W7 é um bloco único no [[Roadmap]], implementado de uma vez. A
@@ -285,6 +289,73 @@ foi escrito para exigi-la:
 A correção é o `st.crossed.clear()` do trecho da §3. Teste:
 `test_the_back_edge_is_crossed_once_per_phase` (**J2**).
 
+### Depois: dois furos que a revisão da branch achou (25 out 2026)
+
+Os três bugs acima foram pegos durante a implementação. Os dois abaixo foram achados depois, por uma
+revisão da branch inteira contra a regra do projeto — *o solver só descarta com prova*. Nenhum dos
+dois aparece no Racebench, e por isso o portão não os pegaria: nenhum dos 202 vereditos mudou com a
+correção.
+
+### (d) Uma chamada indireta sem alvo conhecido era lida como "não chama ninguém"
+
+Uma **chamada indireta** é uma chamada através de um ponteiro de função (`fp()`), em vez de pelo
+nome. Para saber quem ela pode chamar, a análise consulta o **conjunto points-to** do ponteiro — os
+objetos para os quais o SVF calculou que ele pode apontar. Quando o ponteiro passa por um inteiro
+(`slot = (unsigned long)&g; fp = (void (*)(void))slot;`), o SVF perde o rastro e o conjunto fica
+vazio.
+
+O stage 1 nunca lê um conjunto vazio como "não chama ninguém": nesse caso a chamada pode ir para
+**qualquer função cujo endereço é tomado** no programa (`&g` em algum lugar) e cuja assinatura é
+compatível — a premissa **B2** de [[Soundness Assumptions]]. O stage 3 não fazia o mesmo: sem alvo,
+pulava a chamada. Um acesso que só existe dentro de `g` nunca era alcançado, a projeção não juntava
+nenhum caminho, e a trinca — gerada pelo stage 1 e mantida pelo stage 2 — saía **`unsat`**, sem
+registro de contexto. Agora o stage 3 usa o mesmo grafo de chamadas:
+
+`project-src/analysis/src/irqrace-stage3.cpp`
+```cpp
+    if (out.empty() || unknown) {
+      if (over) *over = true;
+      for (const llvm::Function *f : addressTaken)
+        if (signatureMatches(f, ci) && seen.insert(f).second) out.push_back(f);
+    }
+```
+
+`unknown` cobre também o conjunto que tem funções *e* algo que o SVF não nomeia: aí a lista de alvos
+conhecidos não é completa, e a busca segue os dois. O conjunto de escrita de uma chamada assim
+continua "tudo", como antes — ele nunca encolhe. Teste:
+`test_an_unresolved_indirect_call_reaches_every_compatible_target`; com o *fallback* desligado
+(mutação), ele falha.
+
+### (e) Um timeout podia virar `unknown` sem registro
+
+Cada candidato tem um prazo (`timeout_ms`). Passado o prazo, `solve()` devolvia `unknown` sem marcar
+que tinha havido um `unknown` — e a checagem de A₂ em `decide()` lê qualquer coisa diferente de
+`sat` como ramo refutado. Se a busca terminasse aí, o veredito seria `unsat` por falta de tempo, e
+não por prova.
+
+Ao investigar, vi que **hoje isso não chega a acontecer**: antes da checagem de A₂, `decide()` sempre
+põe um estado na fila (o que segue sem escolher aquela instrução), e o laço da busca olha o relógio
+antes de tirar o próximo estado — a busca para como `inconclusive`, motivo `timeout`. Uma mutação que
+desfaz a correção não faz nenhum teste falhar, e é por isso. O furo era latente, e a correção torna a
+regra local, em vez de depender de onde o laço olha o relógio:
+
+`project-src/analysis/src/irqrace-stage3.cpp`
+```cpp
+    // Past the deadline the answer is unknown, and it must be recorded as such.
+    // decide()'s A2 check reads anything but SAT as a refuted branch; today
+    // the search loop's own deadline check stops the search before that can
+    // end in UNSAT, but a timeout must not become a proof because of where
+    // the loop happens to look at the clock.
+    if (left <= 0) { sawUnknown = true; return z3::unknown; }
+```
+
+O teste antigo usava `timeout_ms=0`, que para a busca antes do primeiro passo. O novo,
+`test_a_deadline_passing_inside_the_search_is_never_unsat`, usa uma variável de ambiente só de teste,
+`IRQRACE_STAGE3_EXPIRE_AFTER_CALLS=n`, que faz o prazo vencer na *n*-ésima chamada ao solver — a
+única forma determinística de pôr o prazo no meio de um passo. O caso é uma trinca que só a busca
+refuta (`a[k]` contra `a[1 - k]`, que nunca coincidem num mesmo caminho); para cada *n* entre 1 e o
+número de chamadas, o veredito tem de ser `inconclusive`.
+
 ## 6. A auditoria de cada `unsat`
 
 O portão só cobre os 48 *bug points*. Um `unsat` errado num candidato não anotado é uma perda de
@@ -376,7 +447,7 @@ irqrace stage3-all
 
 ## 11. Estado ao fim do bloco
 
-327 testes hoje. Os 53 deste bloco estão em `tests/test_stage3.py`: 12 sobre programas C
+329 testes hoje. Os 55 deste bloco estão em `tests/test_stage3.py`: 14 sobre programas C
 compilados com o mesmo clang, uma regra de corretude por teste; 31 com o portão em cada caso do
 Racebench; e 10 com vereditos específicos que esta página argumenta. A suíte inteira leva cerca de 80
 s.

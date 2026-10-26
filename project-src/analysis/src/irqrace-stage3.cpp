@@ -62,6 +62,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdlib>
 #include <deque>
 #include <fstream>
 #include <functional>
@@ -236,6 +237,7 @@ public:
     for (llvm::GlobalVariable &g : M.globals()) obj(&g);
     for (llvm::Function &f : M) {
       obj(&f);
+      if (!f.isIntrinsic() && f.hasAddressTaken()) addressTaken.push_back(&f);
       if (f.isDeclaration()) continue;
       for (llvm::Instruction &I : llvm::instructions(f))
         if (llvm::isa<llvm::AllocaInst>(&I)) obj(&I);
@@ -288,20 +290,46 @@ public:
   }
 
   /// Call targets: the direct callee, or the points-to targets of the pointer.
-  std::vector<const llvm::Function *> targets(const llvm::CallBase *ci) {
+  /// When the points-to set is empty or may name something SVF does not, the
+  /// targets are every address-taken function with a compatible signature --
+  /// the same call graph stage 1 derived the candidate from (Soundness
+  /// Assumptions B2). Reading an unresolved call as "calls nothing" would let
+  /// the search miss every access behind it and report UNSAT. `over` is set
+  /// when the fallback was used.
+  std::vector<const llvm::Function *> targets(const llvm::CallBase *ci, bool *over = nullptr) {
     std::vector<const llvm::Function *> out;
+    if (over) *over = false;
     const llvm::Value *callee = ci->getCalledOperand()->stripPointerCasts();
     if (const auto *f = llvm::dyn_cast<llvm::Function>(callee)) {
       out.push_back(f);
       return out;
     }
     bool unknown = false;
+    std::set<const llvm::Function *> seen;
     for (NodeID o : pointsTo(ci->getCalledOperand(), unknown)) {
       auto it = valueOf.find(o);
-      if (it == valueOf.end()) continue;
-      if (const auto *f = llvm::dyn_cast<llvm::Function>(it->second)) out.push_back(f);
+      if (it == valueOf.end()) { unknown = true; continue; }
+      if (const auto *f = llvm::dyn_cast<llvm::Function>(it->second)) {
+        if (seen.insert(f).second) out.push_back(f);
+      } else {
+        unknown = true; // points at data: not a function this module names
+      }
+    }
+    if (out.empty() || unknown) {
+      if (over) *over = true;
+      for (const llvm::Function *f : addressTaken)
+        if (signatureMatches(f, ci) && seen.insert(f).second) out.push_back(f);
     }
     return out;
+  }
+
+  /// Stage 1's rule, verbatim: excluding a target is the unsound direction,
+  /// so only arity has to be compatible.
+  static bool signatureMatches(const llvm::Function *f, const llvm::CallBase *ci) {
+    llvm::FunctionType *ft = f->getFunctionType();
+    if (ft == ci->getFunctionType()) return true;
+    if (ft->isVarArg()) return true;
+    return ft->getNumParams() == ci->arg_size();
   }
 
   /// Everything a function may write, its callees included.
@@ -330,8 +358,11 @@ public:
       ws.all = unk;
     } else if (const auto *ci = llvm::dyn_cast<llvm::CallBase>(I)) {
       if (ci->isInlineAsm()) { ws.all = true; return ws; }
-      auto ts = targets(ci);
-      if (ts.empty()) { ws.all = true; return ws; }
+      bool over = false;
+      auto ts = targets(ci, &over);
+      // An over-approximated call keeps writing everything, as before the
+      // fallback existed: the write set must never shrink.
+      if (ts.empty() || over) { ws.all = true; return ws; }
       for (const llvm::Function *t : ts) {
         if (t->isIntrinsic()) ws.add(intrinsicWrites(ci));
         else if (qy.primitives.count(t->getName().str())) continue;
@@ -398,6 +429,7 @@ public:
   const Query &qy;
   std::map<const llvm::Value *, NodeID> objOf;
   std::map<NodeID, const llvm::Value *> valueOf;
+  std::vector<const llvm::Function *> addressTaken;
 
 private:
   static bool isIrreducible(const llvm::Function &f, FnInfo &fi) {
@@ -497,7 +529,13 @@ struct Result {
 class Executor {
 public:
   Executor(Facts &facts, const Query &qy, z3::context &C)
-      : facts(facts), qy(qy), C(C), memSort(C.array_sort(C.bv_sort(64), C.bv_sort(8))) {}
+      : facts(facts), qy(qy), C(C), memSort(C.array_sort(C.bv_sort(64), C.bv_sort(8))) {
+    // Fault injection for the tests: the deadline passes at the n-th solver
+    // call of each candidate, wherever in the search that call falls -- the
+    // only way to put the deadline inside a step deterministically.
+    if (const char *e = std::getenv("IRQRACE_STAGE3_EXPIRE_AFTER_CALLS"))
+      expireAfterCalls = static_cast<unsigned>(std::strtoul(e, nullptr, 10));
+  }
 
   Result run(const Candidate &cand) {
     Result res;
@@ -568,6 +606,7 @@ private:
   std::set<std::string> unsupported;
   bool sawUnknown = false;
   unsigned solverCalls = 0;
+  unsigned expireAfterCalls = 0;
   unsigned freshCounter = 0;
   std::string lastWitness;
   std::string stopReason;
@@ -624,8 +663,14 @@ private:
   z3::check_result solve(const std::vector<z3::expr> &pc, const z3::expr *extra,
                          z3::model *model = nullptr) {
     ++solverCalls;
+    if (expireAfterCalls && solverCalls >= expireAfterCalls) deadline = Clock::now() - std::chrono::milliseconds(1);
     auto left = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - Clock::now()).count();
-    if (left <= 0) return z3::unknown;
+    // Past the deadline the answer is unknown, and it must be recorded as such.
+    // decide()'s A2 check reads anything but SAT as a refuted branch; today
+    // the search loop's own deadline check stops the search before that can
+    // end in UNSAT, but a timeout must not become a proof because of where
+    // the loop happens to look at the clock.
+    if (left <= 0) { sawUnknown = true; return z3::unknown; }
     z3::params p(C);
     p.set("timeout", static_cast<unsigned>(left));
     inc->set(p);

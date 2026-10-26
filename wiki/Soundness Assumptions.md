@@ -2,7 +2,7 @@
 type: project
 tags: [wiki, project, soundness]
 sources: ["[[IntRace (paper)]]", "[[NIChecker (paper)]]", "[[SDRacer (paper)]]", "[[BMC4AV (paper)]]", "[[LLift (paper)]]"]
-updated: 2026-10-24
+updated: 2026-10-25
 status: draft
 ---
 
@@ -42,7 +42,7 @@ merely asserted.
 | # | Assumption | How it can hide a defect | Where |
 | --- | --- | --- | --- |
 | B1 | **The configuration file names every flow.** Each task and each ISR listed in C1 `flows` is a root of reachability; nothing else is. | *The single largest recall risk in the design.* A handler not listed contributes no accesses and every defect reachable only from it disappears with no error. Mitigated by `irqrace-probe`'s R7 check, which warns when a configured entry has no body — but it cannot warn about a handler nobody configured. | C1 `flows`; probe warning `entry-point-missing` |
-| B2 | An **indirect call whose targets cannot be resolved may call every address-taken function with a matching signature.** An empty points-to set is never read as "calls nothing". | If SVF returns an empty target set and it is trusted, whole subtrees of reachable accesses vanish invisibly ([[Soundness and False Negatives]] §1). Still to be verified against SVF's actual behaviour — an open item. | C1 `analysis.indirect_calls`; probe reports `indirect_call_sites` |
+| B2 | An **indirect call whose targets cannot be resolved may call every address-taken function with a matching signature.** An empty points-to set is never read as "calls nothing". | If SVF returns an empty target set and it is trusted, whole subtrees of reachable accesses vanish invisibly ([[Soundness and False Negatives]] §1). Still to be verified against SVF's actual behaviour — an open item. | C1 `analysis.indirect_calls`; probe reports `indirect_call_sites`; stage 1 `CallGraph::build`, and stage 3 `Facts::targets` follows the same call graph — and for a points-to set that is empty *or* partly unknown (`test_an_unresolved_indirect_call_reaches_every_compatible_target`) |
 | B3 | A call through a **bitcast is a direct call**, resolved by stripping pointer casts. | Not a recall risk but a precision one, and a large one: `common.h` declares `init`, `idlerun` and `rand` K&R-style, so without cast-stripping all 31 subjects look like they dispatch through function pointers and all 31 call graphs get over-approximated. Measured: exactly **one** case, `svp_simple_029_001`, uses genuine function-pointer dispatch. | `irqrace-probe`; `project-src/docs/toolchain-notes.md` |
 | B4 | Reachability is **transitive and inter-procedural** from each entry point; accesses in nested callees are found. | A missed call edge is a missed subtree. Depends entirely on B2. | stage 1 (not yet built) |
 

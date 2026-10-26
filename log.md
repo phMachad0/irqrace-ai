@@ -665,3 +665,23 @@ Pages touched: [[Thesis Goal]], [[Pipeline Design]], [[LLM Stage Design]], [[Das
 [[Pair-Triple Unification]], [[Access Interleaving Patterns]], [[Soundness and False Negatives]],
 [[Data Race]], [[Reimplementation Assessment]], all seven diary pages, `CLAUDE.md`.
 
+
+## [2026-10-25] fix | stage 3 — two UNSAT verdicts without proof, found by a branch review
+
+A review of `track-a/semanas-5-7` against the project's own rule — *a solver may drop a candidate
+only with a proof* — found two places where stage 3 could answer `unsat` without one:
+
+- **Unresolved indirect call.** An empty points-to set for a function pointer made stage 3 skip the
+  call, while stage 1 had applied [[Soundness Assumptions]] B2 (every address-taken function with a
+  compatible signature). Accesses inside the callee were never reached and a real triple came out
+  `unsat`. `Facts::targets` now uses the same fallback, also when the set is partly unknown; the
+  write set of such a call stays "everything". Reproduced on a five-line program, fixed, pinned by a
+  test that fails under mutation.
+- **Deadline inside the search.** Past the deadline `solve()` returned `unknown` without recording
+  it, and the A2 check reads non-SAT as refuted. Latent: the search loop checks the clock before
+  the next state and `decide()` always queues one, so a mutation undoing the fix fails no test. Fixed
+  anyway, with a deterministic fault-injection test (`IRQRACE_STAGE3_EXPIRE_AFTER_CALLS`).
+
+Racebench: all 202 solver verdicts identical to the snapshot taken before the fix; funnel
+316 → 202 → 166, recall gate 48/48. 329 tests pass. Pages touched: [[Soundness Assumptions]] (B2),
+[[Semana 7 — O Stage 3, Busca e Verificação]] (§5 (d), (e), §11).

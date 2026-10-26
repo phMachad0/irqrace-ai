@@ -340,6 +340,65 @@ void t_isr_1(void) { int r = x;      /* R */ }
     assert store.check() == []
 
 
+def test_a_deadline_passing_inside_the_search_is_never_unsat(tmp_path, monkeypatch):
+    """`timeout_ms=0` stops the search before it starts. Here the deadline is
+    made to pass at every solver call in turn -- in the middle of a step, at
+    the A2 check -- on a triple only the search refutes (`a[k]` and
+    `a[1 - k]` never overlap on one path; the projection, which explores each
+    access on its own, cannot see that)."""
+    body = """\
+volatile int a[2];
+void t_main(void) {
+  int k = rand() & 1;
+  a[k] = 1;                          /* W1 */
+  a[1 - k] = 2;                      /* W2 */
+}
+void t_isr_1(void) { int r = a[0];   /* R */ }
+"""
+    lines = [line_of(body, m) for m in ("/* W1 */", "/* R */", "/* W2 */")]
+    store = run_c(tmp_path / "free", body)
+    r = verdict(store, *lines)
+    assert r["verdict"] == "unsat"
+    stats = {s["candidate_id"]: s for s in
+             json.loads((store.root / "solver" / "stats.json").read_text())}
+    assert stats[r["candidate_id"]]["method"] == "search"
+    calls = stats[r["candidate_id"]]["solver_calls"]
+    for k in range(1, calls + 1):
+        monkeypatch.setenv("IRQRACE_STAGE3_EXPIRE_AFTER_CALLS", str(k))
+        store = run_c(tmp_path / f"k{k}", body)
+        r = verdict(store, *lines)
+        assert r["verdict"] == "inconclusive", (k, r)
+        assert store.check() == []
+
+
+def test_an_unresolved_indirect_call_reaches_every_compatible_target(tmp_path):
+    """A function pointer laundered through an integer has an empty points-to
+    set. Stage 1 then reads the call as calling every address-taken function
+    with a compatible signature (Soundness Assumptions B2); stage 3 must follow
+    the same call graph, or it never reaches the accesses inside `g` and
+    reports UNSAT on a real triple."""
+    body = """\
+volatile int x;
+volatile unsigned long slot;
+void g(void) {
+  x = 1;                             /* W1 */
+  x = 2;                             /* W2 */
+}
+void t_main(void) {
+  slot = (unsigned long)&g;
+  void (*fp)(void) = (void (*)(void))slot;
+  fp();
+}
+void t_isr_1(void) { int r = x;      /* R */ }
+"""
+    store = run_c(tmp_path, body)
+    r = verdict(store, *(line_of(body, m) for m in ("/* W1 */", "/* R */", "/* W2 */")))
+    assert r["verdict"] == "sat", r
+    assert r["assignment"]["preempted_at"]["function"] == "g"
+    assert store.read_contexts()
+    assert store.check() == []
+
+
 # -- Racebench ------------------------------------------------------------------
 
 racebench = pytest.mark.skipif(not (SUITE / "README.md").exists(), reason="racebench not present")
