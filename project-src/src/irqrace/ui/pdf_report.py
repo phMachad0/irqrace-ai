@@ -194,7 +194,7 @@ class PDFReportBuilder:
         stages = self.data.get("stages", {})
         stage_names = [
             ("build", "1. Build Bitcode (clang-14)", "Compilação whole.bc e probe de globais"),
-            ("stage1", "2. Stage 1 (SVF May-Alias)", "Grafo de fluxo de controle e pares/triplas"),
+            ("stage1", "2. Stage 1 (SVF May-Alias)", "Grafo de fluxo de controle e trincas (A1, B, A2)"),
             ("solver", "3. Stage 2 + Solver Z3", "Máscara/prioridade e prova formal UNSAT"),
             ("context", "4. Contexto C2 (Pack)", "Empacotamento de pilhas e masking"),
             ("triage", "5. LLM Triagem (Classificação)", "Avaliação de viabilidade e nocividade"),

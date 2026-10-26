@@ -156,7 +156,7 @@ def build(
     involved = sorted({a["flow"] for a in accesses})
 
     record: dict[str, Any] = {
-        "schema_version": "c2/1.0.0",
+        "schema_version": "c2/2.0.0",
         "id": "cPLACEHOLDER0000",
         "fingerprint": "0" * 64,
         "class": "atomicity-triple",

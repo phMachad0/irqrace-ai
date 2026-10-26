@@ -2,6 +2,7 @@
 
 import json
 import pytest
+from pydantic import ValidationError
 
 from irqrace.llm.backends import (
     Backend,
@@ -177,13 +178,15 @@ def test_extend_and_mask_interval_are_accepted_for_one_another():
     assert rate == 1.0
 
 
-def test_mask_access_is_not_accepted_for_an_interval_fix():
-    """Protecting the endpoints leaves the gap the remote access lands in."""
-    cid = _id("svp_simple_009_001")
-    rate, _ = logic_rate(
-        {cid: _patch(strategy=Strategy.mask_access, irqs=(1,), lo=32, hi=33)}, REFS
-    )
-    assert rate == 0.0
+def test_masking_a_single_access_is_not_in_the_vocabulary():
+    """Every candidate is a triple, and protecting one access leaves the gap
+    the remote access lands in -- so the strategy the pairs needed is gone, and
+    a model cannot propose it."""
+    assert "mask_access" not in {s.value for s in Strategy}
+    doc = _patch().model_dump(mode="json")
+    doc["strategy"] = "mask_access"
+    with pytest.raises(ValidationError):
+        Patch.model_validate(doc)
 
 
 def test_a_patch_without_a_reference_is_reported_not_skipped():

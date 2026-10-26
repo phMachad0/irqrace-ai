@@ -829,7 +829,7 @@ def render_pipeline_demo_page(store: RunStore) -> None:
     # STEP 3: STAGE 1 (SVF & CO-EXEC)
     # -----------------------------------------------------------------------
     elif step.startswith("3."):
-        st.caption("**Bloco 3:** Análise de ponteiros SVF + grafo de preempção emitindo pares e triplas conflitantes.")
+        st.caption("**Bloco 3:** Análise de ponteiros SVF + grafo de preempção emitindo as trincas candidatas (A1, B, A2).")
         s1_analysis = _load_json_safe(store.root / "stage1" / "analysis.json")
         col_in, col_out = st.columns(2)
         with col_in:

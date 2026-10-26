@@ -17,9 +17,9 @@ You decide how it is described and where in the reading order it lands.
   and no happens-before edges from acquire/release.
 - Synchronisation is by **masking**: `disable_isr(n)` / `enable_isr(n)` bracket a
   region in which interrupt `n` cannot fire.
-- A **race pair** is two accesses to one shared variable in two flows, at least
-  one a write. An **atomicity triple** is `A1`, `B`, `A2` where `A1` and `A2` are
-  in one flow and `B` is a remote access that lands between them.
+- Every candidate is an **atomicity triple**: `A1`, `B`, `A2`, where `A1` and
+  `A2` are in one flow and `B` is a remote access, in another flow, that lands
+  between them.
 
 ## Reading the evidence
 

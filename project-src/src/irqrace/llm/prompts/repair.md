@@ -23,7 +23,6 @@ there is no second thread to block, and an ISR cannot wait.
 | Strategy | What it means |
 | --- | --- |
 | `mask_interval` | `disable_isr(n)` before `A1`, `enable_isr(n)` after `A2` |
-| `mask_access` | Mask around a single access. **Race pairs only** |
 | `extend_section` | A critical section already exists nearby; widen it to cover the interval |
 | `merge_sections` | Two adjacent critical sections with an unprotected gap; merge them |
 
@@ -31,13 +30,12 @@ Prefer `extend_section` or `merge_sections` when a critical section is already
 present. Adding a second, overlapping one is redundant and it is the kind of
 edit that accumulates.
 
-## The scope follows the defect class
+## The scope is the whole interval
 
-- A **race pair** is fixed by protecting the access.
-- An **atomicity triple** is fixed by making the whole interval from `A1` to
-  `A2` atomic. Protecting `A1` and `A2` individually **does not fix it** — the
-  remote access lands in the gap between them, which is where it was landing
-  already.
+Every candidate is an atomicity triple, and it is fixed by making the whole
+interval from `A1` to `A2` atomic. Protecting `A1` and `A2` individually **does
+not fix it** — the remote access lands in the gap between them, which is where
+it was landing already.
 
 ## Mask every interrupt that can break the interval
 

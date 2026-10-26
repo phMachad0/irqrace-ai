@@ -69,9 +69,6 @@ class Strategy(str, enum.Enum):
 
     #: disable_isr(n) before A1, enable_isr(n) after A2.
     mask_interval = "mask_interval"
-    #: Mask around one access. Race pairs only -- on a triple this protects the
-    #: endpoints and leaves the gap the remote access was already landing in.
-    mask_access = "mask_access"
     #: Widen a critical section that already exists nearby.
     extend_section = "extend_section"
     #: Merge two adjacent sections whose gap is the defect.
@@ -523,17 +520,13 @@ def witness_problems(patch: Patch, record: dict[str, Any]) -> list[str]:
             f"the analysis says {remote!r}"
         )
     order = patch.witness.access_order
-    if record.get("class") == "race-pair":
-        if sorted(order) != ["A1", "B"]:
-            problems.append(f"access order {order} is not a permutation of A1, B")
-    else:
-        if sorted(order) != ["A1", "A2", "B"]:
-            problems.append(f"access order {order} is not a permutation of A1, B, A2")
-        elif order.index("B") != 1:
-            problems.append(
-                f"access order {order} does not place the remote access between the "
-                "local pair, so it does not describe an atomicity violation"
-            )
+    if sorted(order) != ["A1", "A2", "B"]:
+        problems.append(f"access order {order} is not a permutation of A1, B, A2")
+    elif order.index("B") != 1:
+        problems.append(
+            f"access order {order} does not place the remote access between the "
+            "local pair, so it does not describe an atomicity violation"
+        )
     return problems
 
 

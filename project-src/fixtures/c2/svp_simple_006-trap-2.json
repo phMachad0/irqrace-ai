@@ -1,5 +1,5 @@
 {
-  "schema_version": "c2/1.0.0",
+  "schema_version": "c2/2.0.0",
   "id": "c8d257c3f01ffa94b",
   "fingerprint": "8d257c3f01ffa94b97108051b5651fb25c7703069910e87d49a363ee4128e240",
   "class": "atomicity-triple",
@@ -327,7 +327,7 @@
       "file": "svp_simple_006/svp_simple_006_001.c",
       "line_start": 25,
       "line_end": 46,
-      "code": "void svp_simple_006_001_main() {\n  init();\n  int reader1, reader2;\n  \n  for (int i = 0; i < 5; i++)\n    for (int j = 0; i < 5; j++) {\n      if (i == j) {\n        if (i == 0)\n          reader1 = svp_simple_006_001_global_var1;\n        else if (i == 4)\n          reader2 = svp_simple_006_001_global_var1;\n        else if (i == 6)\n          reader2 = svp_simple_006_001_global_var1;\n      }\n    }\n\n  for (int i = 0; i < 5; i++)\n    for (int j = 0; j < 5; j++) {\n      if (((i + j) == 6) && (i < j))\n        svp_simple_006_001_global_var2 = 0x02;\n    }\n}",
+      "code": "void svp_simple_006_001_main() {\n  init();\n  int reader1, reader2;\n  \n  for (int i = 0; i < 5; i++)\n    for (int j = 0; j < 5; j++) {\n      if (i == j) {\n        if (i == 0)\n          reader1 = svp_simple_006_001_global_var1;\n        else if (i == 4)\n          reader2 = svp_simple_006_001_global_var1;\n        else if (i == 6)\n          reader2 = svp_simple_006_001_global_var1;\n      }\n    }\n\n  for (int i = 0; i < 5; i++)\n    for (int j = 0; j < 5; j++) {\n      if (((i + j) == 6) && (i < j))\n        svp_simple_006_001_global_var2 = 0x02;\n    }\n}",
       "truncated": false
     },
     {

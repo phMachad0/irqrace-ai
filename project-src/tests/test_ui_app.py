@@ -68,7 +68,7 @@ def test_compare_runs_on_identical_and_modified(tmp_path: Path) -> None:
     shutil.copytree(FIXTURE_RUN, run_b)
 
     diff_same = compare_runs(RunStore(run_a), RunStore(run_b))
-    assert len(diff_same["shared"]) == 2
+    assert len(diff_same["shared"]) == len(RunStore(run_a).read_candidates("stage1"))
     assert diff_same["only_in_a"] == []
     assert diff_same["only_in_b"] == []
     assert all(not r["Mudou?"] for r in diff_same["rows"])

@@ -1,5 +1,5 @@
 {
-  "schema_version": "c2/1.0.0",
+  "schema_version": "c2/2.0.0",
   "id": "c6756411eeb134a3c",
   "fingerprint": "6756411eeb134a3c3b3124e0d746b4c1c07ba7f21c33f5feeafddad2d1ffdb82",
   "class": "atomicity-triple",

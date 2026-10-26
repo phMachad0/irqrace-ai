@@ -618,13 +618,11 @@ class PipelineStepper:
         for w in summary.get("warnings", []):
             log_fn(f"  ! [{w.get('severity', 'warn').upper()}] {w['code']}: {w['message']}")
         n = summary["candidates"]
-        triples = summary["triples"]
-        pairs = summary["pairs"]
         log_fn(
             f"  SVF enumerou {summary['accesses']} acessos em {summary['objects']} objetos compartilhados: "
-            f"{n} candidatos ({triples} triplas, {pairs} pares)."
+            f"{n} trincas candidatas (A1, B, A2)."
         )
-        return f"{n} candidatos extraídos ({triples} triplas, {pairs} pares)"
+        return f"{n} trincas candidatas extraídas"
 
     def _map_template_candidate_ids(self) -> dict[str, str]:
         """Map template_run candidate IDs -> freshly compiled stage1 candidate IDs by (var, pattern, lines)."""
