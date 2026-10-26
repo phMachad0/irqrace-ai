@@ -1,5 +1,5 @@
 {
-  "schema_version": "c2/1.0.0",
+  "schema_version": "c2/2.0.0",
   "id": "cf8fd11d0783ef732",
   "fingerprint": "f8fd11d0783ef732b0a3363978f24cae5255fa15557389aaf3cfca897fd586d5",
   "class": "atomicity-triple",
@@ -62,11 +62,10 @@
         "is_one_of_many": false
       },
       "masking": {
-        "disabled": [
-          2
-        ],
+        "disabled": [],
         "enabled": [
-          1
+          1,
+          2
         ],
         "unknown": []
       }
@@ -143,11 +142,10 @@
         "is_one_of_many": false
       },
       "masking": {
-        "disabled": [
-          2
-        ],
+        "disabled": [],
         "enabled": [
-          1
+          1,
+          2
         ],
         "unknown": []
       }
@@ -180,23 +178,35 @@
     }
   ],
   "preemption": {
-    "preempting_flow": "isr_2",
-    "preempted_flow": "main",
-    "priority_relation": "strictly-higher",
     "equal_priority_assumed_preemptible": null,
-    "nesting_depth": 2,
+    "nesting_depth": 1,
+    "preempted_flow": "main",
+    "preempting_flow": "isr_2",
+    "priority_relation": "strictly-higher",
     "timing": "unconstrained"
   },
   "masking": {
+    "interval": {
+      "disabled_throughout": [],
+      "enabled_somewhere": [
+        1,
+        2
+      ],
+      "from_role": "A1",
+      "reenabled_within_interval_by": [
+        "isr_1"
+      ],
+      "to_role": "A2",
+      "unknown": []
+    },
     "per_access": [
       {
         "role": "A1",
         "state": {
-          "disabled": [
-            2
-          ],
+          "disabled": [],
           "enabled": [
-            1
+            1,
+            2
           ],
           "unknown": []
         }
@@ -215,51 +225,15 @@
       {
         "role": "A2",
         "state": {
-          "disabled": [
-            2
-          ],
+          "disabled": [],
           "enabled": [
-            1
+            1,
+            2
           ],
           "unknown": []
         }
       }
-    ],
-    "interval": {
-      "from_role": "A1",
-      "to_role": "A2",
-      "disabled_throughout": [],
-      "enabled_somewhere": [
-        1,
-        2
-      ],
-      "unknown": [],
-      "reenabled_within_interval_by": [
-        "isr_1"
-      ],
-      "critical_sections": [
-        {
-          "irqs": [
-            2
-          ],
-          "begin": {
-            "file": "svp_simple_001/svp_simple_001_001.c",
-            "line": 28,
-            "column": 0,
-            "end_line": 28,
-            "snippet": "disable_isr(2);"
-          },
-          "end": {
-            "file": "svp_simple_001/svp_simple_001_001.c",
-            "line": 37,
-            "column": 0,
-            "end_line": 37,
-            "snippet": "}"
-          },
-          "covers_interval": true
-        }
-      ]
-    }
+    ]
   },
   "call_paths": [
     {
@@ -400,14 +374,19 @@
         "note": "a module-level global reached from two flows; no aliasing involved"
       },
       {
-        "fact": "masking.interval.disabled_throughout",
-        "status": "proven",
-        "note": "irq 2 is masked at line 28 on every path through main, but isr_1 may preempt the interval and calls enable_isr(2) at line 46, so irq 2 is NOT masked throughout. Computing this from main's CFG alone would drop an annotated bug point."
-      },
-      {
         "fact": "accesses[1].source",
         "status": "proven",
         "note": "the read at line 55 is guarded by global_flag == 1, which isr_1 sets at line 41 before re-enabling irq 2"
+      },
+      {
+        "fact": "preemption",
+        "note": "priorities from the C1 file, larger number = higher priority; nesting=True, equal_priority_preemption=True, isr_reentrant=False, timing unconstrained",
+        "status": "assumed_from_config"
+      },
+      {
+        "fact": "masking.interval",
+        "note": "isr_2 may run within [line 32, line 35] of main, at nesting depth 1; irq 2 is not masked on every path there; it may be enabled by: enable_isr(2) at line 46 in svp_simple_001_001_isr_1; main masks it itself (disable_isr(2) at line 28 in svp_simple_001_001_main), but isr_1 may run inside the interval and unmask it -- computed from main's own control flow alone, this candidate would have been dropped.",
+        "status": "overapproximated"
       },
       {
         "fact": "solver_result",

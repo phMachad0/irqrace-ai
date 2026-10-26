@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import time
 from pathlib import Path
 from typing import Any
 
@@ -53,6 +54,7 @@ def run_stage1(bitcode: Path, cfg: Config, *, binary: Path | None = None,
 
 def stage1(cfg: Config, store, bitcode: Path) -> dict[str, Any]:
     """Run stage 1 into an open run store. Returns a summary."""
+    t0 = time.perf_counter()
     store.set_stage("stage1", "running")
     try:
         analysis = run_stage1(bitcode, cfg)
@@ -70,22 +72,19 @@ def stage1(cfg: Config, store, bitcode: Path) -> dict[str, Any]:
     candidates = derive_candidates(analysis, cfg)
     n = store.append_candidates("stage1", candidates)
 
-    triples = sum(1 for c in candidates if c["class"] == "atomicity-triple")
     store.set_stage(
         "stage1", "ok",
         candidates_out=n,
         # Stage 1 never discards: it is the generator, and only a proof may drop
         # a candidate anywhere downstream.
         dropped_with_proof=0,
+        wall_ms=int((time.perf_counter() - t0) * 1000),
     )
     store.log("info", "stage1", "candidates-derived",
-              f"{n} candidates ({triples} triples, {n - triples} pairs) over "
-              f"{len(analysis['accesses'])} accesses to "
+              f"{n} candidates over {len(analysis['accesses'])} accesses to "
               f"{len(analysis['objects'])} shared object(s)")
     return {
         "candidates": n,
-        "triples": triples,
-        "pairs": n - triples,
         "accesses": len(analysis["accesses"]),
         "objects": len(analysis["objects"]),
         "warnings": analysis.get("warnings", []),

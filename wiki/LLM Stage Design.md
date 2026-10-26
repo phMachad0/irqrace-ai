@@ -79,7 +79,7 @@ defect is non-local. Proposed shape, per candidate:
 
 | Field | Content |
 | --- | --- |
-| `id`, `class` | candidate identifier; `race-pair` or `atomicity-triple` |
+| `id`, `class` | candidate identifier; always `atomicity-triple` ([[Triples Only]]) |
 | `variable` | name, declared type, `volatile`, declaration site |
 | `accesses` | for each: `R`/`W`, source range, enclosing function, **flow** (main or ISR *n*) |
 | `flows` | for each involved flow: entry point, priority, how it was identified |
@@ -121,7 +121,7 @@ be a table of interrupt patterns with their verdicts:
 | Pattern | Verdict to teach |
 | --- | --- |
 | both local accesses inside **one** critical section covering the interval | infeasible — the planted-trap shape in [[Racebench]] |
-| each local access in its **own** critical section, gap between them unprotected | **still a real atomicity violation** — no race, but the ISR fits in the gap ([[Pair-Triple Unification]]) |
+| each local access in its **own** critical section, gap between them unprotected | **still a real atomicity violation** — each access is protected, but the ISR fits in the gap |
 | preempting flow has **lower or equal** priority | no preemption *if strictly lower*; **equal priority is unresolved** — treat as possible |
 | interrupt not yet enabled at this point in the flow | infeasible only if disabled on **every** path reaching it |
 | the same statement inside a loop as both `A₁` and `A₂` | a valid triple — `svp_simple_029_001` annotates exactly this |

@@ -2,11 +2,16 @@
 type: project
 tags: [wiki, project, diario, pt-br]
 sources: ["[[Roadmap]]", "[[Pipeline Design]]", "[[LLM Stage Design]]", "[[Dashboard Design]]"]
-updated: 2026-09-18
+updated: 2026-10-24
 status: draft
 ---
 
 # Semana 1 — Contratos e Toolchain
+
+> [!note] Revisado em 24 out 2026
+> Desde esta data o projeto trabalha com uma única classe de candidato, a trinca de violação de
+> atomicidade ([[Triples Only]]). Esta página descreve o código como ele é hoje; os contratos C1 e C2,
+> congelados aqui na versão `1.0.0`, estão hoje na `2.0.0`.
 
 > [!info] Sobre esta pasta
 > `wiki/diario/` é a **única** parte do vault escrita em português. Ela registra, semana a
@@ -193,10 +198,10 @@ não existe campo para expressar a alternativa errada.
 Não existe um booleano `is_masked` para alguém usar por engano. Uma interrupção só conta como desabilitada se estiver desabilitada **em todos os caminhos** que chegam àquele ponto;
 "desabilitada em algum caminho" vira defeito perdido.
 
-**(2) A propriedade de intervalo é um campo separado da propriedade de ponto.** Para um par a
-pergunta é "`B` pode rodar *no instante* de `A`?"; para uma trinca é "`B` pode rodar em
-*qualquer ponto* de `[A₁, A₂]`?". Responder uma e inferir a outra é o erro que
-[[Pair-Triple Unification]] existe para evitar.
+**(2) A propriedade de intervalo é um campo próprio.** A pergunta que decide um candidato é
+"`B` pode rodar em *qualquer ponto* de `[A₁, A₂]`?"; o estado de máscara em cada acesso é
+registrado à parte, como evidência, e nunca decide sozinho. Mascarada em A₁ e mascarada em A₂ não
+quer dizer mascarada entre os dois.
 
 **(3) O veredito do solver tem quatro valores, não dois**: `unsat`, `sat`, `inconclusive` e
 `not_run` — e `inconclusive` exige um motivo. Colapsar `inconclusive` em `unsat` seria perda

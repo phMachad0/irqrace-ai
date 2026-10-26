@@ -2,7 +2,7 @@
 type: concept
 tags: [wiki, concept]
 sources: ["[[IntRace (paper)]]", "[[SDRacer (paper)]]"]
-updated: 2026-08-17
+updated: 2026-10-24
 status: draft
 ---
 
@@ -57,5 +57,28 @@ because UBITect's symbolic execution timed out on 40% of cases, and those timeou
 the real bugs hid. So a **timeout or unsupported construct must be recorded as `inconclusive`
 and passed on**, never silently treated as `SAT` or dropped as noise — and the solver's partial
 progress belongs in the context record handed to the LLM.
+
+## How this project builds it
+
+Implemented 2026-10-22 (`project-src/analysis/src/irqrace-stage3.cpp`; [[Soundness Assumptions]]
+group J). IntRace's splice survives almost unchanged; what changes is that **the encoding has to
+over-approximate every execution**, because here UNSAT discards:
+
+- symbolic execution over the LLVM IR, every call inlined, every branch forked and pruned by Z3;
+  memory as one byte array per SVF object, pointers as *(object, offset)*;
+- **loops as one pass** with everything they may write havocked at the header — no unrolling
+  bound, so no bounded guarantee to qualify ([[Loop Abstraction]] in its cheapest form);
+- **interference as havoc**: at every point where [[Interrupt Masking and Synchronization]]
+  analysis says another flow may run, whatever it may write is unconstrained. This is
+  thread-modular, and it is where precision goes: a trap that is infeasible only because of the
+  *order* in which ISRs run looks feasible;
+- an **address projection** run first: each access's paths explored on their own, then "can
+  the addresses coincide?" — a relaxation, so UNSAT there is a proof, and it is what makes index
+  traps cheap.
+
+On [[Racebench]]: 202 candidates in, 36 refuted, 166 reach the LLM; **17.8% attrition against
+IntRace's 86.2%** — different subjects (real-world against 37–97-line cases), a different
+candidate class, and IntRace's encoding is not stated to be an over-approximation. The 48 bug
+points all survive.
 
 Related: [[Symbolic Execution]], [[Bounded Model Checking]], [[Precision Metrics]].

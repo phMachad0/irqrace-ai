@@ -1,0 +1,32 @@
+{
+  "candidate_id": "c07c38d9dfb60c427",
+  "class": "atomicity-triple",
+  "fingerprint": "07c38d9dfb60c4272cd45e1948688e3f816cff721377507f9ee42e0c5e929ed8",
+  "lines": [
+    38,
+    62,
+    43
+  ],
+  "local_flow": "main",
+  "pattern": "RWR",
+  "proof": "isr_1 may preempt main on priority, but irq 1 (isr_1) is masked at every point of every path from line 38 to line 43 in main (13 program points, callees included), even after every mask change a flow able to run there could make. Masked by: disable_isr(1) at line 33 in svp_simple_003_001_main. No other flow may run inside the interval at all.",
+  "reason": "masking",
+  "relies_on": [
+    "B1",
+    "E1",
+    "E4",
+    "F1",
+    "F2",
+    "F3",
+    "F5",
+    "F6",
+    "F7",
+    "F8",
+    "F9",
+    "G2c",
+    "H1d"
+  ],
+  "remote_flow": "isr_1",
+  "stage": "stage2",
+  "variable": "svp_simple_003_001_global_var2"
+}

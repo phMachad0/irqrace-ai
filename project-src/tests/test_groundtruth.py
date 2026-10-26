@@ -62,28 +62,26 @@ def test_every_annotation_names_a_variable(raw):
         assert ann.variable, f"{ann.case} {ann.kind}{ann.index}: {ann.raw}"
 
 
-def _projections_have_a_write(ann):
-    """Both pair projections of a triple must contain at least one write."""
+def _b_conflicts_with_both_ends(ann):
+    """B conflicts with A1 and with A2: each side of it involves a write."""
     a1, b, a2 = (a.kind for a in ann.accesses)
     return "write" in (a1, b) and "write" in (b, a2)
 
 
-def test_every_corrected_triple_projects_onto_pairs_containing_a_write(corrected):
-    """The empirical half of the argument in [[Pair-Triple Unification]].
-
-    A projection of (R, R) is two reads: no race detector can flag it and no
-    atomicity violation can arise from it. Every annotated triple in the suite
+def test_in_every_corrected_triple_b_conflicts_with_both_ends(corrected):
+    """Two reads cannot conflict, so a B that only meets reads on one side cannot
+    make the interval observable from there. Every annotated triple in the suite
     satisfies this once the errata is applied.
     """
     for ann in corrected.bugs + corrected.traps:
-        assert _projections_have_a_write(ann), (
-            f"{ann.case} {ann.kind}{ann.index} {ann.pattern} has a read-only projection")
+        assert _b_conflicts_with_both_ends(ann), (
+            f"{ann.case} {ann.kind}{ann.index} {ann.pattern} has a read-only side")
 
 
 def test_exactly_one_shipped_annotation_breaks_that_property(raw):
     """svp_simple_016_001 bug 1, read literally, is (W, R, R) — and line 33 is a
     write. This is the independent evidence for that errata entry."""
-    offenders = [a for a in raw.bugs + raw.traps if not _projections_have_a_write(a)]
+    offenders = [a for a in raw.bugs + raw.traps if not _b_conflicts_with_both_ends(a)]
     assert [(a.case, a.kind, a.index, a.pattern) for a in offenders] == [
         ("svp_simple_016_001", "bug", 1, "WRR")
     ]

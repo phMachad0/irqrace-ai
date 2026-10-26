@@ -1,6 +1,0 @@
-# ninja log v5
-10135	10877	1789733973091486731	bin/irqrace-stage1	c2492d8c53da4c45
-1	10135	1789733972355480510	CMakeFiles/irqrace-stage1.dir/src/irqrace-stage1.cpp.o	1381445b742d83e6
-10147	11252	1789733386633831503	bin/irqrace-probe	2ed78f1736ed3ee7
-0	10147	1789733385545822695	CMakeFiles/irqrace-probe.dir/src/irqrace-probe.cpp.o	38569196b3821f55
-0	68	1789754638970255448	build.ninja	8dcbcaffdc36185c

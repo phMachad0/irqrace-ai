@@ -5,12 +5,10 @@ pipeline has to obey from stage 2 onward, and the concrete case that proves it.
 
 ## The rule
 
-Stage 2 asks two questions about interrupt masking, and they are different
-questions ([[Pair-Triple Unification]]):
-
-* **point property**, for pairs — is interrupt *n* masked *at* access `A`?
-* **interval property**, for triples — is interrupt *n* masked *throughout*
-  `[A₁, A₂]`?
+Stage 2 asks one masking question of every candidate, the **interval
+property**: is interrupt *n* masked *throughout* `[A₁, A₂]`? What holds at `A₁`
+or at `A₂` alone is recorded as evidence and never answers it — masked at both
+accesses does not mean masked in between.
 
 The recall-safe direction is stated in [[Pipeline Design]]: an interrupt counts
 as masked at a point **only if it is masked on every path reaching that point**.
@@ -107,3 +105,70 @@ modelling the interval property; it is guessing.
 Both are shipped as fixtures — `contracts/examples/c2-bugpoint.json` and
 `contracts/examples/c2-trap.json` — so that stage 2 can be tested against the
 distinction as soon as it exists.
+
+## Correction (2026-10-22, W5): the trap is not provably infeasible
+
+Written when stage 2 was implemented, and left below the original text rather
+than edited into it, because the reasoning above is how the mistake reads from
+the inside.
+
+**The bug-point half of this page stands.** Stage 2 keeps
+`<W#32>,<R#55>,<W#35>`, and for exactly the reason given: computed from main's
+CFG alone, irq 2 is masked over `[32, 35]`; with `isr_1`'s `enable_isr(2)`
+applied wherever `isr_1` may run, it is not. The run's context record says so
+and names `isr_1` in `reenabled_within_interval_by`.
+
+**The trap half does not.** The argument for `<W#43><R#63><W#44>` — "interrupt 2
+was masked by the main task at line 28 and `isr_1` only re-enables it at line
+46, after both writes" — silently assumes that `isr_1` always *starts* with
+irq 2 masked. Racebench's README says an interrupt may fire whenever it is
+enabled, at an indeterminate moment and position, **an indeterminate number of
+times**. Under that model `isr_1` may start with irq 2 unmasked in two
+independent ways:
+
+1. **Before main's `disable_isr(2)`.** `init()`, called at line 26, runs
+   `enable_isr(-1)`, and main masks irq 2 only at line 28. `isr_1` may fire in between —
+   indeed before `init()` too, with `initial_state: all-enabled` — and then
+   irq 2 is unmasked throughout its writes at 43 and 44.
+2. **After an earlier activation of itself.** `isr_1`'s `enable_isr(2)` at line
+   46 is a global unlock and persists after it returns. A second activation of
+   `isr_1` starts with irq 2 unmasked even if main masked it before `isr_1`
+   could ever fire.
+
+In both, `isr_2` (priority 2 > 1) may preempt `isr_1` between the two writes
+and read the intermediate value. The interleaving is reachable; a sound stage 2
+keeps the candidate, and a correct solver should answer SAT, not UNSAT.
+
+The rule this adds is **Soundness Assumptions F8**: *an ISR's masking state on
+entry is the union of the states at every point where it may fire, in every
+flow* — never the state at the point the interval's author had in mind. Route 2
+also rests on **F7**: an ISR's enables may persist after it returns.
+
+What changed because of it:
+
+* `contracts/examples/c2-trap.json` and `c2-bugpoint.json` now carry the masking
+  and preemption blocks stage 2 actually emits. The originals reported the
+  *local* view at each access (`disabled: [2]` at main's line 32) — the value
+  this page warns against, and the one stage 2 cannot soundly produce.
+* `contracts/examples/run-fixture/` no longer has the solver return UNSAT on this
+  trap. The UNSAT example is now the file's *second* trap,
+  `<W#32><R#60><W#35>` (`c2-trap-array-index.json`), where it is true: `B` reads
+  element 1000 and `A₂` writes only element 9999.
+* The label itself is **not** changed. Correcting a label is re-deciding the
+  ground truth rather than reading it — the same line the errata draws for
+  `svp_simple_019_001` (Soundness Assumptions I3). It is recorded as an open
+  question and in [[Contradictions]].
+
+### And the fixpoint direction
+
+This page also said clause (b) must be computed "starting from 'everything may
+run' and tightening, never the other way round". Both directions are sound *at
+convergence*; the difference is what an intermediate iterate means. Descending
+from top gives a sound answer at every step, but on a finite lattice it may stop
+at a fixpoint strictly larger than the least one when flows may preempt each
+other cyclically (equal priorities, re-entrancy). `irqrace.masking` therefore
+computes the **least** fixpoint by ascending iteration and **never returns an
+unconverged iterate**: hitting the round bound raises instead of answering
+(`test_an_intermediate_iterate_is_never_returned`). The concern this page
+raised — reporting a proof before having one — is met by that rule rather than
+by the direction.

@@ -2,11 +2,15 @@
 type: project
 tags: [wiki, project, diario, pt-br]
 sources: ["[[Roadmap]]", "[[Racebench]]", "[[Precision Metrics]]", "[[Soundness and False Negatives]]"]
-updated: 2026-09-18
+updated: 2026-10-24
 status: draft
 ---
 
 # Semana 2 — Ground Truth e Protocolo de Avaliação
+
+> [!note] Revisado em 24 out 2026
+> Desde esta data o projeto trabalha com uma única classe de candidato, a trinca de violação de
+> atomicidade ([[Triples Only]]). Esta página descreve o código como ele é hoje.
 
 **Período:** 7–11 set 2026 · **Trilha A** · Corresponde a [[Roadmap]] W2.
 Página anterior: [[Semana 1 — Contratos e Toolchain]].
@@ -262,9 +266,8 @@ def normalise_variable(name: str) -> str:
     return base.strip()
 ```
 
-**Não mede pares contra gabarito de trincas.** O gabarito do Racebench tem forma de trinca;
-pontuar pares contra ele é a confusão de vocabulário que o vault aponta no [[IntRace (paper)]],
-que reporta trincas sob nome de duas posições. Pares recebem um número próprio.
+**Trinca contra trinca.** O gabarito do Racebench tem forma de trinca, e os candidatos também:
+cada um é casado pela sequência ordenada das suas três linhas.
 
 ## 9. Decisão 3 — casar contra o gabarito corrigido
 

@@ -8,7 +8,7 @@
   "additionalProperties": false,
 
   "properties": {
-    "schema_version": { "const": "c1/1.0.0" },
+    "schema_version": { "const": "c1/2.0.0" },
 
     "subject": {
       "type": "object",
@@ -183,12 +183,6 @@
           "enum": ["signature-matched-address-taken", "points-to-only"],
           "default": "signature-matched-address-taken",
           "description": "An indirect call whose targets cannot be resolved is treated as potentially calling every address-taken function with a matching signature. 'points-to-only' trusts SVF's target set and is unsound when it resolves to nothing."
-        },
-        "candidate_classes": {
-          "type": "array",
-          "items": { "enum": ["race-pair", "atomicity-triple"] },
-          "default": ["race-pair", "atomicity-triple"],
-          "description": "Pairs and triples are derived separately from ONE access set. Do not derive triples by joining confirmed pairs (wiki/concepts/Pair-Triple Unification.md)."
         },
         "allow_same_statement_a1_a2": {
           "type": "boolean",
