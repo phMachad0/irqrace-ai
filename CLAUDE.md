@@ -10,7 +10,7 @@ The human curates sources, asks questions, and directs the analysis.
 ## Why this vault exists
 
 The literature is **background for a tool the human is building**. The goal is a static
-analyzer that finds data races *and* atomicity violations in interrupt-driven embedded C with
+analyzer that finds atomicity violations in interrupt-driven embedded C with
 **no false negatives** — over-approximate, accept false positives — and that emits a rich
 per-candidate context record (call stacks, variables, slices, priority and masking state) so
 an **LLM stage** can triage false positives, propose interrupt-specific fixes, apply them, and

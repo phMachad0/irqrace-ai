@@ -2,7 +2,7 @@
 type: benchmark
 tags: [wiki, benchmark]
 sources: ["[[Racebench (documentation)]]", "[[IntRace (paper)]]", "[[NIChecker (paper)]]", "[[BMC4AV (paper)]]"]
-updated: 2026-08-31
+updated: 2026-10-22
 status: solid
 ---
 
@@ -234,6 +234,43 @@ reading any Racebench result:
 2. Every tool in this literature is optimizing against a scoring function that priced recall
    at zero — which is the backdrop to [[BMC4AV (paper)]]'s finding that a "100% precision"
    tool had a 39.4% hit rate ([[Precision Metrics]]).
+
+### Two traps are reachable under the README's own semantics
+
+Found by this project's stage 2, 2026-10-22. `svp_simple_001_001`'s first trap,
+`global_var <W#43><R#63><W#44>`, is labelled a false positive because irq 2 is masked by `main`
+until `isr_1` unmasks it after both writes — but the README lets `isr_1` fire whenever it is
+enabled, any number of times, so it may *start* with irq 2 unmasked (before `main`'s
+`disable_isr(2)`, or after an earlier activation of itself). The interleaving is reachable. The
+label is kept as shipped and the conflict is [[Contradictions]] #7; the practical consequence is
+that **a sound tool cannot reject all 38 traps** on this suite, and a tool that does is using a
+narrower arrival model than the README states.
+
+The second, found by stage 3 on 2026-10-22: `svp_simple_020_001`'s trap
+`global_var <R#37><W#44><R#40>`. The label rests on the two guards `sum > para` (line 36) and
+`sum < para` (line 39) being exclusive, but `para` may change between them: `isr_1` writes the
+variable at line 44, sets the flag and unmasks irq 2, and `isr_2` then sets `para = 11`. With
+`para = 0` at line 36 and `sum = 2`, both reads happen. Hand-checked as a concrete
+interleaving; the solver's SAT alone would not have been evidence (SAT means *not refuted*).
+
+### What this project's stage 2 does with the traps
+
+Stage 2 (priority and masking, [[Pipeline Design]]) on the 31 simple cases, 2026-10-22: **all 48
+bug points survive**, and 5 of the 35 traps stage 1 reports are rejected with a proof —
+`svp_simple_003_001` trap 1, `026` trap 1, and the `isr_3` traps of `027`, `028` and `030`, all
+of them one critical section covering the interval that nothing able to run there can reopen.
+The remaining 30 are value-, guard- or index-dependent (stage 3's job) or, in one case, not
+actually a trap (above). Only 12 of the 31 cases call a masking primitive at all.
+
+### What this project's stage 3 does with them
+
+Stage 3 (Z3 path feasibility) on the 31 cases, 2026-10-22: **all 48 bug points still reach the
+LLM**, and the solver refutes 14 of the 30 traps stage 2 left — index traps (`001`, `002`,
+`008`, `029`), unreachable guards (`002`, `005`), a struct field (`010`), a re-pointed pointer
+(`011`), and a guard relation only `main` can change (`019`). The 16 that remain are the two
+reachable ones above, and traps whose infeasibility depends on the *order* in which ISRs run
+(`028`: `isr_1` clears the flag before it unmasks `isr_2`), which a thread-modular encoding
+cannot see.
 
 ## Results reported on it
 

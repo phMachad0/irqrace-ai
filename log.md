@@ -522,3 +522,166 @@ implying two phases.
 implementation the corresponding page must be created, and it must be revised whenever that
 week's code changes in a later iteration — a diary page describing code that no longer exists
 teaches the wrong thing to whoever reads it while writing the thesis.
+
+## [2026-10-22] build | W5 Track A — stage 2, recall gate 48/48 after the first filter
+
+Pedro asked for the state of Track A to be checked and the work carried forward. Checked first:
+toolchain healthy, 203/203 tests, `irqrace stage1-all` reproducing the W4 numbers exactly
+(566 candidates, 48/48, 35/38 traps). The calendar is behind — the last commit is 27 Sep and
+by the [[Roadmap]]'s dates this is W8 — which the Roadmap now states in a status callout
+without deciding which de-scoping rungs to take.
+
+**Stage 2 exists.** `irqrace-stage1` now also emits an event CFG; `src/irqrace/masking.py` is an
+abstract interpreter over it, `src/irqrace/stage2.py` makes the decisions.
+
+```
+stage 2: 436 kept (202 triples, 234 pairs), 130 dropped with proof (masking 23, no-path 62, priority 45)
+attrition: 23.0% overall -- triples 36.1%, pairs 6.4%; of which concurrency: 12.0%
+RECALL GATE (stage2): 48/48 annotated bug points present -- PASS
+traps reported: 35/38 after stage 1, 30/38 after stage 2
+runstore check: 31/31 runs conform to C3 (rule 6)
+```
+
+**The mask is shared hardware, so masking is a whole-program question.** Four rules, each now in
+[[Soundness Assumptions]] with a synthetic test: masked only on every path (F1); at every point
+another flow may fire, the state may take whatever that flow leaves behind, persistence after
+return taken as a union (F7); an ISR starts in the union of every state it may preempt (F8);
+nested activations judged from the state they fired in (F9). Every value carries its origin, so
+each verdict is explained in the context record. The fixpoint is the least one, and an
+unconverged iterate is never returned — revising the direction `docs/masking-semantics.md` had
+prescribed in W1, with the reasoning kept on that page.
+
+**Every drop is a proof.** `stage2/dropped.jsonl`, with a schema (`c3-drop-record`), carries the
+reason, the argument with source lines, and the assumption identifiers it relies on.
+`runstore check` now fails a run in which a stage-1 candidate vanished without one.
+
+**Findings.**
+
+1. **A planted trap is reachable under the suite's own README.** `svp_simple_001_001`'s
+   `<W#43><R#63><W#44>`: `isr_1` may start with irq 2 unmasked — before `main`'s
+   `disable_isr(2)`, or after an earlier activation of itself. Stage 2 keeps it. The W1 fixtures
+   had asserted it provably infeasible and reported the *local* masking view per access; both
+   now carry what stage 2 emits, and the run fixture's UNSAT example moved to the file's second
+   trap, where it is true. Label not changed: [[Contradictions]] #7, assumption I4. BMC4AV's local
+   source explains one of the two routes (CBMC `--isr` inserts ISR calls only before conflicting
+   accesses); the other is an [[Open Questions]] item.
+2. **A failing test taught the second route**: the analysis was right, the expectation wrong.
+3. **A context-free nesting rule hid three traps** (`svp_simple_027/028/030`, `isr_3`); judging
+   nested activations from their firing state rejects them. Found by auditing kept traps, not by
+   the gate — it was a precision loss.
+4. **62 `no-path` drops are stage 1's cross-function may-precede refined**, not concurrency;
+   reported separately. All audited by hand in 008, 022, 029, 031.
+5. **12% against IntRace's 54.2%** is not a comparison: 19 of 31 cases never mask.
+
+**E3** gains evidence: the README says an interrupt preempts "the main program or lower-level
+interrupts", which excludes same-level preemption. Not yet confirmed as a decision; G2c stays
+open. Contract changes for Track B — per-access masking now means the sound view, a new drop
+file, a new fixture — are listed in the diary for the Monday sync.
+
+275 tests pass. New diary page: [[Semana 5 — O Stage 2, Prioridade e Máscara]]; [[Semana 4 — Derivação de Candidatos e o Recall Gate]] revised where its
+code changed. Pages touched:
+[[Soundness Assumptions]], [[Contradictions]], [[Racebench]], [[Open Questions]],
+[[Interrupt Masking and Synchronization]], [[Roadmap]].
+
+## [2026-10-22] build | W6–W7 Track A — stage 3 (Z3), the full funnel, recall gate 48/48 on what reaches the LLM
+
+Same session as W5, on the branch now named `track-a/semanas-5-7`.
+
+**Stage 3 exists.** A new binary, `irqrace-stage3`, does symbolic execution over the LLVM IR
+with the Z3 C++ API — the only Z3 on this machine, and the stack decision for anything touching
+LLVM and SVF ([[Reimplementation Assessment]]). Python (`src/irqrace/stage3.py`) writes the query:
+stage 2's run sets moved onto instruction boundaries, so masking and priority reach the solver
+without being recomputed. The question is reachability only: A1, then B inside [A1, A2], then A2,
+on one memory cell ([[Path Feasibility Analysis]]).
+
+```
+solver: 436 in -> 383 sat, 0 inconclusive, 53 unsat (dropped with proof)  [29875 ms total]
+funnel: 566 -> 436 -> 383  [stage 1 2810 ms, stage 2 2468 ms, solver 29875 ms]
+RECALL GATE (stage3): 48/48 annotated bug points present -- PASS
+traps reported: 35/38 after stage 1, 30/38 after stage 2, 16/38 reaching the LLM
+```
+
+**The encoding over-approximates every execution** — memory as one byte array per SVF object,
+loops as one pass with their writes havocked at the header, interference as havoc of whatever a
+flow that may run there writes — so UNSAT is a proof and SAT is only "not refuted"; the C2
+`SolverResult` description now says so for Track B. The one assumption that is not an
+over-approximation is J6, a program free of undefined behaviour, and the two audited proofs that
+rest on it are named. [[Soundness Assumptions]] gains group J and A4 (stage 1 does not enumerate
+memory intrinsics: an honest gap, unexercised by Racebench).
+
+**Three solver bugs caught before any number was reported**, each with a mutation-tested
+regression test: a preemption just before A2 hid A2 and made a reachable trap UNSAT — the
+dangerous one; a volatile load counted as a write, so every Racebench ISR "wrote everything";
+a back edge crossed once in total instead of once per phase. Every UNSAT was then audited
+against the source.
+
+**An address projection** — every path to each access on its own, then "can the addresses
+coincide?" — is a relaxation, so its UNSAT is a proof; it refutes 36 of the 53 and keeps the run
+free of timeouts. **12.2% solver attrition against IntRace's 86.2%**: a thread-modular encoding
+cannot see traps that are infeasible only because of the order ISRs run in (028); recorded in
+[[Open Questions]].
+
+**Finding:** `svp_simple_020_001`'s trap `<R#37><W#44><R#40>` is reachable under the suite's
+README, hand-checked as a concrete interleaving — the second, after 001's ([[Contradictions]] #7,
+[[Racebench]]).
+
+328 tests pass. Diary: [[Semana 6 — O Stage 3, a Codificação]] and
+[[Semana 7 — O Stage 3, Busca e Verificação]] (a thematic split of one block);
+[[Semana 5 — O Stage 2, Prioridade e Máscara]] revised where its code changed. Pages touched:
+[[Path Feasibility Analysis]], [[Racebench]], [[Contradictions]], [[Open Questions]], [[Roadmap]].
+
+## [2026-10-24] direction | triples only — one candidate class
+
+Pedro decided that the tool generates, filters and reports **one candidate class, the
+atomicity-violation triple** — recorded in [[Triples Only]], the one project page that describes
+what was removed. The code of every stage, the contracts, the project documentation, the diary
+(W1–W7) and the `wiki/codigo/` pages were rewritten to it. Per Pedro's scope decisions the
+literature pages keep describing what the papers do, with only the sentences about this
+project's design changed, and the historical records — this log's earlier entries and the
+2026-10-23 meeting notes — are kept as they were.
+
+**Contracts**: C1 `c1/2.0.0` (`analysis.candidate_classes` removed), C2 `c2/2.0.0` (`class`
+constant, exactly three accesses, `pattern` one of the four unserializable shapes), C3's drop
+record narrowed; the fingerprint is unchanged, so every triple keeps its id and Track B's cache
+stays valid. Tool `0.2.0`.
+
+**Regression check**: every triple result — ids, stage-2 decisions and masking states, solver
+verdicts, matches against the ground truth — compared subject by subject against a snapshot
+taken before the change: **zero differences across the 31 cases**. The rewritten stage-3 tests
+were mutation-checked again, plus a fourth mutation (no interference) that two tests catch.
+
+```
+funnel: 316 -> 202 -> 166  [stage 1 1727 ms, stage 2 1325 ms, solver 17636 ms]
+RECALL GATE (stage3): 48/48 annotated bug points present -- PASS
+traps reported: 35/38 after stage 1, 30/38 after stage 2, 16/38 reaching the LLM
+```
+
+The cost in recall is stated, not hidden: a defect needing only one access in each flow is out
+of scope by decision — [[Soundness Assumptions]] H1e — and the race-detection papers' numbers no
+longer have a counterpart here. 327 tests pass. Track B's refactor is GitHub issue
+[phMachad0/irqrace-ai#1](https://github.com/phMachad0/irqrace-ai/issues/1), assigned to Lucas.
+Pages touched: [[Thesis Goal]], [[Pipeline Design]], [[LLM Stage Design]], [[Dashboard Design]],
+[[Roadmap]], [[Soundness Assumptions]], [[Open Questions]], [[Path Feasibility Analysis]],
+[[Pair-Triple Unification]], [[Access Interleaving Patterns]], [[Soundness and False Negatives]],
+[[Data Race]], [[Reimplementation Assessment]], all seven diary pages, `CLAUDE.md`.
+
+
+## [2026-10-25] fix | stage 3 — two UNSAT verdicts without proof, found by a branch review
+
+A review of `track-a/semanas-5-7` against the project's own rule — *a solver may drop a candidate
+only with a proof* — found two places where stage 3 could answer `unsat` without one:
+
+- **Unresolved indirect call.** An empty points-to set for a function pointer made stage 3 skip the
+  call, while stage 1 had applied [[Soundness Assumptions]] B2 (every address-taken function with a
+  compatible signature). Accesses inside the callee were never reached and a real triple came out
+  `unsat`. `Facts::targets` now uses the same fallback, also when the set is partly unknown; the
+  write set of such a call stays "everything". Reproduced on a five-line program, fixed, pinned by a
+  test that fails under mutation.
+- **Deadline inside the search.** Past the deadline `solve()` returned `unknown` without recording
+  it, and the A2 check reads non-SAT as refuted. Latent: the search loop checks the clock before
+  the next state and `decide()` always queues one, so a mutation undoing the fix fails no test. Fixed
+  anyway, with a deterministic fault-injection test (`IRQRACE_STAGE3_EXPIRE_AFTER_CALLS`).
+
+Racebench: all 202 solver verdicts identical to the snapshot taken before the fix; funnel
+316 → 202 → 166, recall gate 48/48. 329 tests pass. Pages touched: [[Soundness Assumptions]] (B2),
+[[Semana 7 — O Stage 3, Busca e Verificação]] (§5 (d), (e), §11).

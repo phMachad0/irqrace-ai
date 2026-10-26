@@ -2,7 +2,7 @@
 type: comparison
 tags: [wiki, comparison]
 sources: ["[[SDRacer (paper)]]", "[[IntRace (paper)]]", "[[NIChecker (paper)]]", "[[BMC4AV (paper)]]", "[[Racebench (documentation)]]"]
-updated: 2026-08-20
+updated: 2026-10-22
 status: solid
 ---
 
@@ -134,3 +134,45 @@ Every comparison in the corpus contains at least one baseline whose binary could
 obtained: Rchecker and intAtom (unavailable to both NIChecker and IntRace), intAtom, Rchecker
 and NIChecker (unavailable to BMC4AV). Each paper discloses this; secondary summaries of them
 usually do not. Treat all cross-tool time and memory figures as indicative only.
+
+## 7. A planted trap is reachable under the suite's own arrival model
+
+Found 2026-10-22 while implementing stage 2 (`project-src/docs/masking-semantics.md`,
+"Correction"; [[Soundness Assumptions]] F8, I4). Not a disagreement between papers, but between
+two parts of one primary artifact.
+
+- **[[Racebench]]'s annotations** label `svp_simple_001_001_global_var <W#43><R#63><W#44>` a
+  planted false positive. The intended reasoning: `main` masks irq 2 at line 28, and `isr_1`
+  unmasks it only at line 46, after both writes, so `isr_2` cannot read in between.
+- **Racebench's README** says an interrupt may preempt the main program or a lower-level
+  interrupt whenever it is enabled, "at an indeterminate moment, position, and number of
+  times". Under that model `isr_1` may start with irq 2 unmasked in two independent ways: by
+  firing between `init()` (which calls `enable_isr(-1)`) and `main`'s `disable_isr(2)`; or by
+  firing a second time after its own `enable_isr(2)` — a global unlock — has persisted. Either
+  way `isr_2` may preempt between lines 43 and 44.
+
+This project's stage 2 follows the README and **keeps** the candidate, so a sound tool's
+trap-rejection ceiling on the suite is below 38/38.
+
+**A second instance**, found by stage 3 on 2026-10-22: `svp_simple_020_001_global_var
+<R#37><W#44><R#40>` is labelled a false positive because the guards at lines 36 and 39
+(`sum > para`, `sum < para`) look exclusive. But `isr_1` — whose write at line 44 is the B —
+sets the flag and unmasks irq 2, and `isr_2` then sets `para = 11` before line 39 is evaluated.
+With `para = 0` and `sum = 2` the two reads both execute. Hand-checked as a concrete
+interleaving, not inferred from a SAT verdict. The label is not corrected
+([[Soundness Assumptions]] I4), for the reason the errata gives for `svp_simple_019_001`.
+
+**Why the published tools agree with the label — partly verified.** [[BMC4AV (paper)]] reports
+0 false positives on the suite ([[Reported Results Across Papers]]). The local source
+(`../BMC4AV/BMC4AV-Ourtool/src/goto-instrument/interrupt.cpp`, ll. 89–120) is CBMC's `--isr`
+instrumentation, which inserts a nondeterministic ISR call only before instructions whose
+read/write set conflicts with the ISR's. Between `init()` and `disable_isr(2)` there is no
+such instruction, so in that model `isr_1` cannot fire there — the first route does not exist.
+That is a partial-order reduction which treats mask operations as invisible, and they are not:
+moving a preemption past `disable_isr(2)` changes what the ISR sees. Whether the second route
+(two activations of `isr_1`) is excluded by bounding activations or by how masking is encoded
+was not established; `disable_isr` and `enable_isr` appear in BMC4AV's `ignore_fun` sets
+(`goto-symex/memory_model.h` l. 70, `interrupt_atomic_violation_check.cpp` l. 106) as
+non-events, and where they *are* modelled was not found in a first pass. Open in
+[[Open Questions]].
+

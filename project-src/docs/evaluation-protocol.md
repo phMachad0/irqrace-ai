@@ -55,13 +55,9 @@ analysis. So names are normalised to a base identifier and checked against the
 candidate's name *and* its alias set, and a mismatch is reported rather than
 fatal. 12 annotations depend on this.
 
-**It does not score pair candidates against triple ground truth.** The recall
-gate is measured on `atomicity-triple` candidates only. Racebench's ground truth
-is triple-shaped, and scoring pairs against it is precisely the vocabulary
-confusion the wiki flags in [[IntRace (paper)]], which reports triples under a
-two-access name ([[Pair-Triple Unification]]). Pair candidates get their own
-number — a triple is **pair-covered** when both projections `(A₁, B)` and
-`(B, A₂)` are reported — published alongside, never instead.
+**Triple against triple.** Racebench's ground truth is triple-shaped, and so is
+every candidate ([[Triples Only]]): a match compares the ordered line triple of
+the candidate with that of the annotation.
 
 ## Decision 3 — match against corrected annotations
 
@@ -92,7 +88,6 @@ moved underneath every number measured against it.
 | **Recall** | bug points matched / 48 | **must be 100%** |
 | Candidates reported | total, per subject and overall | no gate — report without embarrassment |
 | Trap reporting rate | traps matched / 38 | **no gate at stage 1** (see below) |
-| Pair coverage | triples whose both projections are reported | reported, not gated |
 | Kind agreement | matches whose access kinds also agree | diagnostic |
 | Alias-resolved matches | matches where the variable name differed | diagnostic |
 | **Inspection Ratio** | fraction of the ordered list read before every bug point is found | the headline precision-side metric |

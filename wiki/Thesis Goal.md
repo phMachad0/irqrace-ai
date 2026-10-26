@@ -2,7 +2,7 @@
 type: project
 tags: [wiki, project]
 sources: ["[[SDRacer (paper)]]", "[[IntRace (paper)]]", "[[NIChecker (paper)]]", "[[BMC4AV (paper)]]", "[[LLift (paper)]]", "[[IRIS (paper)]]", "[[SkipAnalyzer (paper)]]"]
-updated: 2026-08-27
+updated: 2026-10-24
 status: draft
 ---
 
@@ -20,8 +20,8 @@ currently does),
 
 ## The objective
 
-Build a **static analysis tool that detects data races *and* atomicity violations in
-interrupt-driven embedded C with no false negatives** — every actual defect appears somewhere
+Build a **static analysis tool that detects atomicity violations in interrupt-driven embedded
+C with no false negatives** — every actual defect appears somewhere
 in the reported set, at the cost of accepting false positives — and then **close the loop with
 an LLM**:
 
@@ -34,7 +34,7 @@ an LLM**:
 1. **Static phase (sound).** Over-approximate: find every candidate defect. Precision is
    explicitly *not* the goal here. See [[Soundness and False Negatives]].
 2. **Context capture.** For each candidate, serialize the evidence an LLM would need to judge
-   it: the shared variable, the access triple/pair with source locations, the call stacks
+   it: the shared variable, the access triple with source locations, the call stacks
    reaching each access, the enclosing ISR/task and its priority, the masking state along the
    path, the enclosing function bodies, and the solver's verdict. Anything further the model
    needs it **requests on demand** rather than receiving a precomputed slice
@@ -87,11 +87,11 @@ defect — rather than precision ([[Precision Metrics]]).
 
 Three gaps in the corpus line up with this design, each one already recorded in the wiki:
 
-- **Nothing detects both defect classes in one pass** ([[Tool Capability Matrix]]), although
-  the pipelines share their first two stages. The [[Racebench]] annotations are three-access
-  triples even for the suite the data-race papers evaluate on
-  ([[Racebench (documentation)]]), which suggests the split is partly vocabulary
-  ([[Contradictions]] #5).
+- **The ground truth is triple-shaped.** The [[Racebench]] annotations are three-access
+  triples even for the suite the race-detection papers evaluate on
+  ([[Racebench (documentation)]], [[Contradictions]] #5): the defect this tool targets is the
+  one the community benchmark annotates. Since 2026-10-24 it is the only one
+  ([[Triples Only]]).
 - **Recall is the open frontier, and it is measured badly** ([[Synthesis]] §3). Three of four
   tools report ~zero false positives; "no false negatives" means manual inspection in the
   older papers and bounded absence in the newer ones ([[Precision Metrics]]). A tool built

@@ -8,7 +8,7 @@
   "additionalProperties": false,
 
   "properties": {
-    "schema_version": { "const": "c2/1.0.0" },
+    "schema_version": { "const": "c2/2.0.0" },
 
     "id": {
       "type": "string",
@@ -23,14 +23,14 @@
     },
 
     "class": {
-      "enum": ["race-pair", "atomicity-triple"],
-      "description": "Derived separately from one access set; a triple is not a join of confirmed pairs (Pair-Triple Unification)."
+      "const": "atomicity-triple",
+      "description": "Every candidate is an atomicity-violation triple (wiki/Triples Only.md). Kept as a field so that a record says what it is without its schema at hand."
     },
 
     "pattern": {
       "type": "string",
-      "pattern": "^[RW]{2,3}$",
-      "description": "Access shape in role order: 'RW'/'WR'/'WW' for pairs, 'RWR'/'RWW'/'WWR'/'WRW'/... for triples. Racebench's 48 annotated bug points use RWR (25), RWW (10), WWR (7), WRW (6)."
+      "pattern": "^(RWR|RWW|WWR|WRW)$",
+      "description": "Access shape in role order A1, B, A2 -- one of the four unserializable interleavings, the only ones stage 1 generates (Soundness Assumptions H1b). Racebench's 48 annotated bug points use RWR (25), RWW (10), WWR (7), WRW (6)."
     },
 
     "subject": {
@@ -65,10 +65,10 @@
 
     "accesses": {
       "type": "array",
-      "minItems": 2,
+      "minItems": 3,
       "maxItems": 3,
       "items": { "$ref": "common.defs.schema.json#/$defs/Access" },
-      "description": "In role order. Pairs: [A1, B]. Triples: [A1, B, A2] with A1 and A2 in one flow and B in another. For triples A1 and A2 MAY be the same source location when it lies in a loop that may iterate more than once."
+      "description": "In role order [A1, B, A2], with A1 and A2 in one flow and B in another. A1 and A2 MAY be the same source location when it lies in a loop, or in a function, that may run more than once."
     },
 
     "flows": {
@@ -94,7 +94,7 @@
 
     "masking": {
       "type": "object",
-      "description": "Point property per access; interval property additionally for triples.",
+      "description": "The state at each access, and over the interval [A1, A2] -- the property that decides the candidate.",
       "additionalProperties": false,
       "properties": {
         "per_access": {
@@ -144,8 +144,8 @@
           }
         },
         "a1_a2_same_statement": {
-          "type": ["boolean", "null"],
-          "description": "Triples only. True is a valid and common shape, not an error — svp_simple_029_001 annotates <R,#80>,<W,#83>,<R,#80>."
+          "type": "boolean",
+          "description": "True is a valid and common shape, not an error — svp_simple_029_001 annotates <R,#80>,<W,#83>,<R,#80>."
         }
       }
     },
@@ -188,16 +188,5 @@
       },
       "description": "Run-varying metadata. Deliberately outside the fingerprint."
     }
-  },
-
-  "allOf": [
-    {
-      "if": { "properties": { "class": { "const": "atomicity-triple" } }, "required": ["class"] },
-      "then": { "properties": { "accesses": { "minItems": 3, "maxItems": 3 } } }
-    },
-    {
-      "if": { "properties": { "class": { "const": "race-pair" } }, "required": ["class"] },
-      "then": { "properties": { "accesses": { "minItems": 2, "maxItems": 2 } } }
-    }
-  ]
+  }
 }

@@ -28,7 +28,7 @@ llvm_map_components_to_libnames(llvm_libs
   bitwriter core ipo irreader instcombine instrumentation target linker
   analysis scalaropts support transformutils)
 
-foreach(tool irqrace-probe irqrace-stage1)
+foreach(tool irqrace-probe irqrace-stage1 irqrace-stage3)
   add_executable(${tool} src/${tool}.cpp)
   target_include_directories(${tool} PRIVATE
     ${SVF_DIR}/svf/include

@@ -52,8 +52,8 @@ def test_same_statement_may_precede_itself_inside_a_loop(tmp_path):
     at32 = [x for x in a["accesses"]
             if x["source"]["line"] == 32 and x["object"] == array]
     assert at32 and all(x["in_loop"] for x in at32)
-    pairs = {tuple(p) for p in a["may_precede"]}
-    assert any((x["id"], x["id"]) in pairs for x in at32)
+    precede = {tuple(p) for p in a["may_precede"]}
+    assert any((x["id"], x["id"]) in precede for x in at32)
 
 
 def test_objects_only_one_flow_reaches_are_dropped(tmp_path):
@@ -72,9 +72,9 @@ def test_mutually_exclusive_branches_do_not_precede_each_other(tmp_path):
     not filtering."""
     _, a = analyse("svp_simple_001_001", tmp_path)
     ids = {x["source"]["line"]: x["id"] for x in a["accesses"] if x["flow"] == "isr_2"}
-    pairs = {tuple(p) for p in a["may_precede"]}
-    assert (ids[55], ids[58]) not in pairs
-    assert (ids[58], ids[55]) not in pairs
+    precede = {tuple(p) for p in a["may_precede"]}
+    assert (ids[55], ids[58]) not in precede
+    assert (ids[58], ids[55]) not in precede
 
 
 def test_a_stack_object_shared_through_a_global_pointer_is_found(tmp_path):
@@ -98,8 +98,8 @@ def test_a_function_called_twice_makes_one_instruction_two_accesses(tmp_path):
     inner = [x for x in a["accesses"]
              if x["function"] == "svp_simple_029_001_GetTmData" and x["flow"] == "main"]
     assert inner
-    pairs = {tuple(p) for p in a["may_precede"]}
-    assert any((x["id"], x["id"]) in pairs for x in inner)
+    precede = {tuple(p) for p in a["may_precede"]}
+    assert any((x["id"], x["id"]) in precede for x in inner)
 
 
 def test_prologue_argument_spills_are_not_accesses(tmp_path):
@@ -139,20 +139,15 @@ def test_candidate_ids_are_unique_and_content_addressed(tmp_path):
         assert fingerprint(c) == c["fingerprint"]
 
 
-def test_pairs_and_triples_are_derived_from_one_access_set(tmp_path):
-    """Both classes come from the same accesses; neither is built from the other
-    ([[Pair-Triple Unification]])."""
+def test_every_candidate_is_an_unserializable_triple(tmp_path):
+    """Three accesses in role order A1, B, A2, in one of the four unserializable
+    shapes ([[Triples Only]])."""
     cfg, a = analyse("svp_simple_001_001", tmp_path)
     cands = derive_candidates(a, cfg)
-    triples = [c for c in cands if c["class"] == "atomicity-triple"]
-    pairs = [c for c in cands if c["class"] == "race-pair"]
-    assert triples and pairs
-    assert all(len(c["accesses"]) == 3 for c in triples)
-    assert all(len(c["accesses"]) == 2 for c in pairs)
-    # Every pair has at least one write; a read/read pair is not a race.
-    for c in pairs:
-        assert any(x["kind"] == "write" for x in c["accesses"])
-    for c in triples:
+    assert cands
+    assert all(c["class"] == "atomicity-triple" for c in cands)
+    assert all(len(c["accesses"]) == 3 for c in cands)
+    for c in cands:
         shape = tuple(x["kind"] for x in sorted(
             c["accesses"], key=lambda x: {"A1": 0, "B": 1, "A2": 2}[x["role"]]))
         assert shape in UNSERIALIZABLE
@@ -161,8 +156,6 @@ def test_pairs_and_triples_are_derived_from_one_access_set(tmp_path):
 def test_a_triple_spans_exactly_two_flows(tmp_path):
     cfg, a = analyse("svp_simple_001_001", tmp_path)
     for c in derive_candidates(a, cfg):
-        if c["class"] != "atomicity-triple":
-            continue
         by_role = {x["role"]: x["flow"] for x in c["accesses"]}
         assert by_role["A1"] == by_role["A2"] != by_role["B"]
 

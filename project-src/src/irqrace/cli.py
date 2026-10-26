@@ -62,7 +62,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 def cmd_contracts_validate(args: argparse.Namespace) -> int:
     examples = REPO_ROOT / "contracts" / "examples"
     mapping = {
-        "c1-": "c1", "c2-": "c2", "c3-manifest": "c3-manifest",
+        "c1-": "c1", "c2-": "c2", "c3-manifest": "c3-manifest", "c3-drop": "c3-drop",
         "c4-context-request": "c4-request", "c4-context-reply": "c4-reply",
     }
     failures = 0
@@ -217,8 +217,7 @@ def cmd_stage1(args: argparse.Namespace) -> int:
     except (BuildError, Stage1Error) as e:
         return _err(str(e))
 
-    print(f"{cfg.name}: {summary['candidates']} candidates "
-          f"({summary['triples']} triples, {summary['pairs']} pairs) from "
+    print(f"{cfg.name}: {summary['candidates']} candidates from "
           f"{summary['accesses']} accesses to {summary['objects']} shared object(s)")
     for w in summary["warnings"]:
         print(f"  ! [{w.get('severity', 'warn')}] {w['code']}: {w['message']}")
@@ -226,83 +225,248 @@ def cmd_stage1(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_stage1_all(args: argparse.Namespace) -> int:
-    """Stage 1 over every Racebench case, then the recall gate.
+def cmd_stage2(args: argparse.Namespace) -> int:
+    from .stage1_driver import Stage1Error, stage1
+    from .stage2 import Stage2Error, stage2
 
-    The W3-W4 done-when: candidates.jsonl for all 31 cases and all 48 annotated
-    bug points present.
+    cfg, store = _prepare(args)
+    try:
+        _do_build(cfg, store)
+        s1 = stage1(cfg, store, store.root / "build" / "whole.bc")
+        s2 = stage2(cfg, store)
+    except (BuildError, Stage1Error, Stage2Error) as e:
+        return _err(str(e))
+
+    print(f"{cfg.name}: stage 1 {s1['candidates']} candidates -> stage 2 {s2['kept']} "
+          f"kept, {s2['dropped']} dropped with proof "
+          f"({', '.join(f'{k} {v}' for k, v in sorted(s2['reasons'].items())) or 'none'})")
+    print(f"  masking fixpoint in {s2['rounds']} round(s), {s2['wall_ms']} ms")
+    for d in store.read_drops() if args.verbose else []:
+        print(f"  - {d['candidate_id']} {d['pattern']} {d['lines']} "
+              f"[{d['reason']}] {d['proof']}")
+    print(f"  {store.root}")
+    return 0
+
+
+def cmd_stage3(args: argparse.Namespace) -> int:
+    from .stage1_driver import Stage1Error, stage1
+    from .stage2 import Stage2Error, stage2
+    from .stage3 import Stage3Error, stage3
+
+    cfg, store = _prepare(args)
+    try:
+        result = _do_build(cfg, store)
+        s1 = stage1(cfg, store, result.bitcode)
+        s2 = stage2(cfg, store)
+        s3 = stage3(cfg, store, result.bitcode)
+    except (BuildError, Stage1Error, Stage2Error, Stage3Error) as e:
+        return _err(str(e))
+    v = s3["verdicts"]
+    print(f"{cfg.name}: {s1['candidates']} -> stage 2 {s2['kept']} -> solver: "
+          f"{v.get('sat', 0)} sat, {v.get('inconclusive', 0)} inconclusive, "
+          f"{v.get('unsat', 0)} unsat -> {s3['kept']} reach the LLM  [{s3['wall_ms']} ms]")
+    if args.verbose:
+        by_id = {c["id"]: c for c in store.read_candidates("stage2")}
+        for line in (store.root / "solver" / "results.jsonl").read_text().splitlines():
+            r = json.loads(line)
+            c = by_id[r["candidate_id"]]
+            lines = [a["source"]["line"] for a in c["accesses"]]
+            print(f"  - {r['candidate_id']} {c.get('pattern', ''):<3} "
+                  f"{lines} {r['verdict']}{' (' + r['reason'] + ')' if r.get('reason') else ''}"
+                  f"  {r['wall_ms']} ms")
+    print(f"  {store.root}")
+    return 0
+
+
+def _bench_run(args: argparse.Namespace, through: str) -> int:
+    """Run every Racebench case through ``through``, then the recall gate.
+
+    The gate is evaluated on the output of the LAST stage run: a filter that
+    drops an annotated bug point fails it, whichever stage the filter is in.
     """
     from .evaluation import inspection_ratio, match_subject, report_json
     from .groundtruth import load_suite
-    from .runstore import RunStore
     from .stage1_driver import Stage1Error, stage1
+    from .stage2 import Stage2Error, stage2
+    from .stage3 import Stage3Error, stage3
 
     configs = sorted(Path(args.configs).glob("*.yaml"))
     if not configs:
         return _err(f"no configurations in {args.configs}")
     gt = load_suite(Path(args.suite), Path(args.errata))
+    s3tot = {"in": 0, "kept": 0, "ms": 0}
+    verdicts: dict[str, int] = {}
+    traps_s3 = 0
+    slowest: list[tuple[int, str]] = []
 
-    rows, failures = [], []
-    total_c = total_t = total_p = 0
-    bugs_found = bugs_total = traps_found = traps_total = 0
+    rows, failures, problems = [], [], []
+    tot = {"s1": 0, "s2": 0}
+    reasons: dict[str, int] = {}
+    bugs_found = bugs_total = traps_total = traps_s1 = traps_s2 = 0
+    per_subject_attrition = []
+    t_s1 = t_s2 = 0
 
     for path in configs:
         try:
             cfg = Config.load(path)
             store = RunStore.create(cfg, run_root=args.run_root)
             _do_build(cfg, store)
-            summary = stage1(cfg, store, store.root / "build" / "whole.bc")
-        except (ConfigError, BuildError, Stage1Error) as e:
+            s1 = stage1(cfg, store, store.root / "build" / "whole.bc")
+            s2 = stage2(cfg, store) if through in ("stage2", "stage3") else None
+            s3 = (stage3(cfg, store, store.root / "build" / "whole.bc")
+                  if through == "stage3" else None)
+        except (ConfigError, BuildError, Stage1Error, Stage2Error, Stage3Error) as e:
             failures.append((path.stem, str(e).splitlines()[0]))
             print(f"[FAIL] {path.stem}: {str(e).splitlines()[0]}")
             continue
 
-        candidates = store.read_candidates("stage1")
         case = gt.by_case(cfg.name)
-        rep = match_subject(case.all, candidates, subject=cfg.name)
+        rep1 = match_subject(case.all, store.read_candidates("stage1"), subject=cfg.name)
+        rep = rep1
+        if s2 is not None:
+            rep = match_subject(case.all, store.read_candidates("stage2"), subject=cfg.name)
+        rep2 = rep
+        if s3 is not None:
+            # The gate is taken on what reaches the LLM: the context records.
+            rep = match_subject(case.all, store.read_contexts(), subject=cfg.name)
+            traps_s3 += rep.traps_reported
+            for k, v in s3["verdicts"].items():
+                verdicts[k] = verdicts.get(k, 0) + v
+            s3tot["in"] += s3["in"]
+            s3tot["kept"] += s3["kept"]
+            s3tot["ms"] += s3["wall_ms"]
+            slowest.append((s3["wall_ms"], cfg.name))
         (store.root / "eval" / "report.json").write_text(
-            json.dumps(report_json(rep), indent=2, ensure_ascii=False) + "\n")
+            json.dumps(report_json(rep, stage=through), indent=2, ensure_ascii=False) + "\n")
+        problems += [f"{store.root.name}: {p}" for p in store.check()]
 
         bugs_found += rep.bugs_detected
         bugs_total += len(rep.bug_matches)
-        traps_found += rep.traps_reported
         traps_total += len(rep.trap_matches)
-        total_c += summary["candidates"]
-        total_t += summary["triples"]
-        total_p += summary["pairs"]
+        traps_s1 += rep1.traps_reported
+        traps_s2 += rep2.traps_reported
+        tot["s1"] += s1["candidates"]
+        stage_ms = {st["name"]: st.get("wall_ms") or 0
+                    for st in store.read_manifest()["stages"]}
+        t_s1 += stage_ms.get("stage1", 0)
+        if s2 is not None:
+            t_s2 += s2["wall_ms"]
+            tot["s2"] += s2["kept"]
+            for k, v in s2["reasons"].items():
+                reasons[k] = reasons.get(k, 0) + v
+            if s2["in"]:
+                per_subject_attrition.append(s2["dropped"] / s2["in"])
 
         gate = "ok " if rep.bugs_detected == len(rep.bug_matches) else "MISS"
-        rows.append((cfg.name, summary, rep, gate))
-        print(f"[{gate}] {cfg.name:<20} {summary['candidates']:>5} cand "
-              f"({summary['triples']:>4}t {summary['pairs']:>3}p)  "
-              f"bugs {rep.bugs_detected}/{len(rep.bug_matches)}  "
-              f"traps {rep.traps_reported}/{len(rep.trap_matches)}")
+        rows.append(rep)
+        if s3 is not None:
+            v = s3["verdicts"]
+            print(f"[{gate}] {cfg.name:<20} {s1['candidates']:>4} -> {s2['kept']:>3} -> "
+                  f"{s3['kept']:>3}  (sat {v.get('sat', 0):>3}, inc {v.get('inconclusive', 0):>2}, "
+                  f"unsat {v.get('unsat', 0):>3})  bugs {rep.bugs_detected}/{len(rep.bug_matches)}  "
+                  f"traps {rep1.traps_reported}->{rep2.traps_reported}->{rep.traps_reported}"
+                  f"/{len(rep.trap_matches)}  [{s3['wall_ms']} ms]")
+        elif s2 is None:
+            print(f"[{gate}] {cfg.name:<20} {s1['candidates']:>5} cand  "
+                  f"bugs {rep.bugs_detected}/{len(rep.bug_matches)}  "
+                  f"traps {rep.traps_reported}/{len(rep.trap_matches)}")
+        else:
+            print(f"[{gate}] {cfg.name:<20} {s1['candidates']:>4} -> {s2['kept']:>3} cand  "
+                  f"bugs {rep.bugs_detected}/{len(rep.bug_matches)}  "
+                  f"traps {rep1.traps_reported}->{rep.traps_reported}/{len(rep.trap_matches)}")
         for m in rep.bug_matches:
             if not m.detected:
                 a = m.annotation
-                print(f"        MISSED {a.kind}{a.index} {a.variable} "
-                      f"{a.pattern}{a.lines}")
+                print(f"        MISSED {a.kind}{a.index} {a.variable} {a.pattern}{a.lines}")
 
     n = len(rows)
     print()
     print(f"{n}/{len(configs)} subjects analysed")
-    print(f"candidates: {total_c} total, {total_c / n:.1f} per subject "
-          f"({total_t} triples, {total_p} pairs)"
-          if n else "no subjects analysed")
-    print(f"RECALL GATE: {bugs_found}/{bugs_total} annotated bug points present "
+    if n and through == "stage1":
+        print(f"candidates: {tot['s1']} total, {tot['s1'] / n:.1f} per subject")
+    elif n:
+        print(f"stage 1: {tot['s1']} candidates, {tot['s1'] / n:.1f} per subject  "
+              f"[{t_s1} ms total]")
+    if through in ("stage2", "stage3") and n:
+        dropped = tot["s1"] - tot["s2"]
+        print(f"stage 2: {tot['s2']} kept, {dropped} dropped with proof "
+              f"({', '.join(f'{k} {v}' for k, v in sorted(reasons.items())) or 'none'})"
+              f"  [{t_s2} ms total]")
+
+        def pct(a, b):
+            return f"{100 * a / b:.1f}%" if b else "n/a"
+        lo = min(per_subject_attrition, default=0)
+        hi = max(per_subject_attrition, default=0)
+        concurrency = reasons.get("priority", 0) + reasons.get("masking", 0)
+        print(f"attrition: {pct(dropped, tot['s1'])} overall; "
+              f"{100 * lo:.0f}-{100 * hi:.0f}% per subject")
+        print(f"  of which concurrency (priority + masking): "
+              f"{pct(concurrency, tot['s1'])}; no-path is stage 1's cross-function "
+              f"may-precede refined, not a concurrency result")
+        print("  for scale: IntRace reports 54.2% (33-63% per project) for its stage 2, "
+              "on another candidate class, in real-world subjects")
+    if through == "stage3" and n:
+        def pct3(a, b):
+            return f"{100 * a / b:.1f}%" if b else "n/a"
+        print(f"solver: {s3tot['in']} in -> {verdicts.get('sat', 0)} sat, "
+              f"{verdicts.get('inconclusive', 0)} inconclusive, {verdicts.get('unsat', 0)} unsat "
+              f"(dropped with proof)  [{s3tot['ms']} ms total]")
+        print(f"reaching the LLM: {s3tot['kept']}, "
+              f"{s3tot['kept'] / n:.1f} per subject; solver attrition "
+              f"{pct3(verdicts.get('unsat', 0), s3tot['in'])}")
+        print("  for scale: IntRace reports 86.2% (41-93%) for its feasibility stage, on "
+              "another candidate class, in real-world subjects")
+        print(f"funnel: {tot['s1']} -> {tot['s2']} -> {s3tot['kept']}  "
+              f"[stage 1 {t_s1} ms, stage 2 {t_s2} ms, solver {s3tot['ms']} ms]")
+        slow = sorted(slowest, reverse=True)[:3]
+        print("slowest subjects in the solver: "
+              + ", ".join(f"{name} {ms} ms" for ms, name in slow))
+    print(f"RECALL GATE{'' if through == 'stage1' else ' (' + through + ')'}: "
+          f"{bugs_found}/{bugs_total} annotated bug points present "
           f"-- {'PASS' if bugs_found == bugs_total and bugs_total else 'FAIL'}")
-    print(f"traps reported: {traps_found}/{traps_total} "
-          "(expected to be high; stage 1 does not filter)")
-    ratios = [inspection_ratio(r) for _, _, r, _ in rows]
-    ratios = [x for x in ratios if x is not None]
+    if through == "stage3":
+        print(f"traps reported: {traps_s1}/{traps_total} after stage 1, "
+              f"{traps_s2}/{traps_total} after stage 2, {traps_s3}/{traps_total} reaching the "
+              f"LLM ({traps_s2 - traps_s3} refuted by the solver)")
+    elif through == "stage2":
+        print(f"traps reported: {traps_s1}/{traps_total} after stage 1, "
+              f"{traps_s2}/{traps_total} after stage 2 "
+              f"({traps_s1 - traps_s2} rejected by stage 2)")
+    else:
+        print(f"traps reported: {traps_s1}/{traps_total} "
+              "(expected to be high; stage 1 does not filter)")
+    ratios = [x for x in (inspection_ratio(r) for r in rows) if x is not None]
     if ratios:
         print(f"inspection ratio: {sum(ratios) / len(ratios):.2f} mean over "
               f"{len(ratios)} subject(s) whose bug points were all found")
-    print("for scale: IntRace reports ~208 candidates per program, on real-world "
-          "subjects rather than these 37-97 line cases")
+    if through == "stage1":
+        print("for scale: IntRace reports ~208 candidates per program, on real-world "
+              "subjects rather than these 37-97 line cases")
+    print(f"runstore check: {n - len({p.split(':')[0] for p in problems})}/{n} runs "
+          "conform to C3 (rule 6: nothing vanished without a proof)")
+    for p in problems:
+        print(f"  ! {p}")
     for name, msg in failures:
         print(f"  FAILED {name}: {msg}")
-    return 0 if (bugs_total and bugs_found == bugs_total and not failures) else 1
+    ok = bugs_total and bugs_found == bugs_total and not failures and not problems
+    return 0 if ok else 1
+
+
+def cmd_stage1_all(args: argparse.Namespace) -> int:
+    """Stage 1 over every Racebench case, then the recall gate (W3-W4 done-when)."""
+    return _bench_run(args, "stage1")
+
+
+def cmd_stage3_all(args: argparse.Namespace) -> int:
+    """Stages 1-3 over every Racebench case: the full funnel to the LLM, with
+    per-stage timings, and the recall gate on what reaches it (W6-W7 done-when)."""
+    return _bench_run(args, "stage3")
+
+
+def cmd_stage2_all(args: argparse.Namespace) -> int:
+    """Stages 1 and 2 over every Racebench case, the recall gate on what stage 2
+    keeps, and attrition against IntRace's 54.2% (W5 done-when)."""
+    return _bench_run(args, "stage2")
 
 
 # -- run store ------------------------------------------------------------
@@ -521,13 +685,31 @@ def build_parser() -> argparse.ArgumentParser:
     s1.add_argument("--run-root", default=None)
     s1.set_defaults(func=cmd_stage1)
 
-    sa = sub.add_parser("stage1-all",
-                        help="stage 1 over every Racebench case, then the recall gate")
-    sa.add_argument("--configs", default=str(BENCH_CONFIGS))
-    sa.add_argument("--suite", default=str(DEFAULT_SUITE))
-    sa.add_argument("--errata", default=str(ERRATA))
-    sa.add_argument("--run-root", default="runs")
-    sa.set_defaults(func=cmd_stage1_all)
+    s2 = sub.add_parser("stage2", help="run stages 1 and 2 on one subject")
+    s2.add_argument("config")
+    s2.add_argument("--run-root", default=None)
+    s2.add_argument("--verbose", "-v", action="store_true", help="print every drop and its proof")
+    s2.set_defaults(func=cmd_stage2)
+
+    s3 = sub.add_parser("stage3", help="run stages 1-3 on one subject")
+    s3.add_argument("config")
+    s3.add_argument("--run-root", default=None)
+    s3.add_argument("--verbose", "-v", action="store_true", help="print every verdict")
+    s3.set_defaults(func=cmd_stage3)
+
+    for name, fn, helptext in (
+        ("stage1-all", cmd_stage1_all, "stage 1 over every Racebench case, then the recall gate"),
+        ("stage2-all", cmd_stage2_all,
+         "stages 1 and 2 over every Racebench case, the recall gate, and attrition"),
+        ("stage3-all", cmd_stage3_all,
+         "stages 1-3 over every Racebench case: the funnel to the LLM and the recall gate"),
+    ):
+        sa = sub.add_parser(name, help=helptext)
+        sa.add_argument("--configs", default=str(BENCH_CONFIGS))
+        sa.add_argument("--suite", default=str(DEFAULT_SUITE))
+        sa.add_argument("--errata", default=str(ERRATA))
+        sa.add_argument("--run-root", default="runs")
+        sa.set_defaults(func=fn)
 
     r = sub.add_parser("runstore", help="the C3 run store")
     rs = r.add_subparsers(dest="sub", required=True)

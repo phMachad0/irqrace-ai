@@ -1,0 +1,369 @@
+{
+  "accesses": [
+    {
+      "call_path": {
+        "flow": "main",
+        "frames": [
+          {
+            "function": "svp_simple_001_001_main",
+            "resolution": "direct"
+          }
+        ],
+        "is_one_of_many": false
+      },
+      "flow": "main",
+      "function": "svp_simple_001_001_main",
+      "kind": "write",
+      "loop_context": {
+        "in_loop": true,
+        "nest": [
+          {
+            "header": {
+              "column": 19,
+              "file": "racebench/2.1_remarks/svp_simple_001/svp_simple_001_001.c",
+              "line": 32
+            },
+            "may_iterate_more_than_once": true,
+            "trip_count": null
+          }
+        ]
+      },
+      "masking": {
+        "disabled": [],
+        "enabled": [
+          1,
+          2
+        ],
+        "unknown": []
+      },
+      "role": "A1",
+      "source": {
+        "column": 70,
+        "file": "racebench/2.1_remarks/svp_simple_001/svp_simple_001_001.c",
+        "line": 32
+      }
+    },
+    {
+      "call_path": {
+        "flow": "isr_2",
+        "frames": [
+          {
+            "function": "svp_simple_001_001_isr_2",
+            "resolution": "direct"
+          }
+        ],
+        "is_one_of_many": false
+      },
+      "flow": "isr_2",
+      "function": "svp_simple_001_001_isr_2",
+      "kind": "read",
+      "loop_context": {
+        "in_loop": false,
+        "nest": []
+      },
+      "masking": {
+        "disabled": [],
+        "enabled": [
+          1,
+          2
+        ],
+        "unknown": []
+      },
+      "role": "B",
+      "source": {
+        "column": 13,
+        "file": "racebench/2.1_remarks/svp_simple_001/svp_simple_001_001.c",
+        "line": 60
+      }
+    },
+    {
+      "call_path": {
+        "flow": "main",
+        "frames": [
+          {
+            "function": "svp_simple_001_001_main",
+            "resolution": "direct"
+          }
+        ],
+        "is_one_of_many": false
+      },
+      "flow": "main",
+      "function": "svp_simple_001_001_main",
+      "kind": "write",
+      "loop_context": {
+        "in_loop": true,
+        "nest": [
+          {
+            "header": {
+              "column": 19,
+              "file": "racebench/2.1_remarks/svp_simple_001/svp_simple_001_001.c",
+              "line": 34
+            },
+            "may_iterate_more_than_once": true,
+            "trip_count": null
+          }
+        ]
+      },
+      "masking": {
+        "disabled": [],
+        "enabled": [
+          1,
+          2
+        ],
+        "unknown": []
+      },
+      "role": "A2",
+      "source": {
+        "column": 58,
+        "file": "racebench/2.1_remarks/svp_simple_001/svp_simple_001_001.c",
+        "line": 35
+      }
+    }
+  ],
+  "call_paths": [
+    {
+      "path": {
+        "flow": "main",
+        "frames": [
+          {
+            "function": "svp_simple_001_001_main",
+            "resolution": "direct"
+          }
+        ],
+        "is_one_of_many": false
+      },
+      "role": "A1"
+    },
+    {
+      "path": {
+        "flow": "isr_2",
+        "frames": [
+          {
+            "function": "svp_simple_001_001_isr_2",
+            "resolution": "direct"
+          }
+        ],
+        "is_one_of_many": false
+      },
+      "role": "B"
+    },
+    {
+      "path": {
+        "flow": "main",
+        "frames": [
+          {
+            "function": "svp_simple_001_001_main",
+            "resolution": "direct"
+          }
+        ],
+        "is_one_of_many": false
+      },
+      "role": "A2"
+    }
+  ],
+  "class": "atomicity-triple",
+  "emitted_by": {
+    "tool_version": "0.1.0",
+    "stage": "stage2",
+    "run_id": "svp_simple_001_001-20260831T120000Z-f1x7ur",
+    "timestamp": "2026-08-31T00:00:00Z"
+  },
+  "enclosing_source": [],
+  "fingerprint": "e6fc33f171e5557f77a51105ba6e89dd8d4620fe45320efeb27ed9050752b399",
+  "flows": [
+    {
+      "entry": "svp_simple_001_001_isr_2",
+      "id": "isr_2",
+      "identified_by": "config",
+      "irq": 2,
+      "kind": "isr",
+      "priority": 2
+    },
+    {
+      "entry": "svp_simple_001_001_main",
+      "id": "main",
+      "identified_by": "config",
+      "irq": null,
+      "kind": "task",
+      "priority": 0
+    }
+  ],
+  "id": "ce6fc33f171e5557f",
+  "loop_context": {
+    "a1_a2_same_statement": false,
+    "per_access": [
+      {
+        "context": {
+          "in_loop": true,
+          "nest": [
+            {
+              "header": {
+                "column": 19,
+                "file": "racebench/2.1_remarks/svp_simple_001/svp_simple_001_001.c",
+                "line": 32
+              },
+              "may_iterate_more_than_once": true,
+              "trip_count": null
+            }
+          ]
+        },
+        "role": "A1"
+      },
+      {
+        "context": {
+          "in_loop": false,
+          "nest": []
+        },
+        "role": "B"
+      },
+      {
+        "context": {
+          "in_loop": true,
+          "nest": [
+            {
+              "header": {
+                "column": 19,
+                "file": "racebench/2.1_remarks/svp_simple_001/svp_simple_001_001.c",
+                "line": 34
+              },
+              "may_iterate_more_than_once": true,
+              "trip_count": null
+            }
+          ]
+        },
+        "role": "A2"
+      }
+    ]
+  },
+  "masking": {
+    "interval": {
+      "disabled_throughout": [],
+      "enabled_somewhere": [
+        1,
+        2
+      ],
+      "from_role": "A1",
+      "reenabled_within_interval_by": [
+        "isr_1"
+      ],
+      "to_role": "A2",
+      "unknown": []
+    },
+    "per_access": [
+      {
+        "role": "A1",
+        "state": {
+          "disabled": [],
+          "enabled": [
+            1,
+            2
+          ],
+          "unknown": []
+        }
+      },
+      {
+        "role": "B",
+        "state": {
+          "disabled": [],
+          "enabled": [
+            1,
+            2
+          ],
+          "unknown": []
+        }
+      },
+      {
+        "role": "A2",
+        "state": {
+          "disabled": [],
+          "enabled": [
+            1,
+            2
+          ],
+          "unknown": []
+        }
+      }
+    ]
+  },
+  "pattern": "WRW",
+  "preemption": {
+    "equal_priority_assumed_preemptible": null,
+    "nesting_depth": 1,
+    "preempted_flow": "main",
+    "preempting_flow": "isr_2",
+    "priority_relation": "strictly-higher",
+    "timing": "unconstrained"
+  },
+  "provenance": {
+    "completeness": {
+      "opaque_external_calls": [
+        "disable_isr",
+        "enable_isr"
+      ],
+      "truncated_fields": [],
+      "unresolved_indirect_calls": 0
+    },
+    "entries": [
+      {
+        "fact": "flows",
+        "note": "entry points, interrupt numbers and priorities come from the hand-written C1 configuration file",
+        "status": "assumed_from_config"
+      },
+      {
+        "fact": "variable.shared",
+        "note": "SVF may-alias: object 14 is reached from flows isr_2, main",
+        "status": "proven"
+      },
+      {
+        "fact": "variable",
+        "status": "overapproximated",
+        "note": "Points-to is normalised to the base object (Soundness Assumptions C1b): A1 writes every element of the array, B reads element 1000, A2 writes element 9999 only. No single element is touched by all three, which stage 2 cannot see and stage 3 can prove -- the second planted trap of svp_simple_001_001, and the canonical case for the solver."
+      },
+      {
+        "fact": "solver_result",
+        "note": "stage 3 has not run",
+        "status": "unknown"
+      },
+      {
+        "fact": "preemption",
+        "note": "priorities from the C1 file, larger number = higher priority; nesting=True, equal_priority_preemption=True, isr_reentrant=False, timing unconstrained",
+        "status": "assumed_from_config"
+      },
+      {
+        "fact": "masking.interval",
+        "note": "isr_2 may run within [line 32, line 35] of main, at nesting depth 1; irq 2 is not masked on every path there; it may be enabled by: enable_isr(2) at line 46 in svp_simple_001_001_isr_1; main masks it itself (disable_isr(2) at line 28 in svp_simple_001_001_main), but isr_1 may run inside the interval and unmask it -- computed from main's own control flow alone, this candidate would have been dropped.",
+        "status": "overapproximated"
+      }
+    ]
+  },
+  "schema_version": "c2/2.0.0",
+  "solver_result": {
+    "engine": "z3",
+    "verdict": "not_run"
+  },
+  "static_features": {
+    "any_masking_present": true,
+    "call_path_depth_max": 1,
+    "feeds_branch": null,
+    "priority_gap": 2,
+    "same_statement_a1_a2": false,
+    "used_as_index": null
+  },
+  "subject": {
+    "config_hash": "4f96624c5e3e104961374068a3744e353949f6a4b86420ea636f7592c60071cb",
+    "name": "svp_simple_001_001",
+    "source_root": "/home/pedro/Documentos/tcc/racebench/2.1_remarks"
+  },
+  "variable": {
+    "aliases": [],
+    "decl": {
+      "file": "racebench/2.1_remarks/svp_simple_001/svp_simple_001_001.c",
+      "line": 20
+    },
+    "declared_type": "volatile int[]",
+    "name": "svp_simple_001_001_global_array",
+    "storage": "global",
+    "svf_node": 14,
+    "volatile": true
+  }
+}

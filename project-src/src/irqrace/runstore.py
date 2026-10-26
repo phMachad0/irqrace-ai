@@ -86,6 +86,10 @@ class RunStore:
                 # is computed with the second.
                 "counting_unit": COUNTING_UNIT,
                 "match_rule": MATCH_RULE,
+                # Soundness Assumptions G2c: a triple's interval lies within one
+                # activation of its flow. Not a C1 setting -- it is fixed in
+                # stage 1 -- but it changes which triples exist, so it is echoed.
+                "triple_interval": "single-activation",
             },
             "solver": {
                 "enabled": cfg.analysis["solver"]["enabled"],
@@ -166,11 +170,37 @@ class RunStore:
                 n += 1
         return n
 
+    def append_drops(self, records: Iterable[dict[str, Any]]) -> int:
+        """Append stage-2 drop proofs to ``stage2/dropped.jsonl`` (C3 rule 6)."""
+        n = 0
+        with (self.root / "stage2" / "dropped.jsonl").open("a", encoding="utf-8") as fh:
+            for rec in records:
+                contracts.validate("c3-drop", rec, what=f"drop {rec.get('candidate_id')}")
+                fh.write(contracts.canonical_json(rec) + "\n")
+                n += 1
+        return n
+
+    def read_drops(self) -> list[dict[str, Any]]:
+        path = self.root / "stage2" / "dropped.jsonl"
+        if not path.exists():
+            return []
+        return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+
+    def stage_status(self, name: str) -> str | None:
+        for st in self.read_manifest().get("stages", []):
+            if st["name"] == name:
+                return st["status"]
+        return None
+
     def read_candidates(self, stage: str) -> list[dict[str, Any]]:
         path = self.root / stage / "candidates.jsonl"
         if not path.exists():
             return []
         return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+
+    def read_contexts(self) -> list[dict[str, Any]]:
+        """Every context record: the candidates that reach Track B."""
+        return [json.loads(p.read_text()) for p in sorted((self.root / "context").glob("*.json"))]
 
     def write_context(self, record: dict[str, Any], *, validate: bool = True) -> Path:
         if validate:
@@ -209,6 +239,27 @@ class RunStore:
                 "stage 2 filters, it does not create"
             )
 
+        stage2_ran = self.stage_status("stage2") == "ok"
+        if stage2_ran:
+            drops = self.read_drops()
+            dropped = {d["candidate_id"] for d in drops}
+            for d in drops:
+                try:
+                    contracts.validate("c3-drop", d, what=f"drop {d.get('candidate_id')}")
+                except contracts.ContractError as e:
+                    problems.append(str(e))
+            for cid in sorted(s1 - s2 - dropped):
+                problems.append(
+                    f"candidate {cid} is in stage1 but neither in stage2 nor in "
+                    "stage2/dropped.jsonl: it vanished without a proof, which is a "
+                    "silent recall loss (C3 rule 6)")
+            both = dropped & s2
+            if both:
+                problems.append(f"{len(both)} candidate(s) are both kept and dropped by stage 2")
+            stray = dropped - s1
+            if stray:
+                problems.append(f"{len(stray)} drop record(s) name no stage-1 candidate")
+
         solver_path = self.root / "solver" / "results.jsonl"
         verdicts: dict[str, str] = {}
         if solver_path.exists():
@@ -219,7 +270,9 @@ class RunStore:
 
         contexts = {p.stem for p in (self.root / "context").glob("*.json")}
         if contexts or verdicts:
-            survivors = s2 or s1
+            # Not `s2 or s1`: a stage 2 that soundly dropped everything leaves s2
+            # empty, and that must not resurrect stage 1's set as "survivors".
+            survivors = s2 if stage2_ran else s1
             for cid in sorted(survivors - contexts):
                 if verdicts.get(cid) != "unsat":
                     problems.append(
