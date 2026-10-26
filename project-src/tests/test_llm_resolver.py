@@ -248,3 +248,34 @@ def test_resolver_for_selects_mode_appropriately(tmp_path):
     assert isinstance(auto_r, SourceBackedResolver)
     fallback_r = resolver_for(RECORD, source_root=tmp_path / "nonexistent", mode="auto")
     assert type(fallback_r) is RecordBackedResolver
+
+
+def test_masking_on_a_stage1_record_is_unknown_not_a_crash():
+    """Stage 1 does not compute masking; a record that has not been through
+    stage 2 carries none. Asking for it must say "unsupported" -- treat as
+    unknown -- rather than raise, and never answer enabled or disabled."""
+    import copy
+
+    rec = copy.deepcopy(RECORD)
+    rec.pop("masking", None)
+    for a in rec["accesses"]:
+        a.pop("masking", None)
+    line = rec["accesses"][0]["source"]["line"]
+    reply = RecordBackedResolver(rec).resolve(_req("masking_state_at", line=line))
+    assert reply["status"] == "unsupported"
+    assert reply["recall_rule"] == RECALL_RULES["unsupported"]
+
+
+def test_masking_falls_back_to_the_record_level_state_by_role():
+    """Stage 2 also writes the state per role under masking.per_access."""
+    import copy
+
+    rec = copy.deepcopy(RECORD)
+    for a in rec["accesses"]:
+        a.pop("masking", None)
+    a1 = rec["accesses"][0]
+    state = {"disabled": [2], "enabled": [1], "unknown": []}
+    rec["masking"]["per_access"] = [{"role": "A1", "state": state}]
+    reply = RecordBackedResolver(rec).resolve(_req("masking_state_at", line=a1["source"]["line"]))
+    assert reply["status"] == "ok"
+    assert reply["payload"]["masking"] == state

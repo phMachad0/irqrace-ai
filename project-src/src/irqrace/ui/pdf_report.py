@@ -213,6 +213,10 @@ class PDFReportBuilder:
         for idx, (skey, title, desc) in enumerate(stage_names):
             st = self._stage_status(skey)
             wall = stages.get(skey, {}).get("wall_ms")
+            if skey == "solver":
+                # One row for two stages: report the time of both.
+                parts = [stages.get(k, {}).get("wall_ms") for k in ("stage2", "solver")]
+                wall = sum(w for w in parts if w is not None) if any(w is not None for w in parts) else None
 
             bg = self.COLOR_BG_HEADER if idx % 2 == 0 else (1.0, 1.0, 1.0)
             row_rect = pymupdf.Rect(self.MARGIN_LEFT, self.y, self.PAGE_WIDTH - self.MARGIN_RIGHT, self.y + 14)
@@ -246,12 +250,10 @@ class PDFReportBuilder:
         real_cands = sum(1 for c in candidates.values() if (c.get("triage") or {}).get("bucket") == "likely_real")
         infeas_cands = sum(1 for c in candidates.values() if (c.get("triage") or {}).get("bucket") == "likely_infeasible")
         unsat_cands = sum(1 for c in candidates.values() if (c.get("solver") or {}).get("verdict") == "unsat")
+        dropped_s2 = sum(1 for c in candidates.values() if c.get("drop"))
         repairs_n = sum(1 for c in candidates.values() if c.get("repair"))
         untriaged_n = sum(1 for c in candidates.values() if (c.get("triage") or {}).get("not_triaged"))
         solver_ran = self._stage_status("solver") == "ok"
-
-        # Inspection ratio: real defects / (real defects + traps looked at)
-        insp_ratio = "1.00 (Ótimo)" if real_cands > 0 else "N/A"
 
         # 4 Metric Cards
         card_w = (self.PAGE_WIDTH - self.MARGIN_LEFT - self.MARGIN_RIGHT - 18) / 4.0
@@ -259,10 +261,11 @@ class PDFReportBuilder:
 
         cards_data = [
             ("Total Candidatos", str(total_cands), "Extraídos no Stage 1"),
-            ("Provas UNSAT (Z3)", str(unsat_cands) if solver_ran else "-",
-             "Descarte Formal Seguro" if solver_ran else "Z3 não executado"),
-            ("Defeitos Reais (LLM)", str(real_cands),
-             f"{infeas_cands} armadilhas rejeitadas"
+            ("Descartes c/ Prova", str(dropped_s2 + unsat_cands) if solver_ran else "-",
+             f"Stage 2: {dropped_s2} · Z3 UNSAT: {unsat_cands}" if solver_ran
+             else "Stage 2/Z3 não executados"),
+            ("likely_real (LLM)", str(real_cands),
+             f"{infeas_cands} classificados inviáveis"
              + (f"; {untriaged_n} não triados" if untriaged_n else "")),
             ("Correções Geradas", str(repairs_n), "Com testemunha & patch"),
         ]
@@ -276,6 +279,65 @@ class PDFReportBuilder:
             page.insert_text((cx + 6, self.y + 37), sub, fontsize=6.8, fontname="helv", color=self.COLOR_MUTED)
 
         self.y += card_h + 14
+        self._draw_ground_truth_eval()
+
+    def _draw_ground_truth_eval(self) -> None:
+        """Recall, traps and Inspection Ratio per stage, from the ground truth.
+
+        Computed by :mod:`irqrace.run_evaluation` with the bench's match rule. A
+        case with no ground truth here gets one line saying so -- never a 100%.
+        """
+        rows = self.data.get("evaluation")
+        page = self.current_page
+        assert page is not None
+        if not rows:
+            page.insert_text(
+                (self.MARGIN_LEFT, self.y + 8),
+                "Avaliação contra a ground truth: caso sem ground truth nesta máquina; "
+                "recall e Inspection Ratio não calculados.",
+                fontsize=7.5, fontname="helv", color=self.COLOR_MUTED,
+            )
+            self.y += 20
+            return
+
+        self._check_space(30.0 + 14.0 * len(rows))
+        page = self.current_page
+        assert page is not None
+        page.insert_text(
+            (self.MARGIN_LEFT, self.y + 10),
+            "Avaliação contra a ground truth (Racebench 2.1_remarks + errata), por estágio",
+            fontsize=8.5, fontname="helv", color=self.COLOR_PRIMARY,
+        )
+        self.y += 14
+        names = {"stage1": "Stage 1", "stage2": "Stage 2", "context": "Chegam à LLM",
+                 "triage": "Fila após a triagem"}
+        cols = [(6, "Estágio"), (140, "Candidatos"), (215, "Recall (bug points)"),
+                (330, "Armadilhas vivas"), (430, "Inspection Ratio")]
+        h_rect = pymupdf.Rect(self.MARGIN_LEFT, self.y, self.PAGE_WIDTH - self.MARGIN_RIGHT, self.y + 14)
+        page.draw_rect(h_rect, color=self.COLOR_BORDER, fill=self.COLOR_SECONDARY)
+        for x, label in cols:
+            page.insert_text((self.MARGIN_LEFT + x, self.y + 10), label, fontsize=7.5,
+                             fontname="helv", color=(1, 1, 1))
+        self.y += 14
+        for i, r in enumerate(rows):
+            bg = self.COLOR_BG_HEADER if i % 2 == 0 else (1.0, 1.0, 1.0)
+            row_rect = pymupdf.Rect(self.MARGIN_LEFT, self.y, self.PAGE_WIDTH - self.MARGIN_RIGHT, self.y + 13)
+            page.draw_rect(row_rect, color=self.COLOR_BORDER, fill=bg, width=0.5)
+            gate_ok = r["bugs_detected"] == r["bug_points"]
+            ir = r["inspection_ratio"]
+            values = [
+                names.get(r["stage"], r["stage"]),
+                str(r["candidates"]),
+                f"{r['bugs_detected']}/{r['bug_points']} " + ("PASS" if gate_ok else "FALHOU"),
+                f"{r['traps_reported']}/{r['traps']}",
+                f"{ir:.2f}" if ir is not None else "-",
+            ]
+            for (x, _), v in zip(cols, values):
+                color = self.COLOR_RED_TEXT if (v.endswith("FALHOU")) else self.COLOR_TEXT
+                page.insert_text((self.MARGIN_LEFT + x, self.y + 9), v, fontsize=7.5,
+                                 fontname="helv", color=color)
+            self.y += 13
+        self.y += 12
 
     def _draw_candidates_table(self) -> None:
         self._check_space(110.0)
@@ -334,6 +396,9 @@ class PDFReportBuilder:
             elif t_doc:
                 feas = t_doc.get("feasibility", {}).get("verdict", "?")
                 bucket = t_doc.get("bucket", "?")
+            elif cdata.get("drop"):
+                feas = f"Stage 2 ({cdata['drop'].get('reason', '?')})"
+                bucket = "descartado"
             elif s_doc and s_doc.get("verdict") == "unsat":
                 feas = "UNSAT (Z3)"
                 bucket = "descartado"

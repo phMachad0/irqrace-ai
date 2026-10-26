@@ -22,6 +22,7 @@ from irqrace.llm.repair import (
     witness_problems,
 )
 from irqrace.llm.resolver import resolver_for
+from irqrace.run_evaluation import evaluate_run
 from irqrace.runstore import RunStore, find_runs
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -133,13 +134,25 @@ def _discover_all_runs(runs_root: Path) -> list[Path]:
     if FIXTURE_RUN.exists() and (FIXTURE_RUN / "manifest.json").exists():
         if FIXTURE_RUN not in found:
             found.append(FIXTURE_RUN)
-    found.sort(
-        key=lambda p: (
-            0 if "showcase" in p.name else (2 if p == FIXTURE_RUN else 1),
-            p.name,
-        )
-    )
+    found.sort(key=lambda p: (p == FIXTURE_RUN, p.name))
     return found
+
+
+def _latest_eval_by_subject(all_runs: list[Path]) -> dict[str, tuple[Path, dict[str, Any]]]:
+    """The most recent run of each subject that has an ``eval/report.json``.
+
+    Run directory names are ``<subject>-<UTC timestamp>-<hash>``, so sorting by
+    name orders each subject's runs in time and the last one wins.
+    """
+    out: dict[str, tuple[Path, dict[str, Any]]] = {}
+    for r in sorted(all_runs, key=lambda p: p.name):
+        if r == FIXTURE_RUN:
+            continue
+        m = _load_json_safe(r / "manifest.json")
+        ev = _load_json_safe(r / "eval" / "report.json")
+        if m and ev:
+            out[m.get("subject", {}).get("name", r.name)] = (r, ev)
+    return out
 
 
 def read_human_labels(store: RunStore) -> dict[str, dict[str, str]]:
@@ -216,158 +229,93 @@ def compare_runs(store_a: RunStore, store_b: RunStore) -> dict[str, Any]:
 
 
 def _compute_run_funnel(store: RunStore) -> list[dict[str, Any]]:
+    """One row per pipeline stage, every value read from the run or measured.
+
+    Recall, traps and the Inspection Ratio come from
+    :func:`irqrace.run_evaluation.evaluate_run`: the stage's own output matched
+    against the ground truth with the bench's match rule. A run without ground
+    truth on this machine, or a stage that did not run, shows "-" -- never a
+    100% nobody checked. Stage 3's row is evaluated on the context records,
+    which are exactly what survives the solver.
+    """
     manifest = store.read_manifest()
     stages = {s["name"]: s for s in manifest.get("stages", [])}
-    eval_rep = _load_json_safe(store.root / "eval" / "report.json")
     probe_rep = _load_json_safe(store.root / "build" / "probe.json")
-    s1_analysis = _load_json_safe(store.root / "stage1" / "analysis.json")
-    s1_cands = store.read_candidates("stage1")
-    s2_cands = store.read_candidates("stage2")
-    solver_res = _load_jsonl_safe(store.root / "solver" / "results.jsonl")
-    ctx_files = sorted((store.root / "context").glob("*.json"))
+    s1_analysis = _load_json_safe(store.root / "stage1" / "accesses.json")
     triage_rows = _load_jsonl_safe(store.root / "llm" / "triage.jsonl")
     repair_files = sorted((store.root / "repair").glob("*/patch.json"))
+    evals = {r.stage: r for r in (evaluate_run(store) or [])}
 
-    gt_bugs_total = len(eval_rep.get("bug_matches", [])) if eval_rep else 1
-    gt_bugs_s1 = eval_rep.get("bugs_detected", gt_bugs_total) if eval_rep else 1
-    gt_traps_total = len(eval_rep.get("trap_matches", [])) if eval_rep else 2
-    gt_traps_s1 = eval_rep.get("traps_reported", gt_traps_total) if eval_rep else 2
+    def st(name: str, key: str, default: Any = "-") -> Any:
+        v = stages.get(name, {}).get(key)
+        return default if v is None else v
 
-    n_s1 = len(s1_cands)
-    n_s2 = len(s2_cands) if s2_cands else n_s1
-    n_unsat = sum(1 for r in solver_res if r.get("verdict") == "unsat")
-    n_solver_out = (n_s2 - n_unsat) if solver_res else n_s2
-    n_ctx = len(ctx_files) if ctx_files else n_solver_out
-    n_triage = len(triage_rows)
+    def reduction(name: str) -> str:
+        n_in, n_out = st(name, "candidates_in", None), st(name, "candidates_out", None)
+        if not n_in or n_out is None:
+            return "-"
+        return f"{(1 - n_out / n_in) * 100:.1f}%"
+
+    def recall(ev_key: str | None) -> str:
+        ev = evals.get(ev_key) if ev_key else None
+        if ev is None:
+            return "-"
+        pct = 100 * ev.bugs_detected / ev.bug_points if ev.bug_points else 100.0
+        return f"{ev.bugs_detected}/{ev.bug_points} ({pct:.0f}%)"
+
+    def traps(ev_key: str | None) -> str:
+        ev = evals.get(ev_key) if ev_key else None
+        return f"{ev.traps_reported}/{ev.traps}" if ev else "-"
+
+    def ir(ev_key: str | None) -> float | None:
+        ev = evals.get(ev_key) if ev_key else None
+        return ev.inspection_ratio if ev else None
+
+    def fmt_ir(v: float | None) -> str:
+        return f"{v:.2f}" if v is not None else "-"
+
+    def delta(prev: str | None, cur: str | None) -> str:
+        a, b = ir(prev), ir(cur)
+        return f"{b - a:+.2f}" if (a is not None and b is not None) else "-"
+
+    accesses = len(s1_analysis.get("accesses", [])) if s1_analysis else "-"
     n_likely_real = sum(1 for r in triage_rows if r.get("bucket") == "likely_real")
-    n_infeasible_llm = sum(
-        1 for r in triage_rows if r.get("bucket") == "likely_infeasible"
-    )
-    n_repaired = len(repair_files)
-
-    ir_s1 = eval_rep.get("inspection_ratio") if eval_rep else None
-    if ir_s1 is None and n_s1 > 0:
-        ir_s1 = 1.0
-    ir_solver = (n_solver_out / n_s1) if (n_s1 > 0 and solver_res) else ir_s1
-    ir_llm = (max(1, n_likely_real) / n_s1) if (n_s1 > 0 and triage_rows) else ir_solver
-
+    rows = [
+        ("0. Build & Probe", "build", None, None,
+         len(manifest.get("subject", {}).get("sources", [])),
+         probe_rep.get("globals_count", "-") if probe_rep else "-", "-"),
+        ("1. Stage 1 (SVF + Co-exec)", "stage1", "stage1", None,
+         accesses, st("stage1", "candidates_out"), "Baseline"),
+        ("2. Stage 2 (Mask Filter)", "stage2", "stage2", "stage1",
+         st("stage2", "candidates_in"), st("stage2", "candidates_out"), reduction("stage2")),
+        ("3. Stage 3 (Z3 Solver)", "solver", "context", "stage2",
+         st("solver", "candidates_in"), st("solver", "candidates_out"), reduction("solver")),
+        ("4. Contexto C2", "context", "context", None,
+         st("context", "candidates_in"), st("context", "candidates_out"), "-"),
+        ("5. LLM Stage A (Triage)", "triage", "triage", "context",
+         st("triage", "candidates_in"),
+         f"{len(triage_rows)} ({n_likely_real} likely_real)" if triage_rows else "-",
+         "Reordena a fila"),
+        ("6. LLM Stage B (Repair)", "repair", None, None,
+         st("repair", "candidates_in"), len(repair_files) if repair_files else "-", "-"),
+        ("7. Re-verify", "reverify", None, None,
+         st("reverify", "candidates_in"), st("reverify", "candidates_out"), "-"),
+    ]
     return [
         {
-            "Estágio": "0. Build & Probe",
-            "Status": stages.get("build", {}).get("status", "pending"),
-            "N_in": len(manifest.get("subject", {}).get("sources", [])),
-            "N_out": probe_rep.get("globals_count", "-") if probe_rep else "-",
-            "Redução (ΔN)": "-",
-            "Descartes c/ Prova": 0,
-            "Recall Gate (R_s)": "100%",
-            "Armadilhas Vivas": "-",
-            "Inspection Ratio (IR_s)": "-",
-            "Ganho Marginal (ΔIR)": "-",
-            "Tempo (ms)": stages.get("build", {}).get("wall_ms", "-"),
-        },
-        {
-            "Estágio": "1. Stage 1 (SVF + Co-exec)",
-            "Status": stages.get("stage1", {}).get("status", "pending"),
-            "N_in": s1_analysis.get("accesses_count", "-") if s1_analysis else "-",
-            "N_out": n_s1,
-            "Redução (ΔN)": "Baseline",
-            "Descartes c/ Prova": 0,
-            "Recall Gate (R_s)": f"{gt_bugs_s1}/{gt_bugs_total} (100%)",
-            "Armadilhas Vivas": f"{gt_traps_s1}/{gt_traps_total}",
-            "Inspection Ratio (IR_s)": f"{ir_s1:.2f}" if ir_s1 is not None else "-",
-            "Ganho Marginal (ΔIR)": "0.00",
-            "Tempo (ms)": stages.get("stage1", {}).get("wall_ms", "-"),
-        },
-        {
-            "Estágio": "2. Stage 2 (Mask Filter)",
-            "Status": stages.get("stage2", {}).get("status", "pending"),
-            "N_in": n_s1,
-            "N_out": n_s2,
-            "Redução (ΔN)": f"{(1 - n_s2 / n_s1) * 100:.1f}%" if n_s1 else "0.0%",
-            "Descartes c/ Prova": stages.get("stage2", {}).get("dropped_with_proof", 0),
-            "Recall Gate (R_s)": f"{gt_bugs_s1}/{gt_bugs_total} (100%)",
-            "Armadilhas Vivas": f"{gt_traps_s1}/{gt_traps_total}",
-            "Inspection Ratio (IR_s)": f"{ir_s1:.2f}" if ir_s1 is not None else "-",
-            "Ganho Marginal (ΔIR)": "0.00",
-            "Tempo (ms)": stages.get("stage2", {}).get("wall_ms", "-"),
-        },
-        {
-            "Estágio": "3. Stage 3 (Z3 Solver)",
-            "Status": stages.get("solver", {}).get("status", "pending"),
-            "N_in": n_s2,
-            "N_out": n_solver_out,
-            "Redução (ΔN)": f"{(n_unsat / n_s2) * 100:.1f}%" if n_s2 else "0.0%",
-            "Descartes c/ Prova": n_unsat,
-            "Recall Gate (R_s)": f"{gt_bugs_s1}/{gt_bugs_total} (100%)",
-            "Armadilhas Vivas": f"{max(0, gt_traps_s1 - n_unsat)}/{gt_traps_total}",
-            "Inspection Ratio (IR_s)": f"{ir_solver:.2f}" if ir_solver is not None else "-",
-            "Ganho Marginal (ΔIR)": (
-                f"-{(ir_s1 - ir_solver):.2f}"
-                if (ir_s1 is not None and ir_solver is not None)
-                else "-"
-            ),
-            "Tempo (ms)": stages.get("solver", {}).get("wall_ms", "-"),
-        },
-        {
-            "Estágio": "4. Contexto C2",
-            "Status": stages.get("context", {}).get("status", "pending"),
-            "N_in": n_solver_out,
-            "N_out": n_ctx,
-            "Redução (ΔN)": "0.0%",
-            "Descartes c/ Prova": 0,
-            "Recall Gate (R_s)": f"{gt_bugs_s1}/{gt_bugs_total} (100%)",
-            "Armadilhas Vivas": f"{max(0, gt_traps_s1 - n_unsat)}/{gt_traps_total}",
-            "Inspection Ratio (IR_s)": f"{ir_solver:.2f}" if ir_solver is not None else "-",
-            "Ganho Marginal (ΔIR)": "0.00",
-            "Tempo (ms)": stages.get("context", {}).get("wall_ms", "-"),
-        },
-        {
-            "Estágio": "5. LLM Stage A (Triage)",
-            "Status": stages.get("triage", {}).get("status", "pending"),
-            "N_in": n_ctx,
-            "N_out": f"{n_triage} ({n_likely_real} real)" if n_triage else "-",
-            "Redução (ΔN)": "Reordena fila",
-            "Descartes c/ Prova": 0,
-            "Recall Gate (R_s)": f"{gt_bugs_s1}/{gt_bugs_total} (100%)",
-            "Armadilhas Vivas": (
-                f"{max(0, gt_traps_s1 - n_unsat - n_infeasible_llm)}/{gt_traps_total}"
-                if n_triage
-                else "-"
-            ),
-            "Inspection Ratio (IR_s)": f"{ir_llm:.2f}" if (n_triage and ir_llm is not None) else "-",
-            "Ganho Marginal (ΔIR)": (
-                f"-{(ir_solver - ir_llm):.2f}"
-                if (n_triage and ir_solver is not None and ir_llm is not None)
-                else "-"
-            ),
-            "Tempo (ms)": stages.get("triage", {}).get("wall_ms", "-"),
-        },
-        {
-            "Estágio": "6. LLM Stage B (Repair)",
-            "Status": stages.get("repair", {}).get("status", "pending"),
-            "N_in": n_likely_real if n_triage else "-",
-            "N_out": n_repaired if n_repaired else "-",
-            "Redução (ΔN)": "-",
-            "Descartes c/ Prova": 0,
-            "Recall Gate (R_s)": "100%",
-            "Armadilhas Vivas": "0",
-            "Inspection Ratio (IR_s)": "-",
-            "Ganho Marginal (ΔIR)": "Patch gerado",
-            "Tempo (ms)": stages.get("repair", {}).get("wall_ms", "-"),
-        },
-        {
-            "Estágio": "7. Re-verify",
-            "Status": stages.get("reverify", {}).get("status", "pending"),
-            "N_in": n_repaired if n_repaired else "-",
-            "N_out": stages.get("reverify", {}).get("candidates_out", 0),
-            "Redução (ΔN)": "100% eliminado",
-            "Descartes c/ Prova": stages.get("reverify", {}).get("dropped_with_proof", 0),
-            "Recall Gate (R_s)": "PASS",
-            "Armadilhas Vivas": "0",
-            "Inspection Ratio (IR_s)": "0.00",
-            "Ganho Marginal (ΔIR)": "Verificado",
-            "Tempo (ms)": stages.get("reverify", {}).get("wall_ms", "-"),
-        },
+            "Estágio": label,
+            "Status": st(stage, "status", "pending"),
+            "N_in": n_in,
+            "N_out": n_out,
+            "Redução (ΔN)": red,
+            "Descartes c/ Prova": st(stage, "dropped_with_proof", 0),
+            "Recall Gate (R_s)": recall(ev_key),
+            "Armadilhas Vivas": traps(ev_key),
+            "Inspection Ratio (IR_s)": fmt_ir(ir(ev_key)),
+            "Ganho Marginal (ΔIR)": delta(prev, ev_key) if prev else "-",
+            "Tempo (ms)": st(stage, "wall_ms"),
+        }
+        for label, stage, ev_key, prev, n_in, n_out, red in rows
     ]
 
 
@@ -458,7 +406,7 @@ def _member_avatar_html(slug: str, initials: str, accent: str) -> str:
     """
 
 
-def render_home_page() -> None:
+def render_home_page(all_runs: list[Path]) -> None:
     poli_uri = _img_data_uri(MONO_FIGS_DIR / "logo-poli.png")
     usp_uri = _img_data_uri(MONO_FIGS_DIR / "logo-usp.png")
     logos_html = ""
@@ -597,11 +545,22 @@ def render_home_page() -> None:
             )
 
     st.markdown("")
+    latest = _latest_eval_by_subject(all_runs)
     k1, k2, k3, k4 = st.columns(4)
-    k1.metric("Benchmark Racebench", "31 / 31 casos", "100% compilados em LLVM IR")
-    k2.metric("Recall Gate (Soundness)", "48 / 48 bugs", "Zero falsos negativos")
-    k3.metric("Rejeição de Armadilhas", "80% – 95%", "Z3 + LLM Triage")
-    k4.metric("Regra Central", "Só o Solver descarta", "A LLM apenas ordena e explica")
+    if latest:
+        evs = [ev for _, ev in latest.values()]
+        bd = sum(ev.get("bugs_detected", 0) for ev in evs)
+        bp = sum(ev.get("bug_points", 0) for ev in evs)
+        tr = sum(ev.get("traps_reported", 0) for ev in evs)
+        tt = sum(ev.get("traps", 0) for ev in evs)
+        k1.metric("Casos avaliados", f"{len(latest)} / 31", "run mais recente de cada caso")
+        k2.metric("Recall Gate", f"{bd} / {bp} bug points", "PASS" if bd == bp else "FALHOU")
+        k3.metric("Armadilhas vivas", f"{tr} / {tt}", "no último estágio de cada run")
+    else:
+        k1.metric("Casos avaliados", "-", "nenhum eval/report.json em runs/")
+        k2.metric("Recall Gate", "-", "rode `irqrace stage3-all`")
+        k3.metric("Armadilhas vivas", "-", "")
+    k4.metric("Regra Central", "Só uma prova descarta", "A LLM apenas ordena e explica")
 
 
 # ---------------------------------------------------------------------------
@@ -1084,7 +1043,17 @@ def render_pipeline_demo_page(store: RunStore) -> None:
                         st.code(patched_c, language="c")
                 except Exception:
                     pass
-            st.success("✅ **Re-verify:** Candidato eliminado após aplicar o patch (`0 regressões`).")
+            rv = next((x for x in manifest.get("stages", []) if x["name"] == "reverify"), {})
+            if rv.get("status") == "ok":
+                st.success(
+                    f"**Re-verify:** {rv.get('candidates_in', '?')} patch(es) reverificado(s); "
+                    f"{rv.get('dropped_with_proof', 0)} candidato(s) eliminado(s) com prova."
+                )
+            else:
+                st.warning(
+                    "**Re-verify não executada** — o patch acima não foi reverificado pela "
+                    f"análise estática. {rv.get('error') or ''}"
+                )
 
 
 # ---------------------------------------------------------------------------
@@ -1106,50 +1075,51 @@ def render_metrics_page(store: RunStore, all_runs: list[Path]) -> None:
     st.markdown("### 🏆 Resultados Globais nos 31 Casos do Racebench")
 
     suite_rows: list[dict[str, Any]] = []
-    seen: set[str] = set()
-    for r_path in reversed(all_runs):
-        if "showcase" in r_path.name or r_path == FIXTURE_RUN:
-            continue
-        m = _load_json_safe(r_path / "manifest.json")
-        ev = _load_json_safe(r_path / "eval" / "report.json")
-        if not m or not ev:
-            continue
-        subj = m.get("subject", {}).get("name", r_path.name)
-        if subj in seen:
-            continue
-        seen.add(subj)
-        cands = _load_jsonl_safe(r_path / "stage1" / "candidates.jsonl")
-        sol = _load_jsonl_safe(r_path / "solver" / "results.jsonl")
+    for subj, (r_path, ev) in _latest_eval_by_subject(all_runs).items():
+        r_store = RunStore(r_path)
+        per_stage = {e.stage: e for e in (evaluate_run(r_store) or [])}
         tri = _load_jsonl_safe(r_path / "llm" / "triage.jsonl")
-        n_unsat = sum(1 for r in sol if r.get("verdict") == "unsat")
-        n_real = sum(1 for r in tri if r.get("bucket") == "likely_real")
+        s1 = per_stage.get("stage1")
+        ctx = per_stage.get("context")
+        llm = per_stage.get("triage")
         suite_rows.append(
             {
                 "Subject": subj,
-                "Stage 1 (Cands)": len(cands),
-                "Z3 Descartados (unsat)": n_unsat,
-                "Pós-Z3 (Contexto C2)": len(cands) - n_unsat,
-                "LLM likely_real": n_real,
-                "Bugs Reais (GT)": f"{ev.get('bugs_detected', 0)}/{len(ev.get('bug_matches', []))}",
-                "Recall Gate": "✅ PASS" if ev.get("bugs_detected") == len(ev.get("bug_matches", [])) else "❌",
-                "IR Stage 1": round(ev.get("inspection_ratio") or 1.0, 2),
-                "IR Pós-LLM": round(max(1, n_real) / len(cands), 2) if cands else 0.0,
+                "Stage 1 (Cands)": s1.candidates if s1 else len(r_store.read_candidates("stage1")),
+                "Chegam à LLM": ctx.candidates if ctx else "-",
+                "LLM likely_real": sum(1 for r in tri if r.get("bucket") == "likely_real") if tri else "-",
+                "Bugs (GT)": f"{ev.get('bugs_detected', 0)}/{ev.get('bug_points', 0)}",
+                "Recall Gate": "✅ PASS" if ev.get("recall_gate") else "❌ FALHOU",
+                "Armadilhas vivas": f"{ev.get('traps_reported', 0)}/{ev.get('traps', 0)}",
+                "IR Stage 1": s1.inspection_ratio if s1 else None,
+                "IR na LLM": ctx.inspection_ratio if ctx else None,
+                "IR pós-triagem": llm.inspection_ratio if llm else None,
             }
         )
 
     suite_rows.sort(key=lambda r: r["Subject"])
     if suite_rows:
         df = pd.DataFrame(suite_rows)
+        bd = sum(int(r["Bugs (GT)"].split("/")[0]) for r in suite_rows)
+        bp = sum(int(r["Bugs (GT)"].split("/")[1]) for r in suite_rows)
+
+        def mean_ir(col: str) -> str:
+            vals = [v for v in df[col] if v is not None and v == v]
+            return f"{sum(vals) / len(vals):.2f} ({len(vals)} casos)" if vals else "-"
+
         k1, k2, k3, k4 = st.columns(4)
         k1.metric("Subjects", f"{len(df)}/31")
         k2.metric("Total Candidatos Stage 1", int(df["Stage 1 (Cands)"].sum()))
-        k3.metric("Recall Gate Global", "48/48 (100%)")
-        k4.metric(
-            "Inspection Ratio Médio",
-            f"{df['IR Stage 1'].mean():.2f} → {df['IR Pós-LLM'].mean():.2f}",
-            delta=f"-{(df['IR Stage 1'].mean() - df['IR Pós-LLM'].mean()):.2f} esforço humano",
+        k3.metric("Recall Gate Global", f"{bd}/{bp}", "PASS" if bd == bp else "FALHOU")
+        k4.metric("Inspection Ratio médio", f"{mean_ir('IR Stage 1')} → {mean_ir('IR na LLM')}")
+        st.caption(
+            "Run mais recente de cada caso com `eval/report.json`. O IR médio é tomado só "
+            "sobre os casos em que ele é definido (todo bug point detectado); "
+            "'IR pós-triagem' existe só nos runs que passaram pela triagem."
         )
         st.dataframe(df, width="stretch", hide_index=True)
+    else:
+        st.info("Nenhum run com `eval/report.json` em `runs/`. Rode `irqrace stage3-all` para gerar.")
 
     # Ablation summary table
     abl_path = REPO_ROOT / "ablation-groq-harm.json"
@@ -1209,22 +1179,14 @@ def main() -> None:
     selected_run_path = st.sidebar.selectbox(
         "Execução (`run_id`):",
         options=all_runs,
-        format_func=lambda p: (
-            f"⭐ {p.name.replace('000-e2e-showcase-', '')} (Showcase)"
-            if "showcase" in p.name
-            else (
-                f"📦 {p.name}"
-                if p == FIXTURE_RUN
-                else f"✅ {p.name.split('-2026')[0]}"
-            )
-        ),
+        format_func=lambda p: f"📦 {p.name}" if p == FIXTURE_RUN else p.name,
         index=0,
         key="run_select",
     )
     store = RunStore(selected_run_path)
 
     if page == "🏠 Início":
-        render_home_page()
+        render_home_page(all_runs)
     elif page == "🔬 Pipeline (Demo)":
         render_pipeline_demo_page(store)
     else:

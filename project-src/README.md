@@ -344,9 +344,16 @@ The interactive Streamlit dashboard (`src/irqrace/ui/app.py`, launched via `irqr
 
 ```bash
 pip install -e '.[ui]'
-python3 scripts/seed-showcase-run.py     # populate probe.json and build the 8-stage showcase run
+irqrace stage3-all                       # real runs: stages 1-3 and eval/report.json for all 31 cases
+irqrace llm triage runs/<run_id>         # optional: the LLM stages on one of them
 irqrace ui                               # opens http://localhost:8501
 ```
+
+Every number the dashboard and the desktop app show is read from a run or measured
+against the ground truth (`src/irqrace/run_evaluation.py`, the bench's match rule);
+a stage that did not run shows "-", and a subject without ground truth on this
+machine gets no recall figure. The earlier `scripts/seed-showcase-run.py`, which wrote
+stage-2, solver, triage and re-verification outputs nobody computed, is gone.
 
 The suite is found at `../racebench` or via `IRQRACE_RACEBENCH`.
 

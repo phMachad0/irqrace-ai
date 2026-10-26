@@ -493,28 +493,49 @@ def _run_until(stepper: PipelineStepper, last_key: str) -> list[str]:
             return logs
 
 
-def test_stage2_and_the_solver_are_skipped_not_invented(tmp_path: Path) -> None:
-    """This branch has no stage 2 and no Z3. The step used to write a solver
-    verdict nobody computed ('inconclusive', 'timeout', 12 ms) for every
-    candidate, and fixed timings into the manifest."""
+def test_the_desktop_runs_the_real_stage2_and_stage3(tmp_path: Path) -> None:
+    """The same functions `irqrace stage3` runs, not a stand-in: stage 2 drops
+    with a proof per drop, the solver writes its query and verdicts, and what
+    reaches the LLM is exactly what the solver did not refute."""
     stepper = _stepper(tmp_path)
-    _run_until(stepper, "context")
+    logs = _run_until(stepper, "context")
     store = stepper.store
     stages = {s["name"]: s for s in store.read_manifest()["stages"]}
 
-    for name in ("stage2", "solver"):
-        assert stages[name]["status"] == "skipped"
-        assert stages[name]["error"]
-        assert stages[name].get("wall_ms") is None
-        assert not stages[name].get("dropped_with_proof")
-    assert not (store.root / "stage2" / "candidates.jsonl").exists()
-    assert not (store.root / "solver" / "results.jsonl").exists()
-
-    n = len(store.read_candidates("stage1"))
-    contexts = [json.loads(p.read_text()) for p in (store.root / "context").glob("*.json")]
-    assert len(contexts) == n
-    assert all(c["solver_result"]["verdict"] == "not_run" for c in contexts)
+    for name in ("stage2", "solver", "context"):
+        assert stages[name]["status"] == "ok"
+    drops = store.read_drops()
+    assert drops and all(d["proof"] and d["reason"] for d in drops)
+    assert stages["stage2"]["dropped_with_proof"] == len(drops)
+    assert (store.root / "solver" / "query.txt").exists()
+    verdicts = {
+        json.loads(l)["candidate_id"]: json.loads(l)["verdict"]
+        for l in (store.root / "solver" / "results.jsonl").read_text().splitlines()
+    }
+    assert "unsat" in verdicts.values()
+    assert set(verdicts) == {c["id"] for c in store.read_candidates("stage2")}
+    contexts = {p.stem: json.loads(p.read_text()) for p in (store.root / "context").glob("*.json")}
+    assert set(contexts) == {cid for cid, v in verdicts.items() if v != "unsat"}
+    # The context step reads back what stage 3 wrote: the solver's own verdict.
+    assert all(c["solver_result"]["verdict"] == verdicts[cid] for cid, c in contexts.items())
     assert store.check() == []
+    assert not any("skipped" in line for line in logs)
+
+
+def test_the_desktop_evaluates_a_racebench_case_against_its_ground_truth(tmp_path: Path) -> None:
+    from irqrace.run_evaluation import case_ground_truth, evaluate_run
+
+    if case_ground_truth("svp_simple_001_001") is None:
+        pytest.skip("Racebench is not on this machine")
+    stepper = _stepper(tmp_path)
+    _run_until(stepper, "context")
+    report = json.loads((stepper.store.root / "eval" / "report.json").read_text())
+    assert report["stage"] == "stage3"
+    assert report["recall_gate"] is True
+    assert report["bugs_detected"] == report["bug_points"] == 1
+    rows = {r.stage: r for r in evaluate_run(stepper.store)}
+    assert set(rows) == {"stage1", "stage2", "context"}
+    assert rows["context"].candidates == report["candidates_reported"]
 
 
 class _AlwaysFeasibleBackend:

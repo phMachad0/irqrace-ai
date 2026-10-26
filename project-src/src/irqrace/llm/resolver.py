@@ -217,14 +217,23 @@ class RecordBackedResolver:
 
     def _masking_at(self, args: dict[str, Any]) -> tuple[dict[str, Any], str]:
         line, file = args.get("line"), args.get("file")
+        per_role = {
+            m["role"]: m["state"]
+            for m in (self.record.get("masking") or {}).get("per_access", [])
+        }
         for access in self.record["accesses"]:
             src = access["source"]
             if src["line"] == line and (file is None or src["file"] == file):
+                state = access.get("masking") or per_role.get(access["role"])
+                if state is None:
+                    # A stage-1 record: stage 2 has not computed masking yet.
+                    # The state is unknown, not enabled and not disabled.
+                    return {}, "unsupported"
                 return {
                     "file": src["file"],
                     "line_start": line,
                     "line_end": line,
-                    "masking": access["masking"],
+                    "masking": state,
                 }, "ok"
         # Masking at an arbitrary line needs the CFG. Saying "unsupported" is
         # right; inventing 'enabled' would be a guess and inventing 'disabled'

@@ -14,6 +14,7 @@ Features:
 from __future__ import annotations
 
 import copy
+import dataclasses
 import datetime
 import json
 import os
@@ -52,8 +53,11 @@ from irqrace.llm.repair import RepairClient, apply_unified_diff, witness_problem
 from irqrace.llm.resolver import resolver_for
 from irqrace.llm.verdict import INSPECTION_ORDER, Bucket, Triage
 from irqrace.probe import ProbeError, probe
+from irqrace.run_evaluation import evaluate_run, write_report
 from irqrace.runstore import RunStore, find_runs
 from irqrace.stage1_driver import Stage1Error, stage1
+from irqrace.stage2 import stage2
+from irqrace.stage3 import Stage3Error, stage3
 from irqrace.ui.pdf_report import PDFReportBuilder
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -376,8 +380,6 @@ def find_matching_template_run(subject_name: str, runs_root: Path | None = None)
         return None
     matches: list[Path] = []
     for r in find_runs(root):
-        if "showcase" in r.name:
-            continue
         try:
             m = json.loads((r / "manifest.json").read_text(encoding="utf-8"))
             if m.get("subject", {}).get("name") == subject_name:
@@ -660,39 +662,60 @@ class PipelineStepper:
         return id_map
 
     def _step_solver(self, log_fn) -> str:
-        """Stages 2 and 3 do not exist on this branch: record that, invent nothing.
+        """Stages 2 and 3, the same functions ``irqrace stage3`` runs.
 
-        Both stages are marked ``skipped`` with the reason, no ``stage2/`` or
-        ``solver/`` file is written, and nothing is dropped. The context step then
-        promotes the stage-1 records as they are, and those already say what is
-        missing: ``solver_result.verdict`` is ``not_run`` and the provenance marks
-        masking and the solver result ``unknown`` because those stages have not
-        run. That is what the LLM must see -- not a solver verdict nobody computed.
+        Both may drop a candidate, and only with a proof: stage 2 writes one line
+        per drop to ``stage2/dropped.jsonl``, and stage 3 drops only on ``unsat``.
+        Stage 3 also writes the context records -- with the solver's verdict and
+        its provenance note -- so the context step only reads them back.
+
+        When the subject is a Racebench case with ground truth on this machine,
+        the run is then evaluated the way ``irqrace stage3-all`` evaluates it, and
+        ``eval/report.json`` records the recall gate on what reaches the LLM.
         """
         assert self.store is not None
-        n = len(self.store.read_candidates("stage1"))
-        reason = (
-            "not implemented on this branch: stage 2 (masking and priority) and the "
-            "Z3 stage live on Track A; no candidate was filtered"
-        )
-        self.store.set_stage("stage2", "skipped", candidates_in=n, error=reason)
-        self.store.set_stage("solver", "skipped", candidates_in=n, error=reason)
-        self.store.log("warn", "solver", "stages-skipped", reason)
+        bitcode = self.store.root / "build" / "whole.bc"
+        if not bitcode.exists():
+            raise Stage3Error(f"Bitcode não encontrado em {bitcode}; execute a Etapa 1 primeiro.")
+
+        log_fn("  Stage 2: análise de máscara de interrupções e prioridade (ponto fixo)...")
+        s2 = stage2(self.cfg, self.store)
+        reasons = ", ".join(f"{k}: {v}" for k, v in sorted(s2["reasons"].items())) or "nenhum"
         log_fn(
-            "  Stage 2 (máscara/prioridade) e Stage 3 (Z3) não existem nesta branch: "
-            f"etapas marcadas como 'skipped', nenhum dos {n} candidato(s) foi descartado, "
-            "e os registros seguem com máscara e solver 'unknown' / 'not_run'."
+            f"  Stage 2: {s2['in']} entrada -> {s2['kept']} mantidos, "
+            f"{s2['dropped']} descartados com prova ({reasons}) [{s2['wall_ms']} ms]"
         )
-        return f"Stage 2 e Z3 não executados (skipped); {n}/{n} candidatos seguem para a LLM sem filtro"
+        for d in self.store.read_drops():
+            log_fn(f"    - {d['candidate_id']} {d['pattern']} {d['lines']} [{d['reason']}]")
+
+        log_fn("  Stage 3: execução simbólica sobre o IR com Z3...")
+        s3 = stage3(self.cfg, self.store, bitcode)
+        verdicts = ", ".join(f"{k}: {v}" for k, v in sorted(s3["verdicts"].items())) or "nenhum"
+        log_fn(
+            f"  Stage 3: {s3['in']} entrada -> {verdicts}; "
+            f"{s3['kept']} chegam à LLM [{s3['wall_ms']} ms]"
+        )
+
+        report = write_report(self.store)
+        if report is None:
+            log_fn("  Avaliação: caso sem ground truth nesta máquina; recall não calculado.")
+        else:
+            gate = "PASS" if report["recall_gate"] else "FALHOU"
+            log_fn(
+                f"  Avaliação (ground truth): recall {report['bugs_detected']}/{report['bug_points']} "
+                f"[{gate}], armadilhas vivas {report['traps_reported']}/{report['traps']}."
+            )
+        return (
+            f"{s3['kept']}/{s2['in']} candidatos sobreviveram "
+            f"({s2['dropped']} descartados no stage 2, {s3['dropped']} UNSAT no Z3, todos com prova)"
+        )
 
     def _step_context(self, log_fn) -> str:
         assert self.store is not None
-        ctx_dir = self.store.root / "context"
-        if ctx_dir.exists():
-            for f in ctx_dir.glob("*.json"):
-                f.unlink()
+        # Stage 3 already wrote context/ with the solver's verdict and provenance
+        # note; prepare_context reads those back rather than rebuilding them.
         promoted = prepare_context(self.store)
-        log_fn(f"  {len(promoted)} registros de contexto C2 gerados em context/*.json.")
+        log_fn(f"  {len(promoted)} registros de contexto C2 em context/*.json.")
         return f"{len(promoted)} registros C2 prontos para a LLM"
 
     def _emit_event(self, kind: str, **payload: Any) -> None:
@@ -970,8 +993,9 @@ class PipelineStepper:
     def _step_repair(self, log_fn) -> str:
         assert self.store is not None
         reverify_reason = (
-            "not implemented: re-verifying a patch means re-running stages 2 and 3 "
-            "on the patched program, and they do not exist on this branch"
+            "not implemented: re-verifying a patch means applying it, rebuilding, "
+            "re-running stages 1-3 on the patched program and mapping the candidate "
+            "across the shifted lines; none of that is wired yet"
         )
         if self.use_live_llm:
             started = time.perf_counter()
@@ -1057,7 +1081,7 @@ class PipelineStepper:
                 dropped_with_proof=0,
             )
             self.store.set_stage("reverify", "skipped", candidates_in=n_rep, error=reverify_reason)
-            log_fn(f"  {n_rep}/{total} patch(es) gerados. Reverificação não executada (stages 2 e 3 ausentes).")
+            log_fn(f"  {n_rep}/{total} patch(es) gerados. Reverificação não implementada.")
             return f"{n_rep} correção(ões) gerada(s) com testemunha, sem reverificação"
 
         if self.template_run and (self.template_run / "repair").exists():
@@ -1088,7 +1112,7 @@ class PipelineStepper:
             self.store.set_stage("reverify", "skipped", candidates_in=len(patches), error=reverify_reason)
             log_fn(
                 f"  {len(patches)} patch(es) com testemunha copiados do run de referência. "
-                "Reverificação não executada (stages 2 e 3 ausentes)."
+                "Reverificação não implementada."
             )
             return f"{len(patches)} patch(es) de correção copiados, sem reverificação"
 
@@ -1186,7 +1210,7 @@ class IrqRaceWinApp:
         self._build_ui()
         self._update_llm_header_summary()
         self._refresh_source_listbox()
-        self._load_initial_showcase()
+        self._load_initial_run()
         self.root.after(100, self._poll_queue)
 
     def _build_ui(self) -> None:
@@ -1989,12 +2013,10 @@ class IrqRaceWinApp:
     # Pipeline Step-by-Step and Automatic Execution
     # -------------------------------------------------------------------------
 
-    def _load_initial_showcase(self) -> None:
-        showcase = REPO_ROOT / "runs" / "000-e2e-showcase-svp_simple_001_001"
-        if not showcase.exists():
-            showcase = find_matching_template_run("svp_simple_001_001") or showcase
-        if showcase and showcase.exists():
-            self._load_run_into_ui(showcase, note="Run inicial carregado (svp_simple_001_001).")
+    def _load_initial_run(self) -> None:
+        latest = find_matching_template_run("svp_simple_001_001")
+        if latest is not None:
+            self._load_run_into_ui(latest, note=f"Run mais recente carregado ({latest.name}).")
 
     def _create_stepper(self) -> PipelineStepper | None:
         yaml_p = Path(self.yaml_path_var.get().strip())
@@ -2350,6 +2372,10 @@ class IrqRaceWinApp:
                     r = json.loads(line)
                     solver_map[r["candidate_id"]] = r
 
+        # Stage 2's drops, each with its proof. Without this a candidate stage 2
+        # discarded would read as "pendente", as if it were still waiting.
+        drop_map = {d["candidate_id"]: d for d in store.read_drops()}
+
         triage_map: dict[str, dict[str, Any]] = {}
         triage_file = store.root / "llm" / "triage.jsonl"
         if triage_file.exists():
@@ -2382,12 +2408,16 @@ class IrqRaceWinApp:
             t_doc = triage_map.get(cid)
             s_doc = solver_map.get(cid)
             r_doc = repair_map.get(cid)
+            d_doc = drop_map.get(cid)
 
             if t_doc:
                 feas_v = t_doc.get("feasibility", {}).get("verdict", "?")
                 conf = t_doc.get("feasibility", {}).get("confidence", 0.0)
                 feas_str = f"{feas_v} ({conf:.2f})"
                 bucket_str = t_doc.get("bucket", "?")
+            elif d_doc:
+                feas_str = f"Stage 2 ({d_doc['reason']})"
+                bucket_str = "descartado c/ prova"
             elif s_doc and s_doc.get("verdict") == "unsat":
                 feas_str = "UNSAT (Z3)"
                 bucket_str = "descartado c/ prova"
@@ -2400,6 +2430,7 @@ class IrqRaceWinApp:
             self.candidates_data[cid] = {
                 "record": rec,
                 "solver": s_doc,
+                "drop": d_doc,
                 "triage": t_doc,
                 "repair": r_doc,
                 "run_root": store.root,
@@ -2487,6 +2518,13 @@ class IrqRaceWinApp:
                 triage_lines.append(f"   Raciocínio da LLM:\n   {harm.get('reasoning', '')}")
             else:
                 triage_lines.append("   Não aplicável (candidato já classificado como inviável na etapa 1).")
+        elif info.get("drop"):
+            d_doc = info["drop"]
+            triage_lines.append(f"\n[DESCARTADO ANTES DA LLM PELO STAGE 2 — motivo: {d_doc['reason']}]")
+            triage_lines.append(f"  Fluxos: {d_doc.get('local_flow', '?')} (local) x {d_doc.get('remote_flow', '?')} (remoto)")
+            triage_lines.append(f"  Prova:\n  {d_doc.get('proof', '')}")
+            if d_doc.get("relies_on"):
+                triage_lines.append(f"  Hipóteses de soundness usadas: {', '.join(d_doc['relies_on'])}")
         elif s_doc and s_doc.get("verdict") == "unsat":
             triage_lines.append("\n[DESCARTADO ANTES DA LLM PELO SOLVER Z3]")
             triage_lines.append("  Este candidato teve prova formal UNSAT no estágio estático e não precisou")
@@ -2902,9 +2940,12 @@ class IrqRaceWinApp:
             return
 
         stages_data = {}
+        evaluation = None
         if self.stepper and self.stepper.store:
             m = self.stepper.store.read_manifest()
             stages_data = {s["name"]: s for s in m.get("stages", [])}
+            rows = evaluate_run(self.stepper.store)
+            evaluation = [dataclasses.asdict(r) for r in rows] if rows else None
 
         report_data = {
             "case_name": case_name,
@@ -2915,6 +2956,7 @@ class IrqRaceWinApp:
             "llm_base_url": self.llm_base_url_var.get().strip(),
             "llm_prompt": self.llm_prompt_var.get().strip(),
             "stages": stages_data,
+            "evaluation": evaluation,
             "candidates": self.candidates_data,
         }
 
