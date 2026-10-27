@@ -105,10 +105,18 @@ def render_record(record: dict[str, Any]) -> str:
         "</context_record>",
     ]
     for entry in record.get("enclosing_source", []):
+        # Numbered, so a line the model cites is the line it read: unnumbered
+        # bodies produced miscounted line numbers in blocking elements.
+        first = entry["line_start"]
+        width = len(str(first + entry["code"].count("\n")))
+        numbered = "\n".join(
+            f"{first + k:>{width}}  {text}" for k, text in enumerate(entry["code"].split("\n"))
+        )
         parts.append(
             f'\n<source function="{entry["function"]}" '
-            f'location="{entry["file"]}:{entry["line_start"]}-{entry["line_end"]}">\n'
-            f'{entry["code"]}\n</source>'
+            f'location="{entry["file"]}:{entry["line_start"]}-{entry["line_end"]}"'
+            + (' truncated="true"' if entry.get("truncated") else "")
+            + f'>\n{numbered}\n</source>'
         )
     return "\n".join(parts)
 

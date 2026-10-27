@@ -75,7 +75,7 @@
       "type": "array",
       "minItems": 1,
       "items": { "$ref": "common.defs.schema.json#/$defs/Flow" },
-      "description": "Every flow named by an access, with its priority and how the entry point was identified."
+      "description": "Every configured flow, with its priority and how the entry point was identified. All of them, not only those named by an access: a fact about any flow (one that re-enables an interrupt inside the interval, one that writes a guard) is unreadable without it."
     },
 
     "preemption": {
@@ -152,7 +152,7 @@
 
     "enclosing_source": {
       "type": "array",
-      "description": "Full body of each access's enclosing function, as C. One of the 'cheap, always-useful layers'. Anything beyond this is REQUESTED through C4, not precomputed — there is no slice field and there is not meant to be one (wiki/concepts/Program Slicing.md).",
+      "description": "Full body of each function that can decide the candidate, as C: the functions containing the accesses, the functions on their call paths, the code of every flow that touches the variable or changes the interrupt mask, and short direct callees -- each from its first line to the brace that closes it, never past it. Size-capped (truncated per entry, provenance.completeness.truncated_fields when functions are left out). There is still no slice field; anything beyond this is REQUESTED through C4 (wiki/concepts/Program Slicing.md).",
       "items": {
         "type": "object",
         "required": ["function", "file", "line_start", "line_end", "code"],
