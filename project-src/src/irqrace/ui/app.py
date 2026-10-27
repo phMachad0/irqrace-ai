@@ -955,9 +955,13 @@ def render_pipeline_demo_page(store: RunStore) -> None:
                 fg, bg, badge = BUCKET_BADGES.get(b_name, ("#334155", "#f8fafc", b_name))
                 st.markdown(
                     f'<div style="border:2px solid {fg};background:{bg};padding:10px 14px;border-radius:8px;margin-bottom:10px;">'
-                    f'<b style="color:{fg};font-size:15px;">Bucket: {badge}</b> '
-                    f'<span style="color:#475569;font-size:12px;">(Consultas C4: {verdict.get("requests_made", 0)})</span>'
-                    f"</div>",
+                    f'<b style="color:{fg};font-size:15px;">Bucket: {badge}</b>'
+                    + (
+                        f' <span style="color:#b91c1c;font-size:12px;">(não triado: {verdict["not_triaged"]})</span>'
+                        if verdict.get("not_triaged")
+                        else ""
+                    )
+                    + "</div>",
                     unsafe_allow_html=True,
                 )
                 feas = verdict.get("feasibility", {})

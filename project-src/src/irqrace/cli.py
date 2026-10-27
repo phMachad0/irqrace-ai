@@ -1038,6 +1038,26 @@ def build_parser() -> argparse.ArgumentParser:
     mr.add_argument("--json", action="store_true")
     mr.set_defaults(func=cmd_llm_repair)
 
+    mrep = ms.add_parser("report", help="every candidate of a run: ground-truth label, fate, triage")
+    mrep.add_argument("runs", nargs="+", help="C3 run directories")
+    mrep.add_argument("--json", action="store_true", help="one JSON array, reasoning included")
+    mrep.set_defaults(func=cmd_llm_report)
+
+    pl = sub.add_parser(
+        "pipeline",
+        help="run the desktop app's pipeline from the terminal: same steps, same code",
+    )
+    pl.add_argument("configs", nargs="+", help="C1 configuration files")
+    pl.add_argument("--backend", default=None,
+                    help="provider:model for the LLM steps, e.g. claude-cli:sonnet; "
+                         "without it the LLM steps run offline, as the app does unchecked")
+    pl.add_argument("--prompt", default="+self-validation", help="ablation row")
+    pl.add_argument("--through", default="triage",
+                    choices=["build", "stage1", "solver", "context", "triage", "repair"])
+    pl.add_argument("--run-root", default=str(REPO_ROOT / "runs"))
+    pl.add_argument("--timeout", type=float, default=600.0, help="seconds per LLM request")
+    pl.set_defaults(func=cmd_pipeline)
+
     ui = sub.add_parser("ui", help="launch the Streamlit pipeline visualizer and dashboard")
     ui.add_argument("--port", type=int, default=8501)
     ui.add_argument("--headless", action="store_true")
@@ -1047,6 +1067,96 @@ def build_parser() -> argparse.ArgumentParser:
     gui.set_defaults(func=cmd_gui)
 
     return p
+
+
+def cmd_pipeline(args: argparse.Namespace) -> int:
+    """The desktop app's six steps, headless.
+
+    Drives :class:`irqrace.ui.desktop.PipelineStepper` -- the object behind the
+    app's STEP button -- so a terminal run and a click-through run execute the
+    same code and leave the same run directory. Nothing here re-implements a
+    step.
+    """
+    import yaml
+
+    from .ui.desktop import PIPELINE_STEPS, PipelineStepper, resolve_c_source_files
+
+    adapter, model = None, None
+    if args.backend:
+        adapter, _, model = args.backend.partition(":")
+        if not model:
+            return _err(f"--backend needs provider:model, got {args.backend!r}")
+    keys = [k for k, _ in PIPELINE_STEPS]
+    last = keys.index(args.through)
+    failures = 0
+    for cfg_path in args.configs:
+        path = Path(cfg_path)
+        raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+        stepper = PipelineStepper(
+            path,
+            resolve_c_source_files(raw),
+            work_root=Path(args.run_root),
+            use_live_llm=args.backend is not None,
+            llm_adapter=adapter or "openai",
+            llm_model=model or "",
+            llm_base_url="",
+            llm_prompt=args.prompt,
+            llm_timeout_s=args.timeout,
+        )
+        store = stepper.init_run()
+        print(f"== {path.stem}: {store.root}", flush=True)
+        try:
+            for _ in range(last + 1):
+                stepper.run_next_step(log_fn=lambda line: print(line, flush=True))
+        except Exception as e:  # noqa: BLE001 - report the failing subject, go on to the next
+            failures += 1
+            print(f"[FAIL] {path.stem}: {str(e).splitlines()[0] if str(e) else type(e).__name__}",
+                  flush=True)
+        print(f"   run: {store.root}", flush=True)
+    return 1 if failures else 0
+
+
+def cmd_llm_report(args: argparse.Namespace) -> int:
+    """Per-candidate table: ground truth, where it left the pipeline, the triage.
+
+    On Racebench only feasibility is scored (log 2026-09-27, option C): a bug
+    point is found when it reaches the LLM and is not called infeasible, and a
+    trap is rejected when it is dropped with a proof or called infeasible. The
+    summary counts both that way; the reported buckets are listed as they are.
+    """
+    from .run_evaluation import candidate_table
+
+    rows = []
+    for run in args.runs:
+        rows += candidate_table(RunStore(Path(run)))
+    if args.json:
+        print(json.dumps(rows, indent=2, ensure_ascii=False))
+        return 0
+
+    def short(v, n=1):
+        return "-" if v is None else (f"{v:.{n}f}" if isinstance(v, float) else str(v))
+
+    print("| subject | id | pattern | lines | GT | fate | solver | feasibility (conf) | harm | bucket |")
+    print("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |")
+    for r in rows:
+        feas = "-" if r["feasibility"] is None else f"{r['feasibility']} ({short(r['feasibility_confidence'], 2)})"
+        if r["not_triaged"]:
+            feas = f"NOT TRIAGED: {r['not_triaged'][:60]}"
+        gt = f"{r['gt']} #{r['gt_index']}" if r["gt"] else "-"
+        print(f"| {r['subject']} | {r['id']} | {r['pattern']} | {tuple(r['lines'])} | {gt} | "
+              f"{r['fate']} | {short(r['solver'])} | {feas} | {short(r['harmfulness'])} | {short(r['bucket'])} |")
+
+    def tally(kind: str) -> str:
+        sel = [r for r in rows if r["gt"] == kind]
+        by: dict[str, int] = {}
+        for r in sel:
+            key = r["fate"] if r["fate"] != "llm" else f"llm:{r['feasibility'] or 'untriaged'}"
+            by[key] = by.get(key, 0) + 1
+        return f"{len(sel)} " + ", ".join(f"{k} {v}" for k, v in sorted(by.items()))
+
+    print(f"\nbug points: {tally('bug')}")
+    print(f"traps:      {tally('trap')}")
+    return 0
 
 
 def cmd_gui(args: argparse.Namespace) -> int:

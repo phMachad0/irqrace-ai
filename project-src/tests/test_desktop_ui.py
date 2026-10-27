@@ -603,3 +603,37 @@ def test_live_triage_keeps_every_candidate_when_the_api_fails_on_some(tmp_path, 
     stage = {s["name"]: s for s in store.read_manifest()["stages"]}["triage"]
     assert stage["status"] == "ok"
     assert stage["candidates_in"] == stage["candidates_out"] == len(records)
+
+
+def test_the_pipeline_command_runs_the_desktop_steps_headless(tmp_path: Path, capsys) -> None:
+    """`irqrace pipeline` drives the same PipelineStepper as the STEP button, so a
+    terminal run leaves the same run directory a click-through run does."""
+    from irqrace import cli
+
+    cfg = REPO_ROOT / "bench" / "configs" / "svp_simple_001_001.yaml"
+    rc = cli.main(["pipeline", str(cfg), "--through", "context", "--run-root", str(tmp_path)])
+    assert rc == 0
+    (run,) = [p for p in tmp_path.iterdir() if p.is_dir()]
+    stages = {s["name"]: s["status"] for s in json.loads((run / "manifest.json").read_text())["stages"]}
+    assert all(stages[k] == "ok" for k in ("build", "stage1", "stage2", "solver", "context"))
+    assert stages["triage"] == "pending"
+    out = capsys.readouterr().out
+    assert "Etapa 3/6" in out and f"run: {run}" in out
+
+
+def test_the_report_command_labels_every_candidate(tmp_path: Path, capsys) -> None:
+    from irqrace import cli
+    from irqrace.run_evaluation import case_ground_truth
+
+    cfg = REPO_ROOT / "bench" / "configs" / "svp_simple_001_001.yaml"
+    cli.main(["pipeline", str(cfg), "--through", "context", "--run-root", str(tmp_path)])
+    (run,) = [p for p in tmp_path.iterdir() if p.is_dir()]
+    capsys.readouterr()
+    assert cli.main(["llm", "report", str(run), "--json"]) == 0
+    rows = json.loads(capsys.readouterr().out)
+    stage1 = [json.loads(l) for l in (run / "stage1" / "candidates.jsonl").read_text().splitlines()]
+    assert {r["id"] for r in rows} == {c["id"] for c in stage1}
+    fates = {r["fate"] for r in rows}
+    assert "llm" in fates and "solver:unsat" in fates and any(f.startswith("stage2:") for f in fates)
+    if case_ground_truth("svp_simple_001_001") is not None:
+        assert [r["lines"] for r in rows if r["gt"] == "bug"] == [[32, 55, 35]]

@@ -145,3 +145,83 @@ def write_report(store: RunStore, *, suite_root: Path | None = None) -> dict[str
         json.dumps(doc, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
     return doc
+
+
+def candidate_table(store: RunStore, *, suite_root: Path | None = None) -> list[dict[str, Any]]:
+    """Every stage-1 candidate with its fate through the pipeline and its label.
+
+    One row per candidate: what the ground truth says it is (``bug`` / ``trap`` /
+    ``None`` when no annotation matches it or the subject has none here), where it
+    left the pipeline (a stage-2 drop with its reason, an ``unsat``, or reaching
+    the LLM), and -- if it reached the LLM and was triaged -- both answers and
+    the bucket. This is the table a triage study reads; the desktop shows the
+    same facts one candidate at a time.
+    """
+    manifest = store.read_manifest()
+    subject = manifest["subject"]["name"]
+    candidates = store.read_candidates("stage1")
+
+    labels: dict[str, tuple[str, int]] = {}
+    case = case_ground_truth(subject, suite_root=suite_root)
+    if case is not None:
+        rep = match_subject(case.all, candidates, subject=subject)
+        for m in rep.bug_matches + rep.trap_matches:
+            if m.candidate_id is not None:
+                labels[m.candidate_id] = (m.annotation.kind, m.annotation.index)
+
+    drops = {d["candidate_id"]: d for d in store.read_drops()}
+    solver: dict[str, dict[str, Any]] = {}
+    path = store.root / "solver" / "results.jsonl"
+    if path.exists():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                r = json.loads(line)
+                solver[r["candidate_id"]] = r
+    contexts = {c["id"] for c in store.read_contexts()} if (store.root / "context").is_dir() else set()
+    triage: dict[str, dict[str, Any]] = {}
+    path = store.root / "llm" / "triage.jsonl"
+    if path.exists():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                t = json.loads(line)
+                triage[t["candidate_id"]] = t
+
+    rows = []
+    for c in candidates:
+        cid = c["id"]
+        label = labels.get(cid)
+        if cid in drops:
+            fate = f"stage2:{drops[cid]['reason']}"
+        elif solver.get(cid, {}).get("verdict") == "unsat":
+            fate = "solver:unsat"
+        elif cid in contexts:
+            fate = "llm"
+        else:
+            fate = "pending"
+        t = triage.get(cid) or {}
+        feas = t.get("feasibility") or {}
+        harm = t.get("harmfulness") or {}
+        rows.append({
+            "id": cid,
+            "subject": subject,
+            "pattern": c.get("pattern"),
+            "lines": [a["source"]["line"] for a in c["accesses"]],
+            "variable": (c.get("variable") or {}).get("name"),
+            "gt": label[0] if label else None,
+            "gt_index": label[1] if label else None,
+            "fate": fate,
+            "drop_proof": drops[cid]["proof"] if cid in drops else None,
+            "solver": (solver.get(cid) or {}).get("verdict"),
+            "unconstrained": (solver.get(cid) or {}).get("unconstrained"),
+            "feasibility": feas.get("verdict"),
+            "feasibility_confidence": feas.get("confidence"),
+            "blocking_element": feas.get("blocking_element"),
+            "feasibility_reasoning": feas.get("reasoning"),
+            "harmfulness": harm.get("verdict"),
+            "harm_criterion": harm.get("criterion_matched"),
+            "harm_reasoning": harm.get("reasoning"),
+            "bucket": t.get("bucket"),
+            "not_triaged": t.get("not_triaged"),
+            "backend": (t.get("produced_by") or {}).get("backend"),
+        })
+    return rows

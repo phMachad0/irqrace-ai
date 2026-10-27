@@ -2492,14 +2492,23 @@ class IrqRaceWinApp:
             feas = t_doc.get("feasibility", {})
             harm = t_doc.get("harmfulness")
             prod = t_doc.get("produced_by", {})
+            # Only what the verdict and the manifest record. The prompt row is a
+            # run-level fact (manifest llm.prompt_config); C4 request counts are
+            # not recorded per verdict, so they are not shown rather than shown as 0.
+            run_llm = {}
+            try:
+                run_llm = json.loads((run_root / "manifest.json").read_text(encoding="utf-8")).get("llm") or {}
+            except (OSError, ValueError):
+                pass
             triage_lines.append("\n[RESUMO DA TRIAGEM PELA LLM]")
             triage_lines.append(
-                f"  Modelo / Backend:         {prod.get('backend', '?')} (modo: {prod.get('structured', '?')})"
+                f"  Modelo / Backend:         {prod.get('backend', '-')} "
+                f"(saída estruturada: {prod.get('structured_mode') or '-'})"
             )
-            triage_lines.append(f"  Configuração de Prompt:   {t_doc.get('config_name', '?')}")
+            triage_lines.append(f"  Configuração de Prompt:   {run_llm.get('prompt_config', '-')}")
             triage_lines.append(f"  Grupo Final (Bucket):     {t_doc.get('bucket', '?').upper()}")
-            triage_lines.append(f"  Pedidos de Contexto (C4): {t_doc.get('requests_made', 0)} pedido(s) realizado(s)")
-            triage_lines.append(f"  Autovalidação acionada:   {t_doc.get('self_validation_flipped', False)}")
+            if t_doc.get("not_triaged"):
+                triage_lines.append(f"  NÃO TRIADO:               {t_doc['not_triaged']}")
 
             triage_lines.append("\n1. PERGUNTA DE VIABILIDADE (A intercalação pode ocorrer?)")
             triage_lines.append(
