@@ -1485,3 +1485,26 @@ triage of the 166-triple post-Z3 residue across the 31 cases, re-reported rather
 the fixtures. Pages touched: [[Semana 8 — Integração das Trilhas A e B]] (new),
 [[Semana 5 a 8 — Trilha B (Triagem, Ablação, Reparo e Integração C3-C4)]] (revision note, §3.3
 requoted), [[Semana 7 — O Stage 3, Busca e Verificação]] (next-page link), `index.md`.
+
+
+## [2026-10-27] query | triage study on 15 Racebench cases — why triage underperforms, and three fixes
+
+Filed as [[Triage Study 2026-10-26]]. `svp_simple_001_001`'s bug point came back `uncertain`; a study
+on 15 of 31 cases (101 records triaged with `claude-cli:sonnet`, four analyst agents, controlled
+counterfactuals) found the cause in the record, not in the prompt's policy: stage 1 shipped only the
+functions containing the three accesses, so a flow named by the masking facts was absent (12/16
+`uncertain` when absent, 78/85 `feasible` when present). It also found `enclosing_source` leaking the
+line after each function — Racebench's `//bug点:` header — into 50 of 101 records.
+
+Implemented on Track B: function extent to the closing brace (`source_context.py`); every configured
+flow, the bodies of every flow that touches the variable or changes the mask, call-path functions and
+short callees; `writers.<variable>` with a completeness status, C1 models of primitives and externals,
+macros (all as provenance entries, C2 still 2.0.0); numbered source; the field meanings stated in
+`base.md`. New CLI: `irqrace pipeline` (the desktop's steps, headless) and `irqrace llm report`.
+
+Re-run, same 15 cases: bug points feasible 18 → **23/23**, none infeasible; genuine traps rejected
+1 → **8/11**, each with the right blocking element; the 5 disputed (reachable) traps stay feasible;
+mean Inspection Ratio (option C) 0.67 → **0.55**. Left: the same-location definition and subsumed
+triples (the three traps still accepted), the pattern-specific harm criterion (11/23 bug points in
+`likely_benign`), and a second sample. 590 tests pass. Pages touched: [[Triage Study 2026-10-26]]
+(new), [[Semana 8 — Integração das Trilhas A e B]] (§3.10), `index.md`.

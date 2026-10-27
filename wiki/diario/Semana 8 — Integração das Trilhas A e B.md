@@ -2,7 +2,7 @@
 type: project
 tags: [wiki, project, diario, pt-br]
 sources: ["[[Roadmap]]", "[[Pipeline Design]]", "[[LLM Stage Design]]", "[[Triples Only]]", "[[Soundness Assumptions]]", "[[Racebench]]", "[[LLM Triage]]", "[[Precision Metrics]]"]
-updated: 2026-10-26
+updated: 2026-10-27
 status: draft
 ---
 
@@ -382,6 +382,100 @@ class Strategy(str, enum.Enum):
 - **Interface**: o desktop, o PDF e o dashboard falam em "trincas (A1, B, A2)", não em pares e
   triplas.
 
+### 3.10. O estudo da triagem e o registro que decide o caso
+
+Um bug do 001 classificado como `uncertain` levou a um estudo em 15 dos 31 casos do Racebench
+([[Triage Study 2026-10-26]]): 101 candidatos triados pelo terminal com `claude-cli:sonnet` e quatro
+agentes analisando cada bug e cada armadilha contra o código-fonte. Para isso a CLI ganhou dois
+comandos: `irqrace pipeline`, que roda as mesmas etapas do desktop pelo mesmo objeto
+(`PipelineStepper`), e `irqrace llm report`, que cruza cada candidato com a *ground truth*, o
+estágio em que saiu da pipeline e a triagem.
+
+O achado principal: **o registro não trazia o código que decide o caso.** O stage 1 montava `flows`
+e `enclosing_source` só com as funções que contêm os três acessos. Quando o fluxo citado em
+`masking.interval.reenabled_within_interval_by` faltava, 12 de 16 respostas saíam `uncertain`;
+quando estava, 78 de 85 saíam `feasible`. Acrescentar à mão só o que faltava resolveu os casos
+analisados. O estudo achou também um **vazamento de *ground truth***: o `line_end + 1` mostrava ao
+modelo a linha seguinte à função, que no Racebench é o cabeçalho `//bug点:` das anotações — em 50 dos
+101 registros.
+
+Três mudanças, todas gerais (nenhuma regra fala do Racebench):
+
+**(1) A função vai até a chave que a fecha.** A extensão agora é achada contando chaves a partir da
+primeira linha, ignorando comentários e literais:
+
+`project-src/src/irqrace/source_context.py`
+```python
+def function_extent(lines: list[str], start: int, hint_end: int | None = None) -> int | None:
+    """Last line of the function whose definition starts on ``start`` (1-based).
+
+    Counts braces from ``start``, ignoring comments and literals, and returns
+    the line where the body's opening brace is closed. ``None`` when the braces
+    do not balance within the file (macro-generated bodies, say); the caller
+    then falls back to ``hint_end``, never to a line past it.
+    """
+    depth, opened, in_block = 0, False, False
+    for n in range(start, len(lines) + 1):
+        code, in_block = _code_only(lines[n - 1], in_block)
+        for ch in code:
+            if ch == "{":
+                depth, opened = depth + 1, True
+            elif ch == "}":
+                depth -= 1
+                if opened and depth == 0:
+                    return n
+        if not opened and code.rstrip().endswith(";"):
+            return None  # a prototype, not a definition
+    return hint_end
+```
+
+**(2) O registro leva o que o caso depende.** `flows` passa a ter todos os fluxos configurados, e
+`enclosing_source` acrescenta as funções dos caminhos de chamada, o código de todo fluxo que toca a
+variável ou muda a máscara de interrupções (*masking*), e funções chamadas curtas — com um limite de
+tamanho. O critério dos fluxos:
+
+`project-src/src/irqrace/stage1.py`
+```python
+        touching = {a["function"] for a in self.accesses.values() if a["object"] == obj["id"]}
+        for flow in self.flows.values():
+            reach = self._reachable(flow.entry)
+            relevant = [f for f in reach if f in touching or self._calls_primitive(f)]
+            if relevant:
+                add(flow.entry)
+                for f in relevant:
+                    add(f)
+```
+
+Na proveniência (`provenance`, a lista de fatos com o status de cada um) entram: `writers.<variável>`
+— cada ponto do programa que escreve na variável do candidato e em toda variável compartilhada que o
+código mostrado lê, com a declaração e se a lista é **completa** (`proven`) ou pode não ser
+(`unknown`); o que o C1 diz das primitivas de máscara e das funções externas (`assumed_from_config`);
+e as macros usadas. Uma condição (*guard*) só pode ser "nunca verdadeira" sobre uma lista completa de
+escritas — por isso o status. Nenhum id mudou, porque o *fingerprint* não depende desses campos, e o
+contrato C2 continua `c2/2.0.0`: só a descrição de `flows` e `enclosing_source` foi atualizada.
+
+**(3) O prompt explica os campos.** O `base.md` agora diz o que significam `masking.per_access` (o
+estado **em todo caminho e com todo fluxo que pode rodar antes**, então um `disable_isr` visível não o
+contradiz), `masking.interval`, o `sat` do solver (evidência, não prova), as listas de escritas, os
+modelos do C1 e os `null` de `static_features` ("não calculado", nunca "falso"). O código vai
+numerado com as linhas do arquivo.
+
+**O resultado**, nos mesmos 15 casos (uma amostra cada):
+
+| | antes | depois |
+| --- | --- | --- |
+| bugs chamados `feasible` | 18 de 23 | **23 de 23** |
+| bugs chamados `infeasible` | 0 | 0 |
+| armadilhas genuínas rejeitadas | 1 de 11 | **8 de 11** |
+| armadilhas em disputa chamadas `infeasible` | 0 de 5 | 0 de 5 |
+| Inspection Ratio médio (só viabilidade) | 0,67 | **0,55** |
+
+As oito rejeições citam o elemento bloqueador certo — em cinco, "a ISR limpa a *flag* antes de
+desmascarar a leitora". As três armadilhas que ainda passam são as duas classes que não foram
+mexidas: a definição de "mesma posição de memória" (007) e as trincas subsumidas (022). O bug do
+caso 001 (`cf213e…`), que abriu o estudo, agora sai `feasible`. A nocividade não mudou e ainda põe 11
+dos 23 bugs em `likely_benign` (leitores mortos); é o próximo item.
+
 ## 4. Achados e decisões
 
 1. **O mesmo defeito, em seis lugares.** Stage 2 e Z3 simulados, reverificação `ok` sem execução,
@@ -427,7 +521,7 @@ Dentro de `project-src/`, com a *venv* do projeto:
 
 ## 6. Estado ao fim da semana
 
-**582 testes passando, nenhum falhando** — a primeira suíte inteiramente verde no `track-b` (a falha
+**590 testes passando, nenhum falhando** — a primeira suíte inteiramente verde no `track-b` (a falha
 da *fixture* desatualizada sumiu com a §3.9). O desktop roda build → stage 1 → stage 2 → stage 3 →
 contexto sobre um caso real (conferido em `svp_simple_001_001`, §3.7), e a triagem e o reparo
 operam sobre o que esses estágios produzem — nos testes, com um *backend* simulado; ao vivo, depois
