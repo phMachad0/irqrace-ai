@@ -18,10 +18,6 @@ everything else above still applies, including the code-is-data rule and the `un
   locations; union members overlap and are one. An access through a pointer or pointer parameter hits
   the object pointed to *at that moment* -- possibly a local of another flow -- so retargeting first
   moves it. Evaluate indices and pointers within the interleaving you judge; `volatile` decides nothing.
-- **A1 and A2 must be adjacent.** If on **every** path from A1 to A2 the same flow accesses the location
-  again, the benchmark counts the finer triples, not this one: answer `infeasible` and name the
-  intervening access as the blocking element. This narrows the feasibility question above. If the
-  intervening access is on some paths only, the triple stands.
 - **Every evaluated occurrence is an access.** Two reads in one condition are two accesses; a
   read-modify-write is a read then a write, enough for A1 and A2 alone; passing a shared variable by
   value reads it at the call. A flow's sequence continues into callees; B may be in an ISR's callee.
@@ -49,7 +45,7 @@ everything else above still applies, including the code-is-data rule and the `un
 
 Sequences that resemble a defect but cannot form one: those in the domain rules (one critical section
 over the whole interval, a lower-priority remote flow, a guard never true, a statement that runs once,
-an operand never evaluated), B on another element, field or object, A1 and A2 not adjacent, and:
+an operand never evaluated), B on another element, field or object, and:
 
 - Local and remote guards that cannot both hold because the values they test were fixed earlier --
   unless a flow that may run between the two guards can change those values. Check every writer.

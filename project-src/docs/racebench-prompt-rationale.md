@@ -89,6 +89,12 @@ listed in section 3.
 - "Evaluate indices and pointers within the interleaving" — derived from 007 trap 1 and 009 trap.
 
 ### 1.7 A1 and A2 must be adjacent (subsumed triples are not counted)
+
+> **Removed 2026-10-28.** The first full 31-case run (wiki: Racebench Full Run 2026-10-28) showed
+> the rule contradicted by the suite itself: 017's annotated bug points include non-adjacent
+> triples (a loop condition re-reads the variable between A1 and A2), and the rule made the model
+> call two of them infeasible. Its net effect on the score was +2, bought with recall. The
+> derivation below is kept as the record of why it was tried.
 - Doc: `4.2` › Example from svp_simple_022_001 quotes the four bug points and three "可能误报" traps
   with line citations (022 L69-77) — **cited data**. Its explanation ("function call structure and
   execution order guarantee that certain accesses cannot interleave") is **doc-inferred** and does

@@ -109,6 +109,20 @@ def test_a_match_does_not_require_the_access_kinds_to_agree(gt):
     assert r.bug_matches[0].kinds_agree is False
 
 
+def test_among_siblings_on_the_same_lines_the_kind_agreeing_one_is_the_match(gt):
+    """`x++` reads and writes on one line, so two candidates can share the
+    annotated lines with different kinds. The annotated triple is the one whose
+    kinds agree, wherever it sits in the reported order."""
+    sibling = copy.deepcopy(BUG)
+    sibling["id"] = "csibling000000000"
+    for a in sibling["accesses"]:
+        a["kind"] = "read" if a["kind"] == "write" else "write"
+    r = match_subject(gt.by_case("svp_simple_001_001").bugs, [sibling, BUG],
+                      subject="svp_simple_001_001")
+    m = r.bug_matches[0]
+    assert m.candidate_id == BUG["id"] and m.kinds_agree is True and m.rank == 1
+
+
 def test_a_match_does_not_require_the_variable_name_to_agree(gt):
     """12 annotations name the location through an alias. A detector that
     resolved it to the underlying global must still match."""

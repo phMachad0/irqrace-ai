@@ -147,7 +147,17 @@ def match_subject(
     consumed: set[str] = set()
     for ann in annotations:
         m = Match(annotation=ann)
-        for rank, cand in by_lines.get(ann.lines, []):
+        # Kinds are not part of the match, but they break ties: when several
+        # candidates share the annotated lines -- a loop header both writes and
+        # reads the variable, `x++` both reads and writes it -- the one whose
+        # access kinds agree with the annotation is the annotated triple, and the
+        # others are siblings. Taking the first by rank instead credited a bug
+        # point to (or charged it against) a sibling's verdict.
+        siblings = sorted(
+            by_lines.get(ann.lines, []),
+            key=lambda rc: (candidate_pattern(rc[1]) != ann.pattern, rc[0]),
+        )
+        for rank, cand in siblings:
             names = candidate_names(cand)
             base = normalise_variable(ann.variable)
             # The line triple is unique across all 86 annotations, so the name
