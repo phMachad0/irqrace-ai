@@ -127,3 +127,39 @@ annotator. The cost is ranking: the Inspection Ratio rises to 0.72 because the m
 most unannotated candidates real — many of which are genuine unannotated interleavings (the suite
 does not claim its annotations are exhaustive). The variance between runs (007 flipped) is now the
 largest unmeasured quantity.
+
+## Third run and variance — under the relabelled ground truth (2026-10-28)
+
+After the second run the five label errors were corrected **in the suite** ([[Racebench#Relabel
+2026-10-28]]): the simple cases now carry **53 bug points and 33 traps** (maximum 106). A third
+run repeated the second's configuration exactly (row `+racebench` without the adjacency rule,
+`claude-cli:sonnet`, cache cleared, one sample) to measure run-to-run variance. Run store:
+`project-src/runs/bench-racebench-2026-10-28c/`.
+
+All three runs re-scored against the 53/33 labels (`likely_real` reading; the static stages alone
+give 53/53 and 11 traps, score 73, in every run):
+
+| run | prompt | bug points | traps reported | score / 106 |
+| --- | --- | --- | --- | --- |
+| 1 | with the adjacency rule | 51 / 53 | 0 / 33 | 102 |
+| 2 | without it | **53 / 53** | 3 / 33 | 97 |
+| 3 | without it (repeat) | **53 / 53** | 2 / 33 | **100** |
+
+Run 1's two misses are still 017 bugs #1 and #3, rejected by the adjacency rule; its 0 false
+positives come from the same rule. Runs 2 and 3 report 022's two "possible" items and, in run 2
+only, 007 trap #1.
+
+**Variance (runs 2 and 3, same configuration).** 166 candidates reach the LLM in both, with the
+same ids. Feasibility agrees on **163 of 166 (98.2%)**, Cohen's κ = **0.93**; buckets agree on the
+same 163. Of the three flips, one touches the ground truth: **007 trap #1**, `feasible` in run 2
+and `infeasible` in run 3 — the one item the review had already called unstable. Mean Inspection
+Ratio 0.73 and 0.70.
+
+**Time.** Run 3's wall clock (3,474 s) is not comparable: the machine suspended at 11:54 for about
+25 minutes mid-run (system log), stalling four cases. By the monotonic clock the triage summed
+4,245 s against run 2's 3,380 s, for 306 and 308 calls; static stages 33 s and 27 s.
+
+**Reading.** On the corrected labels the tool detects every bug point in both runs without the
+adjacency rule, and the false positives left are 022's annotator-hedged "possible" items plus one
+unstable trap. A one-sample score here carries about ±3 points of run-to-run noise (one trap
+flipping), small next to the definitional effects measured earlier.

@@ -28,10 +28,13 @@ ERRATA = REPO_ROOT / "bench" / "racebench-errata.yaml"
 #: The five adversarial cases hand-counted to certify the parser
 #: (docs/groundtruth-handcount.md). Kept here so `irqrace groundtruth certify`
 #: checks the parser against the written count rather than against itself.
+#: Per-case counts checked by hand. 001 and 019 changed on 2026-10-28, when
+#: four of their traps were relabelled as bug points (errata note
+#: relabel_2026_10_28); they were (1, 2) and (1, 4).
 HAND_COUNT = {
-    "svp_simple_001_001": (1, 2),
+    "svp_simple_001_001": (2, 1),
     "svp_simple_016_001": (3, 0),
-    "svp_simple_019_001": (1, 4),
+    "svp_simple_019_001": (4, 1),
     "svp_simple_022_001": (4, 3),
     "svp_simple_031_001": (3, 0),
 }
@@ -619,8 +622,8 @@ def cmd_groundtruth_certify(args: argparse.Namespace) -> int:
     ht = sum(v[1] for v in HAND_COUNT.values())
     print(f"       hand-counted total: {hb} bug, {ht} trap")
     print(f"       whole suite: {len(suite.bugs)} bug, {len(suite.traps)} trap "
-          f"(expected 48 / 38)")
-    if (len(suite.bugs), len(suite.traps)) != (48, 38):
+          f"(expected {RACEBENCH_SIMPLE_BUG_POINTS} / {RACEBENCH_SIMPLE_TRAPS})")
+    if (len(suite.bugs), len(suite.traps)) != (RACEBENCH_SIMPLE_BUG_POINTS, RACEBENCH_SIMPLE_TRAPS):
         print("       ! suite total does not match the certified figures")
         bad += 1
     return 1 if bad else 0

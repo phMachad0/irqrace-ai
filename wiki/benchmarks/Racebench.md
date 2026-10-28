@@ -2,11 +2,21 @@
 type: benchmark
 tags: [wiki, benchmark]
 sources: ["[[Racebench (documentation)]]", "[[IntRace (paper)]]", "[[NIChecker (paper)]]", "[[BMC4AV (paper)]]"]
-updated: 2026-10-22
+updated: 2026-10-28
 status: solid
 ---
 
 # Racebench
+
+> [!warning] Ground truth relabelled on 2026-10-28 — counts changed
+> On the human's direction, five planted traps the suite's own README contradicts were
+> relabelled as bug points **in the suite's source** (`../racebench/2.1_remarks`, see its `git
+> diff`): 001 trap 1, 019 traps 2–4, 020 trap 1. The simple cases now carry **53 bug points and
+> 33 traps**; before, **48 and 38**. Every number on this page and elsewhere dated before
+> 2026-10-28 uses 48/38 and is left as written. Evidence and the case-by-case reasoning:
+> [[#Relabel 2026-10-28]], [[Racebench Full Run 2026-10-28]], [[Contradictions]] #7–#8,
+> `project-src/bench/racebench-errata.yaml` (note `relabel_2026_10_28`),
+> `project-src/docs/evaluation-protocol.md`.
 
 The academic benchmark everyone in this literature evaluates on: interrupt-driven C programs
 modelled on real aerospace embedded software, at `github.com/chenruibuaa/racebench`. Built
@@ -22,7 +32,7 @@ directly rather than taken from the DeepWiki export — which changes two of the
 
 | | Cases | Bug points | FP traps |
 | --- | --- | --- | --- |
-| Simple (`svp_simple_001_001` … `svp_simple_031_001`) | 31 | **48** *(measured)* | **38** *(measured)* |
+| Simple (`svp_simple_001_001` … `svp_simple_031_001`) | 31 | **53** *(measured; 48 before 2026-10-28)* | **33** *(measured; 38 before)* |
 | Complex (`svp_real_001`, `svp_real_002`) | 2 | 3 | 5 |
 
 Counted on 2026-08-20 by parsing every `//bug点` and `//误报点` entry in
@@ -261,7 +271,7 @@ all. (Reaching that number required stripping bitcasts from call sites: `common.
 
 | Source | Defect class | Cases used | Ground truth assumed | Against the benchmark |
 | --- | --- | --- | --- | --- |
-| benchmark itself | annotated triples | 31 simple | **48** bug points, 38 traps *(measured)* | — |
+| benchmark itself | annotated triples | 31 simple | **53** bug points, 33 traps *(measured since the 2026-10-28 relabel; 48/38 before — the papers below were scored against 48/38)* | — |
 | [[Racebench (documentation)]] | — | 31 simple | 50 bug points, 33 traps | +2 / −5 against the annotations |
 | [[IntRace (paper)]] | [[Data Race]] | 30 (one dropped: [[Rchecker]] errored on it) | 50 | +2 |
 | [[NIChecker (paper)]] | [[Atomicity Violation]] | 31 | 54, "four harmful patterns" | **+6** — still unexplained |
@@ -348,3 +358,29 @@ software. The enumeration itself is *not* in the repository documentation:
 which this wiki does not treat as authoritative. Recovering the real seven from the primary
 source is listed in [[Open Questions]]; the papers in this wiki use their own three- or
 four-element pattern sets instead ([[Access Interleaving Patterns]]).
+
+## Relabel 2026-10-28
+
+The one change this project made to the suite's labels, as opposed to its line numbers and access
+kinds (which the errata corrects without touching the files). Each relabelled annotation was read
+against the source and the README's arrival model — an interrupt "may preempt the main program or a
+lower-level interrupt whenever it is enabled, at an indeterminate moment, position and number of
+times" — and found reachable as a concrete interleaving:
+
+| case | was | now | reason |
+| --- | --- | --- | --- |
+| 001 | trap 1 `global_var <W#43><R#63><W#44>` | bug 2 `<W#43><R#64><W#44>` | `isr_1` may fire between `init()` and `disable_isr(2)`, or start a second time with irq 2 already unmasked by its first run; `isr_2` then reads the intermediate value |
+| 019 | traps 2, 3, 4 (line-drifted) | bugs 2, 3, 4, with the file's own lines | 2: valid for the `2.1` copy, where the read is inside the critical section, but not for `2.1_remarks`, where `enable_isr(1)` moved before it; 3 and 4: reachable in both copies through the unmasked gap between two critical sections |
+| 020 | trap 1 `global_var <R#37><W#44><R#40>` | bug 3 | reachable with two `isr_1` activations (the first unmasks irq 2 so `isr_2` can change `para`) |
+
+Not relabelled: 022's two "可能误报" (possible false positive) items — reachable but effect-free
+(the ISR writes the value already there, and the local flow rewrites the variable in between), and
+hedged by their annotator; and every trap the review found correct (007 trap 1, 009 trap 1).
+
+Counts: **48 → 53 bug points, 38 → 33 traps**; per (case, variable) 33 → 35 bug points. The 019
+line corrections moved from the errata into the source, so the errata now holds 6 corrections, not
+12. Static pipeline under the new labels (stage3-all, 2026-10-28): recall gate **53/53**, traps
+30/33 after stage 1, 25/33 after stage 2, **11/33** reaching the LLM. The competition rules quote
+53 bug points and 38 markers for the whole suite (50/33 for the simple cases); the coincidence with
+this project's 53/33 for the simple cases is not a reconciliation.
+

@@ -22,7 +22,11 @@ pytestmark = pytest.mark.skipif(
 )
 
 BUG = json.loads((EXAMPLES / "c2-bugpoint.json").read_text())
-TRAP = json.loads((EXAMPLES / "c2-trap.json").read_text())
+#: A trap that is still a trap. `c2-trap.json`, the contract's original trap
+#: example (001 global_var <W#43><R#64><W#44>), was relabelled a bug point on
+#: 2026-10-28 (errata note relabel_2026_10_28) and is tested as such below.
+TRAP = json.loads((EXAMPLES / "c2-trap-array-index.json").read_text())
+RELABELLED = json.loads((EXAMPLES / "c2-trap.json").read_text())
 
 
 @pytest.fixture(scope="module")
@@ -47,14 +51,16 @@ def test_no_trap_shares_a_line_triple_with_a_bug_point(gt):
 
 
 def test_denominators_are_what_the_protocol_declares(gt):
-    assert len(gt.bugs) == RACEBENCH_SIMPLE_BUG_POINTS == 48
-    assert len(gt.traps) == RACEBENCH_SIMPLE_TRAPS == 38
+    assert len(gt.bugs) == RACEBENCH_SIMPLE_BUG_POINTS == 53  # 48 before 2026-10-28
+    assert len(gt.traps) == RACEBENCH_SIMPLE_TRAPS == 33  # 38 before 2026-10-28
     assert COUNTING_UNIT == "per-triple-instance"
 
 
 def test_the_coarser_counting_units_are_what_the_protocol_says(gt):
     """Recorded so the table in the protocol cannot drift from the suite."""
-    assert len({(a.case, a.variable) for a in gt.bugs}) == 33
+    # 33 per (case, variable) before the 2026-10-28 relabel added 001's
+    # global_var and 019's global_condition3 as bug-point variables.
+    assert len({(a.case, a.variable) for a in gt.bugs}) == 35
     assert len({a.case for a in gt.bugs}) == 31
 
 
@@ -85,18 +91,16 @@ def test_the_fixtures_match_their_annotations(gt):
     assert all(m.kinds_agree and m.name_agrees for m in matched)
 
 
-def test_the_errata_is_what_makes_the_trap_fixture_match(gt):
-    """The shipped annotation puts the read on line 63, a declaration; it is on
-    64. Without the correction the fixture would not match its own annotation."""
+def test_the_relabelled_001_annotation_is_a_bug_point_on_its_corrected_line(gt):
+    """Until 2026-10-28 this was trap 1, annotated with its read on line 63 (a
+    declaration) and fixed to 64 by the errata. The relabel moved it to bug 2
+    and wrote line 64 into the suite itself, so it matches without the errata."""
     from irqrace.groundtruth import parse_suite
 
-    uncorrected = parse_suite(SUITE)
-    r = match_subject(uncorrected.by_case("svp_simple_001_001").traps, [TRAP],
-                      subject="svp_simple_001_001")
-    assert r.traps_reported == 0
-    r2 = match_subject(gt.by_case("svp_simple_001_001").traps, [TRAP],
-                       subject="svp_simple_001_001")
-    assert r2.traps_reported == 1
+    shipped = parse_suite(SUITE).by_case("svp_simple_001_001")
+    r = match_subject(shipped.all, [RELABELLED], subject="svp_simple_001_001")
+    assert r.bugs_detected == 1 and r.traps_reported == 0
+    assert [m.annotation.index for m in r.bug_matches if m.detected] == [2]
 
 
 def test_a_match_does_not_require_the_access_kinds_to_agree(gt):
@@ -148,29 +152,28 @@ def test_a_wrong_line_does_not_match(gt):
 
 def test_recall_gate_fails_when_nothing_is_reported(gt):
     r = match_suite(gt, {})
-    assert r.bug_points == 48
+    assert r.bug_points == RACEBENCH_SIMPLE_BUG_POINTS == 53
     assert r.bugs_detected == 0
     assert r.recall_gate_passes is False
-    assert len(r.missed()) == 48
+    assert len(r.missed()) == 53
 
 
 def test_inspection_ratio_is_undefined_when_a_bug_point_is_missed(gt):
     """An Inspection Ratio over an incomplete detection describes how fast a
     reviewer finds the defects that were found, which is not the quantity
     anyone wants."""
-    r = match_subject(gt.by_case("svp_simple_001_001").all, [TRAP],
+    r = match_subject(gt.by_case("svp_simple_001_001").all, [TRAP, BUG],
                       subject="svp_simple_001_001")
-    assert r.bugs_detected == 0
+    assert r.bugs_detected == 1  # bug 2 is missed
     assert inspection_ratio(r) is None
 
 
 def test_inspection_ratio_counts_position_in_the_reported_order(gt):
-    r = match_subject(gt.by_case("svp_simple_001_001").bugs, [TRAP, BUG],
-                      subject="svp_simple_001_001")
+    bug_1 = [b for b in gt.by_case("svp_simple_001_001").bugs if b.index == 1]
+    r = match_subject(bug_1, [TRAP, BUG], subject="svp_simple_001_001")
     assert r.bugs_detected == 1
     assert inspection_ratio(r) == 1.0  # the bug point is last of two
-    r2 = match_subject(gt.by_case("svp_simple_001_001").bugs, [BUG, TRAP],
-                       subject="svp_simple_001_001")
+    r2 = match_subject(bug_1, [BUG, TRAP], subject="svp_simple_001_001")
     assert inspection_ratio(r2) == 0.5
 
 

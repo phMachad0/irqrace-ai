@@ -78,8 +78,8 @@
     {
       "path": "c2/svp_simple_001-trap-1.json",
       "label": "trap",
-      "annotation": "svp_simple_001_001_global_var<W#43><R#63><W#44>",
-      "notes": "D#1 row 1 -- one critical section covering the interval, and the counterpart to the 001 bug point. Both writes sit at lines 43-44 inside isr_1, irq 2 is masked from line 28, and isr_1's enable_isr(2) is at line 46, after both. Same subject, same WRW pattern, same shape of evidence, opposite answer: the only difference is whether a flow running inside the interval re-enables the interrupt. A prompt that gets both right has learned the rule."
+      "annotation": "svp_simple_001_001_global_array<W#32><R#60><W#35>",
+      "notes": "Same location, not same variable -- the counterpart to the 001 bug point. Same subject, same array, same WRW pattern, the same masking (isr_1 punctures main's interval exactly as for the bug): the only difference is the element. B reads global_array[1000]; A2 writes only global_array[9999] (i == TRIGGER). B and A2 never touch one location, so the triple cannot form. A prompt that gets both right reads indices, not names."
     },
     {
       "path": "c2/svp_simple_002-trap-1.json",

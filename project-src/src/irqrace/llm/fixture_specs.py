@@ -418,51 +418,59 @@ SPECS: tuple[FixtureSpec, ...] = (
         ),
     ),
     # -------------------------------------------------------------------- traps
+    # Until 2026-10-28 this slot held 001 trap 1, global_var <W#43><R#64><W#44>,
+    # specified as "irq 2 masked from line 28 to 46, so the interval is
+    # protected". That reading was wrong under the suite's own README (isr_1 may
+    # fire before main's disable_isr(2), or start a second time with irq 2
+    # already unmasked), and the annotation was relabelled a bug point in the
+    # suite (errata note relabel_2026_10_28). The pair keeps its subject with the
+    # trap the case still carries.
     FixtureSpec(
         case="svp_simple_001",
         kind="trap",
         index=1,
         label="trap",
         exercises=(
-            "D#1 row 1 -- one critical section covering the interval, and the "
-            "counterpart to the 001 bug point. Both writes sit at lines 43-44 "
-            "inside isr_1, irq 2 is masked from line 28, and isr_1's "
-            "enable_isr(2) is at line 46, after both. Same subject, same WRW "
-            "pattern, same shape of evidence, opposite answer: the only "
-            "difference is whether a flow running inside the interval re-enables "
-            "the interrupt. A prompt that gets both right has learned the rule."
+            "Same location, not same variable -- the counterpart to the 001 bug "
+            "point. Same subject, same array, same WRW pattern, the same masking "
+            "(isr_1 punctures main's interval exactly as for the bug): the only "
+            "difference is the element. B reads global_array[1000]; A2 writes "
+            "only global_array[9999] (i == TRIGGER). B and A2 never touch one "
+            "location, so the triple cannot form. A prompt that gets both right "
+            "reads indices, not names."
         ),
         accesses=(
             AccessSpec(disabled=(2,), enabled=(1,)),
-            AccessSpec(
-                line=64,
-                enabled=(2,),
-                unknown=(1,),
-                correction=(
-                    "the annotation gives <R#63>, but line 63 is `int reader2;`, "
-                    "a declaration with no access to the variable; the read is on "
-                    "line 64"
-                ),
-            ),
+            AccessSpec(enabled=(2,), unknown=(1,)),
             AccessSpec(disabled=(2,), enabled=(1,)),
         ),
-        interval_disabled=(2,),
+        interval_enabled=(1, 2),
+        reenabled_within_interval_by=("isr_1",),
         critical_sections=(
             {
                 "irqs": [2],
                 "begin": {"file": SRC["svp_simple_001"], "line": 28},
                 "end": {"file": SRC["svp_simple_001"], "line": 46},
-                "covers_interval": True,
+                "covers_interval": False,
             },
         ),
+        used_as_index=True,
         provenance=(
             {
-                "fact": "masking.interval.disabled_throughout",
+                "fact": "masking.interval.reenabled_within_interval_by",
                 "status": "proven",
                 "note": (
-                    "main disables irq 2 at line 28 and isr_1 re-enables it at "
-                    "line 46, after both writes; no flow that may run inside "
-                    "[43, 44] re-enables it, so irq 2 is masked throughout"
+                    "as for the bug point on this array: isr_1 may preempt the "
+                    "interval and calls enable_isr(2) at line 46, so irq 2 is not "
+                    "masked throughout [32, 35]"
+                ),
+            },
+            {
+                "fact": "accesses[1].source",
+                "status": "proven",
+                "note": (
+                    "B reads global_array[1000] (constant index); A2, at line 35, "
+                    "writes global_array[i] only when i == TRIGGER (9999)"
                 ),
             },
         ),

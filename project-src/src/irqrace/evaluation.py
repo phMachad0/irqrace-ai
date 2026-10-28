@@ -7,7 +7,10 @@ every recall number the project reports divides by the first and is computed wit
 the second.
 
 **Counting unit: per-triple-instance.** One annotated triple is one defect. The
-31 simple Racebench cases carry **48 bug points and 38 planted traps**. The
+31 simple Racebench cases carry **53 bug points and 33 planted traps** -- 48 and 38
+until 2026-10-28, when five trap labels the suite's own README contradicts were
+relabelled as bug points in the suite's source (``bench/racebench-errata.yaml``,
+note ``relabel_2026_10_28``). The
 alternatives measured on the same suite were per-(case, variable) at 33/29 and
 per-case at 31 — both coarser, both hiding that ``svp_simple_017_001`` carries
 four distinct bug points on one variable. Per-triple-instance is also what
@@ -43,9 +46,10 @@ from .groundtruth import Annotation, SuiteGroundTruth
 COUNTING_UNIT = "per-triple-instance"
 MATCH_RULE = "same-subject-same-location-same-ordered-lines"
 
-#: The denominators every recall figure on this suite divides by.
-RACEBENCH_SIMPLE_BUG_POINTS = 48
-RACEBENCH_SIMPLE_TRAPS = 38
+#: The denominators every recall figure on this suite divides by. 48 and 38 before
+#: 2026-10-28; every number dated before then uses those (see the module docstring).
+RACEBENCH_SIMPLE_BUG_POINTS = 53
+RACEBENCH_SIMPLE_TRAPS = 33
 
 
 def normalise_variable(name: str) -> str:

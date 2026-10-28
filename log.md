@@ -1558,3 +1558,21 @@ still not required). Reviewed every disputed item against the source and the REA
 but stale in `2.1_remarks`, 022 #1/#3 are the annotator's own "possible" false positives, 007 #1
 (model unstable across runs) and 009 #1 (model hedged) are model errors. With the label errors
 corrected: 87/96.
+
+
+## [2026-10-28] direction | Racebench labels corrected in the suite: 48/38 → 53/33; variance measured
+
+On the human's direction, the five traps the review found reachable under the suite's own README
+were relabelled as bug points in `../racebench/2.1_remarks` (uncommitted there; `git diff` shows
+it): 001 trap 1, 019 traps 2–4, 020 trap 1. Simple-case counts change from **48 bug points / 38
+traps to 53 / 33**; every number before 2026-10-28 uses 48/38. Recorded in
+`bench/racebench-errata.yaml` (note `relabel_2026_10_28`; the six 001/019 line corrections moved
+into the source, 12 → 6), `docs/evaluation-protocol.md`, `evaluation.py`'s constants, the tests,
+[[Racebench]] ("Relabel 2026-10-28"), [[Contradictions]] #7–#8 (resolved), and `CLAUDE.md` (the
+exception to "do not modify the artifacts"). The 001 trap fixture now uses the trap the case still
+carries. Static recall gate under the new labels: 53/53; traps 30/33 → 25/33 → 11/33.
+
+Third full run, same configuration as the second: runs 2 and 3 agree on 163/166 candidates
+(98.2%, κ 0.93); scores against 106: 97 and 100, 53/53 bug points in both; run 1 (with the adjacency
+rule) 102 with 51/53. Run 3's wall clock includes a 25-minute machine suspend. Filed in
+[[Racebench Full Run 2026-10-28]] and the diary (§3.13).

@@ -9,8 +9,9 @@ RUN_ROOT holds one run directory per simple case (as left by
 
 **Scoring.** The NASAC 2019 rule for the 31 simple cases: +2 per bug point
 detected, -3 per planted false-positive marker ("trap") reported. Denominators
-are the project's measured ground truth (2.1_remarks + errata: 48 bug points,
-38 traps), not the competition's 50/33. A detection the suite annotates as
+are the project's measured ground truth (2.1_remarks + errata: 53 bug points and
+33 traps since the 2026-10-28 relabel, 48 and 38 before), not the competition's
+50/33. A detection the suite annotates as
 neither bug nor trap is not a false positive, and is listed separately.
 
 **What counts as "reported".** The tool never drops a candidate without a proof,

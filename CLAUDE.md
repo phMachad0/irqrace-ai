@@ -55,6 +55,12 @@ Consequences for how you should read and write here:
 every count in `wiki/benchmarks/` and several in `wiki/comparisons/`. Check a claim against
 them before repeating it from a paper; doing so has already resolved one contradiction and
 explained another. Do not copy them into the vault and do not modify them.
+Two deliberate exceptions, both in `../racebench`, both uncommitted there so `git diff` shows
+them, both on the human's direction: the `svp_simple_006_001` source patch (2026-10-22, see
+`bench/racebench-errata.yaml`), and the **2026-10-28 relabel** of five trap annotations as bug
+points (001, 019, 020), which changed the simple-case counts from 48/38 to **53 bug points and
+33 traps** (`wiki/benchmarks/Racebench.md`, "Relabel 2026-10-28"). Do not revert them; any number
+dated before 2026-10-28 uses 48/38.
 
 `Clippings/` holds one markdown file per source, named after the tool or short title
 (`SDRacer.md`, `IntRace.md`, `NIChecker.md`, `BMC4AV.md`). `raw/` holds the PDFs, and also

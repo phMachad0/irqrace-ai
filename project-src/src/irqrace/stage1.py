@@ -37,7 +37,7 @@ from .source_context import (
 #: Restricting to this set is a FILTER, so it is listed in
 #: wiki/Soundness Assumptions.md rather than applied silently. It is sound with
 #: respect to the standard definition of an atomicity violation, and every one of
-#: Racebench's 48 annotated bug points falls inside it.
+#: Racebench's annotated bug points (53 since 2026-10-28; 48 before) falls inside it.
 UNSERIALIZABLE = {
     ("read", "write", "read"),
     ("read", "write", "write"),

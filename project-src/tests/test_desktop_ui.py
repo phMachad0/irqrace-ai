@@ -532,7 +532,7 @@ def test_the_desktop_evaluates_a_racebench_case_against_its_ground_truth(tmp_pat
     report = json.loads((stepper.store.root / "eval" / "report.json").read_text())
     assert report["stage"] == "stage3"
     assert report["recall_gate"] is True
-    assert report["bugs_detected"] == report["bug_points"] == 1
+    assert report["bugs_detected"] == report["bug_points"] == 2  # 1 before the 2026-10-28 relabel
     rows = {r.stage: r for r in evaluate_run(stepper.store)}
     assert set(rows) == {"stage1", "stage2", "context"}
     assert rows["context"].candidates == report["candidates_reported"]
@@ -636,4 +636,4 @@ def test_the_report_command_labels_every_candidate(tmp_path: Path, capsys) -> No
     fates = {r["fate"] for r in rows}
     assert "llm" in fates and "solver:unsat" in fates and any(f.startswith("stage2:") for f in fates)
     if case_ground_truth("svp_simple_001_001") is not None:
-        assert [r["lines"] for r in rows if r["gt"] == "bug"] == [[32, 55, 35]]
+        assert sorted(r["lines"] for r in rows if r["gt"] == "bug") == [[32, 55, 35], [43, 64, 44]]

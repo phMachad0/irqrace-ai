@@ -46,12 +46,13 @@ def test_coverage_reports_the_set_as_incomplete_until_it_is():
 
 
 def test_the_seed_pair_is_adversarial():
-    """The two seeded fixtures differ in label but not in shape.
+    """The two 001 fixtures differ in label but not in shape.
 
-    Same subject, same pattern, same class -- the only thing separating them is
-    whether a flow running inside the masked interval re-enables the interrupt.
-    A prompt that gets both right has learned the rule rather than the surface,
-    which is why this pair is the first thing in the set.
+    Same subject, same variable, same pattern, same class, same masking -- the
+    only thing separating them is the array element: B reads [1000] in the trap
+    and [9999] in the bug point. A prompt that gets both right reads locations,
+    not names. (Until 2026-10-28 the trap was 001's global_var triple, which the
+    relabel moved to the bug points; that pair differed in masking instead.)
     """
     pair = [f for f in load_all() if f.subject == "svp_simple_001_001"]
     assert len(pair) == 2
@@ -59,7 +60,8 @@ def test_the_seed_pair_is_adversarial():
     assert (bug.label, trap.label) == ("bug_point", "trap")
     assert bug.record["pattern"] == trap.record["pattern"]
     assert bug.record["class"] == trap.record["class"]
-    assert bug.record["variable"]["name"] != trap.record["variable"]["name"]
+    assert bug.record["variable"]["name"] == trap.record["variable"]["name"]
+    assert bug.record["accesses"][1]["source"]["line"] != trap.record["accesses"][1]["source"]["line"]
 
 
 def test_the_generated_fixtures_on_disk_are_current():

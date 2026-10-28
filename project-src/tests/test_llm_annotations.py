@@ -109,12 +109,13 @@ def test_the_possible_false_positive_header_is_a_trap_section():
 
 
 @needs_suite
-def test_the_reader_reproduces_the_suites_48_and_38():
-    """Roadmap W2's 'done when'. The wiki records 48/38 as measured; this is
-    an independent reproduction from the files."""
+def test_the_reader_reproduces_the_suites_counts():
+    """Roadmap W2's 'done when'. The wiki records the counts as measured (48/38
+    until the 2026-10-28 relabel, 53/33 since); this is an independent
+    reproduction from the files."""
     assert counts(parse_suite(SUITE)) == {
-        "bug_points": 48,
-        "traps": 38,
+        "bug_points": 53,
+        "traps": 33,
         "subjects": 31,
     }
 
@@ -139,22 +140,22 @@ def test_the_patterns_are_the_documented_four_plus_the_known_bad_one():
 
 
 @needs_suite
-def test_the_001_trap_points_at_a_declaration():
-    """<R#63> is `int reader2;`. The read is on line 64."""
+def test_the_relabelled_001_annotation_points_at_the_read():
+    """Shipped as trap 1 with <R#63>, which is `int reader2;`; the read is on
+    line 64. Since the 2026-10-28 relabel it is bug 2 and says 64."""
     source = next((SUITE / "svp_simple_001").glob("*.c"))
-    trap = next(a for a in parse_file(source) if a.kind == "trap" and a.index == 1)
-    problems = verify_against_source(trap, source)
-    assert any("int reader2" in p for p in problems)
+    ann = next(a for a in parse_file(source) if a.kind == "bug_point" and a.index == 2)
+    assert [x.line for x in ann.accesses] == [43, 64, 44]
+    assert not verify_against_source(ann, source)
 
 
 @needs_suite
-def test_case_019_is_annotated_against_the_other_copy_of_the_suite():
-    """All five of svp_simple_019_001's annotations resolve cleanly against
-    ``2.1`` and not against the ``2.1_remarks`` file they are written in.
-
-    In the shipped file they point at ``idlerun();``, ``{`` and blank lines.
-    Any match rule keyed on line numbers therefore loses one bug point and
-    four traps on this case alone.
+def test_case_019_now_resolves_against_its_own_file():
+    """As shipped, all five of svp_simple_019_001's annotations resolved
+    against ``2.1`` and not against the ``2.1_remarks`` file they are written
+    in -- they pointed at ``idlerun();``, ``{`` and blank lines. The 2026-10-28
+    relabel rewrote them with the lines of their own file, so now the reverse
+    holds: clean against ``2.1_remarks``, wrong against ``2.1``.
     """
     plain = SUITE.parent / "2.1" / "svp_simple_019"
     if not plain.is_dir():
@@ -165,18 +166,18 @@ def test_case_019_is_annotated_against_the_other_copy_of_the_suite():
     anns = parse_file(remarks_source)
 
     assert len(anns) == 5
-    assert all(verify_against_source(a, remarks_source) for a in anns), (
-        "expected every annotation in 019 to be wrong against its own file"
+    assert not any(verify_against_source(a, remarks_source) for a in anns), (
+        "expected every annotation in 019 to be right against its own file"
     )
-    assert not any(verify_against_source(a, plain_source) for a in anns), (
-        "expected every annotation in 019 to be right against the 2.1 copy"
-    )
+    assert any(verify_against_source(a, plain_source) for a in anns)
 
 
 @needs_suite
-def test_case_019_is_the_only_case_annotated_against_the_other_copy():
-    """Scoped deliberately: if a second case ever shows this, the defect is
-    systematic rather than local and the match rule needs rethinking."""
+def test_no_case_is_annotated_against_the_other_copy():
+    """019 was the only case whose annotations fit ``2.1`` better than their own
+    ``2.1_remarks`` file, until the 2026-10-28 relabel corrected it. If a case
+    ever shows this again, the defect is systematic and the match rule needs
+    rethinking."""
     plain_root = SUITE.parent / "2.1"
     if not plain_root.is_dir():
         pytest.skip("the unannotated 2.1 copy is not present")
@@ -192,4 +193,4 @@ def test_case_019_is_the_only_case_annotated_against_the_other_copy():
             verify_against_source(a, remarks_source)
         ):
             affected.add(case)
-    assert affected == {"svp_simple_019"}
+    assert affected == set()

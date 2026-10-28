@@ -1,7 +1,8 @@
 """Reading Racebench's ``2.1_remarks`` annotations, tolerantly.
 
 **Ownership note.** ``wiki/Roadmap.md`` assigns the canonical annotation parser
-to Track A, W2 -- the one that certifies the 48/38 ground truth and backs the
+to Track A, W2 -- the one that certifies the ground truth (48/38 then, 53/33 since
+the 2026-10-28 relabel) and backs the
 match rule used in scoring. That does not exist yet, and Track B cannot build a
 single fixture without reading these annotations. This module is therefore a
 **fixture-building aid**, written in Track B's lane and deliberately narrow: it

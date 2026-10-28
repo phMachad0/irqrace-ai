@@ -578,6 +578,22 @@ próprio README (001 #1, 019 #2–#4, 020 #1 — a do 019 #2 ficou desatualizada
 `2.1_remarks` mudou), 2 são "possíveis falsos positivos" que o próprio anotador marcou como dúvida
 (022), e 1 é erro do modelo (007, que acertou na primeira rodada). Com o gabarito corrigido: 87 de 96.
 
+### 3.13. O gabarito corrigido e a variância
+
+Por decisão do Pedro, as cinco armadilhas que a revisão mostrou serem alcançáveis pela semântica do
+próprio README viraram **bugs no fonte do Racebench** (`../racebench/2.1_remarks`; o `git diff` de
+lá mostra a mudança): 001 armadilha 1, 019 armadilhas 2–4 e 020 armadilha 1. O total dos casos
+simples passou de **48 bugs e 38 armadilhas para 53 e 33**. Todo número anterior a 28/10 usa 48/38;
+a mudança está registrada na errata (`relabel_2026_10_28`), no protocolo de avaliação, na página
+[[Racebench]], em [[Contradictions]] #7–#8, no `CLAUDE.md` e nas constantes de
+`evaluation.py`. As correções de linha do 019 foram escritas no próprio fonte, então saíram da
+errata (12 → 6 correções). A fixture da Trilha B que usava a antiga armadilha do 001 virou a
+armadilha que continua no gabarito (`array[1000]` contra `array[9999]`).
+
+Com os rótulos novos o *recall gate* estático dá 53/53. Uma terceira rodada, igual à segunda, mediu
+a variância: as duas rodadas concordam em 163 de 166 candidatos (98,2%, κ = 0,93), e só uma
+armadilha mudou de lado (007). Pontuação sobre 106: **97 e 100**, com 53 de 53 bugs nas duas.
+
 ## 4. Achados e decisões
 
 1. **O mesmo defeito, em seis lugares.** Stage 2 e Z3 simulados, reverificação `ok` sem execução,
@@ -619,6 +635,16 @@ Dentro de `project-src/`, com a *venv* do projeto:
 
 ```bash
 .venv/bin/irqrace ui
+```
+
+```bash
+.venv/bin/python scripts/bench-triage-report.py runs/bench-racebench-2026-10-28c
+```
+
+Para ver a correção do gabarito no próprio Racebench (fora deste repositório):
+
+```bash
+git -C ../../racebench diff 2.1_remarks
 ```
 
 ## 6. Estado ao fim da semana
