@@ -2,7 +2,7 @@
 type: comparison
 tags: [wiki, comparison]
 sources: ["[[SDRacer (paper)]]", "[[IntRace (paper)]]", "[[NIChecker (paper)]]", "[[BMC4AV (paper)]]", "[[Racebench (documentation)]]"]
-updated: 2026-10-22
+updated: 2026-10-28
 status: solid
 ---
 
@@ -206,3 +206,23 @@ was not established; `disable_isr` and `enable_isr` appear in BMC4AV's `ignore_f
 non-events, and where they *are* modelled was not found in a first pass. Open in
 [[Open Questions]].
 
+
+## 8. Three more Racebench trap labels the suite's own semantics contradict
+
+Found 2026-10-28 reviewing the full 31-case run ([[Racebench Full Run 2026-10-28]]), all in
+`svp_simple_019_001`, whose annotations are line-shifted (errata) and exist in two copies of the
+source, `2.1` and the annotated `2.1_remarks`:
+
+- **Trap #2 `<R#45>,<W#71>,<R#51>`** (errata lines) is a valid trap in `2.1`, where the read sits
+  inside `disable_isr(1) … enable_isr(1)` and an ISR firing earlier clears `condition3`, killing the
+  read's guard. In `2.1_remarks` the `enable_isr(1)` moved inside the `if`, before the read, so the
+  ISR can fire after the guard has passed. The label was not updated with the code.
+- **Traps #3 `<R#51>,<W#71>,<R#59>` and #4 `<R#48>,<W#69>,<R#56>`** are reachable in **both**
+  copies: the two main-task reads need `condition3` to change between them, which only `isr_1`
+  can do, in the unmasked gap between one critical section's `enable_isr(1)` and the next
+  `disable_isr(1)` — and it writes `var1` while doing so. The labels follow "each access in its
+  own critical section is protected", which [[Atomicity Violation]] and the project's domain rules
+  reject: protecting both endpoints is not protecting the interval.
+
+Together with #7 that is five of the 38 traps reachable under the README. The model calls all five
+feasible; the scored false-positive count includes them.

@@ -1531,3 +1531,30 @@ Inspection Ratio 0.63 → 0.44 (buckets). 20 of its 22 extra infeasible verdicts
 adjacency convention, which judges redundancy rather than reachability — kept out of the production
 prompt. 592 tests pass. Pages touched: [[Triage Study 2026-10-26]], [[Semana 8 — Integração das
 Trilhas A e B]] (§3.11), `index.md`.
+
+
+## [2026-10-28] result | full pipeline on the 31 Racebench simple cases — score 77/96
+
+Filed as [[Racebench Full Run 2026-10-28]]. Cache cleared, `claude-cli:sonnet`, row `+racebench`,
+one sample, 4 cases in parallel. Scored with the NASAC rule (+2 bug, −3 trap) against the measured
+ground truth (48 bugs, 38 traps); unannotated detections are not false positives (human's
+direction). LLM `likely_real` view: 46/48 bug points, 5/38 traps reported — exactly the five traps
+the suite's own semantics make reachable — score **77** (92 setting those five aside). Static
+stages alone: 48/48, 16 traps, score 48. Mean Inspection Ratio 0.84 → 0.56. 956 s wall clock,
+256 LLM calls, static stages 29 s in total. The two lost bug points (017) were called infeasible by
+the add-on's adjacency rule, which 017's own annotations contradict: the rule should be removed.
+Scoring script: `project-src/scripts/bench-triage-report.py`.
+
+
+## [2026-10-28] result | second full run without the adjacency rule; verdict on the disputed items
+
+[[Racebench Full Run 2026-10-28]], second section. Adjacency rule removed from
+`racebench_semantics.md` (017 contradicts it). Cache cleared, sonnet, one sample: 48/48 bug points
+in `likely_real`, 8 traps reported, score 72/96; mean Inspection Ratio 0.72 (more unannotated
+candidates stay `likely_real`). Scoring artifact fixed: matching now prefers the sibling whose access
+kinds agree when several candidates share the annotated lines (`evaluation.match_subject`; kinds
+still not required). Reviewed every disputed item against the source and the README: 001 #1,
+019 #3, #4 and 020 #1 are label errors under the suite's own semantics, 019 #2 is valid in `2.1`
+but stale in `2.1_remarks`, 022 #1/#3 are the annotator's own "possible" false positives, 007 #1
+(model unstable across runs) and 009 #1 (model hedged) are model errors. With the label errors
+corrected: 87/96.

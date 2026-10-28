@@ -2,7 +2,7 @@
 type: project
 tags: [wiki, project, diario, pt-br]
 sources: ["[[Roadmap]]", "[[Pipeline Design]]", "[[LLM Stage Design]]", "[[Triples Only]]", "[[Soundness Assumptions]]", "[[Racebench]]", "[[LLM Triage]]", "[[Precision Metrics]]"]
-updated: 2026-10-27
+updated: 2026-10-28
 status: draft
 ---
 
@@ -547,6 +547,36 @@ experimental e não vai para o prompt de produção, onde marcaria como "imposs�
 acontecer. A leitura para a monografia: no Racebench, a diferença entre as linhas é sobretudo de
 **definição** (o que o benchmark chama de defeito), não de raciocínio — a viabilidade dos bugs já
 estava em 23 de 23.
+
+### 3.12. A pipeline inteira nos 31 casos
+
+Com o cache das respostas da LLM apagado, a ferramenta inteira rodou nos 31 casos simples do
+Racebench com `claude-cli:sonnet` e a linha `+racebench`, quatro casos em paralelo
+([[Racebench Full Run 2026-10-28]]). A pontuação usa a regra da competição NASAC 2019 (+2 por bug
+detectado, −3 por armadilha reportada) sobre a *ground truth* medida (48 bugs, 38 armadilhas);
+detecções que o benchmark não anota nem como bug nem como armadilha não contam como falso positivo.
+O script que pontua é `project-src/scripts/bench-triage-report.py`.
+
+| "reportado" = | bugs | armadilhas reportadas | pontos (máx. 96) |
+| --- | --- | --- | --- |
+| bucket `likely_real` da LLM | 46 de 48 | 5 de 38 | **77** |
+| tudo que a LLM não chamou de inviável | 46 de 48 | 6 de 38 | 74 |
+| só os estágios estáticos | 48 de 48 | 16 de 38 | 48 |
+
+As 5 armadilhas reportadas são exatamente as 5 "em disputa", que a semântica do próprio README torna
+alcançáveis. Os 2 bugs perdidos (017) foram rejeitados pela **regra de adjacência** do prompt do
+Racebench — que o próprio gabarito do 017 contradiz, porque anota essas trincas não-adjacentes como
+bugs. Decisão: a regra deve sair do prompt. Tempo total: 956 s (≈16 min) com quatro casos em
+paralelo, 256 chamadas à LLM; os estágios estáticos somam 29 s nos 31 casos — 99% do tempo é a LLM.
+
+**Segunda rodada, sem a regra de adjacência:** 48 de 48 bugs em `likely_real`, 8 armadilhas
+reportadas, **72 pontos**. A pontuação tinha um artefato: a regra de casamento compara as linhas e
+não o tipo de acesso, e quando dois candidatos dividem as mesmas linhas (a linha 29 do 017 escreve e
+lê a variável) pegava o primeiro. Agora prefere o "irmão" cujos tipos batem com a anotação. Na
+análise caso a caso, 5 das 8 armadilhas reportadas são **erros do gabarito** sob a semântica do
+próprio README (001 #1, 019 #2–#4, 020 #1 — a do 019 #2 ficou desatualizada quando o código do
+`2.1_remarks` mudou), 2 são "possíveis falsos positivos" que o próprio anotador marcou como dúvida
+(022), e 1 é erro do modelo (007, que acertou na primeira rodada). Com o gabarito corrigido: 87 de 96.
 
 ## 4. Achados e decisões
 

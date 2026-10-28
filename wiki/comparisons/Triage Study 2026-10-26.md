@@ -215,3 +215,5 @@ Same 15 cases, one sample each, no backend failure:
 
 Still open: a second sample per row for variance; points-to and interference precision (item 6);
 whether the adjacency convention is the suite's or an annotation habit.
+
+Full 31-case run with the `+racebench` row, cache cleared: [[Racebench Full Run 2026-10-28]].
