@@ -156,3 +156,62 @@ failure). What changed in the record:
 
 Still open: items 4–6, and a second sample to measure variance; the numbers above are one sample
 each.
+
+## Second follow-up — items 4–6 and a benchmark-semantics row (2026-10-27)
+
+**Items 4–6, in the production row (`+self-validation`):**
+
+- *Same location* (item 4): `base.md` defines the triple over one memory location (same element,
+  same pointee); the domain table gains a "B touches a different location on every path" row that
+  requires the index or pointer argument; `blocking_element` lists the new kinds.
+- *Harmfulness* (item 5): the two questions now get different system prompts. Feasibility keeps the
+  domain table and the self-validation checklist; harmfulness gets a pattern-specific criterion
+  (`harmfulness.md`: the value B reads in WRW, A2's re-read in RWR, the lost write in RWW, A2's read
+  in WWR; a branch evaluated before the changed value does not count) and a two-rule checklist of
+  its own. The domain rule on re-enabling now says "typically a higher-priority one".
+- *Static* (item 6, partly): stage 1's C++ traces where each read's loaded value goes inside its
+  function (def-use through locals: branch, index, dereferenced address, escapes, discarded). From
+  it, `static_features.feeds_branch` / `used_as_index` are computed on the reads that matter for the
+  pattern (null only when the value escapes), and a `value_use` provenance entry states it. An
+  `interval.local_accesses` entry lists same-flow accesses that may fall between A1 and A2 (evidence
+  for subsumed triples; nothing is dropped). Not done: order-sensitive points-to and bounded
+  interference values, both changes to SVF use and to stage 3's encoding.
+
+**A benchmark-semantics row, `+racebench` (experimental, never the reported ablation).** The
+production row plus one add-on asset, `racebench_semantics.md`, drafted by an agent from the
+Racebench DeepWiki export and checked against the suite's own README and `common.c` (rationale and
+per-rule provenance: `project-src/docs/racebench-prompt-rationale.md`). No examples, no case or
+identifier names. Its main rules: the interleaving itself is the defect, effect not required (so
+harm = harmful for the four shapes); same location means same storage; **A1 and A2 must be
+adjacent** — if the same flow touches the location again on every path between them, the suite
+counts the finer triples and this one is a trap; the README's arrival model (any time while
+unmasked, any number of times, nesting; equal priority does not preempt; `init` unmasks all).
+Uncertain points it flags itself: adjacency rests mainly on one case; equal-priority
+non-preemption is a literal README reading and contradicts the project's C1 default.
+
+Same 15 cases, one sample each, no backend failure:
+
+| | items 1–3 | + items 4–6 | `+racebench` |
+| --- | --- | --- | --- |
+| bug points feasible | 23/23 | 23/23 | 23/23 |
+| bug points in `likely_real` | 10 | 8 | **23** |
+| genuine traps rejected | 8/11 | 9/11 | **10/11** (1 uncertain) |
+| disputed traps called infeasible | 0/5 | 0/5 | 0/5 |
+| unannotated called infeasible | 9 | 15 | 37 |
+| mean Inspection Ratio, buckets | 0.59 | 0.63 | **0.44** |
+| mean Inspection Ratio, feasibility only | 0.55 | 0.53 | **0.42** |
+
+- Items 4–6 move feasibility a little (one more trap rejected; 007's index-increment candidates now
+  called a different location) and make harmfulness honest about dead readers: 15 of 23 bug points
+  are `likely_benign`, correct about the code, which is why the bucket view loses ground.
+- `+racebench` aligns the buckets with the benchmark. Of its 22 extra `infeasible` verdicts on
+  unannotated candidates, 20 cite an intervening same-flow access (the adjacency rule) and 2 a
+  different array element. The adjacency rule judges *redundancy*, not reachability: the
+  interleaving is possible, the suite just counts a finer triple. It belongs in a benchmark
+  evaluation row, not in the production prompt, where it would put reachable interleavings under
+  `likely_infeasible`.
+- Reading for the thesis: on Racebench the gap between rows is mostly a definitional gap — what
+  the benchmark calls a defect — not a reasoning gap. Feasibility of bug points was already 23/23.
+
+Still open: a second sample per row for variance; points-to and interference precision (item 6);
+whether the adjacency convention is the suite's or an annotation habit.

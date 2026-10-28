@@ -476,6 +476,78 @@ mexidas: a definição de "mesma posição de memória" (007) e as trincas subsu
 caso 001 (`cf213e…`), que abriu o estudo, agora sai `feasible`. A nocividade não mudou e ainda põe 11
 dos 23 bugs em `likely_benign` (leitores mortos); é o próximo item.
 
+### 3.11. Itens 4 a 6 e uma linha de prompt com a semântica do Racebench
+
+**Mesma posição de memória (item 4).** O `base.md` agora define a trinca sobre **uma** posição: a
+mesma variável e, num array ou ponteiro, o mesmo elemento. A tabela de domínio ganhou a linha "B
+toca outra posição em todo caminho", que só vale com o argumento (os valores do índice ou do
+ponteiro); um índice que não dá para determinar pode coincidir.
+
+**Duas perguntas, dois prompts (item 5).** A checagem de autovalidação (*self-validation*) puxa
+para `uncertain` por motivos de alcançabilidade, e estava sendo aplicada também à pergunta de
+nocividade. Agora cada pergunta recebe o seu prompt de sistema: a de viabilidade fica com a tabela
+de domínio e a checagem; a de nocividade recebe um critério **por padrão** (`harmfulness.md`: em WRW
+importa o que B lê, em RWR a releitura de A2, em RWW a escrita perdida, em WWR o que A2 lê) e uma
+checagem curta, própria.
+
+**Para onde vai o valor lido (item 6, em parte).** O Stage 1 em C++ passou a seguir, dentro da
+função, o valor de cada leitura (*def-use*: de onde um valor é definido até onde é usado), inclusive
+através de variáveis locais:
+
+`project-src/analysis/src/irqrace-stage1.cpp`
+```cpp
+      } else if (const auto *st = llvm::dyn_cast<llvm::StoreInst>(ui)) {
+        if (st->getPointerOperand() == v) {
+          u.deref = true;
+        } else if (const auto *al = llvm::dyn_cast<llvm::AllocaInst>(
+                       st->getPointerOperand()->stripPointerCasts())) {
+          // Stored into a local: follow its loads.
+          for (const llvm::User *au : al->users())
+            if (const auto *al2 = llvm::dyn_cast<llvm::LoadInst>(au))
+              work.push_back(al2);
+            else if (!llvm::isa<llvm::StoreInst>(au) &&
+                     !llvm::isa<llvm::DbgInfoIntrinsic>(au))
+              u.escapes = true; // the local's address is taken
+        } else {
+          u.escapes = true; // stored to global or heap memory
+```
+
+Com isso, `feeds_branch` e `used_as_index` deixaram de ser sempre `null`: são calculados sobre as
+leituras que importam em cada padrão, e só ficam `null` quando o valor escapa da função.
+
+`project-src/src/irqrace/stage1.py`
+```python
+    MATTERING_READS = {"RWR": ("A1", "A2"), "WWR": ("A2",), "WRW": ("B",), "RWW": ("A1",)}
+```
+
+Ficou de fora do item 6: *points-to* sensível à ordem das instruções e limitar os valores que o
+Stage 3 supõe para escritas de outros fluxos — mudanças no uso do SVF e na codificação do Z3.
+
+**Uma linha experimental, `+racebench`.** Um agente leu a documentação DeepWiki do Racebench e
+redigiu um asset (`racebench_semantics.md`), conferido contra o README e o `common.c` do benchmark,
+sem exemplos nem nomes de casos (a proveniência de cada regra está em
+`project-src/docs/racebench-prompt-rationale.md`). As regras principais: a intercalação já é o
+defeito, sem precisar de efeito visível; mesma posição = mesmo armazenamento; **A1 e A2 precisam ser
+adjacentes** (se o mesmo fluxo toca a posição de novo no meio, o benchmark conta a trinca mais fina);
+e o modelo de chegada de interrupções do README. Ele entra como uma linha à parte, nunca na tabela
+de ablação.
+
+Nos mesmos 15 casos, uma amostra cada:
+
+| | itens 1–3 | + itens 4–6 | `+racebench` |
+| --- | --- | --- | --- |
+| bugs em `likely_real` | 10 de 23 | 8 de 23 | **23 de 23** |
+| armadilhas genuínas rejeitadas | 8 de 11 | 9 de 11 | **10 de 11** |
+| armadilhas em disputa chamadas `infeasible` | 0 de 5 | 0 de 5 | 0 de 5 |
+| Inspection Ratio médio (buckets) | 0,59 | 0,63 | **0,44** |
+
+**Decisão registrada.** A regra de adjacência julga *redundância*, não alcançabilidade: a
+intercalação é possível, o benchmark só conta outra trinca no lugar. Por isso ela fica na linha
+experimental e não vai para o prompt de produção, onde marcaria como "impossível" algo que pode
+acontecer. A leitura para a monografia: no Racebench, a diferença entre as linhas é sobretudo de
+**definição** (o que o benchmark chama de defeito), não de raciocínio — a viabilidade dos bugs já
+estava em 23 de 23.
+
 ## 4. Achados e decisões
 
 1. **O mesmo defeito, em seis lugares.** Stage 2 e Z3 simulados, reverificação `ok` sem execução,
@@ -521,7 +593,7 @@ Dentro de `project-src/`, com a *venv* do projeto:
 
 ## 6. Estado ao fim da semana
 
-**590 testes passando, nenhum falhando** — a primeira suíte inteiramente verde no `track-b` (a falha
+**592 testes passando, nenhum falhando** — a primeira suíte inteiramente verde no `track-b` (a falha
 da *fixture* desatualizada sumiu com a §3.9). O desktop roda build → stage 1 → stage 2 → stage 3 →
 contexto sobre um caso real (conferido em `svp_simple_001_001`, §3.7), e a triagem e o reparo
 operam sobre o que esses estágios produzem — nos testes, com um *backend* simulado; ao vivo, depois

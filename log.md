@@ -1508,3 +1508,26 @@ mean Inspection Ratio (option C) 0.67 → **0.55**. Left: the same-location defi
 triples (the three traps still accepted), the pattern-specific harm criterion (11/23 bug points in
 `likely_benign`), and a second sample. 590 tests pass. Pages touched: [[Triage Study 2026-10-26]]
 (new), [[Semana 8 — Integração das Trilhas A e B]] (§3.10), `index.md`.
+
+
+## [2026-10-27] build | triage items 4–6 and an experimental Racebench-semantics prompt row
+
+Follow-up to [[Triage Study 2026-10-26]] on Track B. Item 4: feasibility is defined over one
+memory location, with a "different location on every path" blocking kind that requires the
+argument. Item 5: the two questions get different system prompts — the feasibility checklist no
+longer reaches harmfulness, which gets a pattern-specific criterion (`harmfulness.md`) and its own
+checklist; the re-enable domain rule now says "typically a higher-priority one". Item 6 (part):
+stage 1's C++ traces each read's value through def-use (branch, index, deref, escapes, discarded);
+`feeds_branch` / `used_as_index` are computed on the reads that matter for the pattern, with a
+`value_use` provenance entry and `interval.local_accesses`. Not done: order-sensitive points-to,
+bounded interference in stage 3.
+
+Experimental row `+racebench` (never in the ablation table): the production row plus
+`racebench_semantics.md`, drafted from the Racebench DeepWiki export and checked against the
+suite's README and `common.c` — no examples, no case names; provenance in
+`project-src/docs/racebench-prompt-rationale.md`. Same 15 cases, one sample: bug points in
+`likely_real` 8 → 23/23, genuine traps rejected 9 → 10/11, disputed traps still feasible, mean
+Inspection Ratio 0.63 → 0.44 (buckets). 20 of its 22 extra infeasible verdicts come from the
+adjacency convention, which judges redundancy rather than reachability — kept out of the production
+prompt. 592 tests pass. Pages touched: [[Triage Study 2026-10-26]], [[Semana 8 — Integração das
+Trilhas A e B]] (§3.11), `index.md`.

@@ -153,4 +153,4 @@ Raw clippings live in `Clippings/`, PDFs in `raw/`. Both are immutable.
 | [[Contradictions]] | seven open conflicts, chief among them 37/47 vs 94 violations; #7 two Racebench traps their own README makes reachable |
 | [[Reimplementation Assessment]] | study order, what to reimplement, the stack, and verified artifact availability |
 | [[LLM Integration Patterns]] | seven LLM sources by attach point; what each buys and costs |
-| [[Triage Study 2026-10-26]] | why triage underperforms on real records: missing deciding code (12/16 uncertain vs 78/85 feasible), unexplained fields, a ground-truth leak; counterfactuals and fixes |
+| [[Triage Study 2026-10-26]] | why triage underperforms on real records: missing deciding code (12/16 uncertain vs 78/85 feasible), unexplained fields, a ground-truth leak; fixes 1–6 and a Racebench-semantics row (IR 0.67 → 0.42) |
