@@ -675,7 +675,7 @@ def cmd_llm_fixtures(args: argparse.Namespace) -> int:
 
 
 def cmd_llm_prompts(args: argparse.Namespace) -> int:
-    from .llm.prompts import ABLATION, BY_NAME, DEFERRED
+    from .llm.prompts import ABLATION, BY_NAME, DEFERRED, EXPERIMENTAL
 
     if args.row is None:
         for c in ABLATION:
@@ -694,9 +694,18 @@ def cmd_llm_prompts(args: argparse.Namespace) -> int:
 
     if args.row in DEFERRED:
         return _err(f"row {args.row!r} is deferred until the static pipeline exists")
-    if args.row not in BY_NAME:
-        return _err(f"unknown row {args.row!r}; known: {', '.join(BY_NAME)}")
-    print(BY_NAME[args.row].system_prompt())
+    rows = {**BY_NAME, **EXPERIMENTAL}
+    if args.row not in rows:
+        return _err(f"unknown row {args.row!r}; known: {', '.join(rows)}")
+    cfg = rows[args.row]
+    if not cfg.decomposition:
+        print(cfg.system_prompt())
+        return 0
+    # Decomposed rows send a different prefix to each question.
+    for stage in ("feasibility", "harmfulness"):
+        print(f"===== system prompt for the {stage} question =====\n")
+        print(cfg.system_prompt(stage))
+        print()
     return 0
 
 
@@ -746,10 +755,10 @@ def cmd_llm_triage(args: argparse.Namespace) -> int:
     from .llm.cache import Cache
     from .llm.client import TriageClient
     from .llm.pipeline import triage_store
-    from .llm.prompts import BY_NAME, DEFERRED
+    from .llm.prompts import BY_NAME, DEFERRED, EXPERIMENTAL
     from .llm.resolver import resolver_for
 
-    all_rows = {**BY_NAME, **DEFERRED}
+    all_rows = {**BY_NAME, **DEFERRED, **EXPERIMENTAL}
     if args.row not in all_rows:
         return _err(f"unknown row {args.row!r}; known: {', '.join(all_rows)}")
     config = all_rows[args.row]
@@ -828,10 +837,10 @@ def cmd_llm_repair(args: argparse.Namespace) -> int:
     from .llm.backends import BackendError, RefusalError, from_spec
     from .llm.cache import Cache
     from .llm.pipeline import repair_store
-    from .llm.prompts import BY_NAME, DEFERRED
+    from .llm.prompts import BY_NAME, DEFERRED, EXPERIMENTAL
     from .llm.repair import RepairClient, witness_problems
 
-    all_rows = {**BY_NAME, **DEFERRED}
+    all_rows = {**BY_NAME, **DEFERRED, **EXPERIMENTAL}
     if args.row not in all_rows:
         return _err(f"unknown row {args.row!r}; known: {', '.join(all_rows)}")
     config = all_rows[args.row]

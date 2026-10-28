@@ -302,7 +302,7 @@ class TriageClient:
         convo: Conversation,
         stage: str,
     ) -> tuple[Any, Provenance]:
-        system = self.config.system_prompt()
+        system = self.config.system_prompt(stage if self.config.decomposition else None)
         messages: list[dict[str, str]] = [
             {"role": "user", "content": f"{task}\n\n{rendered}"}
         ]

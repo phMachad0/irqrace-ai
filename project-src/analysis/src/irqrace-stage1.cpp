@@ -354,6 +354,9 @@ struct Access {
   std::vector<SourceRange> loopHeaders;
   std::vector<Frame> callPath;
   bool pathIsOneOfMany = false;
+  // Where a read's loaded value goes (reads only; see valueUse()).
+  bool useBranch = false, useIndex = false, useDeref = false, useEscapes = false;
+  bool useDead = false;
 };
 
 struct ObjectInfo {
@@ -364,6 +367,89 @@ struct ObjectInfo {
   SourceRange decl;
   std::set<std::string> flows;
 };
+
+// Where the value a load produces goes, inside its function. Forward def-use
+// walk through casts, arithmetic, comparisons, selects and phis, and through
+// locals: a store of the value into an alloca is followed to every load of
+// that alloca (flow-insensitively -- an over-approximation, which is the safe
+// direction for "may feed"). Reported, never used to filter: it is evidence for
+// the harmfulness question, which ranks and never drops.
+//   branch  -- reaches a conditional branch, a switch or a select condition
+//   index   -- reaches a GEP index operand
+//   deref   -- reaches the address operand of a load or a store
+//   escapes -- passed to a call, returned, or stored outside a local, so its
+//              use is in code this walk does not see
+//   dead    -- none of the above and no other user: the value is discarded
+struct ValueUse {
+  bool branch = false, index = false, deref = false, escapes = false, dead = false;
+};
+
+ValueUse valueUse(const llvm::LoadInst *ld) {
+  ValueUse u;
+  std::set<const llvm::Value *> seen;
+  std::deque<const llvm::Value *> work{ld};
+  bool anyUse = false;
+  while (!work.empty()) {
+    const llvm::Value *v = work.front();
+    work.pop_front();
+    if (!seen.insert(v).second)
+      continue;
+    for (const llvm::User *us : v->users()) {
+      const auto *ui = llvm::dyn_cast<llvm::Instruction>(us);
+      if (!ui)
+        continue;
+      if (llvm::isa<llvm::DbgInfoIntrinsic>(ui))
+        continue;
+      anyUse = true;
+      if (const auto *br = llvm::dyn_cast<llvm::BranchInst>(ui)) {
+        if (br->isConditional() && br->getCondition() == v)
+          u.branch = true;
+      } else if (const auto *sw = llvm::dyn_cast<llvm::SwitchInst>(ui)) {
+        if (sw->getCondition() == v)
+          u.branch = true;
+      } else if (const auto *se = llvm::dyn_cast<llvm::SelectInst>(ui)) {
+        if (se->getCondition() == v)
+          u.branch = true;
+        else
+          work.push_back(se);
+      } else if (const auto *gep = llvm::dyn_cast<llvm::GetElementPtrInst>(ui)) {
+        if (gep->getPointerOperand() == v)
+          u.deref = true;
+        else
+          u.index = true;
+      } else if (const auto *l2 = llvm::dyn_cast<llvm::LoadInst>(ui)) {
+        if (l2->getPointerOperand() == v)
+          u.deref = true;
+      } else if (const auto *st = llvm::dyn_cast<llvm::StoreInst>(ui)) {
+        if (st->getPointerOperand() == v) {
+          u.deref = true;
+        } else if (const auto *al = llvm::dyn_cast<llvm::AllocaInst>(
+                       st->getPointerOperand()->stripPointerCasts())) {
+          // Stored into a local: follow its loads.
+          for (const llvm::User *au : al->users())
+            if (const auto *al2 = llvm::dyn_cast<llvm::LoadInst>(au))
+              work.push_back(al2);
+            else if (!llvm::isa<llvm::StoreInst>(au) &&
+                     !llvm::isa<llvm::DbgInfoIntrinsic>(au))
+              u.escapes = true; // the local's address is taken
+        } else {
+          u.escapes = true; // stored to global or heap memory
+        }
+      } else if (llvm::isa<llvm::CallBase>(ui) || llvm::isa<llvm::ReturnInst>(ui)) {
+        u.escapes = true;
+      } else if (llvm::isa<llvm::CmpInst>(ui) || llvm::isa<llvm::CastInst>(ui) ||
+                 llvm::isa<llvm::BinaryOperator>(ui) ||
+                 llvm::isa<llvm::UnaryOperator>(ui) || llvm::isa<llvm::PHINode>(ui)) {
+        work.push_back(ui);
+      } else {
+        u.escapes = true; // an instruction this walk does not model
+      }
+    }
+  }
+  u.dead = !u.branch && !u.index && !u.deref && !u.escapes;
+  (void)anyUse;
+  return u;
+}
 
 bool declaredVolatile(const llvm::DIType *t) {
   while (t) {
@@ -589,6 +675,14 @@ int main(int argc, char **argv) {
           }
           a.callPath = path;
           a.pathIsOneOfMany = it->second.multiplePaths.count(fn) > 0;
+          if (const auto *ld = llvm::dyn_cast<llvm::LoadInst>(&*I)) {
+            ValueUse vu = valueUse(ld);
+            a.useBranch = vu.branch;
+            a.useIndex = vu.index;
+            a.useDeref = vu.deref;
+            a.useEscapes = vu.escapes;
+            a.useDead = vu.dead;
+          }
           for (const llvm::Loop *l = li.getLoopFor(I->getParent()); l;
                l = l->getParentLoop()) {
             a.inLoop = true;
@@ -941,8 +1035,16 @@ int main(int argc, char **argv) {
         << ", \"function\": " << q(a.fn->getName().str())
         << ", \"source\": " << emitRange(a.src)
         << ", \"source_recovered\": " << (a.sourceRecovered ? "true" : "false")
-        << ", \"in_loop\": " << (a.inLoop ? "true" : "false")
-        << ", \"point\": ";
+        << ", \"in_loop\": " << (a.inLoop ? "true" : "false");
+    if (a.isWrite)
+      out << ", \"value_use\": null";
+    else
+      out << ", \"value_use\": {\"branch\": " << (a.useBranch ? "true" : "false")
+          << ", \"index\": " << (a.useIndex ? "true" : "false")
+          << ", \"deref\": " << (a.useDeref ? "true" : "false")
+          << ", \"escapes\": " << (a.useEscapes ? "true" : "false")
+          << ", \"dead\": " << (a.useDead ? "true" : "false") << "}";
+    out << ", \"point\": ";
     // Every access's function is in the program model by construction (stage
     // 1's reachability is a subset of it). A null here is a bug that stage 2
     // refuses to paper over, not a default position.

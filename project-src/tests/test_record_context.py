@@ -79,3 +79,16 @@ def test_source_is_rendered_with_its_file_line_numbers(run_001):
     text = render_record(rec)
     assert "55      reader1 = svp_simple_001_001_global_array[TRIGGER];" in text \
         or "55    reader1" in text
+
+
+def test_harm_features_are_computed_on_the_value_the_pattern_changes(run_001):
+    """WRW: what matters is the value B reads. In this program it is stored
+    into a local that is never read, so neither feature fires -- computed,
+    not left null."""
+    rec = _contexts(run_001)["cf213e34277d338cc"]
+    assert rec["pattern"] == "WRW"
+    assert rec["static_features"]["feeds_branch"] is False
+    assert rec["static_features"]["used_as_index"] is False
+    facts = {e["fact"]: e for e in rec["provenance"]["entries"]}
+    assert "B (line 55, read)" in facts["value_use"]["note"]
+    assert "discarded" in facts["value_use"]["note"]

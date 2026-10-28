@@ -39,8 +39,14 @@ _ASSETS = Path(__file__).parent
 BASE = "base.md"
 
 DOMAIN_RULES = "domain_rules.md"
+HARMFULNESS = "harmfulness.md"
 SELF_VALIDATION = "self_validation.md"
+HARM_VALIDATION = "harm_validation.md"
 CONTEXT_REQUESTS = "context_requests.md"
+
+#: The two questions of the decomposed rows. ``None`` is the combined turn of
+#: rows 1-2, which answers both and so gets every asset.
+STAGES = ("feasibility", "harmfulness")
 
 
 def _read(name: str) -> str:
@@ -71,19 +77,41 @@ class PromptConfig:
     decomposition: bool = False
     self_validation: bool = False
     max_request_rounds: int = 4
+    #: Extra assets appended to every question's prompt -- an experimental
+    #: benchmark-semantics add-on, say. Part of the cache key like any asset.
+    extra: tuple[str, ...] = ()
 
-    def assets(self) -> tuple[str, ...]:
-        """Asset filenames in render order. Order is part of the cache key."""
+    def assets(self, stage: str | None = None) -> tuple[str, ...]:
+        """Asset filenames in render order. Order is part of the cache key.
+
+        Per question: the feasibility question gets the interrupt pattern table
+        and the feasibility checklist, the harmfulness question the
+        pattern-specific harm criterion and its own two-rule checklist. The
+        feasibility checklist leans toward ``uncertain`` for reasons about
+        reachability; applied to harmfulness it turned correct ``benign``
+        answers into ``uncertain`` (wiki: Triage Study 2026-10-26).
+        ``stage=None`` is the combined turn and every asset.
+        """
+        feas, harm = stage in (None, "feasibility"), stage in (None, "harmfulness")
         names = [BASE]
         if self.domain_rules:
-            names.append(DOMAIN_RULES)
+            if feas:
+                names.append(DOMAIN_RULES)
+            if harm:
+                names.append(HARMFULNESS)
         if self.progressive:
             names.append(CONTEXT_REQUESTS)
         if self.self_validation:
-            names.append(SELF_VALIDATION)
+            if feas:
+                names.append(SELF_VALIDATION)
+            if harm and self.decomposition:
+                names.append(HARM_VALIDATION)
+        # Last: an add-on states which earlier rules it overrides, and a rule
+        # that comes after it would read as the final word.
+        names.extend(self.extra)
         return tuple(names)
 
-    def system_prompt(self) -> str:
+    def system_prompt(self, stage: str | None = None) -> str:
         """The stable system prefix, identical for every candidate in a row.
 
         Nothing candidate-specific goes in here. That is what makes it cacheable
@@ -99,13 +127,17 @@ class PromptConfig:
         Report the cost column with that stated, or normalise by reporting
         uncached cost for every row.
         """
-        return "\n\n---\n\n".join(_read(n) for n in self.assets())
+        return "\n\n---\n\n".join(_read(n) for n in self.assets(stage))
 
     def hash(self) -> str:
         """Stable identity of this configuration, including asset contents."""
         payload = {
             "name": self.name,
-            "assets": [{"name": n, "sha256": _sha(_read(n))} for n in self.assets()],
+            "assets": [
+                {"stage": st or "combined", "name": n, "sha256": _sha(_read(n))}
+                for st in ((None,) if not self.decomposition else STAGES)
+                for n in self.assets(st)
+            ],
             "decomposition": self.decomposition,
             "max_request_rounds": self.max_request_rounds,
         }
@@ -151,3 +183,11 @@ DEFERRED: dict[str, PromptConfig] = {
 FULL = ABLATION[-1]
 
 BY_NAME = {c.name: c for c in ABLATION}
+
+#: Rows outside the ablation, for experiments. Selectable by name wherever a row
+#: is; never part of the reported ablation table.
+EXPERIMENTAL: dict[str, PromptConfig] = {
+    "+racebench": dataclasses.replace(
+        FULL, name="+racebench", extra=("racebench_semantics.md",)
+    ),
+}

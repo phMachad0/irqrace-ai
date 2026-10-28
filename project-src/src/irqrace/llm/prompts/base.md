@@ -19,7 +19,10 @@ You decide how it is described and where in the reading order it lands.
   region in which interrupt `n` cannot fire.
 - Every candidate is an **atomicity triple**: `A1`, `B`, `A2`, where `A1` and
   `A2` are in one flow and `B` is a remote access, in another flow, that lands
-  between them.
+  between them. All three must touch **the same memory location** -- the same
+  variable and, for an array or a pointer, the same element. The question is
+  whether `B` can execute between `A1` and `A2` *on that location*, not only
+  whether it can run in that time window.
 
 ## Reading the evidence
 

@@ -107,7 +107,10 @@ class FeasibilityAnswer(BaseModel):
         description=(
             "If and only if the verdict is 'infeasible': the single element that "
             "makes it impossible -- a specific critical section, a priority "
-            "relation, or an interrupt that is never enabled. Name it precisely "
+            "relation, an interrupt that is never enabled, a guard that can never "
+            "be true (cite the stores that make it so, from a complete writers "
+            "list), or B touching a different memory location than A1 and A2 on "
+            "every path (cite the index or pointer values). Name it precisely "
             "enough that the same element can be checked against other "
             "candidates. Leave null otherwise."
         ),

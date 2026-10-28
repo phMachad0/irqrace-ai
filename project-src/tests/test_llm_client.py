@@ -134,7 +134,22 @@ def test_the_system_prefix_is_identical_across_candidates():
     client = _client(BY_NAME["+decomposition"], fake)
     client.triage(RECORD)
     client.triage(load_all()[1].record)
-    assert len({r.system for r in fake.requests}) == 1
+    # One prefix per question, each identical across candidates: requests
+    # alternate feasibility, harmfulness for every candidate.
+    feas = {r.system for r in fake.requests[0::2]}
+    harm = {r.system for r in fake.requests[1::2]}
+    assert len(feas) == 1 and len(harm) == 1 and feas != harm
+
+
+def test_the_feasibility_checklist_stays_out_of_the_harmfulness_question():
+    """Its rules lean to `uncertain` for reachability reasons; applied to harm
+    they turned correct `benign` answers into `uncertain`."""
+    cfg = BY_NAME["+self-validation"]
+    feas, harm = cfg.system_prompt("feasibility"), cfg.system_prompt("harmfulness")
+    assert "Check your answer against these rules" in feas
+    assert "Check your answer against these rules" not in harm
+    assert "## Harmfulness" in harm and "## Harmfulness" not in feas
+    assert "When a preemption is actually possible" not in harm
 
 
 def test_nothing_candidate_specific_leaks_into_the_prefix():

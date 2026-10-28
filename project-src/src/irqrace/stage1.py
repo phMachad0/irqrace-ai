@@ -481,6 +481,7 @@ class Deriver:
         shipped = [e["function"] for e in source]
         context, opaque = self._context_facts(
             shipped, "\n".join(e["code"] for e in source), obj)
+        context += self._value_facts(roles)
         rec: dict[str, Any] = {
             "schema_version": "c2/2.0.0",
             "id": "", "fingerprint": "0" * 64,
@@ -526,22 +527,86 @@ class Deriver:
             "R" if self.accesses[i]["kind"] == "read" else "W" for _, i in roles)
         return stamp_identity(rec)
 
+    #: The reads whose value the interleaving changes, per pattern: in RWR the two
+    #: reads that may disagree, in WWR the read that sees B's write instead of
+    #: A1's, in WRW B's read of the intermediate value, in RWW the read A2's write
+    #: may be computed from (B's write is lost).
+    MATTERING_READS = {"RWR": ("A1", "A2"), "WWR": ("A2",), "WRW": ("B",), "RWW": ("A1",)}
+
+    def _mattering(self, roles: list[tuple[str, int]]) -> list[tuple[str, dict[str, Any]]]:
+        pattern = "".join("R" if self.accesses[i]["kind"] == "read" else "W" for _, i in roles)
+        wanted = self.MATTERING_READS.get(pattern, ())
+        return [(r, self.accesses[i]) for r, i in roles if r in wanted]
+
     def _features(self, roles: list[tuple[str, int]],
                   obj: dict[str, Any]) -> dict[str, Any]:
         acc_ids = [i for _, i in roles]
         flows = [self.accesses[i]["flow"] for i in acc_ids]
         prios = [self.flows[f].priority for f in flows]
+        uses = [a.get("value_use") for _, a in self._mattering(roles)]
+
+        def feature(*keys: str) -> bool | None:
+            # True when a mattering read's value reaches one of ``keys``; null
+            # when it escapes the function (its use is not traced), never a
+            # guessed False; False only when every mattering read was traced.
+            if any(u is None for u in uses):
+                return None
+            if any(u.get(k) for u in uses for k in keys):
+                return True
+            return None if any(u.get("escapes") for u in uses) else False
+
         return {
-            # Left null rather than guessed: the harmfulness criterion needs a
-            # dependence graph, which stage 1 does not build (wiki/LLM Stage Design).
-            "feeds_branch": None,
-            "used_as_index": None,
+            "feeds_branch": feature("branch"),
+            "used_as_index": feature("index", "deref"),
             "call_path_depth_max": max(
                 len(self.accesses[i]["call_path"]["frames"]) for i in acc_ids),
             "same_statement_a1_a2": acc_ids[0] == acc_ids[2],
             "priority_gap": max(prios) - min(prios),
             "any_masking_present": False,  # stage 2 fills this in
         }
+
+    def _value_facts(self, roles: list[tuple[str, int]]) -> list[dict[str, Any]]:
+        """Where each mattering read's value goes, and local accesses in between."""
+        out: list[dict[str, Any]] = []
+        parts = []
+        for role, a in self._mattering(roles):
+            u = a.get("value_use")
+            where = f"{role} (line {a['source']['line']}, read)"
+            if u is None:
+                parts.append(f"{where}: not traced")
+                continue
+            if u.get("dead"):
+                parts.append(f"{where}: the loaded value is discarded -- stored in a "
+                             "local whose address is not taken and that is never read")
+                continue
+            uses = [n for k, n in (("branch", "a branch condition"),
+                                   ("index", "an array index"),
+                                   ("deref", "an address that is dereferenced"))
+                    if u.get(k)]
+            text = ("reaches " + ", ".join(uses)) if uses else ""
+            if u.get("escapes"):
+                text += ("; " if text else "") + ("leaves the function (passed to a call, "
+                                                  "returned or stored to non-local memory); "
+                                                  "its use there is not traced")
+            parts.append(f"{where}: {text}")
+        if parts:
+            out.append({"fact": "value_use", "status": "proven",
+                        "note": "where the value the interleaving changes goes, within its "
+                                "function (def-use, through locals): " + "; ".join(parts)})
+        a1, _, a2 = [i for _, i in roles]
+        flow, oid = self.accesses[a1]["flow"], self.accesses[a1]["object"]
+        between = sorted({
+            (x["source"]["line"], x["kind"]) for xid, x in self.accesses.items()
+            if x["flow"] == flow and x["object"] == oid and xid not in (a1, a2)
+            and (a1, xid) in self.precede and (xid, a2) in self.precede})
+        if between:
+            out.append({"fact": "interval.local_accesses", "status": "overapproximated",
+                        "note": "the local flow may also access this location between A1 "
+                                "and A2, on some path: " + ", ".join(
+                                    f"line {ln} ({k})" for ln, k in between)
+                                + ". A remote access landing between such an access and A2 "
+                                "forms another, narrower triple; this one is not dropped."})
+        return out
 
     # -- derivation ------------------------------------------------------
 
