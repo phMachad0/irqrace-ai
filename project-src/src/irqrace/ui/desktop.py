@@ -48,7 +48,7 @@ from irqrace.llm.backends.openai_backend import (
 )
 from irqrace.llm.client import TriageClient
 from irqrace.llm.pipeline import prepare_context, read_triages, repair_store, triage_store
-from irqrace.llm.prompts import BY_NAME, DEFERRED, FULL
+from irqrace.llm.prompts import BY_NAME, DEFERRED, EXPERIMENTAL, FULL
 from irqrace.llm.repair import RepairClient, apply_unified_diff, witness_problems
 from irqrace.llm.resolver import resolver_for
 from irqrace.llm.verdict import INSPECTION_ORDER, Bucket, Triage
@@ -756,7 +756,7 @@ class PipelineStepper:
         assert self.store is not None
         if self.use_live_llm:
             started = time.perf_counter()
-            all_rows = {**BY_NAME, **DEFERRED}
+            all_rows = {**BY_NAME, **DEFERRED, **EXPERIMENTAL}
             p_cfg = all_rows.get(self.llm_prompt, FULL)
             backend = build_backend_from_config(
                 self.llm_adapter,
@@ -779,7 +779,7 @@ class PipelineStepper:
             manifest["llm"] = {
                 "model": backend.spec,
                 "prompt_config": p_cfg.name,
-                "date": "2026-10-22",
+                "date": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d"),
                 "votes": 1,
                 "seed": None,
             }
@@ -950,12 +950,20 @@ class PipelineStepper:
                 encoding="utf-8",
             )
             m = self.store.read_manifest()
+            # The verdicts were produced by the reference run, so its model,
+            # prompt and date are the ones that describe them -- not the
+            # settings on screen, which never ran.
+            ref_llm = {}
+            try:
+                ref_llm = json.loads((self.template_run / "manifest.json").read_text(encoding="utf-8")).get("llm") or {}
+            except (OSError, ValueError):
+                pass
             m["llm"] = {
-                "model": f"{self.llm_adapter}:{self.llm_model}",
-                "prompt_config": self.llm_prompt,
-                "date": "2026-10-22",
-                "votes": 1,
-                "seed": None,
+                "model": ref_llm.get("model", "unknown (copied from a reference run)"),
+                "prompt_config": ref_llm.get("prompt_config", "unknown"),
+                "date": ref_llm.get("date") or "unknown",
+                "votes": ref_llm.get("votes", 1),
+                "seed": ref_llm.get("seed"),
             }
             self.store.write_manifest(m)
             self.store.set_stage(
@@ -999,7 +1007,7 @@ class PipelineStepper:
         )
         if self.use_live_llm:
             started = time.perf_counter()
-            all_rows = {**BY_NAME, **DEFERRED}
+            all_rows = {**BY_NAME, **DEFERRED, **EXPERIMENTAL}
             p_cfg = all_rows.get(self.llm_prompt, FULL)
             backend = build_backend_from_config(
                 self.llm_adapter,
@@ -1363,7 +1371,7 @@ class IrqRaceWinApp:
         self.model_cb.pack(side=tk.LEFT, padx=(0, 8))
 
         ttk.Label(r3, text="Prompt:").pack(side=tk.LEFT, padx=(6, 4))
-        prompt_rows = list({**BY_NAME, **DEFERRED}.keys())
+        prompt_rows = list({**BY_NAME, **DEFERRED, **EXPERIMENTAL}.keys())
         ttk.Combobox(
             r3,
             textvariable=self.llm_prompt_var,
