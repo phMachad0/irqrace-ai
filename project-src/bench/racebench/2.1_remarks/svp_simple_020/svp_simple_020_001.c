@@ -56,5 +56,4 @@ void svp_simple_020_001_isr_2() {
 //bug点:
 //1.svp_simple_020_001_global_var<R#37>,<W#53>,<R#40>
 //2.svp_simple_020_001_global_para<R#36>,<W#52>,<R#39>
-//误报点:
-//1.svp_simple_020_001_global_var<R#37>,<W#44>,<R#40>
+//3.svp_simple_020_001_global_var<R#37>,<W#44>,<R#40>

@@ -27,7 +27,7 @@ void svp_simple_006_001_main() {
   int reader1, reader2;
   
   for (int i = 0; i < 5; i++)
-    for (int j = 0; i < 5; j++) {
+    for (int j = 0; j < 5; j++) {
       if (i == j) {
         if (i == 0)
           reader1 = svp_simple_006_001_global_var1;

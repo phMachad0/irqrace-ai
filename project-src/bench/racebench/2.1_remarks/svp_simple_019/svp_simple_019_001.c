@@ -71,9 +71,9 @@ void svp_simple_019_001_isr_1() {
   svp_simple_019_001_global_var1 = 0x01;
 }
 //bug点:
-//1.svp_simple_019_001_global_var1<R#45>,<W#65>,<R#54>
+//1.svp_simple_019_001_global_var1<R#45>,<W#71>,<R#59>
+//2.svp_simple_019_001_global_var1<R#45>,<W#71>,<R#51>
+//3.svp_simple_019_001_global_var1<R#51>,<W#71>,<R#59>
+//4.svp_simple_019_001_global_condition3<R#48>,<W#69>,<R#56>
 //误报点:
-//1.svp_simple_019_001_global_var2<R#40>,<W#61>,<R#42>
-//2.svp_simple_019_001_global_var1<R#45>,<W#65>,<R#49>
-//3.svp_simple_019_001_global_var1<R#49>,<W#65>,<R#54>
-//4.svp_simple_019_001_global_condition3<R#48><W#63>,<R#53>
+//1.svp_simple_019_001_global_var2<R#40>,<W#67>,<R#42>
