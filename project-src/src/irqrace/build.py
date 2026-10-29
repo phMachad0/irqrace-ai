@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .config import Config
+from .toolchain import run_toolchain_cmd
 
 
 class BuildError(RuntimeError):
@@ -42,7 +43,7 @@ class BuildResult:
 
 def _run(cmd: list[str], log: list[str]) -> None:
     log.append("$ " + " ".join(cmd))
-    proc = subprocess.run(cmd, capture_output=True, text=True)
+    proc = run_toolchain_cmd(cmd)
     if proc.stdout:
         log.append(proc.stdout.rstrip())
     if proc.stderr:

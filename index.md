@@ -1,7 +1,7 @@
 ---
 type: index
 tags: [wiki, index]
-updated: 2026-10-24
+updated: 2026-10-26
 ---
 
 # Index
@@ -11,7 +11,7 @@ Catalog of the wiki. Start at [[Overview]]; read [[Thesis Goal]] for what this v
 the LLM per `CLAUDE.md` — update on every ingest.
 
 **Counts**: 12 sources (5 concurrency, 7 LLM) · 4 tool pages + 7 baseline/infrastructure ·
-20 concepts · 4 benchmarks · 5 comparisons · 7 project pages.
+20 concepts · 4 benchmarks · 7 comparisons · 7 project pages · 9 implementation diary pages.
 
 ## Navigation
 
@@ -43,22 +43,28 @@ Criada e revisada ao fim de cada semana de implementação (ver `CLAUDE.md`).
 | [[Semana 5 — O Stage 2, Prioridade e Máscara]] | W5 · planejada 28 set–2 out, feita 22 out | máscara como problema de programa inteiro, ponto fixo, toda remoção uma prova, **48/48 depois do stage 2**, a armadilha do 001 que é alcançável |
 | [[Semana 6 — O Stage 3, a Codificação]] | W6 · planejada 5–9 out, feita 22 out | execução simbólica sobre o IR, memória por objeto, havoc em laços e por interferência, o splice, o que `sat` quer dizer |
 | [[Semana 7 — O Stage 3, Busca e Verificação]] | W7 · planejada 12–16 out, feita 22 out | a busca, a projeção de endereços, três bugs pegos e testados por mutação, a auditoria dos `unsat`, **funil 316 → 202 → 166 e 48/48** |
+| [[Semana 5 a 8 — Trilha B (Triagem, Ablação, Reparo e Integração C3-C4)]] | W1–W8 (Trilha B) · 26 set–20 out | os 20 *fixtures*, M1 (GO), *backends* agnósticos, 5 linhas de ablação, `SourceBackedResolver`, reparo com testemunha (W7) e integração C3/CLI (W8) |
+| [[Semana 8 — Integração das Trilhas A e B]] | W8 · planejada 19–23 out, feita 23–26 out | código-fonte nos registros, chave do *cache* pela evidência, triagem que não descarta, `claude-cli`, *merge* da `main`, só trincas na Trilha B, stages 2 e 3 reais no desktop e a remoção de tudo que fingia a análise estática |
 
 ## Implementation (`project-src/`)
 
-The tool itself, outside the wiki layer. Started 2026-08-31 (W1 of [[Roadmap]]).
+The tool itself, outside the wiki layer. Started 2026-08-31 (W1 of [[Roadmap]]). Track B started 2026-09-26 on branch
+`track-b/llm-integration`; **M1 answered GO** the same day, and all W1–W8 Track B code deliverables are complete (see `log.md`).
 
 | Path | What it is |
 | --- | --- |
 | `project-src/README.md` | status against the Roadmap, layout, how to build and run |
 | `project-src/contracts/` | **C1–C4 frozen as JSON Schema**, with a worked example of each and a synthetic C3 run directory; W5 adds the stage-2 drop record (`c3-drop-record.schema.json`) |
 | `project-src/src/irqrace/` | Python: contract validation, C1 parser, bitcode build, SVF probe, run store |
+| `project-src/src/irqrace/llm/` | **Track B**: the triage and repair stage. Provider-neutral backends, five ablation rows, mock and source-backed C4 resolvers, scoring, repair harness & evaluator, C3 `RunStore` pipeline, tolerant annotation reader |
+| `project-src/fixtures/` | the 20 labelled context records — 10 bug points, 10 traps, six adversarial pairs |
 | `project-src/analysis/` | C++ over SVF: `irqrace-probe` ([[Dashboard Design]] R4, R7) and `irqrace-stage1` (reachability, shared locations, accesses, may-precede, and the event CFG stage 2 reads) |
 | `project-src/src/irqrace/masking.py` | **W5**: the interrupt-mask abstract interpreter — every-path masking, interference, ISR entry states, least fixpoint, origins |
 | `project-src/src/irqrace/stage2.py` | **W5**: stage 2 — the interval property, context-sensitive nesting, a proof for every drop |
 | `project-src/analysis/src/irqrace-stage3.cpp` | **W6–W7**: stage 3 — symbolic execution over the IR with Z3; the only verdict that may discard |
 | `project-src/src/irqrace/stage3.py` | **W6–W7**: the query (stage 2's run sets per instruction boundary), the verdicts, the context records Track B receives |
 | `project-src/bench/configs/` | one generated C1 file per [[Racebench]] simple case (31) |
+| `project-src/bench/racebench/` | the [[Racebench]] suite, vendored (upstream `ec1d828` + the 006 patch and the relabel; `VENDORED.md`) |
 | `project-src/docs/masking-semantics.md` | why per-flow interval masking drops a real bug point — and the W5 correction: the neighbouring trap is reachable |
 | `project-src/docs/toolchain-notes.md` | SVF/LLVM pairing, the `optnone` trap, the K&R-prototype call-graph trap |
 | `project-src/docs/evaluation-protocol.md` | counting unit, match rule, what is reported and what is gated |
@@ -134,7 +140,7 @@ Raw clippings live in `Clippings/`, PDFs in `raw/`. Both are immutable.
 
 | Page | Summary |
 | --- | --- |
-| [[Racebench]] | 33 aerospace-derived C programs; **48 measured bug points and 38 traps** in the 31 simple cases; four incompatible annotation grammars |
+| [[Racebench]] | 33 aerospace-derived C programs; **53 bug points and 33 traps** in the 31 simple cases since the 2026-10-28 relabel (48/38 before); four incompatible annotation grammars; vendored at `project-src/bench/racebench` since 2026-10-29 |
 | [[Real-World Program Benchmark]] | 18 extracted driver/firmware programs; the shipped ground truth says 45, BMC4AV says 94 — a counting-unit mismatch |
 | [[NASAC 2019 Prototype Competition]] | where Racebench came from: five teams, asymmetric scoring, and why this field prizes precision |
 | [[Candidate Evaluation Subjects]] | Linux drivers vs RTOS vs firmware for tier-3 evaluation, and whether huge codebases fit |
@@ -148,3 +154,5 @@ Raw clippings live in `Clippings/`, PDFs in `raw/`. Both are immutable.
 | [[Contradictions]] | seven open conflicts, chief among them 37/47 vs 94 violations; #7 two Racebench traps their own README makes reachable |
 | [[Reimplementation Assessment]] | study order, what to reimplement, the stack, and verified artifact availability |
 | [[LLM Integration Patterns]] | seven LLM sources by attach point; what each buys and costs |
+| [[Triage Study 2026-10-26]] | why triage underperforms on real records: missing deciding code (12/16 uncertain vs 78/85 feasible), unexplained fields, a ground-truth leak; fixes 1–6 and a Racebench-semantics row (IR 0.67 → 0.42) |
+| [[Racebench Full Run 2026-10-28]] | the whole pipeline on all 31 cases, sonnet, `+racebench`; after the relabel (53 bugs / 33 traps): 53/53 bugs, 97 and 100 of 106 in two runs, 98.2% agreement (κ 0.93); verdict on every disputed item |

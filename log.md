@@ -523,6 +523,757 @@ implementation the corresponding page must be created, and it must be revised wh
 week's code changes in a later iteration — a diary page describing code that no longer exists
 teaches the wrong thing to whoever reads it while writing the thesis.
 
+## [2026-09-26] build | W1/W2 Track B — harness, prompts, scoring; fixtures blocked
+
+Track B started on branch `track-b/llm-integration`, four weeks behind [[Roadmap]]. M1 (11 Sep)
+and M2 (25 Sep) are both past. The harness is built and tested end to end against a fake model
+client; the *measured* work is blocked on one thing, stated at the bottom.
+
+**The decision policy is now a type, not a convention.** The model is never asked for a bucket.
+It answers two narrow questions — *is this interleaving feasible?* and *if feasible, is it
+harmful?* — and `bucket_of` derives the bucket from the pair. `likely_infeasible` is unreachable
+except from an explicit infeasibility claim, and any `uncertain` on either axis yields
+`uncertain`. A model cannot express low confidence by reaching for a low bucket, because the
+word is not in its vocabulary. `scoring.score()` separately refuses to score a set that is not
+exactly the input set, so a dropped candidate raises instead of quietly raising recall by
+vanishing from the denominator.
+
+**The ablation is five configurations, not five prompts.** The rows compose the same markdown
+assets (`base.md`, `domain_rules.md`, `context_requests.md`, `self_validation.md`), so turning a
+component on adds its file and changes nothing else — which is the only way the LLift-shaped
+table means what it says. The config hash covers **asset contents**, so editing the domain-rule
+table invalidates the result cache for every row that includes it; without that, an edited
+prompt would be compared against answers produced by the previous wording.
+
+**C4 is exercised, and its status field carries the recall rule.** `RecordBackedResolver` answers
+from the candidate's own C2 record and returns `not_found`/`unsupported` for everything else —
+each with the self-validation rule that applies to it, rendered *before* the payload. That is
+deliberate rather than a fixture-era limitation: it exercises the rule "a definition you could
+not obtain may access the shared variable" on every run, and that rule is the one deciding
+whether the model invents safety from missing evidence. Request kind, depth and status are
+logged per candidate — the D#2 measurement, which is the cheapest experiment in the project.
+
+**Three findings.**
+
+1. **The baseline row cannot use prompt caching, and this confounds the cost column.** Caching
+   needs a prefix of roughly 1024 tokens. The `simple` row's system prefix is ~565 tokens and
+   the full row's is ~1900, so rows 2–5 cache and row 1 silently does not. Cost per candidate is
+   therefore not comparable across rows unless uncached cost is reported for all five. Recorded
+   in `llm/prompts/__init__.py`.
+2. **A refusal is not a verdict.** Analysed C is security-adjacent text and a safety classifier
+   may decline a candidate. Scoring that as any bucket would corrupt the row, so it raises and
+   the exclusion is reported.
+3. **`tests/test_racebench.py` breaks at collection on any machine without the suite.** It
+   parametrises at module scope from an absolute path into Track A's checkout, so `pytest tests`
+   cannot run at all here. Track A's file; not touched from this branch. Workaround in the
+   README.
+
+**Blocked: the 20 fixtures, and therefore the W1 go/no-go probe.** 2 of 20 exist — the seeded
+pair from Track A's contract examples, which is adversarially ideal (same subject, same `WRW`
+pattern, same class; the only difference is whether a flow running inside the masked interval
+re-enables the interrupt). The remaining 18 must be built from real `2.1_remarks` annotations:
+inventing source locations and function bodies would poison the ground truth every number is
+divided by. The suite is not on this machine.
+
+State: 70 Track B tests, 111 passing overall (65 skipped, needing the toolchain).
+
+## [2026-09-26] direction | LLM stage made provider-agnostic; backend seam added
+
+Direction from the human: the LLM integration must be agnostic to the model, able to connect
+any one. Recorded here because it changes an architecture decision, not just an implementation.
+
+**MCP was proposed as the mechanism and is not one.** The Model Context Protocol standardises
+how an application exposes *tools and context* to a model; it is not a provider abstraction, and
+speaking MCP to Claude, GPT and a local model still needs three different clients to make the
+call. What delivers model-agnosticism is a backend adapter layer, and that is what was built.
+MCP does have a genuine fit in this project — **C4 is shaped exactly like an MCP tool surface**,
+and exposing the resolver as an MCP server would let any MCP-capable host pull context from
+irqrace without knowing our code. Considered and deferred, not rejected: it is not measured by
+any number in [[Roadmap]], and the alternative of making irqrace *only* an MCP server would move
+the loop into an external host and cost the scripted ablation (M3), the per-candidate cache,
+majority voting and consistency — none of which any host implements.
+
+**Why this is more than portability.** [[LLift (paper)]]'s central claim is that prompt
+architecture dominates model choice — its ablation moves recall 0.15 → 1.00 with one model. A
+harness welded to one SDK can cite that; one with a backend seam can *test* it on interrupt
+concurrency, which no source in either branch has done. Holding the prompt fixed and sweeping
+the model is now a scripted experiment. It also gives the ablation an honest floor: if a local
+7B with the full prompt architecture beats a frontier model with the simple prompt, that is a
+far stronger result than any single-model table.
+
+`provider:model` is both the selector and the identity, so a number cannot be reported without
+saying what produced it ([[Precision Metrics]] #8, which the multi-provider setting makes
+sharper — the model name alone is no longer unique). Three adapters: `anthropic` via the
+official SDK, `openai` covering every OpenAI-compatible endpoint, `ollama` for local. The two
+generic adapters speak plain HTTP from the standard library — depending on one vendor's SDK to
+reach a local vLLM server would be backwards, and it means the ablation is reproducible against
+a local model with nothing installed beyond the repository.
+
+**Three cross-provider differences are recorded rather than smoothed over**, because each lands
+in a number:
+
+1. **Structured-output tier.** Providers range from an enforced JSON Schema to nothing. Which
+   tier served an answer is stored on the verdict itself (`produced_by.structured_mode`). A row
+   answered through `prompted_json` is not the same experiment as one answered through
+   `native_schema`; finding that out afterwards would invalidate a comparison instead of
+   explaining it.
+2. **Prompt caching is Anthropic-only here.** Cost per candidate is therefore not comparable
+   across backends, which is a caveat on a table rather than a bug — but only if `Capabilities`
+   says so, which it now does, in the CLI and next to the row.
+3. **Unpriced is not free.** A backend that did not know its rates yields `cost_usd() is None`,
+   and `Spend` refuses to produce a per-candidate figure from a partial total. A silent 0.00
+   would put a local model in the same column as a cloud one.
+
+The seam does **not** retry or repair a bad answer into a good one: a backend that cannot produce
+a parseable verdict raises, and the candidate is reported as an exclusion. Inventing a verdict to
+keep a sweep running is how a recall number becomes fiction.
+
+State: 139 passing (65 skipped, needing the toolchain), of which 98 are Track B. Still blocked on
+the 18 remaining fixtures and therefore on the W1 go/no-go probe.
+
+## [2026-09-26] build | Track B — racebench acquired; tolerant annotation reader certifies 48/38
+
+Racebench cloned to `../racebench` per this file's convention, 539K, unmodified. Proceeding
+without Track A by agreement; the ownership overlap below needs reconciling later.
+
+**Both W1 findings verify against the source.** The suite README names `svp_simple_028_001_main`
+and `svp_simple_030_001_main`; both files define `..._001__main` with two underscores. And the
+`svp_simple_001_001` bug point is exactly `<W#32>,<R#55>,<W#35>`, with `isr_1` setting the flag
+at line 41 and re-enabling irq 2 at line 46 — the interval puncture [[Interrupt Masking and
+Synchronization]] records. The README also settles [[Contradictions]] #3 in its own words:
+「优先级数字越大，优先级越高」, larger number is higher priority.
+
+**A tolerant annotation reader now independently reproduces 48 bug points and 38 traps**
+(`project-src/src/irqrace/llm/annotations.py`). That is [[Roadmap]] W2's "done when", reached
+from Track B's side because no fixture can be built without it. Two notes on getting there:
+
+- The wiki's prediction that *"a strict parser silently returns 28 bug points instead of 48"*
+  **reproduced exactly** — my first reader returned 28. Independent confirmation of a claim
+  that was previously only asserted.
+- Reaching 48 needed two fixes beyond the four documented grammars. `svp_simple_022_001`'s
+  four headerless entries must default to *bug points*; requiring a header costs exactly those
+  four and yields 44, silently. And `svp_simple_013_001` writes its access type in lower case,
+  `<w#66>`, which is not in the wiki's catalogue. Both added to [[Racebench]].
+
+The reader does not match a grammar. It finds bracket groups and pulls a type letter and a
+number out of each independently, so field order, the `#`, the separator and letter case all
+stop mattering and the four grammars collapse into one rule. It recovers from every catalogued
+error — doubled bracket, missing closing bracket, missing `#` — rather than skipping the entry.
+
+**New finding: `svp_simple_019_001` is annotated against the other copy of the suite.** All
+five of its annotations — one bug point, four traps — resolve cleanly against
+`racebench/2.1/svp_simple_019/` and not against the `2.1_remarks` file they are written in,
+where they point at `idlerun();`, a bare `{`, and blank lines. The annotated copy is 72 lines
+of code to the plain copy's 66: the `if` bodies were braced during a reformat and the line
+references were never updated. Checked across the suite, **019 is the only case affected**;
+the other 30 verify identically against both copies. Both facts are fixed as tests.
+
+This closes part of an open blocker rather than just adding a caveat. **Exact-line matching
+between a reported candidate and an annotated bug point is now ruled out empirically** — it
+loses one bug point and four traps on 019 alone, 2% of recall and 10.5% of trap rejection, in
+the direction that makes a tool look worse than it is. [[Open Questions]] updated: a window
+around the nearest access to the named variable absorbs this and the `svp_simple_001_001`
+`<R#63>` off-by-one; only the width is left to decide.
+
+Also recorded: **five cases annotate a global while the annotated line reaches it through a
+pointer or parameter** — 009, 011, 012, 024, 025. Not defects; the set of cases that *require*
+alias reasoning, which is worth knowing before any name-based matching.
+
+**Ownership overlap to reconcile with Track A.** The canonical ground-truth parser is Track A's
+W2 deliverable and must stay so — it owns the counting unit and the match rule, neither of which
+this reader defines. When it lands, the two counts must be reconciled and this one should lose
+its independent count. Track B also could not use `tests/conftest.py` or `cli.py`, both of which
+hardcode an absolute path into Track A's checkout; `annotations.locate_suite()` looks in the
+documented `../racebench` and honours `IRQRACE_RACEBENCH`. Track A's files were not touched from
+this branch.
+
+State: 163 passing (65 skipped, needing the toolchain), of which 122 are Track B. Fixtures still
+2/20 — the reader was the prerequisite, and building the remaining 18 is next.
+
+## [2026-09-26] build | Track B — the 20 fixtures exist; W1 complete except the probe
+
+[[Roadmap]] W1's fixture set is done: **10 bug points and 10 traps**, across 11 subjects,
+spanning all four access patterns the suite uses. The feasibility probe is one command away and
+is not run only because this machine has no API credentials.
+
+**Generated, but the analysis in them is hand-written.** `llm/fixture_specs.py` carries, per
+fixture, the masking state at each access and across the interval, whether the remote flow can
+preempt, and the reasoning; `llm/fixture_builder.py` takes the rest from the source. That keeps
+the Roadmap's intent — hand-building is how schema gaps are found — while removing the part
+that is transcription. `scripts/build-fixtures.py --check` fails if the files are stale.
+
+Selection is by coverage rather than convenience, which the annotation reader made possible:
+interrupt nesting (ISR preempts ISR), pointer aliasing, function-pointer dispatch with
+three-frame call paths, arrays, multi-line expressions, and **six adversarial pairs** — one
+subject contributing a bug point and a trap that differ in exactly one fact.
+`svp_simple_003_001`'s pair shares variable, flows, local accesses *and masking*, parting only
+on whether the remote write sits in a reachable branch.
+
+**Traps come in more shapes than the design anticipated.** Only two of the ten are the "critical
+section covers the interval" shape the D#1 table leads with. The rest are unreachable guards
+(three), disjoint array elements (two), a pointer the remote flow reassigned before reading, a
+ternary that evaluates one of its two textual occurrences, and a loop body whose guard is
+satisfiable exactly once. That last one is the sharpest thing in the set: it has the same shape
+as D#1 row 5, *"the same statement inside a loop as both A1 and A2"*, which the table calls a
+valid triple — and `svp_simple_006_001`'s guard `(i + j) == 6 && i < j` has one solution over
+`i, j` in `[0, 5)`, so the statement executes once. A prompt that applies the rule by shape
+fails it. [[LLM Stage Design]]'s D#1 table should gain a row for this.
+
+**Three defects found by strengthening one test.** The label-leak test — the record must not
+carry the answer — caught, in order: my own provenance entry naming the annotation's section;
+my note explaining *why* `svp_simple_016_001` bug point 3 was chosen over bug point 1; and then
+**Track A's `contracts/examples/c2-trap.json`, whose provenance says "This is the planted-trap
+shape: ONE critical section covering the whole interval."** A real stage 2 does not know whether
+a candidate is annotated, so any record saying so is not indistinguishable from emitter output —
+and rendered into a prompt it hands the model the verdict. Track A's file was not touched; the
+two `svp_simple_001_001` candidates are now generated from their annotations like the rest, so
+the fixture set no longer depends on it. **Pedro should fix that example.**
+
+**A silent-success hole in the recall gate, reached in practice.** Running the ablation with no
+SDK installed excluded all 20 candidates, scored the empty set, and exited **0** — recall over
+nothing is 1.0. `Score.gate_passed` now requires that bug points were actually scored, and the
+runner treats a row that measured nothing as a failure. This is the failure mode the whole
+decision policy exists to prevent, and it was in our own harness.
+
+Also: `scripts/run-ablation.py` runs one row or all five and prints recall, trap rejection,
+Inspection Ratio, consistency and cost, with the backend's caveats beside them. A candidate the
+backend refuses is excluded and reported, never scored.
+
+State: 168 passing (65 skipped, needing the toolchain). W1 for Track B is complete bar the
+probe; the go/no-go needs `ANTHROPIC_API_KEY`, or any OpenAI-compatible endpoint, or a local
+model through Ollama — the backend seam means the probe can run on whichever is cheapest.
+
+## [2026-09-26] build | Track B — repair stage, majority voting, IRIS grouping, C4 distribution
+
+Everything buildable without model access is now built. [[Roadmap]] W6 and W7 have code; W1–W6
+still have **no measured numbers**, and will not until a backend exists.
+
+**W7 — repair.** `llm/repair.py`, with the witness required and stated *before* the patch:
+firing flow, preemption point, access order, and the state that differs from every serial
+execution. [[SAST-Genius (paper)]]'s reusable idea is that an artifact can be checked where a
+verdict cannot, and `witness_problems()` checks it mechanically against the record — the named
+flow must exist, must be the one the analysis says preempts, and the order must put the remote
+access between the local pair. The vocabulary is a closed enum, so a model reaching for a mutex
+cannot express it; there is no second thread to block and an ISR cannot wait.
+
+**Logic Rate is scored on effect, not text** — strategy, interrupts masked, region covered —
+because two correct patches can be written differently and a diff comparison would score
+formatting. Coverage compares as "at least", since widening beyond the interval is conservative;
+it is `latency_note` that has to justify the widening. `mask_interval` and `extend_section` are
+accepted for one another.
+
+**Ten hand-written reference fixes** in `llm/repair_references.py`, each carrying its reasoning
+and, where there is one, the plausible wrong answer. Three are worth naming:
+
+- `svp_simple_001_001` — masking irq 2 is a **no-op**: it is already masked at line 28, and the
+  defect exists because isr_1 re-enables it from inside the interval. The fix must mask irq 1
+  too. The wrong answer looks right and changes nothing.
+- `svp_simple_017_001` — A1 and A2 are one statement in two iterations, so the interval is a
+  loop iteration, not a point. Masking the annotated line alone protects nothing.
+- `svp_simple_029_001` — the accesses are in `GetTmData`/`SetTmData`, which *both* flows call;
+  the interval is in the caller. Fixing where the accesses are would mask the ISR's own path and
+  leave the read-modify-write interruptible.
+
+`svp_simple_005_001` is the latency case: the correct fix spans the tail of a
+`MAX_LENGTH x MAX_LENGTH` loop, so it is right and probably unusable — which is
+[[SDRacer (paper)]]'s 2-of-11 overhead finding reproduced in a fixture.
+
+**Syntax Rate returns `None` when no checker can run**, never a pass. Same discipline as the
+recall gate: an unmeasured 100% is the failure mode, not the absence of a number.
+
+**W6 — voting, with the tie-break as the design decision.** `vote()` collapses n runs by modal
+bucket and resolves ties toward the bucket **earlier in inspection order**. Resolving downward
+would reintroduce through the voting layer exactly the recall loss the decision policy forbids
+at the verdict layer. The winning run's own explanation is kept rather than a synthesis.
+
+**W6 — [[IRIS (paper)]]'s pruning, inverted.** IRIS asks which element is spurious and removes
+every candidate involving it. This design may not remove anything, so
+`blocking_element_groups()` uses the same signal the other way: candidates sharing a blocking
+element are reported as a group, because a reviewer who checks one has checked all of them.
+Inspection Ratio improves, recall is untouched. That is the only pruning the rule permits.
+
+**W4 — the request distribution.** `request_distribution()` reports kind, depth, status,
+answered and not-found rates, and **which C4 kinds were never asked for** — a kind nobody
+requests is a candidate for removal at the next version bump. A test asserts the declared kind
+set still matches the C4 schema, so the "never requested" list cannot be measured against a
+stale enum. This is the measurement the Roadmap calls the cheapest experiment in the project,
+and the one that decides whether precomputed context is ever needed.
+
+**Cost of the blocker, now quantified.** Measuring the rendered prompts: the W1 probe is 10
+requests and the full five-row ablation 240. At Anthropic list prices the probe is **$0.35** on
+Opus 5 and the whole ablation **$10.25** ($2.05 on Haiku 4.5). The Roadmap's >$30-by-W5 trigger
+was well calibrated: n=3 voting across all five rows lands at ~$31, exactly on it, and the
+mitigation it prescribes puts the run at ~$17. The blocker was never cost or hardware — there is
+simply no key, and it has held M1 since 11 September.
+
+State: 202 passing (65 skipped, needing the toolchain). Nothing measured.
+
+## [2026-09-26] build | Track B — first live run; three interoperability defects in the adapter
+
+A Groq key arrived, so the harness met a real endpoint for the first time. It found three
+defects in ten minutes that no amount of fake-backend testing would have found. All three are
+fixed with tests; all three are worth recording because each looked like a different problem
+than it was.
+
+**1. No User-Agent — read as an auth failure.** `urllib` sends `Python-urllib/3.x` when the
+caller sets nothing, and that string is on CDN block lists: Groq's edge answered **403 with
+Cloudflare error 1010** while accepting the byte-identical request from curl. Diagnosing it
+needed a curl comparison with a spoofed UA, because the status code points at credentials. The
+adapter now names itself. Every HTTP client should.
+
+**2. The cache key was not a legal filename.** Backend specs legitimately contain path
+characters — `openai:openai/gpt-oss-120b` has both a colon and a slash — and the key went
+straight into a filename. On Windows the slash silently became a directory and the colon an
+invalid argument. Slugged now, **plus a hash of the original spec**, because two specs can slug
+alike and a cache collision would serve one model's verdict as another's. Only visible with a
+real model id; the fake backend's `fake:v1` is filename-safe, which is exactly why the bug
+survived 200 tests.
+
+**3. No retry on 429, so a rate limit looked like a wall of failures.** Groq's free tier meters
+**8,000 tokens per minute** and one context record costs 3,400–5,200, so the run hit the limit
+after two candidates and reported eighteen exclusions. Nothing was wrong; the harness was
+impatient. Backoff now reads the delay from `retry-after`, else from the provider's message
+("try again in 25.5s"), else a fallback — **plus one second**, because waiting the exact stated
+time lands on the boundary and is refused again. Capped, so an exhausted quota ends a run
+rather than hanging it.
+
+The last one has a measurement consequence worth stating before any number is quoted: at ~2
+candidates per minute a single 20-fixture row takes about ten minutes on this tier, and the
+five-row ablation would take hours. Groq answers the go/no-go; it is not where M3 gets measured.
+
+Note also that this endpoint does not honour `response_format: json_schema` — the adapter
+latches to `prompted_json` and every verdict records that it did. A row served that way is not
+comparable with one served by an enforced schema, which is why `structured_mode` is on the
+record rather than in a footnote.
+
+## [2026-09-26] result | M1 — the feasibility probe answered: GO
+
+The [[Roadmap]] W1 go/no-go, fifteen days late and answered. **Positive.**
+
+**Setup.** 20 fixtures (10 annotated bug points, 10 planted traps), `openai/gpt-oss-120b` via
+Groq, 2026-09-26. The **simple-prompt baseline** — no domain rules, no progressive prompting,
+no decomposition, no self-validation. Output was schema-enforced (`native_schema`), so this
+number carries no structured-output caveat. 17 requests, 57,199 in / 13,014 out, 483s wall
+(rate-limited, not compute).
+
+| | |
+| --- | --- |
+| **recall gate** | **PASS — 9/9 bug points survived triage** |
+| trap rejection | 80.0% (8/10) |
+| Inspection Ratio | 63.2% |
+| protocol violations | 4/19 |
+
+**What this settles.** ``wiki/LLM Stage Design.md``'s stated risk was that *nothing in the LLM
+branch has been tested on concurrency* and that triage quality varies 30 precision points
+between two merely *sequential* bug types, so nothing should be assumed to transfer. At this
+integration point it does transfer, and the baseline is already at the ceiling on recall.
+
+The adversarial pairs are the part worth believing, because they cannot be passed by shape:
+
+- `svp_simple_017_001` (same statement in a loop, **valid** triple) → `likely_real`, and
+  `svp_simple_006_001` (same shape, guard satisfiable **once**) → `likely_infeasible`. The
+  model separated them **without the D#1 rule in the prompt** — the baseline row does not
+  include `domain_rules.md`, and that distinction was only added to the table after the fixture
+  work found it.
+- `svp_simple_001_001`: bug point with the interval punctured by `isr_1` → `likely_real`;
+  trap with the section intact → `likely_infeasible`.
+- `svp_simple_003_001`: one bug point and two traps, the traps differing from it only in
+  masking and in branch reachability. All three correct.
+
+**Three qualifications, none fatal.**
+
+1. **Two real bug points landed in `likely_benign`** (003, 005), and the model was right to:
+   those cases read into dead locals. That is the harmfulness-criterion conflict recorded above
+   and in [[LLM Stage Design]] — a specification problem, not a model failure, and it makes the
+   recall gate's wording inadequate as it stands.
+2. **The one genuine false positive is the hardest trap in the set.** `svp_simple_029_001`'s
+   trap → `likely_real`: the model missed that lines 73 and 74 pass `tm_para` and `tm_para + 1`,
+   so the two reads at line 80 touch elements 36 and 37. Interprocedural **call-site
+   sensitivity** is where the baseline fails, and it is precisely what progressive prompting
+   should fix — the model could have asked for the call paths. That makes it a prediction the
+   ablation can test rather than only a defect.
+3. **One candidate was excluded, not scored.** `svp_simple_009_001`'s bug point failed JSON
+   generation: the model emitted `"confidence": 0. nine`. Schema enforcement caught it; the
+   harness reported the exclusion instead of scoring it. Recall is therefore 9/9, not 10/10.
+
+**The headroom problem, stated before the ablation runs.** [[LLift (paper)]]'s ablation moves
+recall 0.15 → 1.00; ours starts at 1.00. There is nothing for the remaining four rows to
+improve on the headline metric, so **the ablation's dependent variable has to be Inspection
+Ratio and trap rejection, not recall**. A flat recall column is a result and should be reported
+as one: it says that at this integration point, with a 2026 model and a decision policy that is
+conservative by construction, prompt architecture matters less than LLift measured. The 63.2%
+Inspection Ratio and the 029 miss are where the rows can move.
+
+**Two more harness defects, both found by real data.** The IRIS-style grouping produced **zero
+groups**: blocking elements are free text, and "A1 write is dead code (guard i == MAX_LENGTH + 1
+is unsatisfiable)" and "A2 write is dead code because its guard is unsatisfiable" are the same
+reason in different words. Propagation needs a constrained `blocking_element_kind` alongside the
+prose; not changed mid-experiment, since altering the response schema would make the rows
+incomparable. And the cache key covered the prompt assets but **not the response schema** —
+adding a field to the verdict changes the experiment as much as editing a prompt does, and a
+stale hit would have hidden it. Fixed, with a test.
+
+State: 221 passing. First measured numbers in the project.
+
+## [2026-09-26] build | Track B — two ablation rows measured; the harness stalled and was fixed
+
+**Two rows measured, and the second is a negative result.**
+
+| row | recall | trap rejection | Inspection Ratio |
+| --- | --- | --- | --- |
+| `simple` | 100% (10/10) | 80% | **65.0%** |
+| `+domain` | 100% (10/10) | 80% | **75.0%** |
+
+Adding D#1's domain rules **worsened** Inspection Ratio by 10 points and moved neither recall
+nor trap rejection. The mechanism is visible in the bucket changes: three bug points moved down
+(002 `uncertain`→`likely_benign`, 007 and 016 `likely_real`→`uncertain`), one trap moved up, and
+`likely_benign` went from 4 to 7. `domain_rules.md` is where the Bai et al. harmfulness clause
+is stated explicitly, so **making the rule explicit made the model apply it with more conviction
+to Racebench's dead readers — and on this benchmark the rule is wrong**. The baseline scored
+better partly by not having it. That is the harmfulness conflict recorded above, now with a
+measured cost attached.
+
+Strength of evidence, stated plainly: **n=20, single sample, one model.** Inspection Ratio is
+driven by the worst-ranked bug point, so 65%→75% is the last bug point moving from position 13
+to 15 — two candidates, inside the noise for a single sample. Confirming it needs n=3 and the
+consistency measurement, which is what W6 exists for. The direction is suggestive; the number
+is not yet a claim.
+
+**The harness stalled for 66 minutes and reported nothing.** Two compounding causes, neither
+findable against a fake backend:
+
+- `TimeoutError` does not subclass `URLError`, so a read timeout escaped both the error handler
+  and the retry logic. With urllib's socket timeout left at its 600s default that is ten silent
+  minutes per stalled request.
+- Retries had a count limit but no clock. Six retries of up to 90s is nine minutes for one
+  request, and the progressive rows issue up to five requests per candidate across four
+  context-request rounds — so one candidate could absorb most of an hour while the run looked
+  hung rather than slow.
+
+Both fixed, with tests: 120s socket timeout, `TimeoutError` handled, and a wall-clock budget
+per request that gives up inside it.
+
+**The free tier cannot carry M3.** Measured: the full five-row ablation is ~960k tokens against
+Groq's 8,000 tokens/minute, so **two hours of pure quota** and four to six hours in practice
+once retry overshoot is counted. Rows 1 and 2 are done; the three with progressive prompting
+and decomposition are not affordable in time here. On Claude Opus 5 the same work is ~15 minutes
+and $10.25. Groq answered M1 and gives one column of the comparison; it is not where M3 gets
+measured.
+
+Credentials now load from a gitignored `.env`, so runs do not depend on remembering an export
+and keys stay out of shell history.
+
+## [2026-09-26] ingest | NIChecker artifact — Contradictions #1's open item closed
+
+Cloned `../NIChecker` (2.6 GB, Apache-2.0, benchmarks and results only) and recounted the
+18-program real-world suite from the files. [[Contradictions]] #1 left one item explicitly
+open — *"NIChecker's published 47 matches neither the 45 shipped entries nor BMC4AV's 37"* —
+and called re-counting the `logger` package "an original, defensible contribution". It is
+accounted for, and the answer is that **the artifact is corrupt and the paper is right**.
+
+**`violation.info` is a verdict table, not a list.** Each program also ships `mode.txt`, the
+nomination list of (variable, pattern) pairs the tool was told to check. The arithmetic pins
+the relationship: `mode.txt` totals **59** lines across the suite, and `violation.info` totals
+**45 `true violation` + 14 `false violation` = 59**. The 14 are planted false positives, so
+this suite is a triage benchmark in the same way [[Racebench]] is — worth knowing before
+Track B's W9 uses it.
+
+**`logger2/violation.info` belongs to a different program.** It names `test_global_var1/2/3`,
+which appear **zero** times in `logger2/main.c`; those identifiers occur only in the twelve
+anonymised programs, never in `logger*` or `blink*`, which use real names. It is also the only
+file in the suite with no `true`/`false` prefix on its lines. logger2's two nominations —
+`int numberOfRecords rww`, `int tickCounter wwr`, both variables present in its code — have no
+recorded verdict, and `logger3`, the sibling variant, nominates the same two pairs and records
+both as `true violation`.
+
+**45 recorded + 2 lost = 47**, exactly NIChecker's published figure. Stated as an inference,
+not a proof: logger2's verdicts cannot be read back, only reconstructed from its sibling. But
+nobody miscounted — the paper reported what its ground truth said before a file was overwritten.
+
+**The ground truth also mixes counting units inside itself**, which sharpens rather than
+settles the BMC4AV dispute. `blink1`–`blink3` write triples with line numbers
+(`timerCount(95W,121W,96R)`) — 12 entries — while the other fifteen programs write variable and
+pattern only — 50 entries. So the per-variable/per-instance mismatch the wiki attributed to a
+disagreement *between papers* is present *within the shipped document*. Fixing a unit means
+re-deriving line numbers for fifteen programs.
+
+**Method note.** My first hypothesis was that logger2 had simply lost its prefix, the same
+defect as `svp_simple_022_001`'s headerless block in [[Racebench]] — and a grep that assumed
+that would have produced a tidy "48 true violations" and a false parallel between the two
+benchmarks. Checking whether the named variables exist in the named program is what killed it.
+Two benchmarks, two different corruptions that a strict reader mis-handles in two different
+directions.
+
+## [2026-09-26] result | the +progressive row failed, and its failure found a third silent success
+
+Ran `+progressive` alone after the stall fix. It **failed as a measurement**: 3 of 20
+candidates scored, 11 lost to the rate limiter giving up inside its new budget and 6 to a DNS
+blip mid-run. The row is discarded.
+
+**What it reported before being discarded is the finding.** With three candidates scored it
+printed `recall gate: PASS — 100.0% (3/3 bug points survived)` and
+`trap rejection: 100.0% (0/0 traps bucketed low)`. Both guards added earlier held and both were
+insufficient: `gate_passed` required that bug points were scored, and three satisfy it; trap
+rejection over zero traps is vacuously perfect. **A row that measured 15% of the set reported
+three green numbers.**
+
+This is the third variant of the same failure in one day — recall over an empty set, then a
+row with no candidates at all, now a row with a handful. The pattern is that every ratio in
+this harness is well-behaved on the empty and near-empty case and says nothing about coverage.
+So `Score` now carries `n_expected`, a partial row **cannot pass the gate whatever its
+figures**, the report opens with `INCOMPLETE — 3/20 candidates scored`, trap rejection over no
+traps prints `n/a` instead of 100%, and the M3 table renders an incomplete row's cells as
+`3/20 scored` rather than as percentages. That last one matters most: the table is the artifact
+someone quotes from.
+
+Transient network failures are now retried on the same budget as rate limits, since a DNS blip
+excluding six candidates is not a measurement decision.
+
+**The two complete rows, re-scored from cache in 0.88s with zero requests** — which is the
+cache doing exactly what it was built for:
+
+| row | recall | trap rejection | Inspection Ratio | bug points called benign | protocol violations |
+| --- | --- | --- | --- | --- | --- |
+| `simple` | 100% (10/10) | 80% | **65.0%** | 3 | 5 |
+| `+domain` | 100% (10/10) | 80% | **75.0%** | 4 | 9 |
+
+The protocol violations nearly doubling, 5 to 9, is the same mechanism as the Inspection Ratio
+getting worse: `domain_rules.md` states the harmfulness criterion explicitly, the model applies
+it with more conviction to Racebench's dead readers, and more candidates come back benign —
+several without naming the criterion clause the prompt requires. Two rows is not an ablation,
+but the direction is consistent across three separate measures.
+
+`+progressive`, `+decomposition` and `+self-validation` remain unmeasured. They are not
+affordable on this tier: the two decomposition rows issue four to five requests per candidate
+against an 8,000 token-per-minute ceiling.
+
+## [2026-09-27] direction | progressive prompting deferred until the static pipeline exists
+
+Lucas's call, to stop spending tokens on a row that cannot yet measure what it is named for.
+
+**Why.** Reading the request loop end to end found that the ablation's only C4 backend is
+`RecordBackedResolver(record)` (`client.py:189`; its `extra` hook is used only in tests). It
+answers from the record the model already has, so every request either re-serves something in
+the prompt or comes back `not_found`/`unsupported` with a recall rule attached. No request can
+add information. `svp_simple_029_001`'s trap, which the M1 entry predicted progressive prompting
+would fix, is the concrete case: the caller body at lines 73–74 is not in the record, so asking
+for `SetSelfCtrlFlag` returns `not_found` and rule 2 tells the model to assume it touches the
+variable. The prediction could not come true, and its failure would say nothing about the model.
+Meanwhile each round re-sends the whole history (the API is stateless): up to 5 calls per
+candidate, up to 10 with decomposition.
+
+**What changed** (`project-src`, 238 passing): `ABLATION` is four rows — `simple`, `+domain`,
+`+decomposition`, `+self-validation` — none progressive, none carrying `context_requests.md`.
+The `+progressive` definition lives in `DEFERRED`; `run-ablation.py` and `irqrace llm prompts`
+refuse it by name with the reason. The loop and its tests stay. Rows 3–4 now cost at most 2
+requests per candidate. `simple` and `+domain` hashes are unchanged, so their measured results
+remain cached; the two later rows have new hashes, so nothing from their progressive versions can
+be served.
+
+**Correction to chat on the same day:** `+self-validation` adds no request — it is prompt text.
+
+**Consequence for M3.** The table is no longer in [[LLift (paper)]]'s five-row shape; D#2 is
+missing and must be reported as deferred, not as measured-null. It returns when a resolver can
+answer from real source — cheapest form: read `subject.source_root` and serve
+`function_definition`/`isr_body`, ahead of Track A's W8 resolver.
+
+## [2026-09-27] direction | harmfulness not scored on Racebench (option C) — and what re-scoring showed
+
+Lucas chose option C from the [[Open Questions]] entry on Racebench's dead readers: the
+harmfulness answer is still asked, recorded and reported, but **on Racebench only feasibility is
+scored** — a feasible candidate counts as found. The benchmark annotates program facts ("the
+interleaving exists"), so a model that correctly calls `reader = x;` with a dead `reader` benign
+was being penalised for being right. Harmfulness gets judged on the real-world suite in W9.
+
+**Code** (`project-src`, 242 passing): `scoring_bucket()` / `scoring_rank_key()` give the
+feasibility-only view; `score(..., harm_scored=False)` uses it for recall, trap rejection and
+Inspection Ratio, while `bucket_counts` keeps the reported buckets. `run-ablation.py` defaults
+to it (`--score-harm` restores the old view) and gains **`--cache-only`**, which replaces the
+backend's `chat` with an error so a cache miss becomes an exclusion instead of a request.
+Results carry `harm_scored`; the M3 table states the view and warns on mixed views.
+
+**Re-scored from cache, 0 requests:**
+
+| row | recall | trap rejection (old → C) | Inspection Ratio (old → C) |
+| --- | --- | --- | --- |
+| `simple` | 100% | 80% → **70%** | 65% → **65%** |
+| `+domain` | 100% | 80% → **50%** | 75% → **75%** |
+
+`ablation-groq.json`/`.md` now hold view C; the old view is kept as `ablation-groq-harm.json`.
+
+**This corrects the 2026-09-26 reading.** That entry attributed `+domain`'s 10-point Inspection
+Ratio loss to the harmfulness clause sinking bug points. Under view C the harmfulness answer
+cannot move anything, and a gap remains — so the clause was not the whole cause. *How big* a gap
+turned out to depend on something arbitrary; see the review note below.
+In view C every bug point in both rows is `feasible`, which makes the Inspection Ratio simply
+the number of candidates called feasible: `simple` calls 13 feasible (10 bugs + 3 traps),
+`+domain` 15 (10 + 5). The two extra are **traps `simple` correctly called infeasible and
+`+domain` called feasible** — `svp_simple_002_001`'s trap and one of `svp_simple_003_001`'s two
+traps — which `+domain` then labelled benign. The old view hid this: calling them benign put
+them in a low bucket and counted them as rejected, which is why trap rejection read 80% for
+both rows. `+domain` worsened *feasibility* judgement on two traps, and the harmfulness answer
+was masking it. The domain-rules table, not the harmfulness clause, is what to examine.
+
+Same strength-of-evidence caveat as before: n=20, one sample, two candidates.
+
+**Review note, same day — the Inspection Ratio broke ties by hash.** Candidates with equal
+bucket and confidence were ordered by candidate id, which is a fingerprint hash. Under view C
+`+domain` has seven feasible candidates tied at confidence 0.90 (four bug points, three traps),
+and that tie alone let its Inspection Ratio land anywhere from **60% to 75%**; `simple` has no
+such tie and is 65% either way. Ties now put bug points last — the reviewer's worst case,
+deterministic and conservative — which happens to reproduce every figure above, so no number
+changes; what changes is that they no longer depend on hash order. The robust finding is the
+trap count: `+domain` called two more traps feasible (trap rejection 70% → 50%). The Inspection
+Ratio gap runs from **5 points in `+domain`'s favour to 10 against it** depending on tie
+convention (60–75% against a fixed 65%), and the table reports the pessimistic end. With n=20 at one sample, confidence values clustering on 0.90 is itself worth
+watching: it makes the ranking coarser than the metric assumes.
+
+## [2026-09-27] direction | thesis monograph scaffolded — `monografia/`
+
+Lucas asked for the TCC monograph plan (POLI-USP, PCS) and a LaTeX source for the partial
+version. Created `monografia/` at the vault root: abntex2, one source with two entry points
+(`parcial.tex` = chapters 1–6, restricted to before the full implementation; `final.tex` =
+1–5 plus implementation, evaluation, conclusion), `latexmk` with output in `build/`
+(gitignored). Chapter 3 already drafts a short presentation of each paper from
+`wiki/sources/`, every number attributed to its authors and the two preprints (BMC4AV,
+SAST-Genius) flagged as such. `referencias.bib` holds the 12 sources plus CBMC, Lazy-CSeq,
+Z3, SVF, LLVM; authors for SDRacer, LLift and IRIS were filled from memory and marked
+VERIFICAR, and AdaTaint and Reducing False Alarms carry placeholders because the clippings
+have no byline. Racebench is cited as the repository, not the DeepWiki export. Open with the
+human: PCS formatting rules and deadlines, and whether the monograph is joint with Pedro —
+the skeleton assumes joint. Not yet compiled: WSL has no Linux distribution installed.
+
+## [2026-09-27] build | partial monograph written — chapters 1–6, checked against the wiki
+
+`monografia/parcial.tex` now has full text for introduction, background, related work,
+proposal, evaluation methodology and work plan, plus resumo, abstract and the contracts
+appendix; no pending marker remains in those files (the marker macro is also switched off).
+Every claim was drafted from the wiki pages it cites — Thesis Goal, Pipeline Design, LLM Stage
+Design, Soundness Assumptions, Roadmap, the concept, source, benchmark and comparison pages,
+`project-src/docs/evaluation-protocol.md` and `contracts/README.md` — with numbers phrased as
+reported by their authors. Two slips caught on the final pass and fixed: the fixture set has
+six adversarial *pairs*, not six adversarial records; and only `wdt_pci` is confirmed by the
+wiki as a Linux kernel driver.
+
+**Bibliography now checked against the PDFs in `raw/`**, not memory. That corrected the SDRacer
+author list (Ke Wang was missing), gave NIChecker's full author names, confirmed IRIS as ICLR
+2025, and filled the two entries the clippings had no byline for: AdaTaint (Shiyin Lin, ICCSAI
+2025) and Reducing False Alarms (Apostolidis, Kalouptsoglou, Siavvas, Kehagias, Tzovaras —
+IEEE SMARTCOMP 2025, DOI 10.1109/SMARTCOMP65954.2025.00088). The wiki's source pages for those
+two still lack the byline; worth adding on the next lint.
+
+Cover: Poli and USP logos from poli.usp.br, both authors with NUSP, advisor as edited by the
+human in `config/dados.tex`. Builds with the local MiKTeX: 44 pages, no overfull boxes, no
+undefined citation or reference.
+
+## [2026-09-27] direction | the partial monograph does not expose project status
+
+Lucas's call: the partial stops at 6.2 (schedule), then the references. Removed from the
+partial: §6.3 current state (M1, M2, stage-1 counts), §6.4 risks, the contracts appendix, the
+"first results" sentence of resumo/abstract, and two methodology sentences phrased as work
+already done. Nothing deleted: §6.3–6.4 moved to `monografia/capitulos/reservado-final-estado-atual.tex`
+(not included anywhere) for the final version, and a `\ifparcial` switch in `parcial.tex` /
+`final.tex` keeps the appendix and its cross-references in the final only. Partial: 40 pages;
+both versions build clean.
+
+## [2026-09-27] lint | partial monograph re-checked sentence by sentence against the wiki
+
+Every chapter of `monografia/parcial.tex` re-read against its wiki sources. 23 corrections,
+three of them factual errors introduced when drafting:
+
+- **"None of the baselines was available"** was wrong. The wiki records only [[Rchecker]] and
+  [[intAtom]] as unobtainable; [[CPA4AV]] and [[iCBMC]] were run by the papers that used them.
+- **"Racebench is common to the whole literature reviewed"** was wrong: it is what IntRace,
+  NIChecker and BMC4AV evaluate on — not SDRacer, not the LLM sources. The chapter opening
+  also called the benchmarks "common to both literatures".
+- **"All seven LLM sources follow the same division of labour"** overstated
+  [[LLM Integration Patterns]], which says the corpus *converges* on it; two sources also test
+  standalone detection.
+
+Also an internal inconsistency: chapters 2 and 4 called Z3 "the only stage allowed to discard"
+while chapter 4 has stage 2 discarding on proof too. Restated as the wiki's actual rule — only a
+proof of impossibility discards. The rest were precision fixes: competition scoring is for the
+simple cases, IntRace used 30 of 31 cases, SDRacer's repair list includes locks, LLift's $0.43 is
+GPT-4 at 2024 prices, BMC4AV's "automatic" is its own claim, and two unsourced rhetorical claims
+in the introduction were replaced by what SDRacer actually says. Builds clean; 43 pages.
+
+## [2026-09-28] direction | monograph rebuilt on the PCS template; status report added
+
+The partial monograph was restructured to follow the department's own LaTeX model,
+`TCC_PCS_EPUSP_2023`, and a separate status report was written for the advisors.
+
+**Format.** The document now uses the model's preamble, class options, cover and title page,
+and compiles with pdfLaTeX. The custom cover, the custom chapter style and the XeLaTeX/Arial
+dependency were dropped. Qualitative tables became `quadro` environments, which is what the
+model ships for them.
+
+**Structure.** The model's six chapters replace the previous nine. Related work no longer has a
+chapter of its own — the review is digested into *Aspectos Conceituais*, with the papers cited
+inline. The proposal became *Projeto e Implementação* and the evaluation methodology became
+*Testes e Avaliação*, both inside *Desenvolvimento do Trabalho*.
+
+**Four cuts, all requested.** The uCLinux anecdote; the inter-stage contracts, including the
+C1–C4 table and its appendix, which are internal development material; the schedule, milestones
+and the division of work between the authors; and the *Considerações Finais* chapter, which now
+exists only in `final.tex`.
+
+**One editorial decision worth recording.** *Data race* and atomicity violation are now
+distinguished exactly once, where the defect is defined, and treated as synonyms thereafter; the
+pair/triple contrast is gone from the text entirely. The tool still derives both, so the
+monograph is written ahead of a possible decision to keep only triples. If that decision is
+reversed, the text has to change, not just a footnote.
+
+**BMC4AV was demoted rather than removed.** Pedro raised that its zero-false-positive claim
+could read as weakening our motivation, and that its counting dispute costs the reader more than
+it returns. The counting-unit subsection is gone and the tool's own headline numbers with it;
+what remains is its method, the fact that it is the only obtainable artifact, and its recall
+critique of NIChecker with the preprint and unit caveats in one sentence. The argument that the
+denominator is in dispute now rests on our own recount, not on the dispute between the two
+papers.
+
+**`monografia/relato.tex`** is a six-page status report in the same class, in article mode. It
+covers the literature review and the decisions drawn from it, the plan, what is built, milestone
+status, next steps and the de-scoping ladder. Written for advisors rather than for developers,
+so it carries results and findings but no implementation mechanics, and it names the two fronts
+without naming who runs them.
+
+## [2026-09-28] direction | table grids added; a whole subsection recovered from stray comments
+
+Every table and quadro in the monograph and the status report gained full horizontal and
+vertical rules, on request — the booktabs style (`\toprule`/`\midrule`/`\bottomrule`, no
+verticals) is gone from `monografia/`.
+
+**Found in the process, unrelated to the request: `capitulos/05-desenvolvimento.tex`'s entire
+*Testes e Avaliação* subsection — research questions through threats to validity, about 130
+lines including the counting-unit table — was commented out line by line in the commit already
+pushed to `origin/track-b/llm-integration`.** The section heading and its label were live; every
+paragraph and every table after it was not. Compiled output was silent about it: no undefined
+references, since the `\label`/`\ref` pairs were commented together, and no LaTeX warning, since
+missing content is not an error. Root cause not established — nothing in this session's own
+edits explains it, and it predates the table-grid request. Fixed by removing the leading `%`
+from the affected range and reverifying byte for byte against the intended prose, then
+recompiling all three documents and confirming the section's headings and its table both appear
+in `pdftotext` output. Worth a standing habit: after any bulk `sed`/script edit to a `.tex` file,
+grep the file for `^%` before trusting a clean `latexmk` run — a commented-out block is invisible
+to both the compiler and a page-count check.
+
+
+## [2026-10-20] build | Track B W4/W7/W8 completed — source-backed C4 resolver, repair evaluator, and C3 pipeline
+
+Completed all remaining Track B code deliverables on `track-b/llm-integration` so the LLM track is self-contained through W8 without blocking on Track A's C++ stages:
+
+- **`SourceBackedResolver` (`src/irqrace/llm/resolver.py`)**: implements a C-source-tree C4 resolver (`served_by = "resolver"`) alongside `RecordBackedResolver`. Serves `function_definition`, `isr_body`, `macro_expansion` (including multiline `#define`), `type_definition`, `global_declaration`, `all_accesses_to` across translation units, and `all_call_paths` directly from the subject's `.c`/`.h` files while preserving all C4 recall rules (`RECALL_RULES`) when a symbol has no definition in the tree. `run-ablation.py` gains `--resolver {mock,source,auto}`, `--source-root`, and `--include-deferred` to run `+progressive` against the source resolver.
+- **W7 repair stage completion (`src/irqrace/llm/repair.py`, `scripts/run-repair.py`)**: added deterministic result caching (`_patch_schema_hash`, `_repair_config_hash`), C3 repair artifact emission (`repair/<cid>/patch.diff`, `repair/<cid>/patch.json`, `llm/<cid>/repair-turns.jsonl`), in-memory unified diff application (`apply_unified_diff`), `clang`/`gcc -fsyntax-only` verification (`make_compile_checker`), `RepairScore`, and `score_repairs()`. Added `scripts/run-repair.py` to evaluate any backend against the 10 hand-written reference fixes.
+- **W8 end-to-end C3 `RunStore` pipeline & CLI (`src/irqrace/llm/pipeline.py`, `src/irqrace/cli.py`)**: implemented `prepare_context`, `triage_store`, `read_triages`, and `repair_store`, plus `irqrace llm triage` and `irqrace llm repair`. Preserves C3 Rule 6 (no candidate disappears without an `unsat` solver proof) and validates all manifests and records against C2–C4 schemas.
+- **Diary and test suite**: wrote [[Semana 5 a 8 — Trilha B (Triagem, Ablação, Reparo e Integração C3-C4)]]. **243 tests pass** offline (202 Track B tests in `tests/test_llm_*.py`).
+
+## [2026-10-20] build | Track C Streamlit pipeline visualizer & inter-stage metrics dashboard
+
+Implemented the interactive Streamlit visualizer (`src/irqrace/ui/app.py`, `dashboard.py`, `irqrace ui`, and `scripts/seed-showcase-run.py`) over Contract C3 (`runs/<run_id>/`) and Track B's fixtures/prompts/resolvers:
+
+- **Step-by-step block inspector (`Input → Processing → Output`)**: renders every stage (`0. Input & C1` → `1. Build & IR Probe` → `2. Stage 1 SVF & Co-exec` → `3. Stage 2 & Z3 Solver` → `4. Context C2 & Live C4 Playground` → `5. LLM Stage A Triage & C4 Turns` → `6. LLM Stage B Repair & Patched C Preview`) with side-by-side C source highlighting (R26), provenance inspection (R25), explicit display of Z3 `unsat` dropped candidates with proof (R24), and human reviewer label persistence in `eval/human_labels.json` (R28).
+- **Inter-stage funnel metrics & Racebench suite aggregator**: computes per-stage $N_{\text{in}} \to N_{\text{out}}$, static pruning rate $\Delta N_s$, `dropped_with_proof`, Recall Gate $\mathcal{R}_s$, Trap Survival Rate, Inspection Ratio progression $\text{IR}_s$, and marginal human effort saved $\Delta \text{IR}_s$, with one-click Markdown and LaTeX `booktabs` table export for the monograph (R44) plus run-to-run diff comparison (R41).
+- **End-to-end showcase + 31 Racebench runs**: `scripts/seed-showcase-run.py` populates `build/probe.json` across all 31 Racebench Stage-1 runs and builds a C3-validated 8-stage showcase run (`runs/000-e2e-showcase-svp_simple_001_001`). **420 tests pass** in WSL (**249 offline** in Windows venv).
 ## [2026-10-22] build | W5 Track A — stage 2, recall gate 48/48 after the first filter
 
 Pedro asked for the state of Track A to be checked and the work carried forward. Checked first:
@@ -685,3 +1436,165 @@ only with a proof* — found two places where stage 3 could answer `unsat` witho
 Racebench: all 202 solver verdicts identical to the snapshot taken before the fix; funnel
 316 → 202 → 166, recall gate 48/48. 329 tests pass. Pages touched: [[Soundness Assumptions]] (B2),
 [[Semana 7 — O Stage 3, Busca e Verificação]] (§5 (d), (e), §11).
+
+
+## [2026-10-26] build | W8 Track B — integration with Track A, triples only, nothing faked
+
+Track B's side of W8, done 23–26 Oct on `track-b/llm-integration`. Diary:
+[[Semana 8 — Integração das Trilhas A e B]].
+
+**The triage had never seen the code.** A desktop PDF for `svp_simple_001_001` ranked the bug
+triple `uncertain` and repaired code that does not exist (`compute(i)`, `some_value`). Every C2
+record had `enclosing_source: []`: clang splits the source path into `comp_dir` plus a relative
+name, stage 1 emits only the name, and the reader swallowed the miss. Fixed in `stage1.py`; ids
+unchanged. The result cache then kept serving the answers given without source, because its key was
+the fingerprint, which names the candidate and not the evidence; the key now carries a hash of the
+rendered record minus solver timing.
+
+**The triage dropped candidates silently.** A backend error put the candidate on an `excluded` list
+with no reason written, and the stage still ended `ok`: 7 of 23 reached the report on one run, 3 of 13
+on another. A candidate with no answer now stays as `uncertain` with `not_triaged` set and a warning
+in the log ([[LLM Triage]]: the model never drops). All failing is still a `failed` stage.
+
+**A fourth backend, `claude-cli:<model>`** — `claude -p` on the Pro/Max subscription, drawn from
+the plan's limits instead of billed per token; isolated from Claude Code's own prompt, tools,
+hooks and the vault's `CLAUDE.md`; API keys stripped from its environment; unpriced in every cost
+column.
+
+**Merge of `main`** (Track A W5–W7 and the triples-only change). Code merged cleanly; conflicts
+only in documentation, resolved as unions with `main` as the reference. Then Issue #1 on Track B:
+fixtures at `c2/2.0.0`, prompts define only the triple, `mask_access` out of the repair vocabulary
+(on a triple it protects an endpoint and leaves the gap), UI wording.
+
+**Everything that faked static analysis is gone.** The desktop's "Stage 2 & 3" step had copied
+stage 1 into `stage2/` and written an invented solver verdict (`inconclusive`, `timeout`, 12 ms) for
+every candidate; it was first marked `skipped`, and after the merge runs the real `stage2()` and
+`stage3()`. Also removed: `scripts/seed-showcase-run.py`, which wrote stage-2, solver (including
+`unsat` by heuristic), triage and re-verification outputs for all 31 cases; the dashboard's
+per-stage funnel, exported "for the TCC", which appended "(100%)" to every recall and showed
+re-verification as passed; the fixed "48/48", "zero false negatives" and "80%–95%" KPIs; a fixed
+Inspection Ratio in the PDF. They are replaced by `run_evaluation.py`, a per-stage evaluation
+with the bench's match rule — checked against Track A's 31 reports, 0 mismatches, 48/48, traps
+35 → 30 → 16 of 38. Re-verification stays `skipped` with the real reason (W9).
+
+**A bug the fabricated data hid:** the C4 resolver's `masking_state_at` raised on a stage-1 record,
+which has no masking yet; it now answers `unsupported` (treat as unknown).
+
+State: 582 tests pass, none fail — the first fully green suite on this branch. Missing for M4: the
+triage of the 166-triple post-Z3 residue across the 31 cases, re-reported rather than borrowed from
+the fixtures. Pages touched: [[Semana 8 — Integração das Trilhas A e B]] (new),
+[[Semana 5 a 8 — Trilha B (Triagem, Ablação, Reparo e Integração C3-C4)]] (revision note, §3.3
+requoted), [[Semana 7 — O Stage 3, Busca e Verificação]] (next-page link), `index.md`.
+
+
+## [2026-10-27] query | triage study on 15 Racebench cases — why triage underperforms, and three fixes
+
+Filed as [[Triage Study 2026-10-26]]. `svp_simple_001_001`'s bug point came back `uncertain`; a study
+on 15 of 31 cases (101 records triaged with `claude-cli:sonnet`, four analyst agents, controlled
+counterfactuals) found the cause in the record, not in the prompt's policy: stage 1 shipped only the
+functions containing the three accesses, so a flow named by the masking facts was absent (12/16
+`uncertain` when absent, 78/85 `feasible` when present). It also found `enclosing_source` leaking the
+line after each function — Racebench's `//bug点:` header — into 50 of 101 records.
+
+Implemented on Track B: function extent to the closing brace (`source_context.py`); every configured
+flow, the bodies of every flow that touches the variable or changes the mask, call-path functions and
+short callees; `writers.<variable>` with a completeness status, C1 models of primitives and externals,
+macros (all as provenance entries, C2 still 2.0.0); numbered source; the field meanings stated in
+`base.md`. New CLI: `irqrace pipeline` (the desktop's steps, headless) and `irqrace llm report`.
+
+Re-run, same 15 cases: bug points feasible 18 → **23/23**, none infeasible; genuine traps rejected
+1 → **8/11**, each with the right blocking element; the 5 disputed (reachable) traps stay feasible;
+mean Inspection Ratio (option C) 0.67 → **0.55**. Left: the same-location definition and subsumed
+triples (the three traps still accepted), the pattern-specific harm criterion (11/23 bug points in
+`likely_benign`), and a second sample. 590 tests pass. Pages touched: [[Triage Study 2026-10-26]]
+(new), [[Semana 8 — Integração das Trilhas A e B]] (§3.10), `index.md`.
+
+
+## [2026-10-27] build | triage items 4–6 and an experimental Racebench-semantics prompt row
+
+Follow-up to [[Triage Study 2026-10-26]] on Track B. Item 4: feasibility is defined over one
+memory location, with a "different location on every path" blocking kind that requires the
+argument. Item 5: the two questions get different system prompts — the feasibility checklist no
+longer reaches harmfulness, which gets a pattern-specific criterion (`harmfulness.md`) and its own
+checklist; the re-enable domain rule now says "typically a higher-priority one". Item 6 (part):
+stage 1's C++ traces each read's value through def-use (branch, index, deref, escapes, discarded);
+`feeds_branch` / `used_as_index` are computed on the reads that matter for the pattern, with a
+`value_use` provenance entry and `interval.local_accesses`. Not done: order-sensitive points-to,
+bounded interference in stage 3.
+
+Experimental row `+racebench` (never in the ablation table): the production row plus
+`racebench_semantics.md`, drafted from the Racebench DeepWiki export and checked against the
+suite's README and `common.c` — no examples, no case names; provenance in
+`project-src/docs/racebench-prompt-rationale.md`. Same 15 cases, one sample: bug points in
+`likely_real` 8 → 23/23, genuine traps rejected 9 → 10/11, disputed traps still feasible, mean
+Inspection Ratio 0.63 → 0.44 (buckets). 20 of its 22 extra infeasible verdicts come from the
+adjacency convention, which judges redundancy rather than reachability — kept out of the production
+prompt. 592 tests pass. Pages touched: [[Triage Study 2026-10-26]], [[Semana 8 — Integração das
+Trilhas A e B]] (§3.11), `index.md`.
+
+
+## [2026-10-28] result | full pipeline on the 31 Racebench simple cases — score 77/96
+
+Filed as [[Racebench Full Run 2026-10-28]]. Cache cleared, `claude-cli:sonnet`, row `+racebench`,
+one sample, 4 cases in parallel. Scored with the NASAC rule (+2 bug, −3 trap) against the measured
+ground truth (48 bugs, 38 traps); unannotated detections are not false positives (human's
+direction). LLM `likely_real` view: 46/48 bug points, 5/38 traps reported — exactly the five traps
+the suite's own semantics make reachable — score **77** (92 setting those five aside). Static
+stages alone: 48/48, 16 traps, score 48. Mean Inspection Ratio 0.84 → 0.56. 956 s wall clock,
+256 LLM calls, static stages 29 s in total. The two lost bug points (017) were called infeasible by
+the add-on's adjacency rule, which 017's own annotations contradict: the rule should be removed.
+Scoring script: `project-src/scripts/bench-triage-report.py`.
+
+
+## [2026-10-28] result | second full run without the adjacency rule; verdict on the disputed items
+
+[[Racebench Full Run 2026-10-28]], second section. Adjacency rule removed from
+`racebench_semantics.md` (017 contradicts it). Cache cleared, sonnet, one sample: 48/48 bug points
+in `likely_real`, 8 traps reported, score 72/96; mean Inspection Ratio 0.72 (more unannotated
+candidates stay `likely_real`). Scoring artifact fixed: matching now prefers the sibling whose access
+kinds agree when several candidates share the annotated lines (`evaluation.match_subject`; kinds
+still not required). Reviewed every disputed item against the source and the README: 001 #1,
+019 #3, #4 and 020 #1 are label errors under the suite's own semantics, 019 #2 is valid in `2.1`
+but stale in `2.1_remarks`, 022 #1/#3 are the annotator's own "possible" false positives, 007 #1
+(model unstable across runs) and 009 #1 (model hedged) are model errors. With the label errors
+corrected: 87/96.
+
+
+## [2026-10-28] direction | Racebench labels corrected in the suite: 48/38 → 53/33; variance measured
+
+On the human's direction, the five traps the review found reachable under the suite's own README
+were relabelled as bug points in `../racebench/2.1_remarks` (uncommitted there; `git diff` shows
+it): 001 trap 1, 019 traps 2–4, 020 trap 1. Simple-case counts change from **48 bug points / 38
+traps to 53 / 33**; every number before 2026-10-28 uses 48/38. Recorded in
+`bench/racebench-errata.yaml` (note `relabel_2026_10_28`; the six 001/019 line corrections moved
+into the source, 12 → 6), `docs/evaluation-protocol.md`, `evaluation.py`'s constants, the tests,
+[[Racebench]] ("Relabel 2026-10-28"), [[Contradictions]] #7–#8 (resolved), and `CLAUDE.md` (the
+exception to "do not modify the artifacts"). The 001 trap fixture now uses the trap the case still
+carries. Static recall gate under the new labels: 53/53; traps 30/33 → 25/33 → 11/33.
+
+Third full run, same configuration as the second: runs 2 and 3 agree on 163/166 candidates
+(98.2%, κ 0.93); scores against 106: 97 and 100, 53/53 bug points in both; run 1 (with the adjacency
+rule) 102 with 51/53. Run 3's wall clock includes a 25-minute machine suspend. Filed in
+[[Racebench Full Run 2026-10-28]] and the diary (§3.13).
+
+
+## [2026-10-29] direction | Racebench vendored into the implementation; candidate ids made portable
+
+On the human's direction the suite now lives at `project-src/bench/racebench`: upstream
+`chenruibuaa/racebench` at `ec1d828`, imported unchanged by `git archive`, then the project's two
+changes (the 006 patch, the 2026-10-28 relabel) as a separate commit. Provenance, the changes and
+a licence note (upstream ships none) are in `bench/racebench/VENDORED.md`. One locator,
+`irqrace.racebench.locate_suite()` (`IRQRACE_RACEBENCH` overrides); every hard-coded path
+(`/home/pedro/...`, `C:/Users/luoma/...`) is gone; `bench/configs/*.yaml` carry a `source_root`
+relative to the file, resolved at load. `CLAUDE.md`, [[Racebench]] ("Vendored copy"), [[Overview]],
+[[Open Questions]], [[Reimplementation Assessment]], [[Contradictions]] #7–#8 and the diary (§3.13
+revised, §3.14 new) updated.
+
+The move exposed a latent defect: the access `file` the fingerprint hashes came from debug info,
+which clang writes relative to the deepest directory shared with the working directory — so
+candidate ids depended on the machine's layout. `stage1._rel` now locates the file and makes it
+relative to the suite root (`svp_simple_NNN/<file>.c`, the form the LLM fixtures already used);
+the desktop stepper takes the common directory of all `.c` files as the root. Same ids from any
+working directory and any copy of the suite; **every id changed once** (ids quoted before
+2026-10-29 are the old ones; the LLM cache starts cold). Static recall gate unchanged: 316 → 202 →
+166, 53/53, traps 30 → 25 → 11 of 33. 594 tests pass.

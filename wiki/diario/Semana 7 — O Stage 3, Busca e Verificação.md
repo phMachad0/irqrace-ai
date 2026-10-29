@@ -462,4 +462,5 @@ Ainda faltam: a integração com a Trilha B (W8), a suíte de programas reais e 
 **Decisões pendentes, todas do Pedro:** **E3** e **G2c** (da semana 5, sem mudança), e o cronograma
 — pelo calendário do [[Roadmap]] esta é a semana 8, e o M4 é amanhã.
 
-Página anterior: [[Semana 6 — O Stage 3, a Codificação]].
+Página anterior: [[Semana 6 — O Stage 3, a Codificação]] · Próxima página:
+[[Semana 8 — Integração das Trilhas A e B]].

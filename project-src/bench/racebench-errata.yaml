@@ -5,9 +5,12 @@
 # evidence for it, so that the deviation from the shipped suite is auditable
 # rather than silent. See docs/evaluation-protocol.md.
 #
-# Nothing here changes the COUNTS. All 31 simple cases still carry 48 bug points
-# and 38 planted traps; only line numbers and access kinds are corrected. What
-# does change is the shape distribution, and that difference is reported.
+# Nothing in `corrections` changes the COUNTS: only line numbers and access kinds
+# are corrected. The counts changed once, on 2026-10-28, by a different route:
+# five trap labels the suite's own README contradicts were relabelled as bug
+# points IN THE SUITE'S SOURCE (see `relabel_2026_10_28` below). Since then the
+# 31 simple cases carry 53 bug points and 33 traps; before, 48 and 38. Every
+# number in this project dated before 2026-10-28 uses 48/38.
 #
 # Confidence levels:
 #   certain   -- the source admits only one reading
@@ -23,6 +26,31 @@ curated: 2026-09-10
 curated_by: hand verification against the case sources; see docs/groundtruth-handcount.md
 
 notes:
+  relabel_2026_10_28: >
+    Five planted false positives were relabelled as bug points, by editing the
+    annotation comments in the suite's source (then a separate checkout,
+    ../racebench, uncommitted there; since 2026-10-29 vendored at bench/racebench,
+    where the change is its own commit -- bench/racebench/VENDORED.md). Each is reachable under the suite's
+    own README -- "an interrupt may preempt the main program or a lower-level
+    interrupt whenever it is enabled, at an indeterminate moment, position and
+    number of times" -- and each was hand-checked as a concrete interleaving
+    (wiki: Racebench Full Run 2026-10-28, "Verdict on every disputed item";
+    Contradictions #7 and #8).
+      svp_simple_001_001 trap 1 -> bug 2, global_var <W#43><R#64><W#44>: isr_1 may
+        fire between init() and disable_isr(2), or start a second time with irq 2
+        already unmasked by its first run.
+      svp_simple_019_001 traps 2, 3, 4 -> bugs 2, 3, 4 (lines corrected too):
+        trap 2 was valid for the 2.1 copy but not for 2.1_remarks, where
+        enable_isr(1) moved before the read; traps 3 and 4 are reachable in both
+        copies through the unmasked gap between two critical sections.
+      svp_simple_020_001 trap 1 -> bug 3, global_var <R#37><W#44><R#40>: reachable
+        with two isr_1 activations.
+    Remaining labels are shipped as is, including svp_simple_022_001's two
+    "可能误报" (possible false positive) items, which are reachable but
+    effect-free and hedged by the annotator themself. Counts: 48 -> 53 bug
+    points, 38 -> 33 traps. The competition rules (NASAC2019ProtoCompFinal.md)
+    quote 50 and 33 for the 2.1 suite; that 33 matches is a coincidence of
+    different corrections, not a reconciliation.
   svp_simple_006_001: >
     Source patched in the local checkout, 2026-10-22, not an annotation
     correction: line 30 read `for (int j = 0; i < 5; j++)`, whose condition never
@@ -72,75 +100,12 @@ notes:
 corrections:
 
   # -- line numbers ------------------------------------------------------
-
-  - case: svp_simple_001_001
-    kind: trap
-    index: 1
-    reason: line-off-by-one
-    confidence: certain
-    as_written: "svp_simple_001_001_global_var<W#43><R#63><W#44>"
-    corrected: [[write, 43], [read, 64], [write, 44]]
-    evidence: >
-      Line 63 is the declaration `int reader2;`. The read of global_var is the
-      following statement, `reader2 = svp_simple_001_001_global_var;` on line 64.
-      No other line in isr_2 reads global_var.
-
-  - case: svp_simple_019_001
-    kind: bug
-    index: 1
-    reason: line-drift
-    confidence: certain
-    as_written: "svp_simple_019_001_global_var1<R#45>,<W#65>,<R#54>"
-    corrected: [[read, 45], [write, 71], [read, 59]]
-    evidence: >
-      global_var1 is written exactly once in isr_1, at line 71; line 65 is
-      `idlerun();`. Its reads in main are at 45, 51 and 59; line 54 is
-      `idlerun();`. Rank-aligning the annotated reads 45, 49, 54 onto the actual
-      45, 51, 59 gives 54 -> 59, which is also what the six-line insertion
-      described above predicts.
-
-  - case: svp_simple_019_001
-    kind: trap
-    index: 1
-    reason: line-drift
-    confidence: certain
-    as_written: "svp_simple_019_001_global_var2<R#40>,<W#61>,<R#42>"
-    corrected: [[read, 40], [write, 67], [read, 42]]
-    evidence: >
-      global_var2 is written once in isr_1, at line 67; line 61 is blank. Both
-      reads, at 40 and 42, sit above the inserted blocks and are already correct.
-
-  - case: svp_simple_019_001
-    kind: trap
-    index: 2
-    reason: line-drift
-    confidence: certain
-    as_written: "svp_simple_019_001_global_var1<R#45>,<W#65>,<R#49>"
-    corrected: [[read, 45], [write, 71], [read, 51]]
-    evidence: >
-      As bug 1, with the second read rank-aligning 49 -> 51 (reader4).
-
-  - case: svp_simple_019_001
-    kind: trap
-    index: 3
-    reason: line-drift
-    confidence: certain
-    as_written: "svp_simple_019_001_global_var1<R#49>,<W#65>,<R#54>"
-    corrected: [[read, 51], [write, 71], [read, 59]]
-    evidence: >
-      As bug 1, with both reads rank-aligned: 49 -> 51 (reader4), 54 -> 59 (reader5).
-
-  - case: svp_simple_019_001
-    kind: trap
-    index: 4
-    reason: line-drift
-    confidence: certain
-    as_written: "svp_simple_019_001_global_condition3<R#48><W#63>,<R#53>"
-    corrected: [[read, 48], [write, 69], [read, 56]]
-    evidence: >
-      global_condition3 is written once in isr_1, at line 69; line 63 is blank.
-      It is read at 48 (already correct) and 56; line 53 is blank, and 53 -> 56 is
-      the three-line shift the insertion predicts at that point.
+  #
+  # The six line corrections that lived here (svp_simple_001_001 trap 1;
+  # svp_simple_019_001 bug 1 and traps 1-4) were removed on 2026-10-28, when
+  # the annotations themselves were corrected in the suite's source, lines
+  # included -- see `relabel_2026_10_28` in the notes above. Their evidence is in
+  # git history (this file, before that date) and in wiki/benchmarks/Racebench.md.
 
   # -- access kinds ------------------------------------------------------
 

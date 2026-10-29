@@ -18,7 +18,8 @@ changes the shape of what gets built rather than its quality. Resolved items are
 with the date.
 
 - [x] ~~Mirror the [[BMC4AV (tool)]] artifact; clone both benchmarks.~~ Done 2026-08-20 — all
-  three are local at `../BMC4AV` (full source), `../NIChecker`, `../racebench`.
+  three are local at `../BMC4AV` (full source), `../NIChecker`, `../racebench`. Racebench is also
+  vendored in the implementation since 2026-10-29 ([[Racebench#Vendored copy]]).
 - [x] ~~Decide the priority-direction convention.~~ Settled 2026-08-20 from the benchmark READMEs
   and `priority.info`: **larger number = higher priority** ([[Contradictions]] #3).
 - [x] ~~Z3 stage or no Z3 stage?~~ Decided 2026-08-27: **required, ahead of the LLM**
@@ -55,6 +56,9 @@ with the date.
   **Caveat, and the reason this is not fully closed in spirit**: the same person wrote the parser
   and the hand count, so it establishes agreement, not correctness. Pedro spot-checks 019 and
   022, the two where the count rests on a judgement rather than transcription.
+  Track B's tolerant reader (`project-src/src/irqrace/llm/annotations.py`, built for the
+  fixtures) independently reproduces 48 and 38 as well (2026-09-26); two readers now exist and
+  should be reconciled into one rather than drift apart.
 - [ ] **Are `svp_simple_019_001`'s bug/trap labels stale?** Its annotations predate an edit that
   inserted `{`, `enable_isr(1);` and `}` into two guarded blocks in `main` — which is how the
   line drift was reconstructed ([[Racebench]]). That edit is *semantically significant*: the
@@ -64,6 +68,21 @@ with the date.
   and four traps — about 1% of the ground truth — turn on this. Cannot be settled from the
   repository alone; would need the suite's history or its authors. Blocks: nothing, but it is a
   stated threat to validity.
+- [x] **Resolve the harmfulness criterion against Racebench's dead readers.** *(opened
+  2026-09-26, from the first live run.)* The criterion adopted from Bai et al. via
+  [[IntRace (paper)]] asks whether the shared variable feeds a branch or indexes an array.
+  Racebench's simple cases read shared variables into locals that are never used again, in at
+  least 10 of 31 cases, so the criterion classifies annotated bug points as **benign** — and
+  the model doing so is reasoning correctly about the code. Two of the first six bug points
+  came back `likely_benign` on that basis. Options: ask harmfulness only where the value is
+  live; restate the criterion counterfactually; or drop harmfulness on this benchmark and let
+  trap rejection carry the precision argument. Blocks: the interpretation of every harmfulness
+  number on Racebench, and the wording of the recall gate ([[LLM Stage Design]]).
+  **Decided 2026-09-27 (Lucas): option C.** On Racebench the harmfulness answer is asked,
+  recorded and reported but not scored; a feasible candidate counts as found. Harmfulness is
+  judged on the [[Real-World Program Benchmark]] in W9. Consequence found on re-scoring: the
+  `simple` → `+domain` Inspection Ratio gap survives the change, so it was never the
+  harmfulness clause — see `log.md`, same date.
 
 - [ ] **Is `svp_simple_001_001`'s first trap a trap?** Found by stage 2, 2026-10-22: under the
   README's arrival model `<W#43><R#63><W#44>` is reachable, two ways ([[Contradictions]] #7).
@@ -137,16 +156,28 @@ with the date.
   context records for ten [[Racebench]] candidates — five bug points, five planted traps — and
   score a current model by hand. A negative result reshapes the whole design, so this is the
   cheapest high-information experiment available and should come first.
+  **Answered 2026-09-26: GO.** Run on 20 fixtures rather than 10, with the *simple-prompt
+  baseline* — no domain rules, no progressive prompting, no decomposition, no self-validation.
+  `openai/gpt-oss-120b` via Groq, JSON-Schema-enforced output. **Recall gate PASS at 9/9**
+  (one candidate excluded, see below), trap rejection **80%** (8/10), Inspection Ratio
+  **63.2%**. The concern this question existed to test — that nothing in the LLM branch has
+  been tried on concurrency and nothing transfers by assumption — is not borne out at this
+  integration point. Qualifications in the log entry of the same date.
 - [ ] **Write down the benignity criterion the LLM will apply, before it applies one.**
   [[BMC4AV (paper)]] asserts `(R,W,W)` is benign without argument and this wiki treats that as a
   defect ([[Contradictions]] #2). If the triage stage makes benignity judgements case-by-case
   without a stated, testable criterion, the project has reproduced the problem it set out to
   fix. Candidate starting point is the Bai et al. rule via [[IntRace (paper)]] — which is a
   reason to read it primarily rather than second-hand.
-- [ ] **Establish a current cost and capability baseline.** Every model number in the corpus is
+- [x] **Establish a current cost and capability baseline.** Every model number in the corpus is
   from 2023–24 (GPT-4, GPT-3.5, Claude 2, Bard, Llama 3) and none should be used to choose a
   model ([[LLM Integration Patterns]]). Measure tokens and cost per candidate on the probe above
   and record the model and date with the figure ([[Precision Metrics]] #8).
+  **Measured 2026-09-26.** Rendered context record averages ~2,150 tokens; a baseline-row
+  candidate costs ~3,400–5,200 tokens in and ~700 out. At Anthropic list prices that is
+  **$0.35** for a 10-candidate probe on Claude Opus 5 and **$10.25** for the full five-row
+  ablation over 20 fixtures ($2.05 on Haiku 4.5) — so the Roadmap's ">$30 on fixtures by W5"
+  trigger is well calibrated: n=3 voting across all five rows lands at ~$31, exactly on it.
 - [ ] **Instrument the progressive-prompt request channel from the first prototype.** What the
   model asks for, how often and how deep **is** the specification of the context record, now
   that precomputed slicing is out ([[Program Slicing]]). Not blocking, but it must be built in

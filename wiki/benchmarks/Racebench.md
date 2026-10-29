@@ -2,11 +2,21 @@
 type: benchmark
 tags: [wiki, benchmark]
 sources: ["[[Racebench (documentation)]]", "[[IntRace (paper)]]", "[[NIChecker (paper)]]", "[[BMC4AV (paper)]]"]
-updated: 2026-10-22
+updated: 2026-10-29
 status: solid
 ---
 
 # Racebench
+
+> [!warning] Ground truth relabelled on 2026-10-28 — counts changed
+> On the human's direction, five planted traps the suite's own README contradicts were
+> relabelled as bug points **in the suite's source** (then `../racebench/2.1_remarks`; since
+> 2026-10-29 the vendored copy, [[#Vendored copy]]): 001 trap 1, 019 traps 2–4, 020 trap 1. The simple cases now carry **53 bug points and
+> 33 traps**; before, **48 and 38**. Every number on this page and elsewhere dated before
+> 2026-10-28 uses 48/38 and is left as written. Evidence and the case-by-case reasoning:
+> [[#Relabel 2026-10-28]], [[Racebench Full Run 2026-10-28]], [[Contradictions]] #7–#8,
+> `project-src/bench/racebench-errata.yaml` (note `relabel_2026_10_28`),
+> `project-src/docs/evaluation-protocol.md`.
 
 The academic benchmark everyone in this literature evaluates on: interrupt-driven C programs
 modelled on real aerospace embedded software, at `github.com/chenruibuaa/racebench`. Built
@@ -22,7 +32,7 @@ directly rather than taken from the DeepWiki export — which changes two of the
 
 | | Cases | Bug points | FP traps |
 | --- | --- | --- | --- |
-| Simple (`svp_simple_001_001` … `svp_simple_031_001`) | 31 | **48** *(measured)* | **38** *(measured)* |
+| Simple (`svp_simple_001_001` … `svp_simple_031_001`) | 31 | **53** *(measured; 48 before 2026-10-28)* | **33** *(measured; 38 before)* |
 | Complex (`svp_real_001`, `svp_real_002`) | 2 | 3 | 5 |
 
 Counted on 2026-08-20 by parsing every `//bug点` and `//误报点` entry in
@@ -128,7 +138,66 @@ list with **no header at all**, just `// 1:` numbering. There are also outright 
 
 A strict parser silently returns 28 bug points instead of 48 — a 42% undercount, with no
 error. That is very plausibly a contributing cause of the count disagreements below, and it is
-worth stating in any evaluation section.
+worth stating in any evaluation section. A tolerant reader was written against the local
+checkout and **independently reproduces 48 and 38** (`project-src/src/irqrace/llm/annotations.py`,
+with the counts fixed as tests). Two things were needed to get there and neither is obvious:
+the headerless block in `svp_simple_022_001` must default to *bug points* — requiring a header
+costs exactly those four and turns 48 into 44 — and the access type must be matched
+case-insensitively. Rather than match a grammar, the reader finds bracket groups and pulls a
+type letter and a number out of each one independently; field order, the `#`, the separator
+and the letter case then stop mattering, and all four grammars collapse into one rule.
+
+### `svp_simple_019_001` is annotated against the *other* copy of the suite
+
+All five of its annotations — one bug point and four traps — resolve cleanly against
+`racebench/2.1/svp_simple_019/` and **not** against the `2.1_remarks` file they are written in.
+In the shipped annotated file they point at `idlerun();`, at a bare `{`, and at blank lines:
+
+| Annotation | Points at, in `2.1_remarks` | Is, in `2.1` |
+| --- | --- | --- |
+| `<W#61>` | blank line | `svp_simple_019_001_global_var2 = 0x55;` |
+| `<W#63>` | blank line | `svp_simple_019_001_global_condition3 = 0;` |
+| `<W#65>` | `idlerun();` | `svp_simple_019_001_global_var1 = 0x01;` |
+
+**And the two copies are not the same program.** This is not a reformat. Diffing them:
+
+- `svp_simple_019_001_global_var1 = rand();` — an initialising write to *the very variable the
+  bug point is about* — is present in the plain copy and **deleted** in the annotated one;
+- `enable_isr(1)` moves from *after* each guarded read to *inside the guard, before the read*.
+  In the plain copy `reader4` and `reader5` execute with irq 1 **masked**; in the annotated
+  copy they execute with it **enabled**. The masking state of the annotated accesses is
+  inverted between the two files.
+
+So for this case the shipped ground truth describes a program that is not the one shipped
+beside it, and the difference is in exactly the property the defect turns on.
+
+**The directory named `2.1` holds racebench 2.0.** All 31 of its files self-identify in their
+header as `racebench2.0`, dated 19/10/30, against `racebench2.1_remarks` dated 19/11/25. Body
+comparison: **21 of the 31 are identical**, 10 differ, and 019 differs most at 12 lines. Only
+019's annotations resolve better against the older copy, so it is the only case where the
+ground truth is attached to the wrong program — but the version mismatch is suite-wide and
+worth knowing before either directory is treated as canonical.
+
+Two consequences, and they fall on evaluation rather than detection. First, any match rule
+keyed on line numbers loses **one bug point and four traps** on 019: 2% of recall and 10.5% of
+trap rejection, in the direction that makes a tool look worse than it is. Deciding that rule is
+already an open blocker ([[Roadmap]] W2, [[Open Questions]]) and this is the concrete case
+proving exact-line matching cannot be it; a window around the nearest access to the named
+variable absorbs both this and the `<R#63>` off-by-one below. Second, and worse, **019's five
+labels cannot be trusted at all** until someone decides which program they describe — a
+window-based rule will match them to accesses whose masking state is the opposite of the one
+the annotator was looking at. They are excluded from Track B's fixture set for that reason.
+
+Two further line references are wrong in the ordinary way, rather than by being from another
+file: `svp_simple_001_001` trap 1 gives `<R#63>`, which is `int reader2;`, a declaration — the
+read is on line 64. The wiki quotes that exact annotation above as its example of the
+juxtaposed grammar and did not previously record that the line is wrong.
+
+Separately, **five cases annotate a global while the annotated line accesses it through a
+pointer or a parameter** — `svp_simple_009_001` (`*q` for `_p`), `011` (`*m`, `*q`), `012`
+(`*p`), `024` (`array[index]`) and `025` (`*ptr_var`). Those are not defects; they are the
+cases that *require* alias reasoning, and they are worth knowing as a set before any
+name-based matching is attempted.
 
 **This matters more than it looks.** The benchmark's own ground truth is *atomicity-violation
 shaped* — three accesses — even though the suite is called "racebench" and the competition
@@ -202,7 +271,7 @@ all. (Reaching that number required stripping bitcasts from call sites: `common.
 
 | Source | Defect class | Cases used | Ground truth assumed | Against the benchmark |
 | --- | --- | --- | --- | --- |
-| benchmark itself | annotated triples | 31 simple | **48** bug points, 38 traps *(measured)* | — |
+| benchmark itself | annotated triples | 31 simple | **53** bug points, 33 traps *(measured since the 2026-10-28 relabel; 48/38 before — the papers below were scored against 48/38)* | — |
 | [[Racebench (documentation)]] | — | 31 simple | 50 bug points, 33 traps | +2 / −5 against the annotations |
 | [[IntRace (paper)]] | [[Data Race]] | 30 (one dropped: [[Rchecker]] errored on it) | 50 | +2 |
 | [[NIChecker (paper)]] | [[Atomicity Violation]] | 31 | 54, "four harmful patterns" | **+6** — still unexplained |
@@ -289,3 +358,55 @@ software. The enumeration itself is *not* in the repository documentation:
 which this wiki does not treat as authoritative. Recovering the real seven from the primary
 source is listed in [[Open Questions]]; the papers in this wiki use their own three- or
 four-element pattern sets instead ([[Access Interleaving Patterns]]).
+
+## Relabel 2026-10-28
+
+The one change this project made to the suite's labels, as opposed to its line numbers and access
+kinds (which the errata corrects without touching the files). Each relabelled annotation was read
+against the source and the README's arrival model — an interrupt "may preempt the main program or a
+lower-level interrupt whenever it is enabled, at an indeterminate moment, position and number of
+times" — and found reachable as a concrete interleaving:
+
+| case | was | now | reason |
+| --- | --- | --- | --- |
+| 001 | trap 1 `global_var <W#43><R#63><W#44>` | bug 2 `<W#43><R#64><W#44>` | `isr_1` may fire between `init()` and `disable_isr(2)`, or start a second time with irq 2 already unmasked by its first run; `isr_2` then reads the intermediate value |
+| 019 | traps 2, 3, 4 (line-drifted) | bugs 2, 3, 4, with the file's own lines | 2: valid for the `2.1` copy, where the read is inside the critical section, but not for `2.1_remarks`, where `enable_isr(1)` moved before it; 3 and 4: reachable in both copies through the unmasked gap between two critical sections |
+| 020 | trap 1 `global_var <R#37><W#44><R#40>` | bug 3 | reachable with two `isr_1` activations (the first unmasks irq 2 so `isr_2` can change `para`) |
+
+Not relabelled: 022's two "可能误报" (possible false positive) items — reachable but effect-free
+(the ISR writes the value already there, and the local flow rewrites the variable in between), and
+hedged by their annotator; and every trap the review found correct (007 trap 1, 009 trap 1).
+
+Counts: **48 → 53 bug points, 38 → 33 traps**; per (case, variable) 33 → 35 bug points. The 019
+line corrections moved from the errata into the source, so the errata now holds 6 corrections, not
+12. Static pipeline under the new labels (stage3-all, 2026-10-28): recall gate **53/53**, traps
+30/33 after stage 1, 25/33 after stage 2, **11/33** reaching the LLM. The competition rules quote
+53 bug points and 38 markers for the whole suite (50/33 for the simple cases); the coincidence with
+this project's 53/33 for the simple cases is not a reconciliation.
+
+## Vendored copy
+
+Since 2026-10-29 the suite lives **inside the implementation**, at `project-src/bench/racebench`:
+upstream `chenruibuaa/racebench` at commit `ec1d828` (2019-12-04), imported unchanged by
+`git archive`, then the project's two changes (the `svp_simple_006_001` patch and the
+[[#Relabel 2026-10-28|relabel]]) as a separate commit, so they are visible in irqrace's own
+history. `project-src/bench/racebench/VENDORED.md` records the provenance and the changes. Upstream
+ships **no licence file**; the copy is redistributed unchanged except for those two changes, for
+reproducibility, with copyright left to its authors.
+
+Why: before, the suite was a separate checkout one directory above the vault, found through
+absolute paths that resolved on one machine only, and the two changes existed only as
+uncommitted edits there — no clone of the repository could reproduce the 53/33 ground truth.
+
+**Moving it exposed a latent defect in candidate identity.** The `file` field of every access,
+which the fingerprint hashes, came from the debug info, whose path clang writes relative to the
+deepest directory shared with the *working directory*. With the old layout that gave
+`racebench/2.1_remarks/svp_simple_001/svp_simple_001_001.c`; with the suite under the
+working directory it would have given `svp_simple_001_001.c`. Candidate ids therefore depended on
+the machine's directory layout. Since 2026-10-29 the path is always relative to the suite's
+`2.1_remarks` (`svp_simple_001/svp_simple_001_001.c`, the form the LLM fixtures already used),
+and the same ids come out from any working directory and any copy of the suite. **Every candidate
+id changed once**: ids quoted in pages dated before 2026-10-29 (e.g. `cf213e34277d338cc` for case
+001's WRW 32/55/35) are the old ones, and the LLM cache, keyed on the fingerprint, starts cold.
+Counts are unaffected — the static recall gate gives the same 316 → 202 → 166 funnel, 53/53 bug
+points and 30 → 25 → 11 of 33 traps.

@@ -19,10 +19,12 @@ pytestmark = pytest.mark.skipif(
 #: Certified by hand in docs/groundtruth-handcount.md. Chosen to be adversarial:
 #: between them these five exercise every grammar and every known annotation
 #: defect in the suite.
+#: 001 was (1, 2) and 019 (1, 4) until the 2026-10-28 relabel moved four of
+#: their traps to bug points (errata note relabel_2026_10_28).
 HAND_COUNT = {
-    "svp_simple_001_001": (1, 2),
+    "svp_simple_001_001": (2, 1),
     "svp_simple_016_001": (3, 0),
-    "svp_simple_019_001": (1, 4),
+    "svp_simple_019_001": (4, 1),
     "svp_simple_022_001": (4, 3),
     "svp_simple_031_001": (3, 0),
 }
@@ -38,8 +40,9 @@ def corrected():
     return load_suite(SUITE, ERRATA)
 
 
-def test_suite_has_48_bug_points_and_38_traps(raw):
-    assert (len(raw.bugs), len(raw.traps)) == (48, 38)
+def test_suite_has_53_bug_points_and_33_traps(raw):
+    """48 and 38 until the 2026-10-28 relabel (errata note relabel_2026_10_28)."""
+    assert (len(raw.bugs), len(raw.traps)) == (53, 33)
 
 
 def test_all_31_simple_cases_are_parsed(raw):
@@ -143,8 +146,10 @@ def test_a_strict_parser_would_undercount(raw):
 def test_errata_applies_cleanly_and_changes_no_count(raw):
     before = (len(raw.bugs), len(raw.traps))
     report = apply_errata(raw, load_errata(ERRATA))
-    assert len(report) == 12
-    assert (len(raw.bugs), len(raw.traps)) == before == (48, 38)
+    # 12 until 2026-10-28; the six line corrections for 001 and 019 moved into
+    # the suite's source with the relabel.
+    assert len(report) == 6
+    assert (len(raw.bugs), len(raw.traps)) == before == (53, 33)
 
 
 def test_errata_is_fail_fast_when_it_no_longer_applies(raw):

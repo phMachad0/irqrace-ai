@@ -9,7 +9,9 @@ without them is not quotable ([[Precision Metrics]]).
 ## Decision 1 — counting unit: per-triple-instance
 
 **One annotated triple is one defect.** The 31 Racebench simple cases carry
-**48 bug points and 38 planted traps**.
+**53 bug points and 33 planted traps** since 2026-10-28, and carried **48 and 38**
+before (see "Relabel, 2026-10-28" below). Every number dated before that day
+divides by 48/38.
 
 The corpus mixes units without naming them: the shipped `violation.info` counts
 per variable (45 entries) while [[BMC4AV (paper)]]'s tables count per
@@ -17,11 +19,11 @@ access-triple-instance (94), and most cross-paper comparisons quietly depend on
 which ([[Contradictions]] #1). Measured on this suite, the three candidate units
 give:
 
-| Unit | Bug points | Traps |
-| --- | --- | --- |
-| **per-triple-instance** | **48** | **38** |
-| per (case, variable) | 33 | 29 |
-| per case | 31 | 31 |
+| Unit | Bug points | Traps | before 2026-10-28 |
+| --- | --- | --- | --- |
+| **per-triple-instance** | **53** | **33** | 48 / 38 |
+| per (case, variable) | 35 | 25 | 33 / 29 |
+| per case (cases with at least one) | 31 | 22 | 31 / — |
 
 Per-triple-instance is the finest grain available, so it is the hardest to
 inflate; it is what BMC4AV counts, so cross-paper comparison survives; and the
@@ -74,8 +76,35 @@ The errata holds 12 corrections: six line-number fixes (five in 019, one
 off-by-one in 001) and six access-kind fixes across 002, 016, 017 and 022. Each
 entry quotes the annotation as written, gives the corrected triple, states a
 confidence (`certain` for eleven, `likely` for one) and carries its evidence.
-**No correction changes a count**: 48 and 38 hold before and after. What changes
-is the shape distribution, and both are reported.
+**No correction changes a count**: the errata corrects lines and kinds only. What
+changes is the shape distribution, and both are reported. (Since 2026-10-28 the
+errata holds 6 corrections: the six line fixes for 001 and 019 moved into the
+suite's source with the relabel below.)
+
+## Relabel, 2026-10-28 — the one change of counts
+
+Five planted traps were relabelled as bug points **in the suite's own source**
+(then `../racebench/2.1_remarks`, uncommitted there; since 2026-10-29 vendored at
+`bench/racebench`, where the change is a commit of its own), on the human's direction,
+after each was hand-checked as reachable under the suite's README ("an interrupt
+may preempt the main program or a lower-level interrupt whenever it is enabled,
+at an indeterminate moment, position and number of times"):
+
+| Case | Was | Now | Why |
+| --- | --- | --- | --- |
+| 001 | trap 1 `global_var <W#43><R#63><W#44>` | bug 2, read on line 64 | `isr_1` may fire before `disable_isr(2)`, or start again with irq 2 unmasked |
+| 019 | traps 2, 3, 4 (line-drifted) | bugs 2, 3, 4, lines of the file | 2: valid only for the `2.1` copy; 3, 4: reachable through the gap between two critical sections in both copies |
+| 020 | trap 1 `global_var <R#37><W#44><R#40>` | bug 3 | reachable with two `isr_1` activations |
+
+Counts: **48 → 53 bug points, 38 → 33 traps.** Recall gate after stage 3:
+53/53. The evidence: `bench/racebench-errata.yaml` (note `relabel_2026_10_28`),
+wiki `Racebench Full Run 2026-10-28` ("Verdict on every disputed item"),
+`Contradictions` #7 and #8. 022's two "可能误报" (possible false positive) items
+were not relabelled: reachable but effect-free, and hedged by their annotator.
+
+The competition rules quote 53 bug points and 38 false-positive markers for the
+whole suite, 50 and 33 for the simple cases; this project's 53/33 for the simple
+cases coincides with neither by design.
 
 Applying the errata is fail-fast: an entry that no longer matches the file raises
 rather than being skipped, because a silently inapplicable errata means the suite
@@ -85,9 +114,9 @@ moved underneath every number measured against it.
 
 | Number | Definition | Gate |
 | --- | --- | --- |
-| **Recall** | bug points matched / 48 | **must be 100%** |
+| **Recall** | bug points matched / 53 (48 before 2026-10-28) | **must be 100%** |
 | Candidates reported | total, per subject and overall | no gate — report without embarrassment |
-| Trap reporting rate | traps matched / 38 | **no gate at stage 1** (see below) |
+| Trap reporting rate | traps matched / 33 (38 before 2026-10-28) | **no gate at stage 1** (see below) |
 | Kind agreement | matches whose access kinds also agree | diagnostic |
 | Alias-resolved matches | matches where the variable name differed | diagnostic |
 | **Inspection Ratio** | fraction of the ordered list read before every bug point is found | the headline precision-side metric |
@@ -97,7 +126,7 @@ static phase is deliberately over-approximate and ignores guard conditions and
 interrupt state so that nothing is missed ([[Pipeline Design]], stage 1). Traps
 are what the solver and then the LLM stage are there to sort out, so trap
 rejection only becomes a meaningful score after those stages exist. Reporting
-38/38 traps at stage 1 is the expected result.
+most traps at stage 1 is the expected result (30/33 since the relabel).
 
 **Inspection Ratio is undefined when a bug point was missed**, and the code
 returns nothing rather than a flattering number. An Inspection Ratio computed

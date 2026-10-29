@@ -1,0 +1,123 @@
+\chapter{Introdução} \label{cap:introducao}
+
+\section{Motivação}
+\label{sec:motivacao}
+
+Parte significativa do software embarcado que controla sistemas físicos não
+emprega \textit{threads}. Um freio eletrônico, um \textit{driver} de dispositivo
+ou um controlador de bordo executa um laço principal e delega ao hardware a
+tarefa de interrompê-lo. Quando um periférico sinaliza um evento, o processador
+suspende a execução em curso, desvia para uma rotina de tratamento de
+interrupção (\textit{Interrupt Service Routine}, \isr) e retoma o ponto
+interrompido assim que a rotina termina.
+
+Esse mecanismo basta para produzir concorrência. Uma \isr\ pode ser disparada
+entre duas instruções quaisquer do fluxo principal, e ambos os fluxos costumam
+ler e escrever as mesmas variáveis globais. Sem proteção, o resultado do
+programa passa a depender do instante exato em que a interrupção ocorreu, e
+esse instante não se reproduz de forma confiável em teste. Como observam
+\citeonline{sdracer}, o defeito depende da intercalação das execuções, de modo
+que a interrupção precisa ocorrer dentro de uma janela de poucas instruções.
+Uma bateria de testes pode, portanto, passar em todas as execuções observadas
+sem jamais exercitar essa janela. Por esse motivo a literatura recorre a
+técnicas que raciocinam sobre todas as execuções possíveis, entre elas a
+análise estática, a execução simbólica e a verificação de modelos.
+
+As quatro ferramentas que definem o estado da arte nessa linha aparecem entre
+2020 e 2026. O SDRacer combina análise estática, execução simbólica e simulação
+numa plataforma virtual, e é o único que propõe correções \cite{sdracer}. O
+IntRace é puramente estático e organiza a análise em três estágios de custo
+crescente, terminando num solucionador SMT \cite{intrace}. O NIChecker traduz o
+programa com interrupções num programa sequencial equivalente e o entrega a um
+verificador de modelos limitado \cite{nichecker}. O BMC4AV, mais recente,
+mantém a verificação limitada mas guia o solucionador com um grafo de acessos à
+memória \cite{bmc4av}. As quatro relatam precisão alta e poucos falsos
+positivos.
+
+O que elas não relatam com o mesmo cuidado é o \textit{recall}, isto é, a fração dos
+defeitos existentes que a ferramenta efetivamente encontra, medida definida
+formalmente na Seção~\ref{sec:soundness}. Três delas afirmam ausência de falsos
+negativos com base em inspeção manual ou dentro de um limite de desenrolamento
+de laços \cite{sdracer,intrace,nichecker}, e \citeonline{bmc4av} sustentam que
+uma ferramenta com precisão de 100\% encontrou menos de 40\% das violações
+existentes na mesma suíte. Essa assimetria tem origem identificável. O
+\textit{benchmark} que todas utilizam foi criado para uma competição de
+protótipos na qual, nos casos simples, uma detecção valia 2 pontos e um falso
+positivo custava 3 \cite{racebench}. Otimizar para essa regra equivale a
+otimizar contra o \textit{recall}, e a prática permaneceu depois da competição.
+
+Em paralelo, e sem contato com essa literatura, modelos de linguagem de grande
+escala (\llm) passaram a ser usados para tornar a análise estática utilizável.
+Eles decidem quais alertas de um analisador merecem atenção humana
+\cite{llift,chatgpt-static,reducing-fp}, inferem especificações que o
+analisador não tem como derivar sozinho \cite{iris,adataint} e propõem
+correções \cite{skipanalyzer,sastgenius}. Todos esses trabalhos tratam defeitos
+sequenciais, como fluxo de dados contaminados, desreferência de ponteiro nulo,
+vazamento de recursos e uso de variável antes da inicialização.
+\citeonline{llift} chegam a citar a concorrência como algo que a análise
+estática modela mal, mas não a abordam. A interseção entre as duas literaturas
+está vazia, e é nela que este trabalho se situa.
+
+\section{Objetivos}
+\label{sec:objetivos}
+
+O objetivo geral é construir uma ferramenta que encontre defeitos de
+concorrência em código C embarcado orientado a interrupções sem falsos
+negativos em relação a um conjunto explícito de premissas, aceitando falsos
+positivos em troca, e que feche o ciclo com um modelo de linguagem, indo da
+detecção à contextualização, à triagem, ao reparo e à reverificação.
+
+Desse objetivo derivam seis objetivos específicos.
+
+\begin{enumerate}
+  \item Detectar, numa única análise estática, os candidatos a defeito, com
+    \textit{recall} de 100\% sobre o gabarito do \textit{benchmark} Racebench.
+  \item Emitir, para cada candidato, um registro de contexto com as evidências
+    de que um revisor precisa, incluindo acessos, fluxos, prioridades, caminhos
+    de chamada e estado de mascaramento das interrupções.
+  \item Descartar apenas os candidatos que um solucionador prove impossíveis.
+  \item Empregar um \llm\ para ordenar e explicar os candidatos restantes,
+    reduzindo o esforço de revisão sem que nenhum candidato saia do relatório.
+  \item Medir a contribuição de cada técnica de \textit{prompt} por meio de uma
+    ablação no formato adotado por \citeonline{llift}.
+  \item Propor correções específicas de interrupção e verificar que o defeito
+    desapareceu sem que outros tenham sido introduzidos.
+\end{enumerate}
+
+\section{Justificativa}
+\label{sec:justificativa}
+
+Um defeito de concorrência que escapa aos testes manifesta-se em campo, num
+sistema que aciona hardware. Nesse domínio, uma análise que não perde defeitos
+vale mais do que uma análise que raramente erra, pois apenas a primeira sustenta
+a afirmação de que um programa foi verificado. O preço dessa garantia são os
+falsos alarmes. No IntRace, o primeiro estágio produz cerca de 208 candidatos
+por programa real \cite{intrace}, e revisá-los individualmente tem custo
+suficiente para inviabilizar o uso cotidiano da ferramenta. A etapa com \llm\
+proposta aqui endereça precisamente esse custo, ordenando os candidatos de modo
+que o revisor encontre os defeitos reais com o menor esforço de leitura
+possível, sem que nenhum candidato seja removido do relatório.
+
+Do ponto de vista científico, o trabalho contribui em três frentes. É a
+primeira aplicação de triagem assistida por \llm\ a defeitos de concorrência em
+programas com interrupções, um domínio que os sete trabalhos revisados sobre
+\llm\ e análise estática não tocam. Unifica, num só \textit{front end}, as duas
+formas pelas quais a literatura enuncia o defeito, hoje tratadas por ferramentas
+distintas. E explicita as premissas sob as quais a ausência de falsos negativos
+vale, o que nenhum dos trabalhos revisados faz, tornando verificável uma
+afirmação que até agora vinha sendo apenas declarada.
+
+\section{Organização do Trabalho}
+\label{sec:organizacao}
+
+O Capítulo~\ref{cap:conceitos} reúne os conceitos necessários e a revisão da
+literatura, cobrindo o modelo de execução de programas com interrupções, o
+defeito que se busca encontrar, as técnicas de análise empregadas, as
+ferramentas e \textit{benchmarks} existentes e o uso de modelos de linguagem em
+análise estática. O Capítulo~\ref{cap:metodo} descreve o método de trabalho e
+as fases em que o desenvolvimento se organiza. O
+Capítulo~\ref{cap:especificacao} especifica os requisitos da ferramenta, e o
+Capítulo~\ref{cap:desenvolvimento} apresenta as tecnologias escolhidas, o
+projeto da ferramenta e o procedimento de avaliação.\ifparcial\else\ O
+Capítulo~\ref{cap:consideracoes} encerra o documento com o balanço dos
+resultados, as contribuições e as perspectivas de continuidade.\fi

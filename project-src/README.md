@@ -125,6 +125,57 @@ README: `isr_1` may start with irq 2 unmasked, before main's `disable_isr(2)` or
 earlier activation of itself. Stage 2 keeps it. The W1 fixtures had asserted it was provably
 infeasible; they now carry what stage 2 really emits.
 
+## Status — Track B, W1–W8 LLM Integration complete (20 Oct 2026)
+
+Track B (`track-b/llm-integration`) is feature-complete through W8 of the
+[[Roadmap]]: the 20 labelled fixtures, the M1 feasibility probe (**GO**), the
+provider-neutral backend seam, the five ablation rows, the source-backed C4
+resolver (`SourceBackedResolver`), the W7 repair harness and evaluator
+(`RepairClient`, `score_repairs`, `scripts/run-repair.py`), and the W8
+end-to-end C3 `RunStore` pipeline (`llm/pipeline.py`, `irqrace llm triage`,
+`irqrace llm repair`) are implemented and covered by **202 Track B tests**
+(**243 passing overall** offline).
+
+| Track B item (W1–W8) | State |
+| --- | --- |
+| C4 owned and exercised against both mock and source-backed resolvers | done — `llm/resolver.py` (`RecordBackedResolver`, `SourceBackedResolver`) |
+| **Provider-neutral backend seam** | done — `llm/backends/`, any model via `provider:model` |
+| Prompt harness: client, structured output, result cache | done — `llm/client.py`, `llm/cache.py` |
+| Token, latency and cost model | done — `llm/cost.py` |
+| The five ablation rows as compositions | done — `llm/prompts/` |
+| Recall gate, trap rejection, Inspection Ratio, consistency | done — `llm/scoring.py` |
+| **20 hand-built fixtures (10 bug points, 10 traps, 6 adversarial pairs)** | **20/20 done** — `fixtures/`, `scripts/build-fixtures.py` |
+| **Feasibility probe (Milestone M1 go/no-go)** | **GO — 100% recall gate, 80% trap rejection (`simple` row)** |
+| **W7 repair stage + 10 hand-written reference fixes + evaluator** | **done** — `llm/repair.py`, `llm/repair_references.py`, `scripts/run-repair.py` |
+| **W8 end-to-end C3 `RunStore` integration & CLI (`triage`, `repair`)** | **done** — `llm/pipeline.py`, `cli.py` |
+
+### The backend seam
+
+The harness talks to a `Backend`, never to an SDK, so the same prompt
+configuration can be measured against any model. That is not only portability:
+LLift's central claim is that **prompt architecture dominates model choice**,
+and holding the prompt fixed while swapping the model is the only way to check
+it here rather than cite it.
+
+| Spec | Reaches |
+| --- | --- |
+| `anthropic:claude-opus-5` | Claude, via the official SDK — the only adapter with prompt caching |
+| `openai:gpt-4o` | any OpenAI-compatible endpoint: OpenAI, Groq, Together, OpenRouter, LiteLLM, vLLM, LM Studio — set `IRQRACE_OPENAI_BASE_URL` |
+| `ollama:qwen2.5-coder:32b` | a local model |
+| `claude-cli:sonnet` | Claude through `claude -p` (Claude Code, non-interactive) on your Pro/Max login — drawn from the plan's usage limits, not billed per token; unpriced in every cost column |
+
+The generic adapters speak plain HTTP from the standard library. Depending on
+one vendor's SDK to talk to a local vLLM server would be backwards, and it
+means a reviewer can reproduce the ablation against a local model with nothing
+installed beyond this repository.
+
+Three differences across providers are **recorded rather than smoothed over**,
+because each one lands in a number: which structured-output tier served an
+answer (`native_schema` / `tool_call` / `prompted_json`, stored on every
+verdict as `produced_by`), whether the backend has prompt caching (so cost is
+not comparable without saying so), and whether it knew its own prices — an
+unpriced model yields `None`, never `0.00`.
+
 ## Status — end of W3–W4 (18 Sep 2026) · **Milestone M2**
 
 | W3–W4 item | State |
@@ -183,8 +234,8 @@ six lines above where it is.
 | **SVF lists its globals** | done — `irqrace probe` |
 
 Not started at the end of W1: stage 2, the Z3 stage, the LLM stage, the dashboard. As of
-W5, stage 2 exists; as of W6–W7, the Z3 stage too. The LLM stage and the dashboard live on
-Track B's branch, `track-b/llm-integration`.
+W5, stage 2 exists; as of W6–W7, the Z3 stage too. Track B adds the LLM stage and the
+dashboard.
 
 ## Layout
 
@@ -192,17 +243,20 @@ Track B's branch, `track-b/llm-integration`.
 contracts/        C1-C4: the frozen schemas, plus one worked example of each
   examples/       svp_simple_001_001 -- one real bug point, two planted traps,
                   one stage-2 drop record, and run-fixture/, a C3 run directory
+fixtures/         Track B's labelled evaluation set (20 records); labels.json is the manifest
 src/irqrace/      the Python half: contracts, config, build, probe, run store,
                   stage-1 derivation, the masking analysis (masking.py), stage 2,
                   and the stage-3 driver (stage3.py)
+  llm/            Track B: verdicts, prompts, C4 resolvers, harness, scoring, repair, C3 pipeline
 analysis/         the C++ half: SVF-based analysis binaries
                   irqrace-probe   what the build produced, C1 vs bitcode (R4, R7)
                   irqrace-stage1  reachability, shared locations, accesses, may-precede,
                                   and the event CFG stage 2's masking analysis reads
                   irqrace-stage3  path feasibility: symbolic execution over the IR, Z3
 bench/configs/    one generated C1 file per Racebench simple case (31)
-bench/racebench-errata.yaml   12 curated corrections to the annotations, with evidence
-scripts/          toolchain setup
+bench/racebench/  the Racebench suite, vendored (see VENDORED.md)
+bench/racebench-errata.yaml   6 curated corrections to the annotations, with evidence
+scripts/          toolchain setup, fixture builder, ablation runner, repair runner
 docs/             notes that are about the implementation rather than the field
 tests/            unit tests, plus an end-to-end pass over all 31 subjects
 ```
@@ -253,6 +307,59 @@ irqrace stage2-all
 ```bash
 irqrace stage2 bench/configs/svp_simple_001_001.yaml -v
 ```
+
+```bash
+python3 -m pytest tests -q
+```
+
+### Track B
+
+The LLM stage needs no toolchain, and its tests need no API key and no network
+— every backend is exercised through an injected transport.
+
+```bash
+pip install -e '.[llm]'             # pydantic only; covers the OpenAI-compatible
+                                    # and Ollama adapters
+pip install -e '.[llm-anthropic]'   # adds the Anthropic SDK
+```
+
+```bash
+irqrace llm prompts                      # the active ablation rows and their hashes
+irqrace llm prompts '+self-validation'   # the full system prefix, as sent
+irqrace llm backends                     # the providers and the spec form
+irqrace llm backends ollama:llama3       # one spec's capabilities and caveats
+irqrace llm fixtures                     # the 20-fixture labelled set (10 bug points + 10 traps)
+irqrace llm triage runs/<run_id>         # triage a C3 run directory (or a single C2 .json)
+irqrace llm repair runs/<run_id>         # propose repairs for triaged candidates in a C3 run
+python3 scripts/build-fixtures.py        # regenerate the fixtures from the specs
+python3 scripts/run-ablation.py          # score the active rows; exits 1 if the gate fails
+python3 scripts/run-ablation.py --resolver source --include-deferred --rows +progressive
+python3 scripts/run-ablation.py --cache-only --rows simple +domain   # re-score, no requests
+python3 scripts/ablation-table.py a.json b.json   # the M3 table, one column group per model
+python3 scripts/run-repair.py            # score the W7 repair stage against the 10 reference fixes
+```
+
+### Track C — Streamlit Pipeline Visualizer & Inter-Stage Metrics Dashboard
+
+The interactive Streamlit dashboard (`src/irqrace/ui/app.py`, launched via `irqrace ui` or `streamlit run dashboard.py`) provides a step-by-step block-level visualizer (`Input → Processing → Output`) over any C3 `RunStore`, inter-stage funnel metrics across all 31 Racebench subjects, Markdown/LaTeX table export for the thesis (R44), human reviewer label persistence (R28), and run-to-run comparison (R41):
+
+```bash
+pip install -e '.[ui]'
+irqrace stage3-all                       # real runs: stages 1-3 and eval/report.json for all 31 cases
+irqrace llm triage runs/<run_id>         # optional: the LLM stages on one of them
+irqrace ui                               # opens http://localhost:8501
+```
+
+Every number the dashboard and the desktop app show is read from a run or measured
+against the ground truth (`src/irqrace/run_evaluation.py`, the bench's match rule);
+a stage that did not run shows "-", and a subject without ground truth on this
+machine gets no recall figure. The earlier `scripts/seed-showcase-run.py`, which wrote
+stage-2, solver, triage and re-verification outputs nobody computed, is gone.
+
+The Racebench suite ships with the repository, at `bench/racebench` (upstream commit
+`ec1d828` plus two local changes; `bench/racebench/VENDORED.md`). `IRQRACE_RACEBENCH`
+points the tools at another copy on purpose. The suite tests therefore run on any
+clone:
 
 ```bash
 python3 -m pytest tests -q

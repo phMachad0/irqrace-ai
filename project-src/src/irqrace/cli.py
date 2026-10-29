@@ -17,21 +17,25 @@ from . import TOOL_VERSION, contracts
 from .build import BuildError, build
 from .config import Config, ConfigError
 from .probe import ProbeError, probe
+from .racebench import VENDORED_SUITE
 from .runstore import RunStore, find_runs
 from .toolchain import detect
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_SUITE = Path("/home/pedro/Documentos/tcc/racebench/2.1_remarks")
+DEFAULT_SUITE = VENDORED_SUITE  # bench/racebench/2.1_remarks; --suite overrides
 BENCH_CONFIGS = REPO_ROOT / "bench" / "configs"
 ERRATA = REPO_ROOT / "bench" / "racebench-errata.yaml"
 
 #: The five adversarial cases hand-counted to certify the parser
 #: (docs/groundtruth-handcount.md). Kept here so `irqrace groundtruth certify`
 #: checks the parser against the written count rather than against itself.
+#: Per-case counts checked by hand. 001 and 019 changed on 2026-10-28, when
+#: four of their traps were relabelled as bug points (errata note
+#: relabel_2026_10_28); they were (1, 2) and (1, 4).
 HAND_COUNT = {
-    "svp_simple_001_001": (1, 2),
+    "svp_simple_001_001": (2, 1),
     "svp_simple_016_001": (3, 0),
-    "svp_simple_019_001": (1, 4),
+    "svp_simple_019_001": (4, 1),
     "svp_simple_022_001": (4, 3),
     "svp_simple_031_001": (3, 0),
 }
@@ -619,8 +623,8 @@ def cmd_groundtruth_certify(args: argparse.Namespace) -> int:
     ht = sum(v[1] for v in HAND_COUNT.values())
     print(f"       hand-counted total: {hb} bug, {ht} trap")
     print(f"       whole suite: {len(suite.bugs)} bug, {len(suite.traps)} trap "
-          f"(expected 48 / 38)")
-    if (len(suite.bugs), len(suite.traps)) != (48, 38):
+          f"(expected {RACEBENCH_SIMPLE_BUG_POINTS} / {RACEBENCH_SIMPLE_TRAPS})")
+    if (len(suite.bugs), len(suite.traps)) != (RACEBENCH_SIMPLE_BUG_POINTS, RACEBENCH_SIMPLE_TRAPS):
         print("       ! suite total does not match the certified figures")
         bad += 1
     return 1 if bad else 0
@@ -643,6 +647,278 @@ def cmd_groundtruth_errata(args: argparse.Namespace) -> int:
 
 
 # -- parser ---------------------------------------------------------------
+
+
+# -- LLM stage (Track B) --------------------------------------------------
+
+
+def cmd_llm_fixtures(args: argparse.Namespace) -> int:
+    """Report the labelled set. Non-zero while it is short of W1's 10 + 10.
+
+    Exiting non-zero on an incomplete set is deliberate: the fixtures are the
+    input to every measured row, and a row scored against a partial set is a
+    number that will be quoted later without the caveat.
+    """
+    from .llm.fixtures import FixtureError, coverage, load_all
+
+    try:
+        fixtures = load_all()
+    except FixtureError as e:
+        return _err(str(e))
+
+    cov = coverage(fixtures)
+    print(cov.report())
+    for f in fixtures:
+        print(f"  [{f.label:10}] {f.candidate_id}  {f.subject}  {f.annotation}")
+    if not cov.complete:
+        print(
+            f"\nshort of Roadmap W1: need {10 - cov.bug_points} more bug point(s) "
+            f"and {10 - cov.traps} more trap(s)"
+        )
+    return 0 if cov.complete else 1
+
+
+def cmd_llm_prompts(args: argparse.Namespace) -> int:
+    from .llm.prompts import ABLATION, BY_NAME, DEFERRED, EXPERIMENTAL
+
+    if args.row is None:
+        for c in ABLATION:
+            on = [
+                n
+                for n, v in (
+                    ("domain", c.domain_rules),
+                    ("progressive", c.progressive),
+                    ("decomposition", c.decomposition),
+                    ("self-validation", c.self_validation),
+                )
+                if v
+            ]
+            print(f"{c.name:18} {c.hash()}  {', '.join(on) or 'baseline'}")
+        return 0
+
+    if args.row in DEFERRED:
+        return _err(f"row {args.row!r} is deferred until the static pipeline exists")
+    rows = {**BY_NAME, **EXPERIMENTAL}
+    if args.row not in rows:
+        return _err(f"unknown row {args.row!r}; known: {', '.join(rows)}")
+    cfg = rows[args.row]
+    if not cfg.decomposition:
+        print(cfg.system_prompt())
+        return 0
+    # Decomposed rows send a different prefix to each question.
+    for stage in ("feasibility", "harmfulness"):
+        print(f"===== system prompt for the {stage} question =====\n")
+        print(cfg.system_prompt(stage))
+        print()
+    return 0
+
+
+def cmd_llm_backends(args: argparse.Namespace) -> int:
+    """List the providers, or report one spec's capabilities and caveats.
+
+    The caveats are the point. Structured-output tier and prompt caching differ
+    per provider and both land in the ablation's cost and comparability, so
+    they are printed next to the spec rather than discovered in a footnote.
+    """
+    from .llm.backends import REGISTRY, BackendError, from_spec
+
+    if not args.spec:
+        print("providers:")
+        for name in sorted(REGISTRY):
+            print(f"  {name}")
+        print(
+            "\nspec form: provider:model  (e.g. anthropic:claude-opus-5, "
+            "openai:gpt-4o, ollama:qwen2.5-coder:32b)\n"
+            "any OpenAI-compatible endpoint - Groq, Together, OpenRouter, "
+            "LiteLLM, vLLM, LM Studio —\nis reachable as 'openai:<model>' with "
+            "IRQRACE_OPENAI_BASE_URL set.\n"
+            "'claude-cli:<model>' (e.g. claude-cli:sonnet) runs `claude -p` on "
+            "your Claude Pro/Max login:\ndrawn from the plan's usage limits, "
+            "not billed per token."
+        )
+        return 0
+
+    try:
+        backend = from_spec(args.spec)
+    except BackendError as e:
+        return _err(str(e))
+
+    caps = backend.capabilities
+    print(f"{backend.spec}")
+    print(f"  structured output: {caps.structured.value}")
+    print(f"  prompt caching:    {caps.prompt_caching}")
+    print(f"  temperature:       {caps.temperature}")
+    for caveat in caps.caveats():
+        print(f"  [!] {caveat}")
+    return 0
+
+
+def cmd_llm_triage(args: argparse.Namespace) -> int:
+    """Triage a C3 run directory or a single C2 context record."""
+    from .llm.backends import BackendError, RefusalError, from_spec
+    from .llm.cache import Cache
+    from .llm.client import TriageClient
+    from .llm.pipeline import triage_store
+    from .llm.prompts import BY_NAME, DEFERRED, EXPERIMENTAL
+    from .llm.resolver import resolver_for
+
+    all_rows = {**BY_NAME, **DEFERRED, **EXPERIMENTAL}
+    if args.row not in all_rows:
+        return _err(f"unknown row {args.row!r}; known: {', '.join(all_rows)}")
+    config = all_rows[args.row]
+
+    try:
+        backend = from_spec(args.backend)
+    except BackendError as e:
+        return _err(str(e))
+
+    cache = Cache(enabled=not args.no_cache)
+    target = Path(args.target)
+
+    if target.is_dir():
+        store = RunStore(target)
+        try:
+            summary = triage_store(
+                store,
+                config=config,
+                backend=backend,
+                cache=cache,
+                samples=args.samples,
+                resolver_mode=args.resolver,
+            )
+        except (BackendError, RefusalError) as e:
+            return _err(str(e))
+        if args.json:
+            doc = {
+                k: v
+                for k, v in summary.items()
+                if k not in ("triages", "spend")
+            }
+            doc["triages"] = [
+                {**t.model_dump(mode="json"), "bucket": t.bucket.value}
+                for t in summary["triages"]
+            ]
+            print(json.dumps(doc, indent=2, ensure_ascii=False))
+            return 0
+        n_untriaged = summary["not_triaged"]
+        print(
+            f"{summary['run_id']}: {summary['candidates_out'] - n_untriaged}/"
+            f"{summary['candidates_in']} triaged ({summary['backend']}, {summary['config']})"
+            + (f"; {n_untriaged} NOT TRIAGED, kept as uncertain" if n_untriaged else "")
+        )
+        for t in summary["triages"]:
+            if t.not_triaged:
+                print(f"  [{t.bucket.value:<17}] {t.candidate_id}  NOT TRIAGED: {t.not_triaged}")
+            else:
+                print(f"  [{t.bucket.value:<17}] {t.candidate_id}  conf={t.feasibility.confidence:.2f}")
+        return 0
+
+    if not target.is_file():
+        return _err(f"{target} does not exist")
+
+    record = json.loads(target.read_text(encoding="utf-8"))
+    client = TriageClient(config, backend=backend, cache=cache)
+    resolver = resolver_for(record, mode=args.resolver)
+    try:
+        verdict = client.triage(record, resolver=resolver)
+    except (BackendError, RefusalError) as e:
+        return _err(str(e))
+
+    doc = {**verdict.model_dump(mode="json"), "bucket": verdict.bucket.value}
+    if args.json:
+        print(json.dumps(doc, indent=2, ensure_ascii=False))
+    else:
+        print(f"[{verdict.bucket.value}] {verdict.candidate_id}")
+        print(f"  feasibility: {verdict.feasibility.verdict.value} ({verdict.feasibility.confidence:.2f})")
+        if verdict.harmfulness is not None:
+            print(f"  harmfulness: {verdict.harmfulness.verdict.value} ({verdict.harmfulness.confidence:.2f})")
+        print(f"  reasoning:   {verdict.feasibility.reasoning}")
+    return 0
+
+
+def cmd_llm_repair(args: argparse.Namespace) -> int:
+    """Propose an interrupt-specific fix for a C3 run directory or a C2 record."""
+    from .llm.backends import BackendError, RefusalError, from_spec
+    from .llm.cache import Cache
+    from .llm.pipeline import repair_store
+    from .llm.prompts import BY_NAME, DEFERRED, EXPERIMENTAL
+    from .llm.repair import RepairClient, witness_problems
+
+    all_rows = {**BY_NAME, **DEFERRED, **EXPERIMENTAL}
+    if args.row not in all_rows:
+        return _err(f"unknown row {args.row!r}; known: {', '.join(all_rows)}")
+    config = all_rows[args.row]
+
+    try:
+        backend = from_spec(args.backend)
+    except BackendError as e:
+        return _err(str(e))
+
+    cache = Cache(enabled=not args.no_cache)
+    target = Path(args.target)
+
+    if target.is_dir():
+        store = RunStore(target)
+        try:
+            summary = repair_store(
+                store, config=config, backend=backend, cache=cache
+            )
+        except (BackendError, RefusalError, RuntimeError) as e:
+            return _err(str(e))
+        if args.json:
+            doc = {
+                k: v
+                for k, v in summary.items()
+                if k not in ("patches", "spend")
+            }
+            doc["patches"] = {
+                cid: p.model_dump(mode="json")
+                for cid, p in summary["patches"].items()
+            }
+            print(json.dumps(doc, indent=2, ensure_ascii=False))
+            return 0
+        print(
+            f"{summary['run_id']}: {summary['candidates_out']}/{summary['candidates_in']} "
+            f"repaired ({summary['backend']}, {summary['config']})"
+        )
+        for cid, p in summary["patches"].items():
+            print(
+                f"  [{p.strategy.value:<15}] {cid}  irqs={p.masked_irqs}  "
+                f"lines={p.covers_from_line}..{p.covers_to_line}"
+            )
+        return 0
+
+    if not target.is_file():
+        return _err(f"{target} does not exist")
+
+    record = json.loads(target.read_text(encoding="utf-8"))
+    client = RepairClient(config, backend=backend, cache=cache)
+    try:
+        patch = client.repair(record)
+    except (BackendError, RefusalError, RuntimeError) as e:
+        return _err(str(e))
+
+    problems = witness_problems(patch, record)
+    if args.json:
+        print(
+            json.dumps(
+                {**patch.model_dump(mode="json"), "witness_problems": problems},
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
+    else:
+        print(
+            f"[{patch.strategy.value}] {record['id']}  irqs={patch.masked_irqs}  "
+            f"lines={patch.covers_from_line}..{patch.covers_to_line}"
+        )
+        print(f"  witness: {patch.witness.firing_flow} @ {patch.witness.preemption_point}")
+        print(f"  latency: {patch.latency_note}")
+        if problems:
+            for prob in problems:
+                print(f"  ! witness problem: {prob}")
+        print(patch.diff)
+    return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -746,7 +1022,181 @@ def build_parser() -> argparse.ArgumentParser:
     ba.add_argument("--probe", action="store_true")
     ba.set_defaults(func=cmd_bench_build_all)
 
+    m = sub.add_parser("llm", help="Track B — the triage and repair stage")
+    ms = m.add_subparsers(dest="sub", required=True)
+    mf = ms.add_parser("fixtures", help="report the labelled fixture set")
+    mf.set_defaults(func=cmd_llm_fixtures)
+    mp = ms.add_parser("prompts", help="list the ablation rows, or print one")
+    mp.add_argument("row", nargs="?", help="row name, e.g. '+self-validation'")
+    mp.set_defaults(func=cmd_llm_prompts)
+    mb = ms.add_parser("backends", help="list providers, or inspect one spec")
+    mb.add_argument("spec", nargs="?", help="provider:model, e.g. ollama:llama3")
+    mb.set_defaults(func=cmd_llm_backends)
+
+    mt = ms.add_parser("triage", help="triage a C3 run directory or C2 context record")
+    mt.add_argument("target", help="path to a C3 run directory or C2 .json file")
+    mt.add_argument("--backend", default="anthropic:claude-opus-5")
+    mt.add_argument("--row", default="+self-validation")
+    mt.add_argument("--samples", type=int, default=1)
+    mt.add_argument("--resolver", choices=("mock", "source", "auto"), default="auto")
+    mt.add_argument("--no-cache", action="store_true")
+    mt.add_argument("--json", action="store_true")
+    mt.set_defaults(func=cmd_llm_triage)
+
+    mr = ms.add_parser("repair", help="propose a fix for a C3 run directory or C2 record")
+    mr.add_argument("target", help="path to a C3 run directory or C2 .json file")
+    mr.add_argument("--backend", default="anthropic:claude-opus-5")
+    mr.add_argument("--row", default="+self-validation")
+    mr.add_argument("--no-cache", action="store_true")
+    mr.add_argument("--json", action="store_true")
+    mr.set_defaults(func=cmd_llm_repair)
+
+    mrep = ms.add_parser("report", help="every candidate of a run: ground-truth label, fate, triage")
+    mrep.add_argument("runs", nargs="+", help="C3 run directories")
+    mrep.add_argument("--json", action="store_true", help="one JSON array, reasoning included")
+    mrep.set_defaults(func=cmd_llm_report)
+
+    pl = sub.add_parser(
+        "pipeline",
+        help="run the desktop app's pipeline from the terminal: same steps, same code",
+    )
+    pl.add_argument("configs", nargs="+", help="C1 configuration files")
+    pl.add_argument("--backend", default=None,
+                    help="provider:model for the LLM steps, e.g. claude-cli:sonnet; "
+                         "without it the LLM steps run offline, as the app does unchecked")
+    pl.add_argument("--prompt", default="+self-validation", help="ablation row")
+    pl.add_argument("--through", default="triage",
+                    choices=["build", "stage1", "solver", "context", "triage", "repair"])
+    pl.add_argument("--run-root", default=str(REPO_ROOT / "runs"))
+    pl.add_argument("--timeout", type=float, default=600.0, help="seconds per LLM request")
+    pl.set_defaults(func=cmd_pipeline)
+
+    ui = sub.add_parser("ui", help="launch the Streamlit pipeline visualizer and dashboard")
+    ui.add_argument("--port", type=int, default=8501)
+    ui.add_argument("--headless", action="store_true")
+    ui.set_defaults(func=cmd_ui)
+
+    gui = sub.add_parser("gui", help="launch the native Windows (Win32/Tkinter) MVP GUI")
+    gui.set_defaults(func=cmd_gui)
+
     return p
+
+
+def cmd_pipeline(args: argparse.Namespace) -> int:
+    """The desktop app's six steps, headless.
+
+    Drives :class:`irqrace.ui.desktop.PipelineStepper` -- the object behind the
+    app's STEP button -- so a terminal run and a click-through run execute the
+    same code and leave the same run directory. Nothing here re-implements a
+    step.
+    """
+    import yaml
+
+    from .ui.desktop import PIPELINE_STEPS, PipelineStepper, resolve_c_source_files
+
+    adapter, model = None, None
+    if args.backend:
+        adapter, _, model = args.backend.partition(":")
+        if not model:
+            return _err(f"--backend needs provider:model, got {args.backend!r}")
+    keys = [k for k, _ in PIPELINE_STEPS]
+    last = keys.index(args.through)
+    failures = 0
+    for cfg_path in args.configs:
+        path = Path(cfg_path)
+        raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+        stepper = PipelineStepper(
+            path,
+            resolve_c_source_files(raw),
+            work_root=Path(args.run_root),
+            use_live_llm=args.backend is not None,
+            llm_adapter=adapter or "openai",
+            llm_model=model or "",
+            llm_base_url="",
+            llm_prompt=args.prompt,
+            llm_timeout_s=args.timeout,
+        )
+        store = stepper.init_run()
+        print(f"== {path.stem}: {store.root}", flush=True)
+        try:
+            for _ in range(last + 1):
+                stepper.run_next_step(log_fn=lambda line: print(line, flush=True))
+        except Exception as e:  # noqa: BLE001 - report the failing subject, go on to the next
+            failures += 1
+            print(f"[FAIL] {path.stem}: {str(e).splitlines()[0] if str(e) else type(e).__name__}",
+                  flush=True)
+        print(f"   run: {store.root}", flush=True)
+    return 1 if failures else 0
+
+
+def cmd_llm_report(args: argparse.Namespace) -> int:
+    """Per-candidate table: ground truth, where it left the pipeline, the triage.
+
+    On Racebench only feasibility is scored (log 2026-09-27, option C): a bug
+    point is found when it reaches the LLM and is not called infeasible, and a
+    trap is rejected when it is dropped with a proof or called infeasible. The
+    summary counts both that way; the reported buckets are listed as they are.
+    """
+    from .run_evaluation import candidate_table
+
+    rows = []
+    for run in args.runs:
+        rows += candidate_table(RunStore(Path(run)))
+    if args.json:
+        print(json.dumps(rows, indent=2, ensure_ascii=False))
+        return 0
+
+    def short(v, n=1):
+        return "-" if v is None else (f"{v:.{n}f}" if isinstance(v, float) else str(v))
+
+    print("| subject | id | pattern | lines | GT | fate | solver | feasibility (conf) | harm | bucket |")
+    print("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |")
+    for r in rows:
+        feas = "-" if r["feasibility"] is None else f"{r['feasibility']} ({short(r['feasibility_confidence'], 2)})"
+        if r["not_triaged"]:
+            feas = f"NOT TRIAGED: {r['not_triaged'][:60]}"
+        gt = f"{r['gt']} #{r['gt_index']}" if r["gt"] else "-"
+        print(f"| {r['subject']} | {r['id']} | {r['pattern']} | {tuple(r['lines'])} | {gt} | "
+              f"{r['fate']} | {short(r['solver'])} | {feas} | {short(r['harmfulness'])} | {short(r['bucket'])} |")
+
+    def tally(kind: str) -> str:
+        sel = [r for r in rows if r["gt"] == kind]
+        by: dict[str, int] = {}
+        for r in sel:
+            key = r["fate"] if r["fate"] != "llm" else f"llm:{r['feasibility'] or 'untriaged'}"
+            by[key] = by.get(key, 0) + 1
+        return f"{len(sel)} " + ", ".join(f"{k} {v}" for k, v in sorted(by.items()))
+
+    print(f"\nbug points: {tally('bug')}")
+    print(f"traps:      {tally('trap')}")
+    return 0
+
+
+def cmd_gui(args: argparse.Namespace) -> int:
+    """Launch the native Windows (Win32/Tkinter) MVP application."""
+    from .ui.desktop import main as desktop_main
+
+    desktop_main()
+    return 0
+
+
+def cmd_ui(args: argparse.Namespace) -> int:
+    """Launch the Streamlit dashboard over the C3 run store."""
+    import subprocess
+
+    app_path = Path(__file__).resolve().parent / "ui" / "app.py"
+    cmd = [
+        sys.executable,
+        "-m",
+        "streamlit",
+        "run",
+        str(app_path),
+        "--server.port",
+        str(args.port),
+    ]
+    if args.headless:
+        cmd.extend(["--server.headless", "true"])
+    return subprocess.call(cmd)
 
 
 def main(argv: list[str] | None = None) -> int:

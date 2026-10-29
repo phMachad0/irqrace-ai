@@ -1,0 +1,102 @@
+"""What a context record shows the model: the code that decides the case, and
+nothing past it."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import pytest
+
+from irqrace import cli
+from irqrace.llm.client import render_record
+from irqrace.run_evaluation import case_ground_truth
+from irqrace.source_context import find_definition, function_extent
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_a_function_ends_at_its_closing_brace_not_the_line_after():
+    lines = [
+        "void f(void) {",
+        '  /* } */ char *s = "}";',
+        "  if (x) { y(); }",
+        "}",
+        "//bug: ground truth would be here",
+    ]
+    assert function_extent(lines, 1) == 4
+
+
+def test_a_call_or_a_prototype_is_not_a_definition():
+    lines = ["void enable_isr(int);", "void init() { enable_isr(-1); }"]
+    assert find_definition(lines, "enable_isr") is None
+    assert find_definition(lines, "init") == 2
+
+
+@pytest.fixture(scope="module")
+def run_001(tmp_path_factory):
+    if case_ground_truth("svp_simple_001_001") is None:
+        pytest.skip("Racebench is not on this machine")
+    root = tmp_path_factory.mktemp("runs")
+    cfg = REPO_ROOT / "bench" / "configs" / "svp_simple_001_001.yaml"
+    assert cli.main(["pipeline", str(cfg), "--through", "context", "--run-root", str(root)]) == 0
+    (run,) = [p for p in root.iterdir() if p.is_dir()]
+    return run
+
+
+def _contexts(run: Path) -> dict[str, dict]:
+    return {p.stem: json.loads(p.read_text()) for p in (run / "context").glob("*.json")}
+
+
+def _wrw_32_55_35(run: Path) -> dict:
+    """Case 001's bug point #1, found by its lines rather than by an id."""
+    (rec,) = [r for r in _contexts(run).values()
+              if [a["source"]["line"] for a in r["accesses"]] == [32, 55, 35]
+              and r["variable"]["name"] == "svp_simple_001_001_global_array"]
+    return rec
+
+
+def test_no_record_carries_the_benchmark_annotations(run_001):
+    for rec in _contexts(run_001).values():
+        text = render_record(rec)
+        assert "bug点" not in text and "误报点" not in text
+
+
+def test_a_flow_the_masking_facts_name_is_in_the_record_with_its_code(run_001):
+    rec = _wrw_32_55_35(run_001)
+    named = rec["masking"]["interval"]["reenabled_within_interval_by"]
+    assert named == ["isr_1"]
+    flows = {f["id"]: f for f in rec["flows"]}
+    assert "isr_1" in flows
+    shipped = {e["function"] for e in rec["enclosing_source"]}
+    assert flows["isr_1"]["entry"] in shipped
+
+
+def test_the_writers_of_a_guard_variable_are_stated_with_completeness(run_001):
+    rec = _wrw_32_55_35(run_001)
+    facts = {e["fact"]: e for e in rec["provenance"]["entries"]}
+    flag = facts["writers.svp_simple_001_001_global_flag"]
+    assert flag["status"] == "proven" and ":41 " in flag["note"]
+    assert facts["masking_primitives.disable_isr"]["status"] == "assumed_from_config"
+    assert rec["provenance"]["completeness"]["opaque_external_calls"] == []
+    assert "TRIGGER = 9999" in facts["macros"]["note"]
+
+
+def test_source_is_rendered_with_its_file_line_numbers(run_001):
+    rec = _wrw_32_55_35(run_001)
+    text = render_record(rec)
+    assert "55      reader1 = svp_simple_001_001_global_array[TRIGGER];" in text \
+        or "55    reader1" in text
+
+
+def test_harm_features_are_computed_on_the_value_the_pattern_changes(run_001):
+    """WRW: what matters is the value B reads. In this program it is stored
+    into a local that is never read, so neither feature fires -- computed,
+    not left null."""
+    rec = _wrw_32_55_35(run_001)
+    assert rec["pattern"] == "WRW"
+    assert rec["static_features"]["feeds_branch"] is False
+    assert rec["static_features"]["used_as_index"] is False
+    facts = {e["fact"]: e for e in rec["provenance"]["entries"]}
+    assert "B (line 55, read)" in facts["value_use"]["note"]
+    assert "discarded" in facts["value_use"]["note"]

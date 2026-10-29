@@ -20,8 +20,10 @@ say and [[Open Questions]] for what is missing.
 > anything, [[Reimplementation Assessment]] for the build plan and stack, and
 > [[Pipeline Design]] for how each borrowed technique applies.
 >
-> **The artifacts are local**, one directory above the vault: `../racebench`, `../NIChecker`,
-> `../BMC4AV` (full source). Check a claim against them before repeating it from a paper.
+> **The artifacts are local**, one directory above the vault: `../NIChecker`, `../BMC4AV` (full
+> source) and `../racebench`. Since 2026-10-29 the tool reads Racebench from its own vendored copy,
+> `project-src/bench/racebench` ([[Racebench#Vendored copy]]). Check a claim against them before
+> repeating it from a paper.
 
 ## The shape of the field
 

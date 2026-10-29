@@ -22,6 +22,12 @@ from typing import Any, Iterable
 from . import TOOL_VERSION
 from .candidate import stamp_identity
 from .config import Config
+from .source_context import (
+    find_definition,
+    function_extent,
+    identifiers,
+    macro_definitions,
+)
 
 #: The four unserializable access interleavings. With A1 and A2 in one flow and
 #: B in another, exactly these four change the outcome relative to running B
@@ -31,7 +37,7 @@ from .config import Config
 #: Restricting to this set is a FILTER, so it is listed in
 #: wiki/Soundness Assumptions.md rather than applied silently. It is sound with
 #: respect to the standard definition of an atomicity violation, and every one of
-#: Racebench's 48 annotated bug points falls inside it.
+#: Racebench's annotated bug points (53 since 2026-10-28; 48 before) falls inside it.
 UNSERIALIZABLE = {
     ("read", "write", "read"),
     ("read", "write", "write"),
@@ -44,18 +50,60 @@ class Stage1Error(RuntimeError):
     pass
 
 
+#: Size limits on the source shipped in one record. A body longer than the
+#: per-function cap is cut and marked ``truncated``; functions beyond the total
+#: are left out and the record lists ``enclosing_source`` as truncated.
+MAX_FUNCTION_LINES = 200
+MAX_TOTAL_LINES = 600
+#: A called function is shipped alongside its caller only when it is this short:
+#: enough for helpers and stubs, not for whole subsystems.
+MAX_CALLEE_LINES = 30
+
+
 def _rel(path: str, root: str) -> str:
-    try:
-        return str(Path(path).resolve().relative_to(Path(root).resolve()))
-    except (ValueError, OSError):
-        return path
+    """*path* relative to *root*, which is what the fingerprint hashes.
+
+    A debug-info name relative to an unknown compilation directory (see
+    ``_source_lines``) is first located the same way, so the result depends on
+    neither the working directory nor where the suite sits on disk. Until
+    2026-10-29 it was resolved against the working directory only, and the
+    names -- hence every candidate id -- depended on the machine's layout:
+    ``racebench/2.1_remarks/svp_simple_001/svp_simple_001_001.c`` on one
+    checkout, ``svp_simple_001_001.c`` on another.
+    """
+    base = Path(root).resolve()
+    p = Path(path)
+    candidates = [p] if p.is_absolute() else [p, base / p, *(d / p for d in base.parents)]
+    for c in candidates:
+        try:
+            if c.is_file():
+                return c.resolve().relative_to(base).as_posix()
+        except (ValueError, OSError):
+            continue
+    return path
 
 
-def _source_lines(file: str) -> list[str]:
-    try:
-        return Path(file).read_text(encoding="utf-8", errors="replace").splitlines()
-    except OSError:
-        return []
+def _source_lines(file: str, root: str = ".") -> list[str]:
+    """The lines of *file*, or ``[]`` when it cannot be found.
+
+    Debug info may name a file relative to the compilation directory, which the
+    analysis does not emit: clang splits ``/a/b/racebench/x.c`` into directory
+    ``/a/b`` and filename ``racebench/x.c``. Such a name resolves against no
+    fixed directory, so try the working directory, then ``root`` and each of its
+    ancestors. Without this the record silently ships no source at all.
+    """
+    path = Path(file)
+    if path.is_absolute():
+        candidates = [path]
+    else:
+        base = Path(root).resolve()
+        candidates = [path, base / path, *(d / path for d in base.parents)]
+    for c in candidates:
+        try:
+            return c.read_text(encoding="utf-8", errors="replace").splitlines()
+        except OSError:
+            continue
+    return []
 
 
 class Deriver:
@@ -74,13 +122,24 @@ class Deriver:
             (a, b) for a, b in analysis.get("may_precede", [])
         }
         self._file_cache: dict[str, list[str]] = {}
+        self.program = {
+            f["name"]: f for f in analysis.get("program", {}).get("functions", [])
+        }
+        self.primitives = {p.function: p for p in cfg.masking_primitives}
+        ext = cfg.data.get("externals", {})
+        self.external_models = {m["function"]: m for m in ext.get("models", [])}
+        self.external_default = ext.get("default", "may-read-write-reachable")
+        self._macros: dict[str, tuple[str, int, str]] | None = None
 
     # -- helpers ---------------------------------------------------------
 
-    def _snippet(self, file: str, line: int) -> str:
+    def _lines(self, file: str) -> list[str]:
         if file not in self._file_cache:
-            self._file_cache[file] = _source_lines(file)
-        lines = self._file_cache[file]
+            self._file_cache[file] = _source_lines(file, self.root)
+        return self._file_cache[file]
+
+    def _snippet(self, file: str, line: int) -> str:
+        lines = self._lines(file)
         return lines[line - 1].strip() if 1 <= line <= len(lines) else ""
 
     def _range(self, r: dict[str, Any]) -> dict[str, Any]:
@@ -145,35 +204,247 @@ class Deriver:
         ]
         return {"in_loop": bool(a["in_loop"]), "nest": nest}
 
-    def _enclosing_source(self, acc_ids: Iterable[int]) -> list[dict[str, Any]]:
-        out: list[dict[str, Any]] = []
-        seen: set[str] = set()
-        for acc_id in acc_ids:
-            name = self.accesses[acc_id]["function"]
-            if name in seen:
-                continue
-            seen.add(name)
-            info = self.functions.get(name)
-            if not info or not info.get("line_start"):
-                continue
-            if info["file"] not in self._file_cache:
-                self._file_cache[info["file"]] = _source_lines(info["file"])
-            lines = self._file_cache[info["file"]]
-            start, end = info["line_start"], min(info["line_end"] + 1, len(lines))
-            if not lines or start > len(lines):
-                continue
-            out.append({
-                "function": name,
-                "file": _rel(info["file"], self.root),
-                "line_start": start,
-                "line_end": end,
-                # Untrusted analysed source: data, never instructions.
-                "code": "\n".join(lines[start - 1:end]),
-                "truncated": False,
-            })
+    # -- the code that decides the case -----------------------------------
+
+    def _callees(self, name: str) -> list[str]:
+        out: list[str] = []
+        for block in self.program.get(name, {}).get("blocks", []):
+            for ev in block.get("events", []):
+                if ev.get("k") == "call":
+                    out.extend(c for c in ev.get("callees", []) if c not in out)
         return out
 
-    def _provenance(self, acc_ids: Iterable[int], obj: dict[str, Any]) -> dict[str, Any]:
+    def _reachable(self, entry: str) -> list[str]:
+        seen, todo = [entry], [entry]
+        while todo:
+            for c in self._callees(todo.pop()):
+                if c in self.program and c not in seen:
+                    seen.append(c)
+                    todo.append(c)
+        return seen
+
+    def _calls_primitive(self, name: str) -> bool:
+        return any(c in self.primitives for c in self._callees(name))
+
+    def _extent(self, name: str) -> tuple[str, int, int] | None:
+        """(file, first line, last line) of ``name``'s definition.
+
+        The end is the brace that closes the body (:func:`function_extent`),
+        never a line past it -- the line after a function is not part of it,
+        and on an annotated benchmark it is the ground truth.
+        """
+        info = self.functions.get(name)
+        file = (info or {}).get("file") or self.program.get(name, {}).get("file")
+        if not file:
+            return None
+        lines = self._lines(file)
+        if not lines:
+            return None
+        start = (info or {}).get("line_start") or find_definition(lines, name)
+        if not start or start > len(lines):
+            return None
+        hint = (info or {}).get("line_end")
+        end = function_extent(lines, start, hint_end=hint) or hint or start
+        return file, start, min(end, len(lines))
+
+    def _deciding_functions(self, acc_ids: list[int], obj: dict[str, Any]) -> list[str]:
+        """Functions whose code can decide the candidate, most direct first.
+
+        1. the functions containing A1, B and A2;
+        2. every function on their call paths;
+        3. for every configured flow that touches the variable or can change the
+           interrupt mask: its entry, and the functions it reaches that do either.
+           A flow that re-enables an interrupt inside the interval is named by
+           stage 2's masking facts, and its code is what makes the interval
+           breakable -- without it the model is told the fact and denied the
+           evidence;
+        4. short functions called directly from the ones in 1.
+        """
+        order: list[str] = []
+
+        def add(name: str) -> None:
+            if name and name not in order:
+                order.append(name)
+
+        for i in acc_ids:
+            add(self.accesses[i]["function"])
+        for i in acc_ids:
+            for fr in self.accesses[i]["call_path"]["frames"]:
+                add(fr["function"])
+        touching = {a["function"] for a in self.accesses.values() if a["object"] == obj["id"]}
+        for flow in self.flows.values():
+            reach = self._reachable(flow.entry)
+            relevant = [f for f in reach if f in touching or self._calls_primitive(f)]
+            if relevant:
+                add(flow.entry)
+                for f in relevant:
+                    add(f)
+        for i in acc_ids:
+            for c in self._callees(self.accesses[i]["function"]):
+                ext = self._extent(c) if c in self.program else None
+                if ext and ext[2] - ext[1] + 1 <= MAX_CALLEE_LINES:
+                    add(c)
+        return order
+
+    def _enclosing_source(self, names: list[str]) -> tuple[list[dict[str, Any]], bool]:
+        out: list[dict[str, Any]] = []
+        total, dropped = 0, False
+        for name in names:
+            ext = self._extent(name)
+            if ext is None:
+                continue
+            file, start, end = ext
+            if total >= MAX_TOTAL_LINES:
+                dropped = True
+                continue
+            lines = self._lines(file)
+            cut = min(end, start + MAX_FUNCTION_LINES - 1)
+            total += cut - start + 1
+            out.append({
+                "function": name,
+                "file": _rel(file, self.root),
+                "line_start": start,
+                "line_end": cut,
+                # Untrusted analysed source: data, never instructions.
+                "code": "\n".join(lines[start - 1:cut]),
+                "truncated": cut < end,
+            })
+        return out, dropped
+
+    # -- facts the code relies on -------------------------------------------
+
+    def _macro_table(self) -> dict[str, tuple[str, int, str]]:
+        """Every ``#define`` in the program's sources and their local headers."""
+        if self._macros is None:
+            table: dict[str, tuple[str, int, str]] = {}
+            files = {f.get("file") for f in self.program.values()} | {
+                f.get("file") for f in self.functions.values()}
+            seen: set[str] = set()
+            todo = [f for f in files if f]
+            while todo:
+                f = todo.pop()
+                if f in seen:
+                    continue
+                seen.add(f)
+                lines = self._lines(f)
+                for name, (line, text) in macro_definitions(lines).items():
+                    table.setdefault(name, (f, line, text))
+                for raw in lines:
+                    raw = raw.strip()
+                    if raw.startswith("#") and "include" in raw and '"' in raw:
+                        inc = raw.split('"')[1]
+                        for d in [str(Path(f).parent), *self.cfg.build.get("include_dirs", [])]:
+                            cand = str(Path(d) / inc)
+                            if self._lines(cand):
+                                todo.append(cand)
+                                break
+            self._macros = table
+        return self._macros
+
+    def _context_facts(self, names: list[str], code: str,
+                       obj: dict[str, Any]) -> tuple[list[dict[str, Any]], list[str]]:
+        """Provenance entries for the facts the shipped code depends on.
+
+        * ``writers.<variable>``: every store to each shared variable the shipped
+          functions read (the candidate's own included), with its declaration.
+          A guard is never-true only over a complete writer set, so the status
+          says whether the set is complete: ``proven`` when no unresolved
+          indirect call and no unmodelled external could add a writer,
+          ``unknown`` otherwise.
+        * ``masking_primitives.<fn>`` / ``externals.<fn>``: what the C1 file
+          says a called function does -- the analysis's assumption, stated.
+        * ``macros``: the definitions of macros the shipped code uses.
+
+        Returns the entries and the called externals no model covers.
+        """
+        entries: list[dict[str, Any]] = []
+        called: list[str] = []
+        for n in names:
+            for c in self._callees(n):
+                if c not in self.program and c not in called:
+                    called.append(c)
+        every_external = {
+            c for f in self.program for c in self._callees(f) if c not in self.program}
+        unmodelled_anywhere = sorted(
+            c for c in every_external
+            if c not in self.primitives and c not in self.external_models)
+        indirect = self.analysis.get("indirect_overapproximated", 0)
+        complete = not indirect and not unmodelled_anywhere
+
+        read_objects = [obj["id"]] + [
+            a["object"] for a in self.accesses.values()
+            if a["function"] in names and a["kind"] == "read" and a["object"] != obj["id"]]
+        for oid in dict.fromkeys(read_objects):
+            o = self.objects.get(oid)
+            if o is None:
+                continue
+            sites: list[str] = []
+            for a in sorted(self.accesses.values(),
+                            key=lambda a: (a["flow"], a["source"]["line"])):
+                if a["object"] != oid or a["kind"] != "write":
+                    continue
+                site = (f"{a['flow']}: {a['function']} "
+                        f"{_rel(a['source']['file'], self.root)}:{a['source']['line']} "
+                        f"`{self._snippet(a['source']['file'], a['source']['line'])}`")
+                if site not in sites:
+                    sites.append(site)
+            decl = o.get("decl") or {}
+            decl_text = (f"declared at {_rel(decl['file'], self.root)}:{decl['line']} "
+                         f"`{self._snippet(decl['file'], decl['line'])}`"
+                         if decl.get("line") else "declaration not located")
+            why = ("complete: no unresolved indirect call and every called external is "
+                   "modelled" if complete else
+                   "may be incomplete: " + "; ".join(filter(None, [
+                       f"{indirect} indirect call(s) over-approximated" if indirect else "",
+                       ("unmodelled externals may write it: " + ", ".join(unmodelled_anywhere))
+                       if unmodelled_anywhere else ""])))
+            entries.append({
+                "fact": f"writers.{o['name']}",
+                "status": "proven" if complete else "unknown",
+                "note": (f"every store to {o['name']} the analysis found "
+                         f"({len(sites)}): " + ("; ".join(sites) if sites else "none")
+                         + f". {decl_text}. The list is {why}."),
+            })
+
+        for c in called:
+            if c in self.primitives:
+                prim = self.primitives[c]
+                entries.append({
+                    "fact": f"masking_primitives.{c}", "status": "assumed_from_config",
+                    "note": (f"{c}(n) {prim.effect}s interrupt number n (n is argument "
+                             f"{prim.irq_arg} of the call); n = {prim.all_value} means every "
+                             "interrupt. Its effect is modelled by the analysis, not opaque."),
+                })
+            elif c in self.external_models:
+                m = self.external_models[c]
+                entries.append({
+                    "fact": f"externals.{c}", "status": "assumed_from_config",
+                    "note": f"C1 models {c} as effect '{m.get('effect')}'"
+                            + (f": {m['note']}" if m.get("note") else ""),
+                })
+            else:
+                entries.append({
+                    "fact": f"externals.{c}", "status": "unknown",
+                    "note": f"no definition and no C1 model; treated as "
+                            f"'{self.external_default}'",
+                })
+
+        used = identifiers(code)
+        macros = self._macro_table()
+        defs = [f"{n} = {macros[n][2]} ({_rel(macros[n][0], self.root)}:{macros[n][1]})"
+                for n in sorted(used & set(macros))]
+        if defs:
+            entries.append({"fact": "macros", "status": "proven",
+                            "note": "definitions of macros the shipped code uses: "
+                                    + "; ".join(defs)})
+        opaque = [c for c in called
+                  if c not in self.primitives and c not in self.external_models]
+        return entries, opaque
+
+    def _provenance(self, acc_ids: Iterable[int], obj: dict[str, Any],
+                    context: list[dict[str, Any]] | None = None,
+                    opaque: list[str] | None = None,
+                    truncated: bool = False) -> dict[str, Any]:
         entries = [
             {"fact": "flows", "status": "assumed_from_config",
              "note": "entry points, interrupt numbers and priorities come from the "
@@ -205,21 +476,28 @@ class Deriver:
                 "note": "an indirect call on this path could not be resolved by "
                         "points-to and was treated as calling every address-taken "
                         "function with a matching signature"})
+        entries.extend(context or [])
         return {
             "entries": entries,
             "completeness": {
                 "unresolved_indirect_calls": self.analysis.get(
                     "indirect_overapproximated", 0),
-                "opaque_external_calls": sorted(
-                    p.function for p in self.cfg.masking_primitives),
-                "truncated_fields": [],
+                # Only what is genuinely unknown: the masking primitives and the
+                # externals the C1 file models are stated above, not opaque.
+                "opaque_external_calls": sorted(opaque or []),
+                "truncated_fields": ["enclosing_source"] if truncated else [],
             },
         }
 
     def _record(self, roles: list[tuple[str, int]],
                 obj: dict[str, Any]) -> dict[str, Any]:
         acc_ids = [i for _, i in roles]
-        flows = sorted({self.accesses[i]["flow"] for i in acc_ids})
+        names = self._deciding_functions(acc_ids, obj)
+        source, dropped = self._enclosing_source(names)
+        shipped = [e["function"] for e in source]
+        context, opaque = self._context_facts(
+            shipped, "\n".join(e["code"] for e in source), obj)
+        context += self._value_facts(roles)
         rec: dict[str, Any] = {
             "schema_version": "c2/2.0.0",
             "id": "", "fingerprint": "0" * 64,
@@ -240,7 +518,9 @@ class Deriver:
                 "svf_node": obj["id"],
             },
             "accesses": [self._access_record(i, role) for role, i in roles],
-            "flows": [self._flow_record(f) for f in flows],
+            # Every configured flow: a fact about any of them (one that re-enables
+            # an interrupt, one that writes a guard) is unreadable without it.
+            "flows": [self._flow_record(f) for f in self.flows],
             "call_paths": [
                 {"role": role, "path": self._access_record(i, role)["call_path"]}
                 for role, i in roles
@@ -251,10 +531,10 @@ class Deriver:
                     for role, i in roles
                 ],
             },
-            "enclosing_source": self._enclosing_source(acc_ids),
+            "enclosing_source": source,
             "solver_result": {"verdict": "not_run", "engine": "z3"},
             "static_features": self._features(roles, obj),
-            "provenance": self._provenance(acc_ids, obj),
+            "provenance": self._provenance(acc_ids, obj, context, opaque, dropped),
             "emitted_by": {"tool_version": TOOL_VERSION, "stage": "stage1"},
         }
         a1, _, a2 = acc_ids
@@ -263,22 +543,86 @@ class Deriver:
             "R" if self.accesses[i]["kind"] == "read" else "W" for _, i in roles)
         return stamp_identity(rec)
 
+    #: The reads whose value the interleaving changes, per pattern: in RWR the two
+    #: reads that may disagree, in WWR the read that sees B's write instead of
+    #: A1's, in WRW B's read of the intermediate value, in RWW the read A2's write
+    #: may be computed from (B's write is lost).
+    MATTERING_READS = {"RWR": ("A1", "A2"), "WWR": ("A2",), "WRW": ("B",), "RWW": ("A1",)}
+
+    def _mattering(self, roles: list[tuple[str, int]]) -> list[tuple[str, dict[str, Any]]]:
+        pattern = "".join("R" if self.accesses[i]["kind"] == "read" else "W" for _, i in roles)
+        wanted = self.MATTERING_READS.get(pattern, ())
+        return [(r, self.accesses[i]) for r, i in roles if r in wanted]
+
     def _features(self, roles: list[tuple[str, int]],
                   obj: dict[str, Any]) -> dict[str, Any]:
         acc_ids = [i for _, i in roles]
         flows = [self.accesses[i]["flow"] for i in acc_ids]
         prios = [self.flows[f].priority for f in flows]
+        uses = [a.get("value_use") for _, a in self._mattering(roles)]
+
+        def feature(*keys: str) -> bool | None:
+            # True when a mattering read's value reaches one of ``keys``; null
+            # when it escapes the function (its use is not traced), never a
+            # guessed False; False only when every mattering read was traced.
+            if any(u is None for u in uses):
+                return None
+            if any(u.get(k) for u in uses for k in keys):
+                return True
+            return None if any(u.get("escapes") for u in uses) else False
+
         return {
-            # Left null rather than guessed: the harmfulness criterion needs a
-            # dependence graph, which stage 1 does not build (wiki/LLM Stage Design).
-            "feeds_branch": None,
-            "used_as_index": None,
+            "feeds_branch": feature("branch"),
+            "used_as_index": feature("index", "deref"),
             "call_path_depth_max": max(
                 len(self.accesses[i]["call_path"]["frames"]) for i in acc_ids),
             "same_statement_a1_a2": acc_ids[0] == acc_ids[2],
             "priority_gap": max(prios) - min(prios),
             "any_masking_present": False,  # stage 2 fills this in
         }
+
+    def _value_facts(self, roles: list[tuple[str, int]]) -> list[dict[str, Any]]:
+        """Where each mattering read's value goes, and local accesses in between."""
+        out: list[dict[str, Any]] = []
+        parts = []
+        for role, a in self._mattering(roles):
+            u = a.get("value_use")
+            where = f"{role} (line {a['source']['line']}, read)"
+            if u is None:
+                parts.append(f"{where}: not traced")
+                continue
+            if u.get("dead"):
+                parts.append(f"{where}: the loaded value is discarded -- stored in a "
+                             "local whose address is not taken and that is never read")
+                continue
+            uses = [n for k, n in (("branch", "a branch condition"),
+                                   ("index", "an array index"),
+                                   ("deref", "an address that is dereferenced"))
+                    if u.get(k)]
+            text = ("reaches " + ", ".join(uses)) if uses else ""
+            if u.get("escapes"):
+                text += ("; " if text else "") + ("leaves the function (passed to a call, "
+                                                  "returned or stored to non-local memory); "
+                                                  "its use there is not traced")
+            parts.append(f"{where}: {text}")
+        if parts:
+            out.append({"fact": "value_use", "status": "proven",
+                        "note": "where the value the interleaving changes goes, within its "
+                                "function (def-use, through locals): " + "; ".join(parts)})
+        a1, _, a2 = [i for _, i in roles]
+        flow, oid = self.accesses[a1]["flow"], self.accesses[a1]["object"]
+        between = sorted({
+            (x["source"]["line"], x["kind"]) for xid, x in self.accesses.items()
+            if x["flow"] == flow and x["object"] == oid and xid not in (a1, a2)
+            and (a1, xid) in self.precede and (xid, a2) in self.precede})
+        if between:
+            out.append({"fact": "interval.local_accesses", "status": "overapproximated",
+                        "note": "the local flow may also access this location between A1 "
+                                "and A2, on some path: " + ", ".join(
+                                    f"line {ln} ({k})" for ln, k in between)
+                                + ". A remote access landing between such an access and A2 "
+                                "forms another, narrower triple; this one is not dropped."})
+        return out
 
     # -- derivation ------------------------------------------------------
 
