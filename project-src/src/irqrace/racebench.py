@@ -28,6 +28,32 @@ from typing import Any
 
 from .config import SCHEMA_VERSION
 
+#: The suite ships inside this repository, at ``bench/racebench`` (upstream
+#: chenruibuaa/racebench at ec1d828, plus the local changes listed in
+#: ``bench/racebench/VENDORED.md``). Until 2026-10-29 it lived in a separate
+#: checkout one directory above the vault, found through absolute paths that
+#: only resolved on one machine; the two changes the project made to the suite
+#: lived uncommitted in that checkout, so no clone of this repository could
+#: reproduce the 53/33 ground truth.
+VENDORED_SUITE = Path(__file__).resolve().parents[2] / "bench" / "racebench" / "2.1_remarks"
+
+
+def locate_suite() -> Path | None:
+    """The ``2.1_remarks`` directory: ``IRQRACE_RACEBENCH`` if set, else the vendored copy.
+
+    The variable exists to run against another copy of the suite on purpose
+    (an upstream checkout, say); it never falls back silently, so a wrong
+    value gives ``None`` rather than the vendored copy.
+    """
+    import os
+
+    if env := os.environ.get("IRQRACE_RACEBENCH"):
+        path = Path(env)
+        path = path if path.name == "2.1_remarks" else path / "2.1_remarks"
+        return path if path.is_dir() else None
+    return VENDORED_SUITE if VENDORED_SUITE.is_dir() else None
+
+
 CASE_RE = re.compile(r"^svp_simple_(\d{3})_001\.c$")
 HANDLER_RE = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)\s*/\s*(-?\d+)\s*/\s*(-?\d+)")
 
@@ -166,17 +192,33 @@ def config_for(row: dict[str, Any], suite_root: Path) -> dict[str, Any]:
     }
 
 
+def source_root_for(suite_root: Path, out_dir: Path) -> Path:
+    """*suite_root* as written in a config under *out_dir*: relative when it can be."""
+    import os
+
+    try:
+        return Path(os.path.relpath(suite_root.resolve(), out_dir.resolve()))
+    except ValueError:  # another drive on Windows
+        return suite_root.resolve()
+
+
 def generate(suite_root: Path, out_dir: Path) -> list[Path]:
-    """Write one C1 file per case. Validates each before writing."""
+    """Write one C1 file per case. Validates each before writing.
+
+    ``source_root`` is written relative to *out_dir* when the suite is reachable
+    from it, so the files stay valid in any clone; ``Config.load`` resolves it
+    against the file's own directory.
+    """
     import yaml
 
     from .config import Config
 
     rows = parse_readme(suite_root / "README.md")
     out_dir.mkdir(parents=True, exist_ok=True)
+    root_in_file = source_root_for(suite_root, out_dir)
     written: list[Path] = []
     for row in rows:
-        doc = config_for(row, suite_root)
+        doc = config_for(row, root_in_file)
         Config.from_dict(doc)  # fails loudly rather than writing a broken file
         path = out_dir / f"{row['name']}.yaml"
         path.write_text(yaml.safe_dump(doc, sort_keys=False, allow_unicode=True))

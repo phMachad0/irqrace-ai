@@ -48,6 +48,14 @@ def _contexts(run: Path) -> dict[str, dict]:
     return {p.stem: json.loads(p.read_text()) for p in (run / "context").glob("*.json")}
 
 
+def _wrw_32_55_35(run: Path) -> dict:
+    """Case 001's bug point #1, found by its lines rather than by an id."""
+    (rec,) = [r for r in _contexts(run).values()
+              if [a["source"]["line"] for a in r["accesses"]] == [32, 55, 35]
+              and r["variable"]["name"] == "svp_simple_001_001_global_array"]
+    return rec
+
+
 def test_no_record_carries_the_benchmark_annotations(run_001):
     for rec in _contexts(run_001).values():
         text = render_record(rec)
@@ -55,7 +63,7 @@ def test_no_record_carries_the_benchmark_annotations(run_001):
 
 
 def test_a_flow_the_masking_facts_name_is_in_the_record_with_its_code(run_001):
-    rec = _contexts(run_001)["cf213e34277d338cc"]
+    rec = _wrw_32_55_35(run_001)
     named = rec["masking"]["interval"]["reenabled_within_interval_by"]
     assert named == ["isr_1"]
     flows = {f["id"]: f for f in rec["flows"]}
@@ -65,7 +73,7 @@ def test_a_flow_the_masking_facts_name_is_in_the_record_with_its_code(run_001):
 
 
 def test_the_writers_of_a_guard_variable_are_stated_with_completeness(run_001):
-    rec = _contexts(run_001)["cf213e34277d338cc"]
+    rec = _wrw_32_55_35(run_001)
     facts = {e["fact"]: e for e in rec["provenance"]["entries"]}
     flag = facts["writers.svp_simple_001_001_global_flag"]
     assert flag["status"] == "proven" and ":41 " in flag["note"]
@@ -75,7 +83,7 @@ def test_the_writers_of_a_guard_variable_are_stated_with_completeness(run_001):
 
 
 def test_source_is_rendered_with_its_file_line_numbers(run_001):
-    rec = _contexts(run_001)["cf213e34277d338cc"]
+    rec = _wrw_32_55_35(run_001)
     text = render_record(rec)
     assert "55      reader1 = svp_simple_001_001_global_array[TRIGGER];" in text \
         or "55    reader1" in text
@@ -85,7 +93,7 @@ def test_harm_features_are_computed_on_the_value_the_pattern_changes(run_001):
     """WRW: what matters is the value B reads. In this program it is stored
     into a local that is never read, so neither feature fires -- computed,
     not left null."""
-    rec = _contexts(run_001)["cf213e34277d338cc"]
+    rec = _wrw_32_55_35(run_001)
     assert rec["pattern"] == "WRW"
     assert rec["static_features"]["feeds_branch"] is False
     assert rec["static_features"]["used_as_index"] is False

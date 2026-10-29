@@ -61,10 +61,26 @@ MAX_CALLEE_LINES = 30
 
 
 def _rel(path: str, root: str) -> str:
-    try:
-        return str(Path(path).resolve().relative_to(Path(root).resolve()))
-    except (ValueError, OSError):
-        return path
+    """*path* relative to *root*, which is what the fingerprint hashes.
+
+    A debug-info name relative to an unknown compilation directory (see
+    ``_source_lines``) is first located the same way, so the result depends on
+    neither the working directory nor where the suite sits on disk. Until
+    2026-10-29 it was resolved against the working directory only, and the
+    names -- hence every candidate id -- depended on the machine's layout:
+    ``racebench/2.1_remarks/svp_simple_001/svp_simple_001_001.c`` on one
+    checkout, ``svp_simple_001_001.c`` on another.
+    """
+    base = Path(root).resolve()
+    p = Path(path)
+    candidates = [p] if p.is_absolute() else [p, base / p, *(d / p for d in base.parents)]
+    for c in candidates:
+        try:
+            if c.is_file():
+                return c.resolve().relative_to(base).as_posix()
+        except (ValueError, OSError):
+            continue
+    return path
 
 
 def _source_lines(file: str, root: str = ".") -> list[str]:

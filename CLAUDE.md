@@ -50,17 +50,21 @@ Consequences for how you should read and write here:
 | Implementation diary | `wiki/diario/**` | LLM only | **Portuguese.** One page per Roadmap week. Mandatory — see below. |
 | Schema | `CLAUDE.md` (this file) | LLM + human together | Co-evolves as conventions change. |
 
-**Tool artifacts and benchmarks live outside the vault**, one directory up: `../racebench`,
-`../NIChecker`, `../BMC4AV` (full source — a CBMC fork). They are the primary evidence for
+**Tool artifacts and benchmarks live outside the vault**, one directory up: `../NIChecker`,
+`../BMC4AV` (full source — a CBMC fork), and the original `../racebench` checkout. **Racebench
+is the exception: since 2026-10-29 it is vendored inside the implementation, at
+`project-src/bench/racebench`** (upstream commit `ec1d828`, provenance and local changes in its
+`VENDORED.md`), and that copy — not `../racebench` — is what the tool and every count read. They are the primary evidence for
 every count in `wiki/benchmarks/` and several in `wiki/comparisons/`. Check a claim against
 them before repeating it from a paper; doing so has already resolved one contradiction and
 explained another. Do not copy them into the vault and do not modify them.
-Two deliberate exceptions, both in `../racebench`, both uncommitted there so `git diff` shows
-them, both on the human's direction: the `svp_simple_006_001` source patch (2026-10-22, see
-`bench/racebench-errata.yaml`), and the **2026-10-28 relabel** of five trap annotations as bug
-points (001, 019, 020), which changed the simple-case counts from 48/38 to **53 bug points and
-33 traps** (`wiki/benchmarks/Racebench.md`, "Relabel 2026-10-28"). Do not revert them; any number
-dated before 2026-10-28 uses 48/38.
+The vendored suite carries two deliberate changes, both on the human's direction, committed in
+irqrace as their own commit on top of the pristine import: the `svp_simple_006_001` source patch
+(2026-10-22, see `bench/racebench-errata.yaml`), and the **2026-10-28 relabel** of five trap
+annotations as bug points (001, 019, 020), which changed the simple-case counts from 48/38 to
+**53 bug points and 33 traps** (`wiki/benchmarks/Racebench.md`, "Relabel 2026-10-28"). Do not
+revert them; any number dated before 2026-10-28 uses 48/38. Any further change to the suite
+goes into `project-src/bench/racebench` with an entry in its `VENDORED.md`.
 
 `Clippings/` holds one markdown file per source, named after the tool or short title
 (`SDRacer.md`, `IntRace.md`, `NIChecker.md`, `BMC4AV.md`). `raw/` holds the PDFs, and also

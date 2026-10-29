@@ -168,7 +168,8 @@ usually do not. Treat all cross-tool time and memory figures as indicative only.
 ## 7. A planted trap is reachable under the suite's own arrival model
 
 > **Resolved 2026-10-28 by relabelling the suite** — the traps below are bug points in
-> `../racebench/2.1_remarks` since then ([[Racebench#Relabel 2026-10-28]]). Kept as the record of why.
+> the suite's source since then — `../racebench/2.1_remarks` at the time, the vendored
+> `project-src/bench/racebench` from 2026-10-29 ([[Racebench#Relabel 2026-10-28]]). Kept as the record of why.
 
 Found 2026-10-22 while implementing stage 2 (`project-src/docs/masking-semantics.md`,
 "Correction"; [[Soundness Assumptions]] F8, I4). Not a disagreement between papers, but between
@@ -213,7 +214,8 @@ non-events, and where they *are* modelled was not found in a first pass. Open in
 ## 8. Three more Racebench trap labels the suite's own semantics contradict
 
 > **Resolved 2026-10-28 by relabelling the suite** — the traps below are bug points in
-> `../racebench/2.1_remarks` since then ([[Racebench#Relabel 2026-10-28]]). Kept as the record of why.
+> the suite's source since then — `../racebench/2.1_remarks` at the time, the vendored
+> `project-src/bench/racebench` from 2026-10-29 ([[Racebench#Relabel 2026-10-28]]). Kept as the record of why.
 
 Found 2026-10-28 reviewing the full 31-case run ([[Racebench Full Run 2026-10-28]]), all in
 `svp_simple_019_001`, whose annotations are line-shifted (errata) and exist in two copies of the

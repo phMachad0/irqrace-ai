@@ -117,6 +117,22 @@ def _deep_merge(base: dict[str, Any], over: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+def resolve_source_root(raw: dict[str, Any], path: Path | None) -> dict[str, Any]:
+    """Make a relative ``subject.source_root`` absolute against *path*'s directory.
+
+    A relative root is relative to the configuration file, not to the working
+    directory: ``bench/configs/*.yaml`` say ``../racebench/2.1_remarks``. Without
+    a file there is nothing to anchor it to, and it is left as written.
+    Modifies *raw* in place and returns it.
+    """
+    subject = raw.get("subject")
+    if path is not None and isinstance(subject, dict) and isinstance(subject.get("source_root"), str):
+        root = Path(subject["source_root"])
+        if not root.is_absolute():
+            subject["source_root"] = str((Path(path).parent / root).resolve())
+    return raw
+
+
 class Config:
     """A loaded, defaulted, validated C1 document."""
 
@@ -140,7 +156,7 @@ class Config:
 
     @classmethod
     def from_dict(cls, raw: dict[str, Any], *, path: Path | None = None) -> "Config":
-        raw = copy.deepcopy(raw)
+        raw = resolve_source_root(copy.deepcopy(raw), path)
         raw.setdefault("schema_version", SCHEMA_VERSION)
         data = _deep_merge(DEFAULTS, raw)
 

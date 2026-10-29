@@ -1576,3 +1576,25 @@ Third full run, same configuration as the second: runs 2 and 3 agree on 163/166 
 (98.2%, κ 0.93); scores against 106: 97 and 100, 53/53 bug points in both; run 1 (with the adjacency
 rule) 102 with 51/53. Run 3's wall clock includes a 25-minute machine suspend. Filed in
 [[Racebench Full Run 2026-10-28]] and the diary (§3.13).
+
+
+## [2026-10-29] direction | Racebench vendored into the implementation; candidate ids made portable
+
+On the human's direction the suite now lives at `project-src/bench/racebench`: upstream
+`chenruibuaa/racebench` at `ec1d828`, imported unchanged by `git archive`, then the project's two
+changes (the 006 patch, the 2026-10-28 relabel) as a separate commit. Provenance, the changes and
+a licence note (upstream ships none) are in `bench/racebench/VENDORED.md`. One locator,
+`irqrace.racebench.locate_suite()` (`IRQRACE_RACEBENCH` overrides); every hard-coded path
+(`/home/pedro/...`, `C:/Users/luoma/...`) is gone; `bench/configs/*.yaml` carry a `source_root`
+relative to the file, resolved at load. `CLAUDE.md`, [[Racebench]] ("Vendored copy"), [[Overview]],
+[[Open Questions]], [[Reimplementation Assessment]], [[Contradictions]] #7–#8 and the diary (§3.13
+revised, §3.14 new) updated.
+
+The move exposed a latent defect: the access `file` the fingerprint hashes came from debug info,
+which clang writes relative to the deepest directory shared with the working directory — so
+candidate ids depended on the machine's layout. `stage1._rel` now locates the file and makes it
+relative to the suite root (`svp_simple_NNN/<file>.c`, the form the LLM fixtures already used);
+the desktop stepper takes the common directory of all `.c` files as the root. Same ids from any
+working directory and any copy of the suite; **every id changed once** (ids quoted before
+2026-10-29 are the old ones; the LLM cache starts cold). Static recall gate unchanged: 316 → 202 →
+166, 53/53, traps 30 → 25 → 11 of 33. 594 tests pass.

@@ -28,8 +28,9 @@ curated_by: hand verification against the case sources; see docs/groundtruth-han
 notes:
   relabel_2026_10_28: >
     Five planted false positives were relabelled as bug points, by editing the
-    annotation comments in ../racebench/2.1_remarks (the suite's git diff shows
-    it; the repository was not committed to). Each is reachable under the suite's
+    annotation comments in the suite's source (then a separate checkout,
+    ../racebench, uncommitted there; since 2026-10-29 vendored at bench/racebench,
+    where the change is its own commit -- bench/racebench/VENDORED.md). Each is reachable under the suite's
     own README -- "an interrupt may preempt the main program or a lower-level
     interrupt whenever it is enabled, at an indeterminate moment, position and
     number of times" -- and each was hand-checked as a concrete interleaving

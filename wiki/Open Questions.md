@@ -18,7 +18,8 @@ changes the shape of what gets built rather than its quality. Resolved items are
 with the date.
 
 - [x] ~~Mirror the [[BMC4AV (tool)]] artifact; clone both benchmarks.~~ Done 2026-08-20 — all
-  three are local at `../BMC4AV` (full source), `../NIChecker`, `../racebench`.
+  three are local at `../BMC4AV` (full source), `../NIChecker`, `../racebench`. Racebench is also
+  vendored in the implementation since 2026-10-29 ([[Racebench#Vendored copy]]).
 - [x] ~~Decide the priority-direction convention.~~ Settled 2026-08-20 from the benchmark READMEs
   and `priority.info`: **larger number = higher priority** ([[Contradictions]] #3).
 - [x] ~~Z3 stage or no Z3 stage?~~ Decided 2026-08-27: **required, ahead of the LLM**

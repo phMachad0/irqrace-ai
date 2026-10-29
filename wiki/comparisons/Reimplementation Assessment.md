@@ -147,7 +147,8 @@ an open question ([[Open Questions]]).
 ## Artifact availability (obtained 2026-08-20)
 
 All three obtainable artifacts are now local, one directory above the vault: `../racebench`,
-`../NIChecker`, `../BMC4AV`.
+`../NIChecker`, `../BMC4AV`. Racebench is additionally vendored inside the tool, at
+`project-src/bench/racebench`, since 2026-10-29 ([[Racebench#Vendored copy]]).
 
 | Artifact                                                                      | Status                                                                                                                                                                                                                                                    |
 | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

@@ -17,11 +17,12 @@ from . import TOOL_VERSION, contracts
 from .build import BuildError, build
 from .config import Config, ConfigError
 from .probe import ProbeError, probe
+from .racebench import VENDORED_SUITE
 from .runstore import RunStore, find_runs
 from .toolchain import detect
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_SUITE = Path("/home/pedro/Documentos/tcc/racebench/2.1_remarks")
+DEFAULT_SUITE = VENDORED_SUITE  # bench/racebench/2.1_remarks; --suite overrides
 BENCH_CONFIGS = REPO_ROOT / "bench" / "configs"
 ERRATA = REPO_ROOT / "bench" / "racebench-errata.yaml"
 

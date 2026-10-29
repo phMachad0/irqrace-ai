@@ -254,7 +254,8 @@ analysis/         the C++ half: SVF-based analysis binaries
                                   and the event CFG stage 2's masking analysis reads
                   irqrace-stage3  path feasibility: symbolic execution over the IR, Z3
 bench/configs/    one generated C1 file per Racebench simple case (31)
-bench/racebench-errata.yaml   12 curated corrections to the annotations, with evidence
+bench/racebench/  the Racebench suite, vendored (see VENDORED.md)
+bench/racebench-errata.yaml   6 curated corrections to the annotations, with evidence
 scripts/          toolchain setup, fixture builder, ablation runner, repair runner
 docs/             notes that are about the implementation rather than the field
 tests/            unit tests, plus an end-to-end pass over all 31 subjects
@@ -355,16 +356,14 @@ a stage that did not run shows "-", and a subject without ground truth on this
 machine gets no recall figure. The earlier `scripts/seed-showcase-run.py`, which wrote
 stage-2, solver, triage and re-verification outputs nobody computed, is gone.
 
-The suite is found at `../racebench` or via `IRQRACE_RACEBENCH`.
+The Racebench suite ships with the repository, at `bench/racebench` (upstream commit
+`ec1d828` plus two local changes; `bench/racebench/VENDORED.md`). `IRQRACE_RACEBENCH`
+points the tools at another copy on purpose. The suite tests therefore run on any
+clone:
 
 ```bash
-python3 -m pytest tests --ignore=tests/test_racebench.py -k "llm" -q
+python3 -m pytest tests -q
 ```
-
-On a machine without the Racebench suite, `pytest tests` fails during
-*collection* — `tests/test_racebench.py` parametrises at module scope from
-`DEFAULT_SUITE`, which is an absolute path into Track A's checkout. Until that
-is guarded, use `pytest tests --ignore=tests/test_racebench.py`.
 
 If `python3` on your `PATH` is not the interpreter `irqrace` was installed with (a PlatformIO
 virtualenv, say), run the tests as `/usr/bin/python3 -m pytest tests -q`.

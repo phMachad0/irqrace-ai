@@ -11,6 +11,7 @@ import pandas as pd
 import streamlit as st
 import yaml
 
+from irqrace.llm.annotations import locate_suite
 from irqrace.llm.client import FEASIBILITY_TASK, render_record
 from irqrace.llm.fixtures import load_all as load_all_fixtures
 from irqrace.llm.prompts import ABLATION, BY_NAME, FULL
@@ -54,11 +55,10 @@ BUCKET_BADGES = {
 
 
 def _resolve_source_file(source_root: str, rel_path: str) -> Path | None:
+    suite = locate_suite()
     for p in (
         Path(source_root) / rel_path,
-        Path("C:/Users/luoma/Desktop/racebench/2.1_remarks") / rel_path,
-        Path("/home/pedro/Documentos/tcc/racebench/2.1_remarks") / rel_path,
-        REPO_ROOT.parent / "racebench" / "2.1_remarks" / rel_path,
+        *((suite / rel_path,) if suite else ()),
     ):
         try:
             if p.exists() and p.is_file():

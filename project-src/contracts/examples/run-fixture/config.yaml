@@ -14,7 +14,7 @@ subject:
     extra_bitcode:
     - common.c
   name: svp_simple_001_001
-  source_root: /home/pedro/Documentos/tcc/racebench/2.1_remarks
+  source_root: ../../../bench/racebench/2.1_remarks
   sources:
   - svp_simple_001/svp_simple_001_001.c
 masking:

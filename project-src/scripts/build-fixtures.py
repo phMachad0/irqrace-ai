@@ -116,8 +116,8 @@ def main() -> int:
     suite = locate_suite()
     if suite is None:
         print(
-            "racebench not found. Clone it to ../racebench or set "
-            "IRQRACE_RACEBENCH.",
+            "racebench not found: bench/racebench/2.1_remarks is missing, or "
+            "IRQRACE_RACEBENCH points at a directory that does not exist.",
             file=sys.stderr,
         )
         return 2

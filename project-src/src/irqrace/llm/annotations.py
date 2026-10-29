@@ -65,31 +65,9 @@ from typing import Literal
 
 Kind = Literal["bug_point", "trap"]
 
-#: Where the suite might be. ``tests/conftest.py`` and ``cli.py`` both hardcode
-#: an absolute path into Track A's checkout, which makes every suite-dependent
-#: test unrunnable on any other machine -- ``pytest tests`` currently fails at
-#: *collection* there. Rather than edit Track A's files from this branch, Track
-#: B looks in the documented location and lets the environment override.
-#: ``CLAUDE.md``: "Tool artifacts and benchmarks live outside the vault, one
-#: directory up: ``../racebench``".
-#: ``…/<vault>/project-src/src/irqrace/llm/annotations.py`` — parents[3] is
-#: ``project-src``, parents[4] the vault, parents[5] the directory holding it,
-#: which is where ``../racebench`` resolves to.
-_SUITE_CANDIDATES = (
-    Path(__file__).resolve().parents[5] / "racebench" / "2.1_remarks",
-    Path("/home/pedro/Documentos/tcc/racebench/2.1_remarks"),
-)
-
-
-def locate_suite() -> Path | None:
-    """The ``2.1_remarks`` directory, or ``None`` if the suite is not here."""
-    import os
-
-    if env := os.environ.get("IRQRACE_RACEBENCH"):
-        path = Path(env)
-        path = path if path.name == "2.1_remarks" else path / "2.1_remarks"
-        return path if path.is_dir() else None
-    return next((p for p in _SUITE_CANDIDATES if p.is_dir()), None)
+#: The suite is vendored at ``bench/racebench``; the one locator lives in
+#: ``irqrace.racebench`` and is re-exported here, where most callers import it.
+from irqrace.racebench import VENDORED_SUITE, locate_suite  # noqa: E402,F401
 
 #: Section headers. ``可能误报`` ("possible false positive") is a trap section
 #: under a different name, and case 022 uses only that one.

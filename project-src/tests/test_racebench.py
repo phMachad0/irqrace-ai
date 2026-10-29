@@ -6,12 +6,13 @@ against the *source files*, because the README is not always right — see
 ``ENTRY_OVERRIDES``.
 """
 import re
+from pathlib import Path
 
 import pytest
 from conftest import BENCH_CONFIGS, SUITE
 
 from irqrace.config import Config
-from irqrace.racebench import ENTRY_OVERRIDES, config_for, parse_readme
+from irqrace.racebench import ENTRY_OVERRIDES, config_for, parse_readme, source_root_for
 
 pytestmark = pytest.mark.skipif(
     not (SUITE / "README.md").exists(), reason="racebench suite not present"
@@ -76,9 +77,26 @@ def test_generated_configs_on_disk_are_current():
     """`bench/configs/` is checked in; it must match what the generator produces."""
     import yaml
 
+    root = source_root_for(SUITE, BENCH_CONFIGS)
     for row in rows():
         path = BENCH_CONFIGS / f"{row['name']}.yaml"
         assert path.exists(), f"missing {path}; run `irqrace bench gen-configs`"
-        assert yaml.safe_load(path.read_text()) == config_for(row, SUITE), (
+        assert yaml.safe_load(path.read_text()) == config_for(row, root), (
             f"{path} is stale; run `irqrace bench gen-configs`"
         )
+
+
+def test_a_relative_source_root_resolves_against_the_config_file():
+    """`bench/configs/*.yaml` say `../racebench/2.1_remarks`; that must reach the
+    vendored suite from any working directory, not only from `project-src`."""
+    import os
+
+    path = BENCH_CONFIGS / "svp_simple_001_001.yaml"
+    cwd = os.getcwd()
+    try:
+        os.chdir("/")
+        cfg = Config.load(path)
+    finally:
+        os.chdir(cwd)
+    assert Path(cfg.subject["source_root"]) == SUITE.resolve()
+    assert all(f.is_file() for f in cfg.source_files())

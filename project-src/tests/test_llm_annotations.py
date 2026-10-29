@@ -1,7 +1,7 @@
 """The tolerant annotation reader, and what it found in the suite.
 
-The grammar tests run anywhere. The suite tests skip when Racebench is not on
-the machine — set ``IRQRACE_RACEBENCH`` or clone it to ``../racebench``.
+The grammar tests run anywhere. The suite tests read the copy vendored at
+``bench/racebench`` (or ``IRQRACE_RACEBENCH``), and skip only if it is missing.
 """
 
 import pytest

@@ -64,6 +64,7 @@ The tool itself, outside the wiki layer. Started 2026-08-31 (W1 of [[Roadmap]]).
 | `project-src/analysis/src/irqrace-stage3.cpp` | **W6–W7**: stage 3 — symbolic execution over the IR with Z3; the only verdict that may discard |
 | `project-src/src/irqrace/stage3.py` | **W6–W7**: the query (stage 2's run sets per instruction boundary), the verdicts, the context records Track B receives |
 | `project-src/bench/configs/` | one generated C1 file per [[Racebench]] simple case (31) |
+| `project-src/bench/racebench/` | the [[Racebench]] suite, vendored (upstream `ec1d828` + the 006 patch and the relabel; `VENDORED.md`) |
 | `project-src/docs/masking-semantics.md` | why per-flow interval masking drops a real bug point — and the W5 correction: the neighbouring trap is reachable |
 | `project-src/docs/toolchain-notes.md` | SVF/LLVM pairing, the `optnone` trap, the K&R-prototype call-graph trap |
 | `project-src/docs/evaluation-protocol.md` | counting unit, match rule, what is reported and what is gated |
@@ -139,7 +140,7 @@ Raw clippings live in `Clippings/`, PDFs in `raw/`. Both are immutable.
 
 | Page | Summary |
 | --- | --- |
-| [[Racebench]] | 33 aerospace-derived C programs; **48 measured bug points and 38 traps** in the 31 simple cases; four incompatible annotation grammars |
+| [[Racebench]] | 33 aerospace-derived C programs; **53 bug points and 33 traps** in the 31 simple cases since the 2026-10-28 relabel (48/38 before); four incompatible annotation grammars; vendored at `project-src/bench/racebench` since 2026-10-29 |
 | [[Real-World Program Benchmark]] | 18 extracted driver/firmware programs; the shipped ground truth says 45, BMC4AV says 94 — a counting-unit mismatch |
 | [[NASAC 2019 Prototype Competition]] | where Racebench came from: five teams, asymmetric scoring, and why this field prizes precision |
 | [[Candidate Evaluation Subjects]] | Linux drivers vs RTOS vs firmware for tier-3 evaluation, and whether huge codebases fit |

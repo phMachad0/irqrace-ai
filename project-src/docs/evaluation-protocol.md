@@ -84,7 +84,8 @@ suite's source with the relabel below.)
 ## Relabel, 2026-10-28 — the one change of counts
 
 Five planted traps were relabelled as bug points **in the suite's own source**
-(`../racebench/2.1_remarks`, visible in its `git diff`), on the human's direction,
+(then `../racebench/2.1_remarks`, uncommitted there; since 2026-10-29 vendored at
+`bench/racebench`, where the change is a commit of its own), on the human's direction,
 after each was hand-checked as reachable under the suite's README ("an interrupt
 may preempt the main program or a lower-level interrupt whenever it is enabled,
 at an indeterminate moment, position and number of times"):

@@ -2,7 +2,7 @@
 type: benchmark
 tags: [wiki, benchmark]
 sources: ["[[Racebench (documentation)]]", "[[IntRace (paper)]]", "[[NIChecker (paper)]]", "[[BMC4AV (paper)]]"]
-updated: 2026-10-28
+updated: 2026-10-29
 status: solid
 ---
 
@@ -10,8 +10,8 @@ status: solid
 
 > [!warning] Ground truth relabelled on 2026-10-28 — counts changed
 > On the human's direction, five planted traps the suite's own README contradicts were
-> relabelled as bug points **in the suite's source** (`../racebench/2.1_remarks`, see its `git
-> diff`): 001 trap 1, 019 traps 2–4, 020 trap 1. The simple cases now carry **53 bug points and
+> relabelled as bug points **in the suite's source** (then `../racebench/2.1_remarks`; since
+> 2026-10-29 the vendored copy, [[#Vendored copy]]): 001 trap 1, 019 traps 2–4, 020 trap 1. The simple cases now carry **53 bug points and
 > 33 traps**; before, **48 and 38**. Every number on this page and elsewhere dated before
 > 2026-10-28 uses 48/38 and is left as written. Evidence and the case-by-case reasoning:
 > [[#Relabel 2026-10-28]], [[Racebench Full Run 2026-10-28]], [[Contradictions]] #7–#8,
@@ -384,3 +384,29 @@ line corrections moved from the errata into the source, so the errata now holds 
 53 bug points and 38 markers for the whole suite (50/33 for the simple cases); the coincidence with
 this project's 53/33 for the simple cases is not a reconciliation.
 
+## Vendored copy
+
+Since 2026-10-29 the suite lives **inside the implementation**, at `project-src/bench/racebench`:
+upstream `chenruibuaa/racebench` at commit `ec1d828` (2019-12-04), imported unchanged by
+`git archive`, then the project's two changes (the `svp_simple_006_001` patch and the
+[[#Relabel 2026-10-28|relabel]]) as a separate commit, so they are visible in irqrace's own
+history. `project-src/bench/racebench/VENDORED.md` records the provenance and the changes. Upstream
+ships **no licence file**; the copy is redistributed unchanged except for those two changes, for
+reproducibility, with copyright left to its authors.
+
+Why: before, the suite was a separate checkout one directory above the vault, found through
+absolute paths that resolved on one machine only, and the two changes existed only as
+uncommitted edits there — no clone of the repository could reproduce the 53/33 ground truth.
+
+**Moving it exposed a latent defect in candidate identity.** The `file` field of every access,
+which the fingerprint hashes, came from the debug info, whose path clang writes relative to the
+deepest directory shared with the *working directory*. With the old layout that gave
+`racebench/2.1_remarks/svp_simple_001/svp_simple_001_001.c`; with the suite under the
+working directory it would have given `svp_simple_001_001.c`. Candidate ids therefore depended on
+the machine's directory layout. Since 2026-10-29 the path is always relative to the suite's
+`2.1_remarks` (`svp_simple_001/svp_simple_001_001.c`, the form the LLM fixtures already used),
+and the same ids come out from any working directory and any copy of the suite. **Every candidate
+id changed once**: ids quoted in pages dated before 2026-10-29 (e.g. `cf213e34277d338cc` for case
+001's WRW 32/55/35) are the old ones, and the LLM cache, keyed on the fingerprint, starts cold.
+Counts are unaffected — the static recall gate gives the same 316 → 202 → 166 funnel, 53/53 bug
+points and 30 → 25 → 11 of 33 traps.

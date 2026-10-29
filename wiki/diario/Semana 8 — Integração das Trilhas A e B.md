@@ -2,7 +2,7 @@
 type: project
 tags: [wiki, project, diario, pt-br]
 sources: ["[[Roadmap]]", "[[Pipeline Design]]", "[[LLM Stage Design]]", "[[Triples Only]]", "[[Soundness Assumptions]]", "[[Racebench]]", "[[LLM Triage]]", "[[Precision Metrics]]"]
-updated: 2026-10-28
+updated: 2026-10-29
 status: draft
 ---
 
@@ -581,8 +581,9 @@ próprio README (001 #1, 019 #2–#4, 020 #1 — a do 019 #2 ficou desatualizada
 ### 3.13. O gabarito corrigido e a variância
 
 Por decisão do Pedro, as cinco armadilhas que a revisão mostrou serem alcançáveis pela semântica do
-próprio README viraram **bugs no fonte do Racebench** (`../racebench/2.1_remarks`; o `git diff` de
-lá mostra a mudança): 001 armadilha 1, 019 armadilhas 2–4 e 020 armadilha 1. O total dos casos
+próprio README viraram **bugs no fonte do Racebench** (na época em `../racebench/2.1_remarks`, sem
+commit, visível pelo `git diff` de lá; desde 29/10 a suíte está dentro do repositório e a mudança é
+um commit próprio — ver §3.14): 001 armadilha 1, 019 armadilhas 2–4 e 020 armadilha 1. O total dos casos
 simples passou de **48 bugs e 38 armadilhas para 53 e 33**. Todo número anterior a 28/10 usa 48/38;
 a mudança está registrada na errata (`relabel_2026_10_28`), no protocolo de avaliação, na página
 [[Racebench]], em [[Contradictions]] #7–#8, no `CLAUDE.md` e nas constantes de
@@ -593,6 +594,110 @@ armadilha que continua no gabarito (`array[1000]` contra `array[9999]`).
 Com os rótulos novos o *recall gate* estático dá 53/53. Uma terceira rodada, igual à segunda, mediu
 a variância: as duas rodadas concordam em 163 de 166 candidatos (98,2%, κ = 0,93), e só uma
 armadilha mudou de lado (007). Pontuação sobre 106: **97 e 100**, com 53 de 53 bugs nas duas.
+
+### 3.14. O Racebench dentro do repositório, e os ids que dependiam da máquina
+
+**O que mudou.** A suíte do Racebench era um repositório separado, um diretório acima do vault
+(`../racebench`), e o código a encontrava por caminhos absolutos como
+`/home/pedro/Documentos/tcc/racebench/2.1_remarks` (e, na interface, `C:/Users/luoma/...`). As duas
+alterações que o projeto fez na suíte (o patch do 006 e a correção de gabarito da §3.13) existiam
+só como mudanças **sem commit** naquele checkout. Consequência: nenhum clone do irqrace conseguia
+reproduzir o gabarito 53/33.
+
+Por decisão do Pedro, a suíte foi **vendorizada** — copiada para dentro do repositório, em
+`project-src/bench/racebench`, em vez de ser uma dependência externa. A cópia veio do commit
+`ec1d828` do upstream (`chenruibuaa/racebench`) por `git archive`, sem nada além dos arquivos
+versionados, e as duas alterações entraram por cima num commit separado. Assim, o histórico do
+irqrace mostra exatamente o que foi mudado na suíte. O arquivo `bench/racebench/VENDORED.md` registra
+a origem, as alterações e um aviso: **o upstream não tem licença**. A cópia é redistribuída sem
+mudanças além dessas duas, para fins de reprodutibilidade, e os direitos continuam com os autores.
+
+Todo o código passa a encontrar a suíte por uma função só:
+
+`project-src/src/irqrace/racebench.py`
+```python
+VENDORED_SUITE = Path(__file__).resolve().parents[2] / "bench" / "racebench" / "2.1_remarks"
+
+
+def locate_suite() -> Path | None:
+    """The ``2.1_remarks`` directory: ``IRQRACE_RACEBENCH`` if set, else the vendored copy.
+
+    The variable exists to run against another copy of the suite on purpose
+    (an upstream checkout, say); it never falls back silently, so a wrong
+    value gives ``None`` rather than the vendored copy.
+    """
+    import os
+
+    if env := os.environ.get("IRQRACE_RACEBENCH"):
+        path = Path(env)
+        path = path if path.name == "2.1_remarks" else path / "2.1_remarks"
+        return path if path.is_dir() else None
+    return VENDORED_SUITE if VENDORED_SUITE.is_dir() else None
+```
+
+A variável de ambiente `IRQRACE_RACEBENCH` continua existindo, para rodar contra outra cópia de
+propósito, mas nunca cai silenciosamente na cópia vendorizada: um valor errado dá `None`. As 31
+configurações em `bench/configs/` agora dizem `source_root: ../racebench/2.1_remarks`, um caminho
+**relativo ao próprio arquivo**, que `config.resolve_source_root` torna absoluto ao carregar —
+então elas valem em qualquer clone, rodando de qualquer diretório.
+
+**O defeito que a mudança expôs.** Cada candidato tem um id (`c` + 16 dígitos hexadecimais) que é
+um *hash* SHA-256 do seu *fingerprint*: o sujeito, a classe, a variável e, para cada um dos três
+acessos, o papel, o tipo, o fluxo, o **arquivo** e a linha. O campo do arquivo vem das *debug info*
+(informações de depuração que o clang grava no *bitcode* para ligar cada instrução a um arquivo e
+uma linha do fonte). O clang grava esse caminho **relativo ao diretório mais profundo que o arquivo
+compartilha com o diretório de trabalho** de quem rodou o comando. Com o layout antigo isso dava
+`racebench/2.1_remarks/svp_simple_001/svp_simple_001_001.c` (o ancestral comum era
+`/home/pedro/Documentos/tcc`); com a suíte dentro do repositório, daria só
+`svp_simple_001_001.c`. Ou seja, **o id de cada candidato dependia de onde as pastas estavam no
+disco e de onde o comando era rodado**. Na máquina do Lucas, por exemplo, os ids seriam outros. Os
+testes passaram a falhar porque procuravam o candidato `cf213e34277d338cc` e ele não existia mais.
+
+A correção ancora o caminho na raiz da suíte. Primeiro localiza o arquivo, do mesmo jeito que já se
+fazia para ler o fonte (diretório de trabalho, depois a raiz e cada ancestral dela), e só então o
+torna relativo à raiz:
+
+`project-src/src/irqrace/stage1.py`
+```python
+def _rel(path: str, root: str) -> str:
+    """*path* relative to *root*, which is what the fingerprint hashes.
+
+    A debug-info name relative to an unknown compilation directory (see
+    ``_source_lines``) is first located the same way, so the result depends on
+    neither the working directory nor where the suite sits on disk. Until
+    2026-10-29 it was resolved against the working directory only, and the
+    names -- hence every candidate id -- depended on the machine's layout:
+    ``racebench/2.1_remarks/svp_simple_001/svp_simple_001_001.c`` on one
+    checkout, ``svp_simple_001_001.c`` on another.
+    """
+    base = Path(root).resolve()
+    p = Path(path)
+    candidates = [p] if p.is_absolute() else [p, base / p, *(d / p for d in base.parents)]
+    for c in candidates:
+        try:
+            if c.is_file():
+                return c.resolve().relative_to(base).as_posix()
+        except (ValueError, OSError):
+            continue
+    return path
+```
+
+Além disso, o app desktop — que é quem executa `irqrace pipeline` — escolhia como raiz a pasta do
+*primeiro* `.c` da lista (a pasta do caso). Agora escolhe a pasta mais profunda que contém **todos**
+(`os.path.commonpath`), que para um caso do Racebench (o arquivo do caso mais o `common.c`) é a
+`2.1_remarks`. O caminho resultante é `svp_simple_001/svp_simple_001_001.c`, o mesmo formato que
+as *fixtures* da Trilha B já usavam.
+
+**Verificação.** Rodando o caso 019 a partir da cópia vendorizada e a partir do `../racebench`
+antigo, saem os mesmos ids. O caso 001 também dá os mesmos ids rodando de `project-src/` e de `/`.
+O *recall gate* estático dá exatamente o funil anterior: 316 → 202 → 166 candidatos, 53/53 bugs e
+30 → 25 → 11 de 33 armadilhas. Os testes que fixavam o id passaram a achar o candidato pelas linhas
+(32, 55, 35), e há um teste novo que carrega uma config a partir de `/` e confere que ela chega na
+suíte. Resultado: 594 testes passando.
+
+**O custo.** Todos os ids de candidato mudaram uma vez. Ids citados em páginas com data anterior a
+29/10 (como o `cf213e34277d338cc` do WRW 32/55/35 do caso 001) são os antigos. O cache do LLM, que
+tem o *fingerprint* na chave, começa vazio para os candidatos reais. As contagens não mudam.
 
 ## 4. Achados e decisões
 
@@ -641,10 +746,10 @@ Dentro de `project-src/`, com a *venv* do projeto:
 .venv/bin/python scripts/bench-triage-report.py runs/bench-racebench-2026-10-28c
 ```
 
-Para ver a correção do gabarito no próprio Racebench (fora deste repositório):
+Para ver as alterações feitas na suíte vendorizada (o patch do 006 e a correção de gabarito):
 
 ```bash
-git -C ../../racebench diff 2.1_remarks
+git log -p -- bench/racebench
 ```
 
 ## 6. Estado ao fim da semana

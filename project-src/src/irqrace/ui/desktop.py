@@ -39,13 +39,14 @@ from typing import Any
 import yaml
 
 from irqrace.build import BuildError, build
-from irqrace.config import Config, ConfigError
+from irqrace.config import Config, ConfigError, resolve_source_root
 from irqrace.llm.backends import BackendError, ChatRequest, RefusalError, from_spec
 from irqrace.llm.backends.openai_backend import (
     OpenAICompatibleBackend,
     _RateLimited,
     _Transient,
 )
+from irqrace.llm.annotations import locate_suite
 from irqrace.llm.client import TriageClient
 from irqrace.llm.pipeline import prepare_context, read_triages, repair_store, triage_store
 from irqrace.llm.prompts import BY_NAME, DEFERRED, EXPERIMENTAL, FULL
@@ -342,12 +343,8 @@ def resolve_c_source_files(raw_cfg: dict[str, Any]) -> list[Path]:
     search_bases = []
     if src_root:
         search_bases.append(Path(src_root))
-    search_bases.extend(
-        [
-            REPO_ROOT.parent.parent / "racebench" / "2.1_remarks",
-            REPO_ROOT.parent / "racebench" / "2.1_remarks",
-        ]
-    )
+    if (suite := locate_suite()) is not None:
+        search_bases.append(suite)
 
     for rel in list(sources) + list(extra_bc):
         p_rel = Path(rel)
@@ -412,7 +409,10 @@ def apply_source_list_to_c1_dict(
     out["subject"].setdefault("build", {})
 
     if c_files:
-        common_parent = c_files[0].parent
+        # The deepest directory holding every .c file: for a Racebench case
+        # (the case file plus common.c) that is the suite's 2.1_remarks, so
+        # access paths -- and candidate ids -- read svp_simple_NNN/<file>.c.
+        common_parent = Path(os.path.commonpath([p.parent for p in c_files]))
         out["subject"]["source_root"] = str(common_parent)
         out["subject"]["sources"] = [str(p) for p in c_files]
         out["subject"]["build"]["extra_bitcode"] = []
@@ -464,7 +464,8 @@ class PipelineStepper:
         self.llm_timeout_s = llm_timeout_s
         self.event_cb = event_cb
 
-        raw = yaml.safe_load(self.yaml_path.read_text(encoding="utf-8"))
+        raw = resolve_source_root(
+            yaml.safe_load(self.yaml_path.read_text(encoding="utf-8")), self.yaml_path)
         if not self.source_paths:
             self.source_paths = resolve_c_source_files(raw)
 
@@ -1842,9 +1843,7 @@ class IrqRaceWinApp:
             self.selected_source_view_var.set("")
 
     def _add_source_files(self) -> None:
-        initial_dir = REPO_ROOT.parent / "racebench" / "2.1_remarks"
-        if not initial_dir.exists():
-            initial_dir = REPO_ROOT
+        initial_dir = locate_suite() or REPO_ROOT
         paths = filedialog.askopenfilenames(
             parent=self.root,
             title="Selecionar um ou mais arquivos C / Header (.c, .h)",
@@ -1864,9 +1863,8 @@ class IrqRaceWinApp:
         self._append_log(f"Lista atualizada ({len(self.source_files_list)} arquivos .c/.h). Próxima execução compilará os novos arquivos.")
 
     def _add_source_folder(self) -> None:
-        initial_dir = REPO_ROOT.parent / "racebench"
-        if not initial_dir.exists():
-            initial_dir = REPO_ROOT
+        suite = locate_suite()
+        initial_dir = suite.parent if suite else REPO_ROOT
         folder = filedialog.askdirectory(
             parent=self.root,
             title="Selecionar pasta do projeto contendo arquivos .c, .h e opcionalmente .yaml",
