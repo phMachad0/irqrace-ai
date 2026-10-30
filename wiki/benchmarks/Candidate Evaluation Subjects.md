@@ -2,7 +2,7 @@
 type: benchmark
 tags: [wiki, benchmark]
 sources: ["[[NIChecker (paper)]]", "[[BMC4AV (paper)]]", "[[IntRace (paper)]]", "[[SDRacer (paper)]]"]
-updated: 2026-08-27
+updated: 2026-10-29
 status: draft
 ---
 
@@ -105,6 +105,11 @@ ArduPilot, PX4, Betaflight, Marlin, Klipper, and similar. Bare-metal or thin-RTO
 ISR use, active issue trackers, and defects that are often reported with reproduction detail.
 Closest in spirit to `logger`/`blink`/`brake`, and lower modelling risk than Option B. Weaker
 on labelled ground truth than Option A.
+
+*First contact, 2026-10-29:* the human's own ESP32 robot firmware ([[Rastro-Robot Firmware]]),
+with one planted defect. That was enough to show that C++ and SMP break assumptions Racebench
+never tested ([[Soundness Assumptions]] B2, C2b, E6). Any Option C subject in C++ or on a
+multi-core MCU needs issues #4–#6 settled first.
 
 ## Recommended plan
 

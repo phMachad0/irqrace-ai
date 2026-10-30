@@ -2,7 +2,7 @@
 type: concept
 tags: [wiki, concept]
 sources: ["[[SDRacer (paper)]]", "[[IntRace (paper)]]", "[[NIChecker (paper)]]", "[[BMC4AV (paper)]]", "[[Racebench (documentation)]]"]
-updated: 2026-10-24
+updated: 2026-10-29
 status: draft
 ---
 
@@ -34,6 +34,17 @@ pointer-typed parameters via inter-procedural alias analysis ([[IntRace (paper)]
 must-alias or field-insensitive shortcut trades recall for speed. Embedded C compounds this
 with function-pointer ISR vector tables, where an imprecise call graph silently removes whole
 handlers from consideration.
+
+**C++ sharpens the trade instead of relaxing it.** The over-approximation that keeps C sound,
+where an unresolved indirect call reaches every address-taken function of a matching signature,
+needs a meaningful signature. In C++ every virtual call has one argument, the `this` pointer.
+Matched by arity, one unresolved call reaches every FreeRTOS task body and constructor in the
+program. On [[Rastro-Robot Firmware]] that put ~15.9M triples in front of stage 1, and the only
+configuration that finished, `points-to-only`, is the one that silently resolves an unknown
+target to nothing ([[Soundness Assumptions]] B2). The way out is a more precise *sound*
+resolution (class hierarchy for virtual calls, exact types elsewhere), not a less sound one.
+Context-insensitive points-to adds a second, precision-only cost: two distinct stack objects
+whose methods run in two flows look shared ([[Soundness Assumptions]] C2b).
 
 ### 2. Filters that assume synchronization they cannot see
 [[Interrupt Masking and Synchronization]] in real embedded code is frequently ad-hoc —
@@ -87,6 +98,13 @@ what this project does ([[Triples Only]]).
 - **Priority direction.** The two data-race papers state a numbering convention opposite to
   the benchmark they run on ([[Contradictions]] #3). An inverted comparison in a
   priority-ordering filter drops exactly the real preemptions.
+- **More than one core.** Every model in the corpus, and [[Racebench]] itself, is
+  single-core, so "a lower-priority flow cannot run inside a higher-priority interval" is safe
+  there. On an SMP microcontroller it is false for any two flows that may sit on different cores.
+  The ESP32's two cores run FreeRTOS tasks in parallel, so a priority filter there drops real
+  interleavings while calling each drop a proof. Measured on [[Rastro-Robot Firmware]]: 25 such
+  drops ([[Soundness Assumptions]] E6). The flow model needs a core (or "any") per flow before
+  priority may decide anything.
 
 ### 7. Execution-grounded validation
 [[SDRacer (tool)]]'s final filter is replay on Simics: a race requiring a hardware state the
