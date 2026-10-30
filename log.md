@@ -1671,3 +1671,19 @@ Five consumers use lines only: `stage3 -v`, the C3 drop record schema, the gate 
 Streamlit step 1 (highlights the wrong file) and the repair compile check (patches and builds A₁'s
 file alone). Both recorded in [[Open Questions]] and in the diary,
 [[Semana 9 — O Benchmark de Programas Reais]] §3.9–3.10.
+
+
+## [2026-10-30] direction | issues #8–#17: Semana 9 follow-ups and the desktop app
+
+Ten issues opened on the human's request. Four come from the investigations of the same day:
+**#8** the file travels with the line everywhere (C3 drop record, gate matchers, `stage3 -v`,
+Streamlit step 1, the repair compile check, the desktop candidate list, where the human proposes an
+asterisk when the accesses span files); **#9** triage per interval and under a budget; **#10** a
+deterministic solver limit (`rlimit`); **#11** running triage on the 18 programs. Six come from
+the human's review of the desktop app: **#12** `obj_N` names, which the stage 1 takes from LLVM
+value names that clang discards for locals (recoverable from `DILocalVariable`); **#13** group
+candidates by variable; **#14** undiscarded candidates first and sort by column; **#15** a VS
+Code-style layout with a bottom panel showing a status per tab and a candidate-detail panel on
+the right; **#16** parallel triage calls, and triage and repair in one prompt, to be measured as a
+new ablation row; **#17** the repair pane's `wrap=tk.NONE`. Referenced from [[Open Questions]] and
+the diary's §6.

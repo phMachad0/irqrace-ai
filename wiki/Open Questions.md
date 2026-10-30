@@ -198,12 +198,16 @@ with the date.
   `not_triaged`, and recall is untouched. The order of magnitude, from the rastro-robot triage
   (32.5 s per candidate on `claude-cli:sonnet` with `+self-validation`), is ~9 h for 972 triples
   against ~2.5 h for 280 intervals ([[Semana 9 — O Benchmark de Programas Reais]] §3.9).
+  Issues [#9](https://github.com/phMachad0/irqrace-ai/issues/9) (per interval, budget) and
+  [#16](https://github.com/phMachad0/irqrace-ai/issues/16) (parallel calls; triage and repair in one
+  prompt, to be measured as a new ablation row rather than swapped in).
 - [ ] **Carry the file wherever a line goes.** Globals shared across translation units are
   detected and the C2 record has every access's file. But the C3 drop record's schema has only
   `lines`, the gate matchers and `stage3 -v` print or compare lines only, the Streamlit step 1
   highlights every access in `sources[0]`, and the repair compile check patches and builds only
   A₁'s file. None of this affects recall; the UI and the repair check do the wrong thing on
   multi-file subjects ([[Semana 9 — O Benchmark de Programas Reais]] §3.10).
+  [#8](https://github.com/phMachad0/irqrace-ai/issues/8).
 - [ ] **Let the user declare the target hardware, and give it to the model.** *Direction,
   2026-10-29 (Pedro).* MCU, architecture, cores, widest atomic access, RTOS and its API,
   interrupt controller, ISR restrictions. On [[Rastro-Robot Firmware]] the facts the triage needs

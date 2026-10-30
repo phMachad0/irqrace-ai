@@ -494,9 +494,12 @@ A partir de `project-src/`, com `source scripts/env.sh`:
 candidatos chegam à LLM, *gate* 40/45 com as prioridades do NIChecker e 45/45 com as do BMC4AV nos
 programas em disputa; com as prioridades corrigidas, a execução oficial dá **45/45**. Falta:
 
-- a triagem por grupo (§3.9) e os cinco consumidores que usam só a linha (§3.10);
-- um *timeout* determinístico no solver;
-- a triagem LLM nos 18 programas (Trilha B, W9);
+- a triagem por grupo (§3.9, issue #9) e os consumidores que usam só a linha (§3.10, #8);
+- um *timeout* determinístico no solver (#10);
+- a triagem LLM nos 18 programas (Trilha B, W9; #11), que depende de #9, #10 ou #16;
+- a interface: nomes `obj_N` (#12), agrupar por variável (#13), ordenação (#14), layout estilo
+  VS Code com status nas abas (#15), triagem paralela e mesclada com o reparo (#16), quebra de
+  linha no reparo (#17);
 - o suporte a re-verificação (CBMC/`bmc4av` nos inconclusivos);
 - decidir se o *timeout* do Z3 muda para este benchmark;
 - o Pedro conferir à mão as correções do `blink2`, em especial a reconstrução da primeira entrada.
