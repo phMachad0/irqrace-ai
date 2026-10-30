@@ -507,6 +507,34 @@ def cmd_bench_gen(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_realworld_gen(args: argparse.Namespace) -> int:
+    from .realworld import CONFIGS, generate, locate_suite
+
+    suite = locate_suite()
+    if suite is None:
+        return _err("bench/realworld not found (or IRQRACE_REALWORLD is wrong)")
+    written = generate(suite, Path(args.out) if args.out else CONFIGS, corrected=not args.raw)
+    print(f"wrote {len(written)} configuration(s) to {args.out or CONFIGS}")
+    return 0
+
+
+def cmd_realworld_run(args: argparse.Namespace) -> int:
+    from .realworld import CONFIGS, RealWorldError, run
+
+    configs = sorted(Path(args.configs or CONFIGS).glob("*.yaml"))
+    if args.only:
+        configs = [c for c in configs if c.stem in set(args.only)]
+    if not configs:
+        return _err("no configurations; run `irqrace realworld gen-configs`")
+    try:
+        s = run(configs, run_root=args.run_root, through=args.through,
+                corrected=not args.raw, jobs=args.jobs)
+    except RealWorldError as e:
+        return _err(str(e))
+    ok = s["total"] and s["found"] == s["total"] and not s["failures"] and not s["problems"]
+    return 0 if ok else 1
+
+
 def cmd_bench_build_all(args: argparse.Namespace) -> int:
     configs = sorted(Path(args.configs).glob("*.yaml"))
     if not configs:
@@ -1021,6 +1049,24 @@ def build_parser() -> argparse.ArgumentParser:
     ba.add_argument("--run-root", default="runs")
     ba.add_argument("--probe", action="store_true")
     ba.set_defaults(func=cmd_bench_build_all)
+
+    rw = sub.add_parser("realworld", help="the 18 real-world programs (NIChecker's copy)")
+    rws = rw.add_subparsers(dest="sub", required=True)
+    rg = rws.add_parser("gen-configs", help="one C1 per program, plus BMC4AV's priority variants")
+    rg.add_argument("--out", default=None)
+    rg.add_argument("--raw", action="store_true",
+                    help="use every priority.info as shipped, without the priority corrections")
+    rg.set_defaults(func=cmd_realworld_gen)
+    rr = rws.add_parser("run", help="stages 1..N on every program, and the recall gate")
+    rr.add_argument("--configs", default=None)
+    rr.add_argument("--through", choices=("stage1", "stage2", "stage3"), default="stage3")
+    rr.add_argument("--only", nargs="*", help="configuration names to run")
+    rr.add_argument("--run-root", default="runs")
+    rr.add_argument("--jobs", "-j", type=int, default=1,
+                    help="run this many configurations in parallel processes")
+    rr.add_argument("--raw", action="store_true",
+                    help="match against violation.info as shipped, without the line errata")
+    rr.set_defaults(func=cmd_realworld_run)
 
     m = sub.add_parser("llm", help="Track B — the triage and repair stage")
     ms = m.add_subparsers(dest="sub", required=True)

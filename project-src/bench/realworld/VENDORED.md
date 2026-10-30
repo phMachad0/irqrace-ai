@@ -33,8 +33,8 @@ and run as a second configuration rather than discarded.
 ## Local changes
 
 **None to the files.** Six programs do not compile as shipped (`EINVAL`, `NULL`,
-`wdt_ctr_port` undeclared; `wdtpci_lock0`, a typo for `wdtpci_lock`). They are made
-to compile by preprocessor definitions in their generated C1 build flags, listed
+`wdt_ctr_port` undeclared; `wdtpci_lock0`, a typo for `wdtpci_lock`; `return NULL;` in `void` ISRs). They are made
+to compile by preprocessor definitions and compiler flags in their generated C1, listed
 with their evidence in `../realworld-errata.yaml`, so every file here stays
 byte-identical to upstream. Any future change to a file goes into this directory
 as its own commit, with an entry here.

@@ -1,0 +1,181 @@
+# Curated errata for the 18 real-world programs (bench/realworld, NIChecker's copy).
+#
+# Policy, 2026-10-29: the vendored files stay byte-identical to upstream. What the
+# project has to change to analyse them lives here, with the evidence, so the
+# deviation is auditable rather than silent. Five kinds of entry:
+#
+#   build_defines         preprocessor definitions that make a program compile
+#                         without touching its source; copied into its C1 flags
+#   build_flags           extra compiler flags, for the same purpose
+#   priority_corrections  priorities replaced in the primary C1, because the shipped
+#                         ones make the program's own ground truth unreachable
+#   priority_alternatives the priorities BMC4AV's copy gives where they disagree
+#                         with NIChecker's and nothing decides; a second C1 per program
+#   groundtruth           what the evaluation harness does with a violation.info
+#                         that cannot be read as written
+#
+# Confidence: certain -- the source admits one reading; likely -- strongly implied.
+
+schema_version: errata/1.0.0
+suite: realworld (zhvngyuan/NIChecker 40267c0, NIChecker_Experiments/benchmark2_atomicity_violations)
+curated: 2026-10-29
+
+build_defines:
+  # Linux errno and stddef values the extraction dropped with its #includes
+  # (all commented out at the top of each file). Values are Linux's.
+  i8xx_tco_1: &errno [EINVAL=22]
+  i8xx_tco_2: &errno_null [EINVAL=22, "NULL=((void*)0)"]
+  i8xx_tco_3: *errno_null
+  wdt_pci_1: &wdt [ "NULL=((void*)0)", wdt_ctr_port=0, wdtpci_lock0=wdtpci_lock ]
+  wdt_pci_2: [wdt_ctr_port=0, wdtpci_lock0=wdtpci_lock]
+  wdt_pci_3: *wdt
+
+build_flags:
+  wdt_pci_3: [-Wno-error=return-type]
+
+build_flag_evidence:
+  return-type: >
+    certain -- all eight ISRs of wdt_pci_3 are `void` and end in `return NULL;`
+    (lines 1015-1210), which clang 14 rejects by default. The returned value is a
+    constant that no caller reads, so downgrading the error to a warning changes
+    no access. Found 2026-10-29 by the first build.
+
+build_define_evidence:
+  EINVAL: "certain -- `return -EINVAL;` in i8xx_tco_1:292/305; errno.h is commented out (`//#include <errno.h>`)."
+  NULL: "certain -- 27-33 uses per file of pointer comparisons/assignments; stddef.h is not included."
+  wdt_ctr_port: >
+    likely -- used once, in `wdt_ctr_mode` (`outb_p(ctr, wdt_ctr_port);`), never
+    declared; its siblings `wdt_dc_port` etc. are plain globals. `outb_p` expands to
+    `outb`, whose body here is empty, so the value of the port cannot matter to any
+    shared access. BMC4AV's copy deletes the line instead; defining the name keeps
+    the file as shipped.
+  wdtpci_lock0: >
+    certain -- a typo: `spin_lock(wdtpci_lock); ... spin_unlock(wdtpci_lock0);` in
+    the same block; the only declared lock is `bool wdtpci_lock`. BMC4AV's copy
+    makes the same correction in the source.
+
+priority_corrections:
+  # Adopted 2026-10-30 on the project's direction. Source: BMC4AV's copy of the same
+  # file (Real-world-Programs/<program>/priority.info, read 2026-10-29), same
+  # convention (larger = higher, main:0). The shipped priorities stay in the
+  # vendored file; `irqrace realworld run --raw` runs them unchanged.
+  logger3:
+    priorities: {task_communicate: 3, task_measure1: 5, task_measure2: 2, task_measure3: 6}
+    confidence: likely
+    evidence: >
+      Shipped: task_measure2 at 6, the highest, so nothing preempts it; the
+      annotated `tickCounter wwr` needs task_communicate or task_measure3 to write
+      between task_measure2's lines 99 and 100. Stage 2 drops both candidates with a
+      correct proof. NIChecker's paper states larger = higher (p0 < p1 <= ... <= pn).
+  wdt_pci_1:
+    priorities: {writer1: 4, writer2: 4, closer1: 2, closer2: 2}
+    confidence: likely
+    evidence: >
+      Shipped: writers at 2, closers at 4. Both annotated violations need a writer
+      to preempt a closer (test_global_var1: writer1:1084 between closer1:989-990;
+      test_global_var3: writer2:1108 between closer2:1049-1050), impossible under
+      the shipped levels. BMC4AV's copy has exactly the levels swapped.
+  wdt_pci_2:
+    priorities: {writer1: 4, writer2: 4, writer3: 1, closer1: 2, closer2: 2, closer3: 4}
+    confidence: likely
+    evidence: >
+      As wdt_pci_1: both annotated violations (test_global_var1 rwr,
+      test_global_array wwr) are dropped by priority under the shipped levels and
+      kept under BMC4AV's.
+
+priority_correction_evidence: >
+    Mirroring the shipped priorities of all 18 programs gives 18/45, so the files
+    are not inverted wholesale; the error is in these three. With the corrections
+    the suite is 45/45 (first full run, 2026-10-29). Contradictions #9.
+
+priority_alternatives:
+  # BMC4AV's priorities where they differ and nothing decides between the two:
+  # the annotated violations are reachable under both. Run beside, not counted.
+  logger2:    {task_communicate: 3, task_measure1: 5, task_measure2: 2}
+  i8xx_tco_1: {writer1: 2, closer1: 4, closer2: 2}
+
+groundtruth:
+  logger2:
+    action: no-entries
+    confidence: certain
+    evidence: >
+      Its three lines (`int test_global_var1 rwr` ...) carry no true/false label and
+      name variables that do not occur in logger2/main.c (0 occurrences of
+      `test_global_var`). Read as zero entries -- which is also how the 45/14 count
+      in the wiki was taken. BMC4AV's copy ships the same file.
+  i8xx_tco_1:
+    action: as-shipped
+    confidence: certain
+    evidence: >
+      BMC4AV's copy of violation.info differs here and only here:
+      `true violation int tco_expect_close wwr no`. The trailing `no` is unexplained
+      in either artifact; NIChecker's line is used as written. Contradicts the wiki's
+      earlier "byte-identical" claim (Contradictions #1).
+  instance_entries:
+    action: match-lines
+    confidence: certain
+    evidence: >
+      blink1-3 annotate instances, not variables: `timerCount(95W,121W,96R)` is
+      A1, B, A2 with line and access kind. `123/136W` lists two alternative lines
+      for one access; either matches.
+
+# Line corrections to instance entries. As for Racebench, a correction changes
+# only lines and access kinds, never a label and never a count; the harness
+# reports the gate with and without them (`irqrace realworld run --raw`).
+# Index = position among the file's labelled lines, from 1.
+corrections:
+  - program: blink2
+    index: 1
+    as_written: "true violation timerCount(93R,121W,93R)"
+    corrected: "timerCount(93R,119/132W,95R)"
+    confidence: likely
+    evidence: >
+      Line 121 is `if (timerCount == 0)` in Timer_C_isr: a read, not the write the
+      annotation says. blink2 is blink1 with Timer_C inserted (lines 117-125);
+      blink1's 121 is Timer_Force's write, now at 132, and the file's own trap uses
+      132W. Timer_A (p3) may also be preempted by Timer_C's write at 119 (p4), so
+      both are admitted. A1 = A2 = 93R cannot be two accesses: Timer_A has no loop
+      and line 93 (`timerCount = timerCount + 1`) reads once; the only other read
+      in Timer_A is line 95, `if (timerCount == 0)`. The A2 line is the
+      reconstruction, the weakest part of this file.
+  - program: blink2
+    index: 2
+    as_written: "true violation timerCount(95R,121W,95W)"
+    corrected: "timerCount(93R,119/132W,93W)"
+    confidence: likely
+    evidence: >
+      blink1's line numbers, unshifted: blink1's read-modify-write `timerCount++` is
+      line 95; blink2's is `timerCount = timerCount + 1` at 93. Line 95 of blink2
+      writes nothing. B as in index 1.
+  - program: blink2
+    index: 3
+    as_written: "true violation timerCount(108W,121W,109R)"
+    corrected: "timerCount(106W,119/132W,108R)"
+    confidence: likely
+    evidence: >
+      blink1's numbering again (Timer_B writes at 108 and reads at 109 there). In
+      blink2 Timer_B writes at 106 and reads at 108; line 109 has no timerCount
+      access. B as in index 1. After correction this is the same instance as
+      index 4: two annotations, one triple. Counts are left as shipped.
+  - program: blink2
+    index: 4
+    as_written: "true violation timerCount(106W,121W,108R)"
+    corrected: "timerCount(106W,119/132W,108R)"
+    confidence: likely
+    evidence: >
+      A1 and A2 are already blink2's lines; only B carries blink1's 121. See index 1
+      for B and index 3 for the duplicate.
+  - program: blink3
+    index: 1
+    as_written: "true violation timerCount(93R,123/136W,93W)"
+    corrected: "timerCount(95R,123/136W,95W)"
+    confidence: likely
+    evidence: >
+      Line 93 of blink3 has no timerCount access. Timer_A's only read-modify-write
+      is `timerCount++` at 95, and the file's third entry already uses 95 for it.
+  - program: blink3
+    index: 5
+    as_written: "false violation timerCount(93R,146W,93W)"
+    corrected: "timerCount(95R,146W,95W)"
+    confidence: likely
+    evidence: Same drift as index 1, in the trap.

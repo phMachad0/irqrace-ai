@@ -1,0 +1,88 @@
+schema_version: c1/2.0.0
+subject:
+  name: wdt_pci_2
+  source_root: ../realworld
+  sources:
+  - wdt_pci_2/main.c
+  build:
+    mode: single-tu
+    cc: clang-14
+    linker: llvm-link-14
+    flags:
+    - -g
+    - -O0
+    - -Xclang
+    - -disable-O0-optnone
+    defines:
+    - wdt_ctr_port=0
+    - wdtpci_lock0=wdtpci_lock
+priority_convention: larger-is-higher
+flows:
+- id: main
+  kind: task
+  entry: main
+  irq: null
+  priority: 0
+  identified_by: config
+- id: writer1
+  kind: isr
+  entry: writer1_isr
+  irq: 1
+  priority: 4
+  identified_by: config
+- id: writer2
+  kind: isr
+  entry: writer2_isr
+  irq: 2
+  priority: 4
+  identified_by: config
+- id: writer3
+  kind: isr
+  entry: writer3_isr
+  irq: 3
+  priority: 1
+  identified_by: config
+- id: closer1
+  kind: isr
+  entry: closer1_isr
+  irq: 4
+  priority: 2
+  identified_by: config
+- id: closer2
+  kind: isr
+  entry: closer2_isr
+  irq: 5
+  priority: 2
+  identified_by: config
+- id: closer3
+  kind: isr
+  entry: closer3_isr
+  irq: 6
+  priority: 4
+  identified_by: config
+masking:
+  primitives:
+  - function: disable_isr
+    effect: disable
+    irq_arg: 0
+    all_value: -1
+    non_constant_arg: unknown
+  - function: enable_isr
+    effect: enable
+    irq_arg: 0
+    all_value: -1
+    non_constant_arg: unknown
+  initial_state: unknown
+  isr_entry_masks_self: false
+semantics:
+  equal_priority_preemption: true
+  isr_arrival: unbounded
+  isr_reentrant: false
+  nesting: true
+  timing_model: unconstrained
+externals:
+  default: may-read-write-reachable
+  models: []
+ground_truth:
+  kind: violation-info
+  path: wdt_pci_2/violation.info
