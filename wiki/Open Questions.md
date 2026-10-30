@@ -191,6 +191,19 @@ with the date.
   **$0.35** for a 10-candidate probe on Claude Opus 5 and **$10.25** for the full five-row
   ablation over 20 fixtures ($2.05 on Haiku 4.5) — so the Roadmap's ">$30 on fixtures by W5"
   trigger is well calibrated: n=3 voting across all five rows lands at ~$31, exactly on it.
+- [ ] **Triage by interval, not by triple, and under a budget.** The real-world suite sends 972
+  triples to the LLM. They are 280 intervals (variable, A₁, A₂, pattern) and 119 (variable,
+  pattern) pairs. One call per interval, with all its B's listed, asks the same question at 29%
+  of the calls. The LLM never discards, so what a budget leaves untriaged stays in the report as
+  `not_triaged`, and recall is untouched. The order of magnitude, from the rastro-robot triage
+  (32.5 s per candidate on `claude-cli:sonnet` with `+self-validation`), is ~9 h for 972 triples
+  against ~2.5 h for 280 intervals ([[Semana 9 — O Benchmark de Programas Reais]] §3.9).
+- [ ] **Carry the file wherever a line goes.** Globals shared across translation units are
+  detected and the C2 record has every access's file. But the C3 drop record's schema has only
+  `lines`, the gate matchers and `stage3 -v` print or compare lines only, the Streamlit step 1
+  highlights every access in `sources[0]`, and the repair compile check patches and builds only
+  A₁'s file. None of this affects recall; the UI and the repair check do the wrong thing on
+  multi-file subjects ([[Semana 9 — O Benchmark de Programas Reais]] §3.10).
 - [ ] **Let the user declare the target hardware, and give it to the model.** *Direction,
   2026-10-29 (Pedro).* MCU, architecture, cores, widest atomic access, RTOS and its API,
   interrupt controller, ISR restrictions. On [[Rastro-Robot Firmware]] the facts the triage needs

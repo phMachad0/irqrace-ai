@@ -2,7 +2,7 @@
 type: benchmark
 tags: [wiki, benchmark]
 sources: ["[[NIChecker (paper)]]", "[[BMC4AV (paper)]]", "[[IntRace (paper)]]", "[[SDRacer (paper)]]"]
-updated: 2026-08-20
+updated: 2026-10-29
 status: solid
 ---
 
@@ -31,8 +31,10 @@ staying in that family for the next tier.
 
 ## What the shipped ground truth actually says
 
-The `violation.info` files are **byte-identical between the NIChecker repository and the
-BMC4AV artifact**, so there is exactly one ground-truth document and both teams shipped it.
+The `violation.info` files are **identical between the NIChecker repository and the BMC4AV
+artifact in 17 of 18 programs** (*corrected 2026-10-29*: this page said byte-identical;
+`i8xx_tco_1` differs by a trailing `no`), so there is effectively one ground-truth document and
+both teams shipped it. **The programs themselves are not identical** (see "Two copies" below).
 Parsed on 2026-08-20 it contains, over the 18 programs, **45 entries marked `true violation`
 and 14 marked `false violation`** — one line per shared variable, naming the pattern:
 
@@ -71,10 +73,80 @@ See [[Contradictions]] #1.
 them; on `logger1` it reports two violations of other shapes while the shipped ground truth
 lists three `rww` and nothing else.
 
-**Equal-priority ISRs are present here too.** `wdt_pci_1`'s `priority.info` gives
-`writer1_isr:4  writer2_isr:4  closer1_isr:2  closer2_isr:2  main:0` — two pairs of ISRs
-sharing a priority level. [[Open Questions]] had flagged this as a `svp_real_002`-only concern;
+**Equal-priority ISRs are present here too.** `wdt_pci_1`'s `priority.info` in BMC4AV's copy
+gives `writer1_isr:4  writer2_isr:4  closer1_isr:2  closer2_isr:2  main:0` — two pairs of ISRs
+sharing a priority level. NIChecker's copy has the same pairs with the levels swapped (writers 2,
+closers 4; [[Contradictions]] #9). [[Open Questions]] had flagged this as a `svp_real_002`-only concern;
 it is in the main benchmark ([[Asymmetric Preemption]]).
+
+## Two copies, and the one this project analyses (2026-10-29)
+
+Vendored at `project-src/bench/realworld` from NIChecker's repository (commit `40267c0`), on the
+human's direction. It is the original distribution and the one `violation.info` was written for,
+and its `main` keeps the real masking. Provenance is in `bench/realworld/VENDORED.md`. What differs
+from BMC4AV's copy is in [[Contradictions]] #9: `main.c` in all 18, priorities in five.
+
+What it takes to analyse it, all recorded with evidence in `bench/realworld-errata.yaml`. The
+vendored files stay byte-identical to upstream:
+
+| Problem | Programs | Handled by |
+| --- | --- | --- |
+| `priority.info` names `task_measure`, the function is `task_measure_isr`, and `main` is not listed | all | generator: entry `<name>_isr`, `main` a task at priority 0 |
+| `EINVAL`, `NULL` undeclared (the extraction dropped the includes) | `i8xx_tco_*`, `wdt_pci_1/3` | `-D` in the C1 build |
+| `wdt_ctr_port` undeclared; `wdtpci_lock0`, a typo for `wdtpci_lock` | `wdt_pci_*` | `-D` |
+| `return NULL;` in all eight `void` ISRs | `wdt_pci_3` | `-Wno-error=return-type` |
+| ground truth unlabelled, naming variables absent from the program | `logger2` | read as zero entries, which is the 45/14 count above |
+| per-instance lines copied from `blink1` without the shift from an inserted ISR. B is `121W` on a line that only reads | `blink2` (4 entries), `blink3` (2) | line errata, `likely`, with alternatives where the source does not say which write |
+
+**The ground truth's grain is mixed.** 31 of the 45 bug entries are per *variable and pattern*
+(`true violation int numberOfRecords rww`). The 14 `blink` entries are per *instance*, with lines.
+The harness (`irqrace realworld run`) matches each at its own grain, so a per-variable entry is
+satisfied by any candidate on that variable with that pattern. That is weaker than Racebench's
+line match and is said wherever the number is quoted.
+
+## Runs of this project's pipeline
+
+**Official run, 2026-10-30.** NIChecker's copy, line errata and the three priority corrections applied
+(`bench/realworld-errata.yaml`):
+
+| | |
+| --- | --- |
+| Funnel | 1980 → 1037 → **972** reaching the LLM (54 per program) |
+| Stage 2 | 505 dropped by priority, 438 by no-path |
+| Solver | 846 `sat`, 126 `inconclusive`, 65 `unsat` |
+| **Recall gate** | **45/45, PASS** |
+| Traps reaching the LLM | 9/14 |
+
+The solver's split is not reproducible across runs: its 10 s timeout is wall-clock, and `brake3`
+went from 3 `unsat` / 49 `inconclusive` to 0 / 73 under machine load. Recall is unaffected,
+since `inconclusive` is kept.
+
+972 triples are 280 distinct intervals (variable, A₁, A₂, pattern) and 119 (variable, pattern)
+pairs, which is the ground truth's grain. 65 of those pairs are on variables the ground truth
+does not annotate, such as `expect_close` in the watchdog drivers. Precision cannot be computed
+against a non-exhaustive ground truth. Turning off equal-priority preemption, which
+[[NIChecker (paper)]] says its semantics forbid, cuts stage 2 by 44% but loses 2 annotated
+violations in `i8xx_tco_1`. The ground truth itself relies on it. Diary:
+[[Semana 9 — O Benchmark de Programas Reais]] §3.9.
+
+**First run, 2026-10-29.** NIChecker's copy, line errata applied, priorities as shipped:
+
+| | |
+| --- | --- |
+| Funnel | 1980 → 1005 → **941** reaching the LLM (52.3 per program) |
+| Stage 2 | 537 dropped by priority, 438 by no-path |
+| Solver | 842 `sat`, 99 `inconclusive` (94 of them in `brake2`/`brake3`, at the 10 s timeout), 64 `unsat` |
+| Recall gate, NIChecker's priorities | **40/45**: misses in `logger3`, `wdt_pci_1`, `wdt_pci_2` |
+| Recall gate, BMC4AV's priorities for the five disputed programs | **45/45** |
+| Traps reaching the LLM | 7/14 |
+
+The five misses are not detector failures. Under NIChecker's own priorities and its stated
+convention, the annotated violations are unreachable, and stage 2 proves it correctly
+([[Contradictions]] #9). Which `priority.info` to treat as canonical for those programs is an
+open decision.
+
+For scale: [[Racebench]]'s 31 cases send 166 candidates to the LLM. Here 941 do. The per-variable
+grain of most entries means the gate is a weaker statement than Racebench's per-line one.
 
 ## The disputed ground truth, as the papers state it
 

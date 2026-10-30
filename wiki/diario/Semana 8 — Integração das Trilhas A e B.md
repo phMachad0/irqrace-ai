@@ -773,3 +773,5 @@ Falta:
 
 Página anterior: [[Semana 7 — O Stage 3, Busca e Verificação]] · Trilha B até a W8:
 [[Semana 5 a 8 — Trilha B (Triagem, Ablação, Reparo e Integração C3-C4)]].
+
+Próxima página: [[Semana 9 — O Benchmark de Programas Reais]].

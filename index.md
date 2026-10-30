@@ -11,7 +11,7 @@ Catalog of the wiki. Start at [[Overview]]; read [[Thesis Goal]] for what this v
 the LLM per `CLAUDE.md` — update on every ingest.
 
 **Counts**: 12 sources (5 concurrency, 7 LLM) · 4 tool pages + 7 baseline/infrastructure ·
-20 concepts · 4 benchmarks · 7 comparisons · 7 project pages · 9 implementation diary pages.
+20 concepts · 5 benchmarks · 7 comparisons · 7 project pages · 10 implementation diary pages.
 
 ## Navigation
 
@@ -45,6 +45,7 @@ Criada e revisada ao fim de cada semana de implementação (ver `CLAUDE.md`).
 | [[Semana 7 — O Stage 3, Busca e Verificação]] | W7 · planejada 12–16 out, feita 22 out | a busca, a projeção de endereços, três bugs pegos e testados por mutação, a auditoria dos `unsat`, **funil 316 → 202 → 166 e 48/48** |
 | [[Semana 5 a 8 — Trilha B (Triagem, Ablação, Reparo e Integração C3-C4)]] | W1–W8 (Trilha B) · 26 set–20 out | os 20 *fixtures*, M1 (GO), *backends* agnósticos, 5 linhas de ablação, `SourceBackedResolver`, reparo com testemunha (W7) e integração C3/CLI (W8) |
 | [[Semana 8 — Integração das Trilhas A e B]] | W8 · planejada 19–23 out, feita 23–26 out | código-fonte nos registros, chave do *cache* pela evidência, triagem que não descarta, `claude-cli`, *merge* da `main`, só trincas na Trilha B, stages 2 e 3 reais no desktop e a remoção de tudo que fingia a análise estática |
+| [[Semana 9 — O Benchmark de Programas Reais]] | W9 · 26–30 out, em andamento (29–30 out) | o firmware do robô (3 problemas, issues #4–#7); o benchmark de 18 programas vendorizado; duas cópias que não são o mesmo programa; errata sem tocar no fonte; o *recall gate* que separou um erro de modelo de um erro da ferramenta |
 
 ## Implementation (`project-src/`)
 
@@ -141,9 +142,10 @@ Raw clippings live in `Clippings/`, PDFs in `raw/`. Both are immutable.
 | Page | Summary |
 | --- | --- |
 | [[Racebench]] | 33 aerospace-derived C programs; **53 bug points and 33 traps** in the 31 simple cases since the 2026-10-28 relabel (48/38 before); four incompatible annotation grammars; vendored at `project-src/bench/racebench` since 2026-10-29 |
-| [[Real-World Program Benchmark]] | 18 extracted driver/firmware programs; the shipped ground truth says 45, BMC4AV says 94 — a counting-unit mismatch |
+| [[Real-World Program Benchmark]] | 18 extracted driver/firmware programs; the shipped ground truth says 45, BMC4AV says 94 — a counting-unit mismatch. Two copies that differ ([[Contradictions]] #9); vendored at `project-src/bench/realworld` (NIChecker's). Official run (2026-10-30): 1980 → 1037 → 972, **gate 45/45** with three priority errata |
 | [[NASAC 2019 Prototype Competition]] | where Racebench came from: five teams, asymmetric scoring, and why this field prizes precision |
 | [[Candidate Evaluation Subjects]] | Linux drivers vs RTOS vs firmware for tier-3 evaluation, and whether huge codebases fit |
+| [[Rastro-Robot Firmware]] | the human's own ESP32/FreeRTOS C++ firmware with one planted ISR×task lost update: found and kept 2770 → 10 → 10 → LLM; exposed three problems Racebench cannot (C++ virtual calls, context-insensitive `this`, dual-core priority) |
 
 ## Comparisons (`wiki/comparisons/`)
 

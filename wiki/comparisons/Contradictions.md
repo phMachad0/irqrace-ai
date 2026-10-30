@@ -2,7 +2,7 @@
 type: comparison
 tags: [wiki, comparison]
 sources: ["[[SDRacer (paper)]]", "[[IntRace (paper)]]", "[[NIChecker (paper)]]", "[[BMC4AV (paper)]]", "[[Racebench (documentation)]]"]
-updated: 2026-10-28
+updated: 2026-10-29
 status: solid
 ---
 
@@ -26,8 +26,10 @@ were never searched for. Its assertion-insertion strategy is also claimed to mis
 auxiliary code in large programs.
 
 **Status: largely explained as a units mismatch, 2026-08-20.** Both artifacts are now local
-and their `violation.info` ground-truth files are byte-identical, so there is one ground-truth
-document that both teams shipped. It contains **45 `true violation` entries, one per shared
+and their `violation.info` ground-truth files are identical in 17 of 18 programs, so there is
+one ground-truth document that both teams shipped. *Corrected 2026-10-29:* this page said
+"byte-identical". `i8xx_tco_1` differs: BMC4AV's copy appends an unexplained `no` to
+`tco_expect_close wwr`. The programs and their priorities differ much more (#9). It contains **45 `true violation` entries, one per shared
 variable**. BMC4AV's results file counts **per access-triple instance**. The two agree closely
 on the small programs and diverge monotonically with program size — `wdt_pci_3` is 4 entries
 against 29 reported instances — which is what a per-variable versus per-instance mismatch
@@ -234,3 +236,48 @@ source, `2.1` and the annotated `2.1_remarks`:
 
 Together with #7 that is five of the 38 traps reachable under the README. The model calls all five
 feasible; the scored false-positive count includes them.
+
+## 9. The two copies of the real-world programs are different programs
+
+Found 2026-10-29 while vendoring the suite ([[Real-World Program Benchmark]]). The 18 programs
+ship twice: in the NIChecker repository (`NIChecker_Experiments/benchmark2_atomicity_violations`)
+and in the BMC4AV artifact (`Real-world-Programs/`). The earlier pages here treated them as one
+suite because the ground-truth files agree (#1). They are not one suite:
+
+- **`main.c` differs in all 18.** NIChecker's `main` masks around its initialisation
+  (`disable_isr(-1)` … `enable_isr(-1)`). BMC4AV's replaces that with a CBMC thread harness
+  (`__CPROVER_ASYNC_1: Timer_A_isr();`) and carries its own tool's results in comments.
+- **`priority.info` disagrees in five programs**, under the same stated convention (larger =
+  higher). In `wdt_pci_1` NIChecker has writers at 2 and closers at 4, and BMC4AV has writers at
+  4 and closers at 2: the opposite preemption relation. The others are `logger2`, `logger3`,
+  `i8xx_tco_1` (`closer2` 4 against 2) and `wdt_pci_2`.
+- **Six NIChecker programs do not compile as shipped** under clang 14. BMC4AV's
+  copy compiles in 17 of 18 because it was edited (lines deleted, a typo fixed).
+
+**Consequence.** Any per-program comparison between [[NIChecker (paper)]] and [[BMC4AV (paper)]]
+on this suite, including the 37/47-against-94 dispute (#1), may compare runs on different
+programs with different interrupt models. Neither paper says which copy its numbers come from.
+Since the priority relation decides which interleavings exist, this matters most for
+`wdt_pci_1` and `wdt_pci_2`. Those are also where BMC4AV's count diverges most from the shipped
+ground truth.
+
+**And NIChecker's priorities contradict NIChecker's ground truth** (first full run, 2026-10-29).
+With NIChecker's `priority.info`, five ground-truth violations in `logger3`, `wdt_pci_1` and
+`wdt_pci_2` are dropped by stage 2 with a correct proof. Each needs a lower-priority flow to
+preempt a higher one, under the convention [[NIChecker (paper)]] itself states (`p0 < p1 ≤ … ≤
+pn`). In `wdt_pci_1`, `writer1` (p2) would have to preempt `closer1` (p4) between lines 989 and
+990. Mirroring NIChecker's priorities for all 18 programs drops the gate to 18/45, so the file
+convention is not inverted wholesale. BMC4AV's priorities make all five disputed programs
+consistent with the ground truth (9/9). With them adopted as errata for those three programs
+(the human's decision, 2026-10-30), the official run is 45/45. The simplest reading is
+that BMC4AV silently corrected five wrong `priority.info` files. If so, the 37/47-against-94
+comparison (#1) also runs the two tools on differently corrected inputs. The diary has the details
+([[Semana 9 — O Benchmark de Programas Reais]] §3.8).
+
+**This project's position.** It analyses NIChecker's copy, vendored at
+`project-src/bench/realworld`. It adopts BMC4AV's priorities as errata for the three programs where
+NIChecker's contradict NIChecker's own ground truth. For the other two disputed programs it runs
+BMC4AV's as a second configuration, because nothing there decides between them
+(`bench/realworld-errata.yaml`). One more inconsistency of the same kind: the ground truth needs
+equal-priority ISRs to preempt each other (`i8xx_tco_1`, `closer1`/`closer2` at 4). The NIChecker
+paper's semantics forbid that.
