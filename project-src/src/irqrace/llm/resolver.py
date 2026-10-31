@@ -196,8 +196,10 @@ class RecordBackedResolver:
         return {"accesses": self.record["accesses"]}, "truncated"
 
     def _call_paths(self, args: dict[str, Any]) -> tuple[dict[str, Any], str]:
+        # The record wraps each path with the access role it belongs to; a C4
+        # reply carries the paths themselves.
         paths = [
-            p
+            p["path"]
             for p in self.record.get("call_paths", [])
             if args.get("function") in json.dumps(p)
         ]
@@ -612,9 +614,11 @@ def _load_subject_sources(
                 if rel not in rel_candidates:
                     rel_candidates.append(rel)
 
-    for hfile in sorted(root.glob("*.h")):
-        if hfile.name not in rel_candidates:
-            rel_candidates.append(hfile.name)
+    # Sources too, not only headers: a helper in a shared file (Racebench's
+    # common.c) is exactly the code the record leaves out and C4 exists to fetch.
+    for shared in sorted(root.glob("*.[ch]")):
+        if shared.name not in rel_candidates:
+            rel_candidates.append(shared.name)
 
     for rel in rel_candidates:
         full = (root / rel).resolve() if not Path(rel).is_absolute() else Path(rel)

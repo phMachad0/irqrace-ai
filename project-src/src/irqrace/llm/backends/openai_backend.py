@@ -270,6 +270,11 @@ class OpenAICompatibleBackend(Backend):
             raise _Transient(
                 f"cannot reach {self.base_url}: {e.reason}", 5.0
             ) from None
+        except ConnectionError as e:
+            # A connection dropped mid-response is not wrapped in URLError, and
+            # it is none of the exceptions the stages catch: it ended the whole
+            # case instead of one attempt at one candidate.
+            raise _Transient(f"connection to {self.base_url} lost: {e}", 5.0) from None
         except TimeoutError:
             # A read timeout raises TimeoutError directly rather than through
             # URLError, so it was not caught here and escaped the retry logic
