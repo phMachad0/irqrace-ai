@@ -366,6 +366,8 @@ struct ObjectInfo {
   bool isVolatile = false;
   SourceRange decl;
   std::set<std::string> flows;
+  std::string storage = "global"; // C2 variable.storage
+  std::string function;           // the function a local or an allocation is in
 };
 
 // Where the value a load produces goes, inside its function. Forward def-use
@@ -472,6 +474,41 @@ bool declaredVolatile(const llvm::DIType *t) {
     return false;
   }
   return false;
+}
+
+std::string typeName(const llvm::DIType *t);
+
+// clang discards the names of local values unless told otherwise, so a stack
+// object has no LLVM name to show. `-g` is mandatory (build.py), and debug info
+// keeps what the source said: the name, the type and where it was declared.
+void describeNonGlobal(const llvm::Value *v, ObjectInfo &oi) {
+  if (const auto *ai = llvm::dyn_cast_or_null<llvm::AllocaInst>(v)) {
+    oi.storage = "stack";
+    oi.function = ai->getFunction()->getName().str();
+    auto declares = llvm::FindDbgDeclareUses(const_cast<llvm::AllocaInst *>(ai));
+    if (declares.empty())
+      return;
+    const llvm::DILocalVariable *dv = declares[0]->getVariable();
+    if (!dv->getName().empty())
+      oi.name = dv->getName().str();
+    if (const llvm::DISubprogram *sp = dv->getScope()->getSubprogram())
+      oi.function = sp->getName().str();
+    oi.decl.file = dv->getFilename().str();
+    oi.decl.line = dv->getLine();
+    oi.type = typeName(dv->getType());
+    oi.isVolatile = declaredVolatile(dv->getType());
+    return;
+  }
+  if (const auto *call = llvm::dyn_cast_or_null<llvm::CallBase>(v)) {
+    oi.storage = "heap";
+    oi.function = call->getFunction()->getName().str();
+    const llvm::Function *callee = call->getCalledFunction();
+    oi.name = (callee ? callee->getName().str() : std::string("allocation")) + " in " + oi.function + "()";
+    if (const llvm::DebugLoc &loc = call->getDebugLoc()) {
+      oi.decl.file = loc->getFilename().str();
+      oi.decl.line = loc.getLine();
+    }
+  }
 }
 
 std::string typeName(const llvm::DIType *t) {
@@ -748,6 +785,8 @@ int main(int argc, char **argv) {
     const auto *gv = llvm::dyn_cast_or_null<llvm::GlobalVariable>(v);
     if (!gv) {
       oi.name = v && v->hasName() ? v->getName().str() : ("obj_" + std::to_string(id));
+      oi.storage = "unknown";
+      describeNonGlobal(v, oi);
       continue;
     }
     oi.name = gv->getName().str();
@@ -981,7 +1020,8 @@ int main(int argc, char **argv) {
     out << (first ? "\n    " : ",\n    ") << "{\"id\": " << id
         << ", \"name\": " << q(oi.name) << ", \"declared_type\": " << q(oi.type)
         << ", \"volatile\": " << (oi.isVolatile ? "true" : "false")
-        << ", \"decl\": " << emitRange(oi.decl) << ", \"flows\": [";
+        << ", \"decl\": " << emitRange(oi.decl) << ", \"storage\": " << q(oi.storage)
+        << ", \"function\": " << q(oi.function) << ", \"flows\": [";
     bool f2 = true;
     for (const std::string &fl : oi.flows) {
       out << (f2 ? "" : ", ") << q(fl);

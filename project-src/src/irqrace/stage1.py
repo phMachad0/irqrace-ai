@@ -499,7 +499,7 @@ class Deriver:
             shipped, "\n".join(e["code"] for e in source), obj)
         context += self._value_facts(roles)
         rec: dict[str, Any] = {
-            "schema_version": "c2/2.0.0",
+            "schema_version": "c2/2.1.0",
             "id": "", "fingerprint": "0" * 64,
             "class": "atomicity-triple",
             "subject": {
@@ -513,7 +513,8 @@ class Deriver:
                 "volatile": obj["volatile"],
                 "decl": self._range(obj["decl"]) if obj["decl"]["line"] else
                         {"file": "", "line": 1},
-                "storage": "global",
+                "storage": obj.get("storage", "global"),
+                **({"function": obj["function"]} if obj.get("function") else {}),
                 "aliases": [],
                 "svf_node": obj["id"],
             },
