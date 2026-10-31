@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import os
 import secrets
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
@@ -29,6 +30,23 @@ STAGE_NAMES = [
 
 def _utcnow() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _replace(src: Path, dst: Path, *, attempts: int = 6, wait_s: float = 0.05) -> None:
+    """``os.replace``, tolerating a reader that has *dst* open.
+
+    On Windows the replace fails while anyone holds the destination open, and
+    the UI polls this file while a run is writing it. The reader is gone within
+    milliseconds; failing here would lose a case to a poll.
+    """
+    for attempt in range(1, attempts + 1):
+        try:
+            os.replace(src, dst)
+            return
+        except PermissionError:
+            if attempt == attempts:
+                raise
+            time.sleep(wait_s * attempt)
 
 
 def new_run_id(subject: str) -> str:
@@ -60,7 +78,7 @@ class RunStore:
         (store.root / "config.yaml").write_text(cfg.dump())
 
         manifest: dict[str, Any] = {
-            "schema_version": "c3/1.0.0",
+            "schema_version": "c3/1.1.0",
             "run_id": run_id,
             "created": _utcnow(),
             "tool_version": TOOL_VERSION,
@@ -95,6 +113,7 @@ class RunStore:
                 "enabled": cfg.analysis["solver"]["enabled"],
                 "engine_version": "",
                 "timeout_ms": cfg.analysis["solver"]["timeout_ms"],
+                "rlimit": cfg.analysis["solver"]["rlimit"],
             },
             "llm": None,
             "stages": [{"name": n, "status": "pending"} for n in STAGE_NAMES],
@@ -117,7 +136,7 @@ class RunStore:
         contracts.validate("c3-manifest", manifest, what=str(self.manifest_path))
         tmp = self.manifest_path.with_suffix(".json.tmp")
         tmp.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
-        os.replace(tmp, self.manifest_path)  # atomic: the UI polls this file
+        _replace(tmp, self.manifest_path)  # atomic: the UI polls this file
 
     def update_manifest(self, **fields: Any) -> dict[str, Any]:
         m = self.read_manifest()

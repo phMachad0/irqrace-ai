@@ -1,7 +1,7 @@
-"""The fingerprint is Track B's cache key and the run store's join key.
+"""The fingerprint is the run store's join key.
 
-If it ever depends on something that varies between runs, the cache silently
-misses and two runs of the same subject stop being comparable.
+If it ever depends on something that varies between runs, two runs of the same
+subject stop being comparable.
 """
 import copy
 import json

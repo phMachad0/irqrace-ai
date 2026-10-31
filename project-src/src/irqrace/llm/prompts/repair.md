@@ -59,4 +59,9 @@ region is small and bounded.
 
 A unified diff against the file as given, minimal, changing nothing the fix
 does not require. Keep the surrounding code and its formatting exactly as it
-is.
+is, because the diff is applied by matching those lines.
+
+The record may show several files. Put the fix in the one that holds the
+interrupted flow, name it in `file` with its path exactly as in the `location` of
+its `<source>` block, and use that path in the diff's `---` and `+++` headers. A
+patch changes one file.
