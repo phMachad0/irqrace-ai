@@ -140,7 +140,7 @@ end-to-end C3 `RunStore` pipeline (`llm/pipeline.py`, `irqrace llm triage`,
 | --- | --- |
 | C4 owned and exercised against both mock and source-backed resolvers | done — `llm/resolver.py` (`RecordBackedResolver`, `SourceBackedResolver`) |
 | **Provider-neutral backend seam** | done — `llm/backends/`, any model via `provider:model` |
-| Prompt harness: client, structured output, result cache | done — `llm/client.py`, `llm/cache.py` |
+| Prompt harness: client, structured output | done — `llm/client.py` |
 | Token, latency and cost model | done — `llm/cost.py` |
 | The five ablation rows as compositions | done — `llm/prompts/` |
 | Recall gate, trap rejection, Inspection Ratio, consistency | done — `llm/scoring.py` |
@@ -334,7 +334,6 @@ irqrace llm repair runs/<run_id>         # propose repairs for triaged candidate
 python3 scripts/build-fixtures.py        # regenerate the fixtures from the specs
 python3 scripts/run-ablation.py          # score the active rows; exits 1 if the gate fails
 python3 scripts/run-ablation.py --resolver source --include-deferred --rows +progressive
-python3 scripts/run-ablation.py --cache-only --rows simple +domain   # re-score, no requests
 python3 scripts/ablation-table.py a.json b.json   # the M3 table, one column group per model
 python3 scripts/run-repair.py            # score the W7 repair stage against the 10 reference fixes
 ```

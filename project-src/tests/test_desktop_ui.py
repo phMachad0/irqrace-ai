@@ -24,18 +24,6 @@ from irqrace.ui.desktop import (
 )
 
 
-@pytest.fixture(scope="module")
-def tk_root():
-    """Shared single Tk root per test session to avoid Windows Tcl/Tk DLL reload corruption."""
-    root = tk.Tk()
-    root.withdraw()
-    yield root
-    try:
-        root.destroy()
-    except Exception:
-        pass
-
-
 def test_multi_file_c_and_h_list_in_c1(tmp_path: Path) -> None:
     c1 = tmp_path / "mod1.c"
     c2 = tmp_path / "mod2.c"
@@ -114,13 +102,23 @@ def test_win_app_top_tabs_and_multi_file_list(tk_root) -> None:
     win = tk.Toplevel(tk_root)
     try:
         app = IrqRaceWinApp(win)
-        # Verify the 2 top-level tabs exist ("Pipeline" and "Configuração de APIs de LLM")
+        # Starts on the home screen; generic mode has two tabs (Projeto, Pipeline)
+        assert app.current_screen == "home"
+        assert set(app.screens) == {"home", "bench", "generic", "llm"}
         tabs = app.top_notebook.tabs()
         assert len(tabs) == 2
 
-        # Verify source files list contains multiple files (.c and .h)
+        # Generic mode starts empty: nothing is preloaded behind the user's back
+        assert app.source_files_list == []
+        assert app.yaml_path_var.get() == ""
+
+        # Importing a C1 file fills the source list (.c and .h)
+        assert app.import_c1(REPO_ROOT / "bench" / "configs" / "svp_simple_001_001.yaml")
         assert len(app.source_files_list) >= 2
         assert app.src_listbox.size() == len(app.source_files_list)
+        # ...from the vendored suite, not a checkout found relative to the working directory
+        suite = (REPO_ROOT / "bench" / "racebench").resolve()
+        assert all(suite in p.parents for p in app.source_files_list)
 
         # Verify preset switching in LLM config tab
         app.llm_preset_var.set("ChatGPT / OpenAI Oficial")
@@ -273,9 +271,17 @@ def test_two_screen_wizard_and_mandatory_llm(monkeypatch, tk_root) -> None:
     win = tk.Toplevel(tk_root)
     try:
         app = IrqRaceWinApp(win)
+        app.open_generic_mode()
+        assert app.current_screen == "generic"
 
         # Starts on Screen 1 (tab_setup)
         assert app.top_notebook.select() == str(app.tab_setup)
+
+        # No configuration yet: refuses to proceed
+        assert app._on_proceed_to_pipeline() is False
+        assert any("Configuração Obrigatória" in err for err in errors)
+        errors.clear()
+        assert app.import_c1(REPO_ROOT / "bench" / "configs" / "svp_simple_001_001.yaml")
 
         # Check button names are concise: (RESET), (STEP), (RESUME), (STOP)
         assert app.btn_reset.cget("text") == "(RESET)"
@@ -284,6 +290,10 @@ def test_two_screen_wizard_and_mandatory_llm(monkeypatch, tk_root) -> None:
         assert app.btn_stop.cget("text") == "(STOP)"
 
         # Attempt to proceed without API key must fail and show mandatory error
+        # (whatever the developer's .env says, test the keyed OpenAI-compatible path)
+        app.llm_adapter_var.set("openai")
+        app.llm_base_url_var.set("https://api.groq.com/openai/v1")
+        app.llm_model_var.set("openai/gpt-oss-120b")
         app.llm_api_key_var.set("")
         ok = app._on_proceed_to_pipeline()
         assert ok is False
@@ -575,15 +585,11 @@ class _AlwaysFeasibleBackend:
 
 def test_live_triage_keeps_every_candidate_when_the_api_fails_on_some(tmp_path, monkeypatch):
     import irqrace.ui.desktop as desktop
-    from irqrace.llm.cache import Cache
 
     # The variable block, not the bare name: every record now ships isr_2's
     # body, and that body reads global_var.
     fake = _AlwaysFeasibleBackend(fail_for='"name": "svp_simple_001_001_global_var"').backend
     monkeypatch.setattr(desktop, "build_backend_from_config", lambda *a, **k: fake)
-    real_client = desktop.TriageClient
-    monkeypatch.setattr(desktop, "TriageClient",
-                        lambda cfg, backend: real_client(cfg, backend=backend, cache=Cache(enabled=False)))
 
     stepper = _stepper(tmp_path, use_live_llm=True)
     _run_until(stepper, "triage")
