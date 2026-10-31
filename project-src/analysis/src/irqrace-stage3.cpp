@@ -113,6 +113,7 @@ struct Candidate {
 
 struct Query {
   unsigned timeoutMs = 10000;
+  uint64_t rlimit = 0; // Z3 resource units per candidate; 0 is no limit
   unsigned maxStates = 40000;
   std::set<std::string> primitives;
   std::map<std::string, std::string> models; // function -> effect
@@ -154,6 +155,7 @@ bool readQuery(const std::string &path, Query &qy, std::string &err) {
     if (w.empty() || w[0][0] == '#') continue;
     const std::string &k = w[0];
     if (k == "timeout_ms" && w.size() == 2) qy.timeoutMs = std::stoul(w[1]);
+    else if (k == "rlimit" && w.size() == 2) qy.rlimit = std::stoull(w[1]);
     else if (k == "max_states" && w.size() == 2) qy.maxStates = std::stoul(w[1]);
     else if (k == "primitive" && w.size() == 2) qy.primitives.insert(w[1]);
     else if (k == "model" && w.size() == 3) qy.models[w[1]] = w[2];
@@ -524,6 +526,7 @@ struct Result {
   std::string method;  // how an UNSAT was reached: "projection" or "search"
   unsigned states = 0, solverCalls = 0;
   unsigned wallMs = 0;
+  uint64_t rlimitUsed = 0;
 };
 
 class Executor {
@@ -548,6 +551,8 @@ public:
     sawUnknown = false;
     unsupported.clear();
     solverCalls = 0;
+    rlimitUsed = 0;
+    rlimitSeen = 0;
 
     bool sat = false;
     std::string witness;
@@ -559,6 +564,7 @@ public:
     if (projectionRefutes(cand, states)) {
       res.states = states;
       res.solverCalls = solverCalls;
+      res.rlimitUsed = rlimitUsed;
       res.unconstrained = notes;
       res.method = "projection";
       res.wallMs = static_cast<unsigned>(
@@ -572,6 +578,7 @@ public:
     if (o == Outcome::Stopped) exhausted = false;
     res.states = states;
     res.solverCalls = solverCalls;
+    res.rlimitUsed = rlimitUsed;
     res.unconstrained = notes;
     res.wallMs = static_cast<unsigned>(
         std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - t0).count());
@@ -606,6 +613,7 @@ private:
   std::set<std::string> unsupported;
   bool sawUnknown = false;
   unsigned solverCalls = 0;
+  uint64_t rlimitUsed = 0, rlimitSeen = 0;
   unsigned expireAfterCalls = 0;
   unsigned freshCounter = 0;
   std::string lastWitness;
@@ -644,6 +652,23 @@ private:
 
   bool timeUp() const { return Clock::now() > deadline; }
 
+  // The limit that decides a verdict counts Z3's own steps, so it falls at the
+  // same place under any load. The clock is only a safeguard against a query
+  // the counter does not see, and is far above it (issue #10).
+  bool spent() const { return qy.rlimit && rlimitUsed >= qy.rlimit; }
+
+  void countResources() {
+    // The counter is cumulative over the solver's life, across every check.
+    z3::stats st = inc->statistics();
+    for (unsigned i = 0; i < st.size(); ++i)
+      if (st.key(i) == "rlimit count") {
+        uint64_t now = st.uint_value(i);
+        rlimitUsed += now - rlimitSeen;
+        rlimitSeen = now;
+        return;
+      }
+  }
+
   // One incremental solver per candidate. Every path condition and query term
   // is asserted once, guarded by an indicator literal, and each check passes
   // the indicators of the current path as assumptions: Z3 then reuses the
@@ -670,14 +695,17 @@ private:
     // the search loop's own deadline check stops the search before that can
     // end in UNSAT, but a timeout must not become a proof because of where
     // the loop happens to look at the clock.
-    if (left <= 0) { sawUnknown = true; return z3::unknown; }
+    if (left <= 0 || spent()) { sawUnknown = true; return z3::unknown; }
     z3::params p(C);
     p.set("timeout", static_cast<unsigned>(left));
+    if (qy.rlimit)
+      p.set("rlimit", static_cast<unsigned>(std::min<uint64_t>(qy.rlimit - rlimitUsed, UINT_MAX)));
     inc->set(p);
     z3::expr_vector as(C);
     for (const z3::expr &e : pc) as.push_back(lit(e));
     if (extra) as.push_back(lit(*extra));
     z3::check_result r = inc->check(as);
+    if (qy.rlimit) countResources();
     if (r == z3::unknown) sawUnknown = true;
     if (r == z3::sat && model) *model = inc->get_model();
     return r;
@@ -1007,7 +1035,7 @@ private:
     work.push_back(std::move(init));
     unsigned local = 0;
     while (!work.empty()) {
-      if (timeUp() || ++local > qy.maxStates / 4 || collected.size() > kMaxProjectionPaths)
+      if (spent() || timeUp() || ++local > qy.maxStates / 4 || collected.size() > kMaxProjectionPaths)
         return false;
       ++states;
       State st = std::move(work.back());
@@ -1073,6 +1101,7 @@ private:
     std::vector<State> work;
     work.push_back(std::move(init));
     while (!work.empty()) {
+      if (spent()) { stopReason = "rlimit"; return Outcome::Stopped; }
       if (timeUp()) { stopReason = "timeout"; return Outcome::Stopped; }
       if (++states > qy.maxStates) { stopReason = "budget"; return Outcome::Stopped; }
       State st = std::move(work.back());
@@ -1579,6 +1608,7 @@ int main(int argc, char **argv) {
       first = false;
     }
     o << "], \"wall_ms\": " << r.wallMs << ", \"timeout_ms\": " << qy.timeoutMs
+      << ", \"rlimit\": " << qy.rlimit << ", \"rlimit_used\": " << r.rlimitUsed
       << ", \"states\": " << r.states << ", \"solver_calls\": " << r.solverCalls
       << ", \"method\": " << (r.method.empty() ? "null" : q(r.method)) << "}";
     std::cout << o.str() << std::endl;

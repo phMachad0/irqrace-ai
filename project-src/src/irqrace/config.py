@@ -28,7 +28,11 @@ import yaml
 
 from . import contracts
 
-SCHEMA_VERSION = "c1/2.0.0"
+SCHEMA_VERSION = "c1/2.1.0"
+
+#: Z3 resource units per candidate; see :mod:`irqrace.stage3`. About 10 s of
+#: solving on the reference machine (brake3, 430 units/ms, issue #10).
+DEFAULT_RLIMIT = 4_000_000_000
 
 #: Defaults applied on load. Kept in one place and checked against the schema's
 #: own ``default`` annotations by ``tests/test_contracts.py``, so the two cannot
@@ -65,7 +69,8 @@ DEFAULTS: dict[str, Any] = {
         "alias": "may",
         "indirect_calls": "signature-matched-address-taken",
         "allow_same_statement_a1_a2": True,
-        "solver": {"enabled": True, "timeout_ms": 10000, "on_timeout": "inconclusive"},
+        "solver": {"enabled": True, "timeout_ms": 120000, "rlimit": DEFAULT_RLIMIT,
+                   "on_timeout": "inconclusive"},
     },
     "output": {"run_root": "runs", "run_id": None},
 }
@@ -180,7 +185,7 @@ class Config:
         problems: list[str] = []
         flows = self.flows
 
-        if self.data["schema_version"] != SCHEMA_VERSION:
+        if self.data["schema_version"].split(".")[0] != SCHEMA_VERSION.split(".")[0]:
             problems.append(
                 f"schema_version is {self.data['schema_version']!r}, "
                 f"this build implements {SCHEMA_VERSION!r}"
