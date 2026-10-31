@@ -124,6 +124,8 @@ código. Isso importa para o próximo problema.
 
 ### 3.2. O cache servia as respostas antigas
 
+> **Decisão revertida:** o cache de respostas foi removido do projeto em 30 out (§3.19).
+
 Com o código-fonte nos registros, o app continuou mostrando as mesmas classificações. A chave do
 *cache* era `(fingerprint, configuração de prompt, modelo, schema)`, e o *fingerprint* não tinha
 mudado: o *cache* devolvia as respostas que o modelo deu **sem** ver o código. A chave passou a
@@ -699,6 +701,682 @@ suíte. Resultado: 594 testes passando.
 29/10 (como o `cf213e34277d338cc` do WRW 32/55/35 do caso 001) são os antigos. O cache do LLM, que
 tem o *fingerprint* na chave, começa vazio para os candidatos reais. As contagens não mudam.
 
+### 3.15. Uma nova sequência de telas: modo Racebench e modo genérico com assistente (29 out)
+
+Até aqui o desktop abria direto numa tela de configuração que misturava duas coisas diferentes: um
+seletor de "Caso Racebench" e um campo de texto com o caminho do arquivo `.yaml` de configuração. Ele
+ainda carregava, sem perguntar, o caso `svp_simple_001_001` e o *run* mais recente dele. A pedido do
+Lucas, o app passou a ter uma **tela inicial** com dois caminhos:
+
+| Tela | Para quê | Módulo |
+| --- | --- | --- |
+| **Início** | escolher o modo | `ui/desktop.py` |
+| **Benchmarks Racebench** | rodar os casos da suíte sem intervenção e comparar com o gabarito | `ui/benchmark_screen.py` |
+| **Analisar um projeto** (modo genérico) | descrever o programa sob análise e rodar o pipeline | `ui/desktop.py` + `ui/c1_wizard.py` |
+| **Configuração da LLM** | provedor, modelo e chave, compartilhada pelos dois modos | `ui/desktop.py` |
+
+**O arquivo de configuração não é mais editado à mão.** O arquivo C1 é o contrato que descreve o
+modelo de interrupções do programa (fontes, fluxos, prioridades, primitivas de mascaramento,
+semântica do processador). Um *fluxo* é um ponto de entrada que roda "por conta própria": a tarefa
+principal ou uma ISR (*interrupt service routine*, a função que o hardware chama quando a interrupção
+dispara). No modo genérico o usuário tem duas saídas: **importar** um C1 existente ou **criá-lo pelo
+assistente** (*wizard*, uma janela de várias páginas que conduz o preenchimento passo a passo). O
+campo do caminho ficou somente leitura. O assistente tem cinco páginas: Projeto (nome e arquivos
+`.c`/`.h`), Fluxos, Mascaramento, Semântica e Revisão. Ele lê os fontes com uma expressão regular
+para sugerir funções. Não é um *parser*, e por isso é só sugestão: o usuário confirma cada linha, e
+o número da IRQ e a prioridade o assistente não tem como deduzir.
+
+O ponto que importa para a tese: **o assistente valida com a mesma função que o pipeline usa**, então
+não existe arquivo que o assistente aceite e o pipeline recuse:
+
+```python
+# project-src/src/irqrace/ui/c1_wizard.py
+def validate_state(state: WizardState, target: Path | None = None) -> Config:
+    """Build the document and load it exactly as the pipeline will."""
+    doc = state.to_c1(target)
+    try:
+        return Config.from_dict(doc, path=target)
+```
+
+Os padrões oferecidos são os *recall-safe* do esquema. *Recall* é a fração dos defeitos reais que a
+ferramenta encontra. Um padrão *recall-safe* é o que nunca faz um defeito real sumir: chegada de
+interrupções `unbounded`, externas `may-read-write-reachable`, aninhamento e preempção entre
+prioridades iguais ligados. Toda opção que não é *sound* (que pode esconder um defeito real) vem com
+um aviso em vermelho ao lado. Na página de fluxos o aviso é o mais importante do contrato: uma ISR
+esquecida não contribui nenhum acesso, e os defeitos que só ela alcança desaparecem sem erro nenhum.
+Importar um arquivo também valida. O `lucas_config.yaml` antigo, no esquema anterior ao `c1/2.0.0`,
+agora é recusado com a mensagem do contrato, em vez de falhar só na etapa 1.
+
+**O modo Racebench** lista os 31 arquivos de `bench/configs`, deixa escolher a profundidade e roda os
+casos selecionados fora da *thread* da janela (uma *thread* é um fluxo de execução paralelo; assim a
+janela não trava). Nesta primeira versão, os casos rodavam um de cada vez, do início ao fim; a §3.18
+mudou isso na profundidade completa. A profundidade **estática** (etapas 1–4) é o padrão: é sobre ela que o *recall gate* é definido, e ela
+não gasta chamadas de API. O *recall gate* é a exigência de que nenhum *bug point* do gabarito se
+perca. A profundidade **completa** acrescenta triagem e reparo pela LLM. Cada caso é pontuado por
+`evaluate_run`, a mesma avaliação por estágio da §3.7. A tabela mostra os candidatos por estágio, os
+bugs detectados sobre o total, as armadilhas reportadas (*traps*, linhas anotadas como "não é bug")
+e o tempo. Um caso que falha vira uma linha da tabela, não o fim da bateria:
+
+```python
+# project-src/src/irqrace/ui/benchmark_screen.py
+    except InterruptedError:
+        out["status"] = "stopped"
+    except Exception as e:  # a failing case is a row in the table, not the end of the batch
+        out["error"] = f"{type(e).__name__}: {e}"
+```
+
+O resumo de cada bateria é gravado em `runs/benchmarks/racebench-<profundidade>-<data>.json`. Um
+duplo clique num caso abre o *run* na aba Pipeline, onde candidatos, triagem e *diff* podem ser
+inspecionados como no modo genérico.
+
+**Um defeito achado no caminho.** O log de 29 out mostrava o build compilando a partir de
+`C:\Users\luoma\Desktop\racebench`, o *checkout* antigo, e não da cópia vendorizada (§3.14). A causa
+era `resolve_c_source_files`: ela usava o `source_root` relativo dos `bench/configs`
+(`../racebench/2.1_remarks`) contra o **diretório de trabalho**, e não contra o arquivo. Rodando da
+raiz do *vault*, `../racebench` é justamente o *checkout* antigo. Agora a função recebe o arquivo de
+origem e resolve a partir dele:
+
+```python
+# project-src/src/irqrace/ui/desktop.py
+    if yaml_path is not None:
+        raw_cfg = resolve_source_root(copy.deepcopy(raw_cfg), Path(yaml_path))
+```
+
+Um teste confere que todos os fontes importados de `svp_simple_001_001.yaml` estão dentro de
+`bench/racebench`.
+
+**Testes.** `tests/test_desktop_modes.py` é novo, com 8 testes:
+- varredura e sugestões a partir do código;
+- arquivo do assistente aceito por `Config.load` e pelo `PipelineStepper`;
+- recusa do que o contrato recusa;
+- ida e volta de um C1 do Racebench pelo assistente, preservando fluxos, primitivas, semântica e
+  gabarito;
+- um caso real de benchmark rodando até o contexto com *recall gate* 2/2;
+- caso que falha virando linha;
+- navegação entre as telas.
+
+A *fixture* `tk_root` foi para o `conftest.py` com escopo de sessão, porque no Windows um segundo
+`tk.Tk()` depois de destruir o primeiro corrompe o estado do Tcl/Tk. No Windows a suíte fica em
+389 passando e 37 falhando. As 37 falhas já existiam antes desta mudança: problemas de codificação
+`cp1252` em `test_groundtruth`/`test_racebench`, o `lucas_config.yaml` no esquema antigo e um teste
+desatualizado da tela de abertura.
+
+### 3.16. O histórico da LLM mostra o que ela leu (29 out)
+
+Para avaliar um veredito é preciso saber em que código ele se apoiou. A aba "Histórico LLM" só
+despejava os turnos da conversa, e ainda lia um campo `phase` que os turnos não têm. Ela foi
+refeita (`ui/llm_history.py`) para separar as **duas vias** pelas quais o código chega ao modelo:
+
+- **entregue** (azul): os blocos `<source>` do registro C2 que `render_record` põe no primeiro
+  prompt, sem a LLM pedir. É a função de cada acesso da trinca, já numerada por linha.
+- **solicitado** (amarelo para o pedido; verde para o código fornecido; vermelho para o recusado):
+  os pedidos do protocolo **C4**. Com o *progressive prompting* ligado, a LLM escreve, num bloco
+  `request`, um pedido de um tipo fechado (`function_definition`, `isr_body`,
+  `all_accesses_to`…). O programa o interpreta, o *resolver* responde, e a resposta volta no turno
+  seguinte. Quando não há corpo (`not_found`), a resposta leva a regra de recall que o modelo deve
+  aplicar, e o histórico mostra essa regra.
+
+C4 **não é MCP** (*Model Context Protocol*, o padrão de *tool calling* entre aplicações e modelos).
+É um protocolo textual próprio do projeto, definido em `contracts/c4-*.schema.json`, que funciona
+com qualquer *backend*. O *backend* `claude -p` desliga as ferramentas e os servidores MCP de
+propósito (§3.4).
+
+No topo da aba fica um resumo, "O QUE A LLM LEU", com cada trecho, local e número de linhas. Para
+isso o `TriageClient` passou a gravar no `turns.jsonl` os pedidos interpretados e as respostas do
+*resolver* como dados, e não só como texto:
+
+```python
+# project-src/src/irqrace/llm/client.py
+            convo.add("assistant", text, stage=stage, turn=turn, requests=requests)
+            ...
+            convo.add("user", reply_text, stage=stage, turn=turn, kind="c4_replies", replies=replies)
+```
+
+O contrato C3 já dizia que o `turns.jsonl` contém "os pedidos e respostas C4". Para *runs* antigos,
+sem esses campos, a aba reconstrói pedidos e respostas a partir do texto, com o mesmo *parser* do
+cliente.
+
+**O achado.** Ao montar a aba, ficou visível que **nenhum dos 164 `turns.jsonl` existentes tem um
+único pedido C4**. Das linhas de prompt da ablação (`simple`, `+domain`, `+decomposition`,
+`+self-validation`), nenhuma liga `progressive`. Ele só existe na linha adiada `+progressive`.
+Então, em todos os *runs* até aqui, a LLM leu **somente** o código entregue no registro C2. Quando
+o prompt do *run* não permite pedidos, a aba diz isso explicitamente, em vez de mostrar uma lista
+vazia. Isso é um dado para a [[LLM Stage Design|decisão D#2]]: a distribuição de pedidos que o
+desenho chama de "o experimento mais barato do projeto" ainda não foi medida nenhuma vez.
+
+Um defeito antigo saiu no caminho: a aba Triagem quebrava (`AttributeError`) em triagens com
+`produced_by: null`, como as escritas pelo *backend* CLI. Testes: `tests/test_llm_history.py`
+(5 testes), com uma conversa simulada que pede um `isr_body` (respondido) e uma função
+inexistente (`not_found`, com a regra).
+
+### 3.17. O "Completo" que não chamava a LLM: o cache sem transcrição (29 out)
+
+> **Decisão revertida:** esta seção descreve código que não existe mais. O cache, o checkbox
+> "Reutilizar respostas em cache" e o evento `llm-cache-hit` foram removidos em 30 out (§3.19).
+
+**O sintoma.** No modo Racebench, a profundidade "Completo" parecia rodar só a parte estática: não
+havia nenhum registro de conversa com a LLM. Os *runs* mostram que as etapas 5 e 6 rodaram, sim. O
+resumo `runs/benchmarks/racebench-full-20261029T225848Z.json` lista
+`build,stage1,solver,context,triage,repair` nos 31 casos. Mas no `svp_simple_029_001` a triagem
+terminou em 54 ms, e no `svp_simple_030_001` só 2 dos 11 candidatos têm `turns.jsonl`.
+
+**A causa** é o **cache de resultados** (`.llm-cache/`): um diretório com uma resposta por chave.
+A chave é formada pela *fingerprint* do candidato, pelo prompt, pelo modelo, pelo esquema e pela
+evidência mostrada, e o cache existe para não pagar duas vezes pela mesma pergunta. Num acerto de
+cache (*cache hit*), o `TriageClient` devolvia o veredito guardado antes de montar a conversa:
+nada era chamado, nada era gravado e nada era avisado. O `RepairClient` fazia o mesmo. Para quem
+avalia, um veredito sem conversa é indistinguível de uma transcrição perdida.
+
+**A correção** tem três partes:
+
+1. O cache passa a guardar a transcrição ao lado da resposta (`<chave>.turns.jsonl`).
+2. Num acerto, o cliente escreve no *run* um `turns.jsonl` (ou `repair-turns.jsonl`) que começa
+   com um turno marcador `cache_hit`, seguido da conversa original:
+
+```python
+# project-src/src/irqrace/llm/client.py
+        cached = self.cache.get(*key)
+        self.last_from_cache = cached is not None
+        if cached is not None:
+            if run_dir is not None:
+                cache_hit_conversation(
+                    record["id"], self.cache.get_turns(*key), stage="triage",
+                    backend_spec=self.backend.spec, prompt_config=self.config.name,
+                ).write(run_dir)
+            return Triage.model_validate(cached)
+```
+
+3. A interface mostra a origem de cada resposta:
+   - o log da etapa marca cada candidato servido do cache com ♻ e fecha com "X via API, Y do cache";
+   - o `log.ndjson` do *run* ganha um evento `llm-cache-hit`. O bloco `llm` do *manifest* não
+     admite campos extras (C3), então o evento vai para o log;
+   - a aba "Histórico LLM" mostra a faixa roxa "♻ RESPOSTA DO CACHE";
+   - a tela de configuração da LLM ganhou o checkbox **"Reutilizar respostas em cache"**. Desmarcado,
+     ele força chamadas novas à API, nos dois modos.
+
+As 306 entradas que já estavam no cache foram escritas antes desta mudança e não têm transcrição.
+Para elas, a aba diz que a conversa original não foi guardada e manda desligar o cache para
+revê-la.
+
+Um veredito de cache continua sendo um veredito válido, com o mesmo modelo, o mesmo prompt e a
+mesma evidência. O que mudou é que ele não fica mais invisível para a avaliação.
+
+Testes:
+
+- três novos em `tests/test_llm_history.py`: acerto com transcrição, acerto sem transcrição e cache
+  desligado;
+- um trecho a mais no teste de cache de `tests/test_llm_repair.py`;
+- uma execução de ponta a ponta do caso 029 com `claude-cli:haiku`/`simple`, que registrou
+  "0 via API, 2 do cache" na triagem e "1 do cache" no reparo.
+
+### 3.18. Racebench em duas filas: a LLM não espera o estático (30 out)
+
+**O problema.** Em "Executar todos" na profundidade completa, cada caso passava pelas 6 etapas antes
+de o próximo começar. Quem espera é a LLM: a resposta do modelo leva segundos, e nesse tempo o
+estático do caso seguinte ficava parado. As chamadas à API também saíam uma de cada vez.
+
+**A decisão: duas filas.** `run_batch`, em `ui/benchmark_screen.py`, separa a bateria assim:
+
+- **Fila estática:** uma *thread*, um caso por vez, etapas 1–4.
+- **Fila LLM:** um *pool* de *threads* (um grupo fixo de N fluxos de execução que pegam tarefas de
+  uma fila), etapas 5–6. N é escolhido na tela, em "Casos na LLM em paralelo", de 1 a 16, e o padrão
+  é 4.
+
+Quando o estático de um caso termina, o caso vai para o *pool*, e a fila estática passa ao próximo
+sem esperar:
+
+```python
+# project-src/src/irqrace/ui/benchmark_screen.py
+            reached = run_steps(res, stepper, STATIC_LAST_STEP, log_fn, should_stop)
+            evaluate_case(res, stepper)
+            if reached and last_step != STATIC_LAST_STEP:
+                emit("row_static", dict(res))  # a copy: the pool writes to *res* from here on
+                pool.submit(llm_lane, res, stepper, log_fn)
+            else:
+                finish(res)
+```
+
+Três escolhas nesse desenho:
+
+1. **O estático continua sequencial.** Ele não é o gargalo, e rodá-lo em paralelo contaminaria os
+   tempos por estágio (`wall_ms`).
+2. **O paralelismo é por caso, não por candidato.** Dentro de um caso os candidatos seguem em ordem.
+   O laço de `_step_triage` regrava `triage.jsonl` a cada candidato e consulta
+   `client.last_from_cache`, e os dois assumem uma única *thread*. Com 31 casos, o paralelismo por
+   caso já resolve a espera.
+3. **Um caso nunca está nas duas filas ao mesmo tempo.** É isso que dispensa travas (*locks*) no
+   `PipelineStepper` e no `RunStore`: cada caso tem os seus, e só uma *thread* os toca de cada vez.
+
+**O que mudou na tela.** A coluna de status passa por `na fila` → `⏳ estático` → `🤖 fila LLM` →
+`🤖 LLM` → resultado. Candidatos, bugs e recall aparecem assim que o estático acaba, antes da LLM.
+Cada linha de log leva o nome do caso, porque os logs agora se intercalam. O botão (STOP) avisa
+todos os casos em curso, e os que estão na fila LLM terminam `parado` sem chamar a API.
+
+**Uma falha da LLM não apaga mais o recall.** Antes, uma exceção na triagem pulava `evaluate_run` e a
+linha ficava sem números. Agora `evaluate_case` roda mesmo depois de uma falha: o caso fica `failed`,
+com os números do estático, porque o *recall gate* é definido sobre eles.
+
+**Um risco que as duas filas criaram.** Todo `PipelineStepper` novo varre os `manifest.json` de todos
+os *runs* em `find_matching_template_run`, e agora isso acontece enquanto outras *threads* gravam
+esses arquivos. A gravação usa `os.replace`, que troca o arquivo de uma vez só. No Windows, essa
+troca levanta `PermissionError` se alguém estiver com o destino aberto, e o caso cairia no meio da
+LLM por causa de uma simples leitura. A correção tenta de novo por alguns milissegundos:
+
+```python
+# project-src/src/irqrace/runstore.py
+    for attempt in range(1, attempts + 1):
+        try:
+            os.replace(src, dst)
+            return
+        except PermissionError:
+            if attempt == attempts:
+                raise
+            time.sleep(wait_s * attempt)
+```
+
+Esse risco veio da leitura do código. A falha não foi observada numa execução; o teste a simula.
+A varredura saiu do projeto em 30 out (§3.19). A nova tentativa ficou, porque a interface também lê
+esse arquivo durante um *run*.
+
+**O custo: *rate limit*.** O *rate limit* é o limite de uso imposto pelo provedor, em geral em tokens
+por minuto, e estourá-lo devolve o erro HTTP 429. Os N casos dividem o mesmo limite. O *backend*
+desiste depois de 6 novas tentativas ou de 300 s, e o candidato vira `uncertain` com o motivo em
+`not_triaged`. Isso não perde recall, porque nada sai do relatório, mas piora a triagem sem alarde.
+Por isso o total de candidatos sem veredicto aparece no resumo da tela e no JSON da bateria, junto
+com `llm_workers`: duas baterias com N diferentes não são diretamente comparáveis. Não há limitador
+global de taxa. Se o número subir, basta reduzir N.
+
+**Verificação.** Oito testes novos em `tests/test_desktop_modes.py`, com um *stepper* falso:
+
+- a LLM de um caso só é liberada quando o estático do caso seguinte começa, o que prova que ela não
+  espera;
+- as fases LLM de dois casos se sobrepõem;
+- os resultados saem ordenados mesmo terminando fora de ordem;
+- a falha na LLM mantém os números do estático;
+- o STOP não deixa o caso entrar na LLM;
+- um único *worker* (uma *thread* do *pool*) ainda roda todos os casos;
+- a profundidade estática não chega à LLM;
+- candidatos sem veredicto chegam ao resumo.
+
+Um nono teste cobre `write_manifest` com um `PermissionError` simulado.
+
+Houve também uma execução de ponta a ponta da tela real, com os 31 casos e a análise estática de
+verdade, contra um servidor local falso que responde em 0,4 s e devolve 429 nas três primeiras
+chamadas. Resultado: 31/31 `ok`, 53/53 bugs, 501 chamadas em 79 s, no máximo 4 simultâneas, linhas
+em `🤖 LLM` e `⏳ estático` ao mesmo tempo. O STOP encerrou a bateria com 1 chamada feita. **Isso
+não mede o ganho de tempo nem o comportamento de *rate limit* com um provedor real.**
+
+No Windows a suíte, sem `tests/test_ui_app.py` (este Python não tem `pandas`), fica em 400 passando e
+36 falhando. A falha a menos é `test_live_triage_keeps_every_candidate_when_the_api_fails_on_some`:
+um `lambda` do teste não aceitava o `cache=` da §3.17, e a correção foi de uma linha no teste. As 36
+restantes são 33 de `test_racebench`, 2 de `test_groundtruth` e a do `lucas_config.yaml`.
+
+**A primeira bateria real, e o "travamento" que não era travamento.** Em 30 out a tela pareceu presa
+em `🤖 LLM`. Os *runs* mostram que não estava: com `claude-cli` as chamadas funcionaram em paralelo
+(às 19:28, os casos 001 a 004 estavam em triagem ao mesmo tempo). Na bateria que pareceu presa, o
+*pool* estava em 1 e cada candidato levava cerca de 26 s, então o caso 001 ficou mais de 2 minutos na
+mesma linha, sem nenhum sinal de avanço, e os outros 30 esperaram na fila. A falta era de informação:
+
+- a linha agora mostra `🤖 Triagem 3/6`, a partir do evento `api_candidate_progress`, que os
+  *steppers* da bateria não recebiam;
+- o resumo mostra quantos casos terminaram, quantos estão na LLM e quantos esperam na fila;
+- na profundidade estática, o resumo diz que a LLM não é chamada. O rótulo "API LLM: Inativa" é da
+  aba Pipeline e o modo Racebench não o atualiza; ao abrir um *run* da tabela, ele agora diz que o
+  *run* já foi executado.
+
+**Um defeito real achado no teste.** Uma conexão derrubada no meio da resposta levanta
+`RemoteDisconnected`, que não é `URLError` nem nenhuma das exceções que as etapas capturam. O erro
+encerrava o caso inteiro, em vez de uma tentativa de um candidato. Agora é uma falha transitória,
+repetida como um *rate limit*:
+
+```python
+# project-src/src/irqrace/llm/backends/openai_backend.py
+        except ConnectionError as e:
+            # A connection dropped mid-response is not wrapped in URLError, and
+            # it is none of the exceptions the stages catch: it ended the whole
+            # case instead of one attempt at one candidate.
+            raise _Transient(f"connection to {self.base_url} lost: {e}", 5.0) from None
+```
+
+**`+progressive` com `claude-cli`: dois achados.**
+
+1. Nos *runs* reais desse dia, com Sonnet 5.5 e Haiku, **nenhuma das transcrições gravadas tem um
+   pedido C4**. Esta seção dizia que "o caminho funciona" porque 166 rodadas chegaram ao *resolver* no
+   servidor falso. **Isso estava errado:** o desktop nem usava o *resolver* com os fontes, e o pedido
+   falso também não testava o que importava (§3.21).
+2. Com `claude-sonnet-5-5`, vários candidatos falharam com a mensagem "safeguards flagged this
+   message" (`reasoning_extraction`). Isso não aconteceu na bateria com `+self-validation`, nem nos
+   5 candidatos respondidos pelo Haiku, e aconteceu também num *run* sem paralelismo, então a causa
+   não é o paralelismo. A **hipótese**, ainda não verificada, é a segunda chamada: como `claude -p`
+   só aceita um turno, `_render_messages` transforma a resposta anterior do modelo numa transcrição
+   e pede que ela seja convertida no formato final, o que pode parecer uma tentativa de extrair o
+   raciocínio. O erro chega como falha de API, não como recusa. Nesses *runs* a transcrição do
+   candidato que falha não foi gravada, então eles não mostram em que chamada o erro ocorreu. Desde a
+   §3.20 ela é gravada turno a turno, e o próximo erro deste tipo vai dizer.
+
+A suíte no Windows, nas mesmas condições, fica em 402 passando e as mesmas 36 falhando.
+
+### 3.19. O cache de LLM saiu do projeto (30 out)
+
+**A decisão**, do autor do projeto: nenhuma resposta da LLM pode ser reutilizada. Toda triagem e todo
+reparo são uma chamada nova ao modelo. Isso reverte a decisão da W2 e as §3.2 e §3.17.
+
+**O que saiu:**
+
+- `llm/cache.py` e o parâmetro `cache=` de `TriageClient`, `RepairClient`, `triage_store` e
+  `repair_store`;
+- as opções `--no-cache` e `--cache-only` da CLI e dos *scripts*;
+- `evidence_hash` e os *hashes* de esquema, que só existiam para compor a chave do cache;
+- o parâmetro `sample`, que só distinguia entradas de cache. `--samples` da ablação continua: agora
+  cada repetição é simplesmente outra chamada. Só `--sample` de `run-repair.py` saiu, por não ter mais
+  efeito;
+- o checkbox, o log "X via API, Y do cache", o evento `llm-cache-hit` e a faixa roxa do histórico;
+- **o modo "Cache / Simulado (Offline)"**. Ele copiava vereditos e *patches* de um *run* anterior do
+  mesmo caso (`find_matching_template_run`), sem chamar a LLM. O nome era outro, mas era um cache.
+  Com "Usar API de LLM Real" desmarcado, as etapas 5 e 6 agora ficam `skipped` e os candidatos seguem
+  em `context/` sem veredicto. Isso resolve a pendência da §6, em que esse modo "fingia a LLM".
+
+**O que ficou, de propósito:**
+
+- o *prompt caching* do provedor (`cache_control`, `cache_read_tokens`). É outra coisa: o modelo é
+  chamado e responde de novo, e só parte dos *tokens* de entrada sai mais barata. Nenhuma resposta é
+  reaproveitada;
+- `PromptConfig.hash`, que continua identificando a linha da ablação nos relatórios;
+- o *fingerprint*, cuja regra continua valendo: é por ele que dois *runs* do mesmo sujeito são
+  comparados;
+- caches internos sem relação com a LLM, como o de linhas de fonte no stage 1;
+- o diretório `.llm-cache/` em disco (458 arquivos, fora do git). Nada mais o lê. Ele não foi apagado
+  porque, estando fora do git, não poderia ser recuperado.
+
+**O que o projeto perde:**
+
+- reexecutar custa de novo: rodar a mesma linha duas vezes paga duas vezes;
+- `--cache-only` era a forma de repontuar linhas já medidas sem nenhuma chamada. Agora, repontuar
+  exige chamar o modelo, ou reler os resultados salvos em JSON;
+- nos *runs* antigos, o marcador `cache_hit` continua nos arquivos e aparece no histórico como um turno
+  comum de SISTEMA, com o texto dizendo que a resposta veio do cache. O número continua auditável.
+
+**Testes.** `tests/test_llm_cache.py` saiu. Quatro testes novos fixam o comportamento: a mesma
+triagem pedida duas vezes faz duas chamadas, o mesmo reparo também, sem API não há veredicto, e um
+*run* antigo com marcador continua legível. No Windows a suíte, sem `tests/test_ui_app.py`, fica em
+393 passando e as mesmas 36 falhas antigas. A contagem caiu porque os testes do cache foram removidos.
+A tela real, com a análise estática real e o servidor falso, rodou os 31 casos em `+progressive`:
+31/31 `ok` e 53/53 bugs. Com o STOP, foram 17 `ok` e 14 parados.
+
+### 3.20. Inspeção ao vivo de um caso do Racebench (30 out)
+
+**O problema.** A tabela só conhecia o *run* de um caso depois que ele terminava, então o duplo clique
+não fazia nada antes disso. Em baterias reais um caso leva minutos.
+
+**O que mudou.** O duplo clique funciona assim que o caso começa, inclusive ainda no estático. A aba
+Pipeline abre em **inspeção ao vivo**: etapas, candidatos, vereditos e a aba Histórico LLM se atualizam
+sozinhos, e as linhas do log daquele caso aparecem no log da aba. Um candidato que está sendo
+respondido aparece como `⏳ na LLM`. Quando o caso termina, a aba volta ao modo normal.
+
+Abrir mais cedo seria uma linha. Quatro problemas tornaram isso mais que uma linha:
+
+1. **Dois escritores no mesmo *run*.** Abrir um *run* cria um `PipelineStepper` ligado a ele. Com o
+   caso ainda rodando, clicar em "Executar Tudo" faria uma segunda *thread* escrever no mesmo diretório.
+   Por isso a inspeção é somente leitura: nenhum *stepper* fica ligado e os botões ficam desativados,
+   inclusive o de aplicar *patch*, porque o benchmark está lendo aqueles fontes.
+2. **Atualizar sem atrapalhar a leitura.** `_refresh_from_store` voltava para o primeiro candidato e
+   levava o texto ao topo. Agora a tela compara `run_signature` (caminho, data e tamanho de cada
+   arquivo) e só redesenha o que mudou. O candidato selecionado e a rolagem são mantidos, e quem está no
+   fim do texto continua acompanhando o fim.
+3. **Arquivos lidos pela metade.** `triage.jsonl` é reescrito a cada candidato. Uma leitura no meio da
+   escrita dá erro de JSON, e a atualização simplesmente tenta de novo no segundo seguinte. **O teste
+   achou um defeito aqui:** a tabela era limpa antes da leitura, então essa exceção a deixava vazia.
+   Agora ela só é limpa depois que tudo foi lido.
+4. **A conversa só existia no fim.** `turns.jsonl` era gravado quando o candidato terminava. Agora
+   `Conversation` grava a cada turno:
+
+```python
+# project-src/src/irqrace/llm/client.py
+    def add(self, role: str, content: Any, **meta: Any) -> None:
+        self.turns.append({"role": role, "content": content, **meta})
+        if self.live_path is not None:
+            self._dump(self.live_path)
+```
+
+O mesmo vale para o reparo. Há um ganho além da inspeção: uma conversa que falha agora deixa no *run*
+o que foi dito até ali, o que faltava para diagnosticar o erro do Sonnet da §3.18.
+
+**Limite:** a tela mostra cada turno quando a resposta chega. Ela não mostra o texto sendo gerado
+palavra por palavra, porque os *backends* não usam *streaming*.
+
+**Verificação.** Três testes novos em `tests/test_desktop_modes.py`: o *run* é anunciado antes da
+primeira etapa, uma conversa que falha deixa o que foi dito, e a inspeção é somente leitura e mantém a
+seleção, inclusive com um `triage.jsonl` cortado no meio. Na tela real, com o servidor falso, um caso
+foi aberto ainda em `⏳ estático` e acompanhado até o fim: 0/6 a 6/6 etapas, 14 candidatos, histórico
+crescendo e seleção mantida. A suíte fica em 396 passando e as mesmas 36 falhas antigas.
+
+### 3.21. Opções de prompt: por que os bugs reais viravam `likely_benign`, e o C4 de verdade (30 out)
+
+**A queixa** foi que a LLM "quase sempre descarta bugs reais". Antes de mexer no prompt, os bugs do
+gabarito foram contados por grupo nos *runs* do dia:
+
+| Modelo / prompt | `likely_real` | `likely_benign` | `likely_infeasible` |
+| --- | --- | --- | --- |
+| Sonnet 5.5, `+self-validation` | 4 | **19** | 0 |
+| Haiku, `+progressive` | 0 | **10** | 0 |
+| Opus, `+progressive` | 0 | **4** | 0 |
+
+Os 33 bugs em `likely_benign` foram todos julgados `feasible`. A LLM acertava que a intercalação
+ocorre e dizia que ela não faz mal: "o valor vai para um local nunca lido" (um **leitor morto**, como
+o `reader1` do Racebench). `harmfulness.md` manda exatamente isso, e em código real está certo. O
+gabarito do Racebench, porém, conta a intercalação em si. A linha `+racebench` já resolvia isso, mas
+não estava em uso. Mais código, sozinho, não mudaria essa resposta.
+
+**Três defeitos deixavam o C4 inútil, e nenhum teste os tinha pegado:**
+
+1. Em 31/31 casos o desktop usava o `RecordBackedResolver`, que só repete o registro. A raiz passada
+   tinha um nível a mais (`.../svp_simple_001`), e os caminhos do registro já começam com essa pasta.
+2. `_load_subject_sources` só carregava `*.h` da raiz, então `common.c` nunca era lido. É justamente
+   o código fora do registro para o qual o C4 existe.
+3. `all_call_paths` devolvia o formato do C2 num lugar onde o contrato C4 exige outro, e isso lançava
+   `ContractError`. Como esse erro é um `ValueError`, que o desktop não capturava, um pedido derrubaria
+   o caso. O mesmo valia para um pedido malformado do modelo. Agora um pedido que não pode ser atendido
+   volta como `unsupported`, com a regra de recall (`_answer`, em `llm/client.py`).
+
+**O que mudou:**
+
+- **Duas opções novas:** `+c4`, o prompt completo com pedidos, e `+racebench+c4`. `ABLATION` não mudou.
+- **`context_requests.md` reescrito.** O texto antigo dizia "Do not ask for context you will not use
+  -- what you request [...] is measured". O novo diz que pedir é opcional, e manda pedir antes de
+  responder `infeasible` ou `benign` se a resposta depender de código não lido. A regra de `not_found`
+  agora está no próprio texto: antes ela citava um *checklist* ausente em `+progressive`. Saiu
+  `masking_state_at`, que só responde para linhas de acesso, e o registro já traz isso.
+- **A tela Racebench ganhou um seletor de prompt próprio**, com padrão `+racebench+c4`, independente do
+  `.env`, e um aviso quando a opção escolhida não tem a semântica do benchmark.
+- **Nova coluna "LLM: reais"**, porque "Bugs detectados" só mostra o estático e nunca revelaria o
+  problema acima. Os totais vão para o resumo e o JSON (`triage_outcome`, em `run_evaluation.py`).
+- **O erro do Sonnet saiu.** `_render_messages`, do `claude -p`, deixou de reenviar a prosa do modelo:
+  o histórico vira uma mensagem só, com tarefa, registro, respostas C4 e instrução final.
+
+**Resultado com chamadas reais**, só triagem, `+racebench+c4`:
+
+| Modelo | Casos | Bugs `likely_real` | `uncertain` | `benign` | Armadilhas `likely_real` | Pedidos C4 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Haiku | 001–005 | 4/6 | 2 | 0 | 0/1 | 0 |
+| Sonnet 5.5 | 002, 004, 005 | 3/3 | 0 | 0 | 0/1 | **4** |
+
+Os quatro pedidos do Sonnet são **os primeiros pedidos C4 reais do projeto**: três
+`global_declaration` e um `all_accesses_to`, todos respondidos `ok` pelo *resolver* com os fontes.
+Os casos 002, 004 e 005, que falhavam com o erro de `safeguards`, passaram sem erro. É uma amostra
+de 8 casos, e não a bateria dos 31.
+
+**O que ficou aberto:** 4 dos 14 candidatos do Haiku falharam com `unknown error` na segunda chamada;
+por isso os 2 bugs do caso 001 ficaram `uncertain`. O *backend* descartava o motivo. Agora ele inclui
+`errors`/`subtype` na mensagem, mas a repetição que leria esse motivo não foi feita. A causa é
+desconhecida.
+
+`harmfulness.md` não mudou: `+c4`, em código real, continua chamando leitor morto de `benign`.
+
+### 3.22. Multi-arquivo: a linha agora anda com o arquivo (31 out, *issue* #8)
+
+**O problema.** Uma global usada em `task.c` e `isr.c` é detectada, e o registro C2 guarda o arquivo de
+cada acesso. Mas vários consumidores usavam só a linha: `(8,5,11)` não diz que o 5 está em `isr.c`.
+
+**O que a *issue* não dizia.** Ela afirmava que nada afetava a detecção nem o recall, e isso é verdade.
+Mas o reparo podia **corromper um fonte sem aviso**: `apply_unified_diff` ignorava o nome do arquivo e
+não conferia as linhas de contexto. Um diff feito para `isr.c`, aplicado a `task.c`, trocava
+`pending = 0;` por `guarded_inc();`, e o botão "Aplicar patch" grava no arquivo real. A verificação de
+compilação tinha o mesmo erro: testava o patch no arquivo do A₁.
+
+**A correção central:** as linhas decidem, não os números.
+
+```python
+# project-src/src/irqrace/llm/repair.py
+    code = ["".join(line.split()) for line in src]
+    wanted_code = ["".join(line.split()) for line in old]
+    fits = (
+        i for i in sorted(range(floor, len(src) - len(old) + 1), key=lambda i: abs(i - wanted))
+        if code[i:i + len(old)] == wanted_code
+    )
+```
+
+Um *hunk* (um bloco do diff) vai para onde suas linhas estão, o mais perto possível do número citado,
+como faz o programa `patch`. Se elas não estão no arquivo, o diff é recusado.
+
+**A medição que mudou a primeira versão.** A checagem foi testada nos 244 patches reais em `runs/`. Na
+versão estrita, 52 dos 194 do Haiku de 29/10 eram recusados, e **37 só por indentação**: o modelo
+reescreve tabulação como espaços. Por isso espaço em branco deixou de contar, como em `patch -l`:
+
+| Modelo, data | Aplicam | Recusados |
+| --- | --- | --- |
+| Sonnet 5.5, 30/10 | 6 | 0 |
+| Haiku, 30/10 | 8 | 0 |
+| Haiku, 29/10 | 179 | 15 |
+| Llama, 20 e 22/10 | 5 | 28 |
+
+Os 15 recusados do Haiku têm as linhas no arquivo, mas fora de sequência: o diff está errado, e o
+código antigo os aplicaria deslocando o conteúdo. Três patches antigos (`gpt-oss-120b`) não dizem o
+arquivo. **Uma consequência:** a *Syntax Rate* medida antes desta mudança deixa de ser comparável,
+porque patches que antes "aplicavam" agora falham.
+
+**O que mudou no resto:**
+
+- **`Patch.file`:** o modelo declara o arquivo, e `repair.md` explica como. Isso muda a resposta da LLM.
+  Um patch altera um único arquivo; uma correção que exija dois não é representável.
+- **Compilação:** o sujeito é recriado numa pasta temporária com o patch aplicado. Compila-se o `.c`
+  alterado ou, se o patch for num `.h`, todos os `.c`. Um `.c` só pode quebrar a si mesmo com
+  `-fsyntax-only`. **Não há link**, então uma função inexistente não é detectada.
+- **Exibição:** `access_locations` mostra `(8,5,11)` em um arquivo e `task.c:8, isr.c:5, task.c:11` em
+  vários, na lista do desktop, no PDF, no `stage3 -v` e na Streamlit. A opção do asterisco foi descartada.
+- **Marcas no código:** a aba Código Fonte e o passo 1 da Streamlit marcam um acesso só no arquivo dele.
+  A Streamlit mostra um painel por arquivo.
+- **Contrato C3 passa a `c3/1.1.0`:** o registro de descarte ganha `accesses: [{file, line}]`. `lines`
+  fica por compatibilidade, e runs `c3/1.0.0` continuam válidos.
+- **Gabarito:** `Access.file` é opcional e, quando existe, entra no casamento. O Racebench não o usa.
+  `realworld.py`, que só existe na branch `semana-9`, ainda precisa da mesma mudança na integração.
+- **Alvo do patch no desktop:** compara o caminho inteiro e devolve `None` em vez de adivinhar.
+
+**Testes.** `tests/test_multifile.py` traz o programa de dois arquivos da *issue*, rodando o pipeline
+real.
+
+**Dois erros meus que só o WSL mostrou.** O Windows não tem pandas, então `test_ui_app.py` não roda lá, e
+a Streamlit ficou com `access_locations` sem importar: a primeira tabela de candidatos quebrava com
+`NameError`. E o campo novo `accesses` do registro de descarte confundiu um auxiliar de `test_stage2.py`,
+que tratava qualquer `accesses` como acessos C2. Vale a lição: uma suíte que pula testes em uma máquina
+não atesta nada sobre eles.
+
+**Um alarme falso que custou tempo.** A suíte do WSL acusou o recall gate do `svp_simple_019_001`. Parecia
+grave, mas o caso falhava igual no `HEAD` limpo. A causa era o ambiente: `/etc/profile.d/irqrace.sh` define
+`IRQRACE_RACEBENCH` apontando para a cópia antiga em `Desktop/racebench`, anterior ao relabel. O gabarito
+lido não era o vendorizado. Sem essa variável, o caso passa. Rode a suíte com
+`env -u IRQRACE_RACEBENCH`.
+
+### 3.23. A lista de candidatos e o layout (31 out, *issues* #13, #14, #15, #17)
+
+Quatro pedidos sobre a mesma tela. O que decide ordem, agrupamento e estado das abas foi para um módulo
+sem Tk, `ui/candidate_list.py`, que roda em máquina sem tela. `desktop.py` só desenha.
+
+- **#14, ordem:** por padrão, o que chega à LLM vem primeiro, na ordem da triagem, e depois o que foi
+  descartado com prova. Clicar no título ordena e mostra ▲ ou ▼. Linhas ordenam como números, viabilidade
+  pela confiança e *bucket* pelo significado:
+
+```python
+# project-src/src/irqrace/ui/candidate_list.py
+BUCKET_ORDER = tuple(b.value for b in INSPECTION_ORDER) + (PENDING, DISCARDED)
+```
+
+  A ordem de inspeção é a mesma da métrica *Inspection Ratio*: a fila de leitura de quem revisa.
+- **#13, agrupamento:** a caixa "Agrupar por variável" transforma a lista em árvore, com contagem por
+  padrão, quantos vão à LLM, quantos foram descartados e o melhor *bucket*. A chave inclui a declaração,
+  porque dois locais chamados `rate` em funções diferentes são duas variáveis.
+- **#15, layout:** lista e detalhe do candidato lado a lado, e as abas num painel inferior que redimensiona
+  e recolhe, como o terminal do VS Code. O detalhe mostra cada acesso com arquivo, fluxo, prioridade e
+  trecho de código com a linha marcada. O estado da aba usa símbolo **e** cor (`✓ ○ ✗ …`). Como uma aba do
+  `ttk` não tem cor própria de texto, a cor vai numa pequena imagem.
+- **#17, quebra de linha:** um `tk.Text` não aplica `wrap` por trecho, então a aba de reparo tem dois
+  painéis: a explicação quebra linha, e o diff não quebra e tem barra horizontal.
+
+### 3.24. Triagem em paralelo, por intervalo e sob orçamento (31 out, *issues* #9 e #16)
+
+**O problema.** Os 18 programas reais levam 972 triplas à LLM, e `wdt_pci_3` tem 132 só em `expect_close`.
+A maioria é a mesma pergunta repetida: este intervalo, de A₁ a A₂, pode ser interrompido por uma escrita?
+
+**Um motor só.** `triage_store` e o desktop tinham laços próprios. Agora ambos usam `triage_records`, em
+`llm/pipeline.py`, com três opções:
+
+- **Paralelo:** `workers` conversas ao mesmo tempo, com `ThreadPoolExecutor`, porque o trabalho é espera de
+  rede. Cada conversa grava só o próprio diretório, e os totais de custo têm trava. O resultado não depende
+  de `workers`, salvo sob orçamento, em que as chamadas em andamento decidem onde ele para. Antes disso, o
+  paralelismo era só por caso, na tela Racebench, e não ajudava num programa com 175 triplas. Essa tela
+  segue com `workers=1`, senão as duas camadas se multiplicariam.
+- **Por intervalo:** triplas que só diferem em B viram uma conversa, com todos os B listados. O prompt pede
+  a resposta do intervalo inteiro:
+
+```python
+# project-src/src/irqrace/llm/intervals.py
+        "Answer for the interval as a whole: the interleaving is feasible if ANY of these B can "
+        "occur inside it, and harmful if ANY of them that can occur does harm. Do not answer "
+        "infeasible unless the blocking element rules out every B listed.",
+```
+
+  Assim "inviável" exige descartar todos os B, e um B perigoso não se esconde atrás dos demais. O fluxo faz
+  parte da chave: uma linha alcançada por dois fluxos são dois intervalos, com mascaramento e prioridade
+  diferentes. A tripla copia o veredito e guarda em `interval_of` qual conversa respondeu por ela.
+- **Orçamento:** limite de chamadas, *tokens* ou dólares, checado antes de cada conversa. Grupos com sinal
+  estático mais forte vão primeiro. O que sobra fica `uncertain`, com o motivo. Um limite em dólares para
+  no primeiro pedido sem preço, porque sem preço não é de graça.
+
+**Por que isso não custa recall.** A LLM não descarta nada. Um teste parametrizado confirma que o relatório
+lista os mesmos candidatos com e sem cada opção, inclusive com orçamento zero. O que muda é quanto da
+ordenação um modelo de fato leu, então o manifesto registra `workers`, `by_interval` e `budget`.
+
+**O que ainda não está medido.** Nenhuma destas opções rodou com LLM real. Falta saber se o veredito por
+grupo concorda com o por tripla, e por isso a #9 continua aberta. A parte 2 da #16, triagem e reparo no
+mesmo prompt, não foi feita: muda a arquitetura de prompt e precisa entrar como nova linha da ablação.
+
+### 3.25. Nomes de variável pela informação de debug (31 out, *issue* #12)
+
+**O problema.** Objetos locais apareciam como `obj_1176`, inclusive no prompt. O clang descarta o nome de
+valores locais, então `hasName()` falha e sobra o número interno do SVF (*Static Value-Flow*, a análise de
+ponteiros usada no Stage 1).
+
+**A correção.** O `-g` já é obrigatório, e a informação de debug guarda o que o fonte disse:
+
+```cpp
+// project-src/analysis/src/irqrace-stage1.cpp
+    auto declares = llvm::FindDbgDeclareUses(const_cast<llvm::AllocaInst *>(ai));
+    if (declares.empty())
+      return;
+    const llvm::DILocalVariable *dv = declares[0]->getVariable();
+```
+
+`llvm.dbg.declare` é a marca que liga uma alocação de pilha (`alloca`) à sua variável de origem. Dela saem
+nome, tipo, arquivo e linha. Uma alocação dinâmica vira `malloc in foo()`, com o local da chamada.
+`obj_N` só sobra se não houver debug info, e `svf_node` segue como identificador interno. `variable.storage`
+deixou de dizer `global` para tudo, e o novo `variable.function` entra em `c2/2.1.0`, compatível com
+registros `2.0.0`. A tela mostra `rate (local de taskControl, tasks.cpp:226)`.
+
+**Uma consequência.** O nome faz parte da impressão digital do candidato, então os IDs de candidatos em
+variáveis locais mudam. No Racebench isso atinge só o `svp_simple_009_001`: 9 dos 316 candidatos do Stage 1
+estão em locais, antes `obj_14`, `obj_17` e `obj_55`, agora `svp_simple_009_001_local_var1` a `3`. Conferido
+rodando o código antigo e o novo sobre esse caso. Comparar esses IDs com execuções anteriores a esta mudança
+não vai casar. O recall gate do caso continua passando.
+
 ## 4. Achados e decisões
 
 1. **O mesmo defeito, em seis lugares.** Stage 2 e Z3 simulados, reverificação `ok` sem execução,
@@ -713,6 +1391,9 @@ tem o *fingerprint* na chave, começa vazio para os candidatos reais. As contage
    "os stages 2 e 3 não existem nesta branch". Agora eles existem; o motivo passou a ser o que de
    fato falta (aplicar o *patch*, recompilar, rodar os stages 1–3 de novo e mapear o candidato pelas
    linhas deslocadas). Ela continua `skipped`.
+5. **Paralelismo tem custo em qualidade, não só em taxa.** Um candidato que esgota as tentativas de
+   *rate limit* continua no relatório como `uncertain`, então o recall não acusa nada. Por isso o
+   total sem veredicto e `llm_workers` passaram a sair junto com os números (§3.18).
 
 ## 5. Como reproduzir
 
@@ -746,6 +1427,12 @@ Dentro de `project-src/`, com a *venv* do projeto:
 .venv/bin/python scripts/bench-triage-report.py runs/bench-racebench-2026-10-28c
 ```
 
+Para os testes das duas filas do modo Racebench (§3.18):
+
+```bash
+.venv/bin/python -m pytest -q tests/test_desktop_modes.py
+```
+
 Para ver as alterações feitas na suíte vendorizada (o patch do 006 e a correção de gabarito):
 
 ```bash
@@ -767,9 +1454,7 @@ Falta:
 - **a reverificação dos *patches*** (W9), hoje `skipped`;
 - `feeds_branch` e `used_as_index` saem sempre `null`, e o modelo ora lê isso como "não", ora inventa
   evidência;
-- decidir o critério de nocividade diante dos leitores mortos do Racebench (§3.3);
-- o modo *offline* do desktop ainda copia a triagem e o reparo de um *run* anterior do mesmo caso;
-  não finge a análise estática, mas finge a LLM.
+- decidir o critério de nocividade diante dos leitores mortos do Racebench (§3.3).
 
 Página anterior: [[Semana 7 — O Stage 3, Busca e Verificação]] · Trilha B até a W8:
 [[Semana 5 a 8 — Trilha B (Triagem, Ablação, Reparo e Integração C3-C4)]].

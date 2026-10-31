@@ -2,7 +2,7 @@
 type: project
 tags: [wiki, project, diario, pt-br]
 sources: ["[[Roadmap]]", "[[Pipeline Design]]", "[[LLM Stage Design]]", "[[Dashboard Design]]"]
-updated: 2026-10-24
+updated: 2026-10-29
 status: draft
 ---
 
@@ -273,6 +273,32 @@ A regra de auto-validação viaja junto com a resposta.
 | clang / LLVM | 14 | do sistema |
 | SVF | 2.7 | é a *release* que tem como alvo o LLVM 14 |
 | Z3 | 4.8.12 | do sistema |
+
+> [!important] Plataformas suportadas (diretiva de 29 out 2026)
+> O programa deve funcionar em **dois ambientes, ambos de primeira classe**: o **Ubuntu nativo**
+> (a referência é o 22.04) e o **Windows com WSL2** (*Windows Subsystem for Linux*, a camada do
+> Windows que executa uma distribuição Linux de verdade, aqui o Ubuntu-22.04). Na semana 1 o
+> toolchain foi montado só para Linux. Esta nota registra a decisão posterior, sem apagar o
+> histórico.
+>
+> No Windows, o Python (CLI, app desktop, estágio LLM) roda nativamente. Já o clang, o
+> `llvm-link` e os binários `irqrace-*` são executáveis Linux (formato ELF), e o Windows não
+> sabe executá-los. Por isso toda chamada a eles passa por uma única função,
+> `run_toolchain_cmd`, que no Linux executa o comando direto e no Windows o encaminha ao WSL,
+> traduzindo os caminhos `C:\…` para `/mnt/c/…`:
+>
+> ```python
+> # project-src/src/irqrace/toolchain.py
+> if sys.platform == "win32":
+>     first = Path(cmd[0]) if cmd else Path()
+>     if not (first.suffix.lower() == ".exe" and first.exists()):
+>         wsl_cmd = ["wsl", "-e", *[to_wsl_arg(str(a)) for a in cmd]]
+> ```
+>
+> As regras completas estão em [[Reimplementation Assessment#Technology stack]]. Em resumo:
+> nenhum `subprocess.run` direto num binário do toolchain; caminhos sempre absolutos; arquivos
+> lidos pelos binários escritos com fim de linha LF. Esta última regra existe porque o Git no
+> Windows (`core.autocrlf=true`) converte os scripts `.sh` para CRLF, e aí o bash aborta.
 
 O `setup-svf.sh` compila o SVF **contra o LLVM do sistema**, e não baixa o LLVM pré-compilado que o próprio SVF oferece. Dois motivos: o pacote pré-compilado ocupa vários gigabytes descompactado e a máquina tinha menos de 4 GB livres; e usar o mesmo LLVM para compilar os sujeitos e para analisá-los mantém a versão do bitcode e a análise em sintonia. Custou 64 MB e uns dez minutos.
 

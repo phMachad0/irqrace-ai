@@ -152,7 +152,7 @@ Raw clippings live in `Clippings/`, PDFs in `raw/`. Both are immutable.
 | [[Tool Capability Matrix]] | all four tools side by side, feature by feature |
 | [[Reported Results Across Papers]] | every headline number with its ground truth, hardware, and whether it was re-run |
 | [[Contradictions]] | seven open conflicts, chief among them 37/47 vs 94 violations; #7 two Racebench traps their own README makes reachable |
-| [[Reimplementation Assessment]] | study order, what to reimplement, the stack, and verified artifact availability |
+| [[Reimplementation Assessment]] | study order, what to reimplement, the stack, supported platforms (Ubuntu, Windows + WSL2), and verified artifact availability |
 | [[LLM Integration Patterns]] | seven LLM sources by attach point; what each buys and costs |
 | [[Triage Study 2026-10-26]] | why triage underperforms on real records: missing deciding code (12/16 uncertain vs 78/85 feasible), unexplained fields, a ground-truth leak; fixes 1–6 and a Racebench-semantics row (IR 0.67 → 0.42) |
 | [[Racebench Full Run 2026-10-28]] | the whole pipeline on all 31 cases, sonnet, `+racebench`; after the relabel (53 bugs / 33 traps): 53/53 bugs, 97 and 100 of 106 in two runs, 98.2% agreement (κ 0.93); verdict on every disputed item |

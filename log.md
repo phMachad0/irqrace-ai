@@ -1598,3 +1598,125 @@ the desktop stepper takes the common directory of all `.c` files as the root. Sa
 working directory and any copy of the suite; **every id changed once** (ids quoted before
 2026-10-29 are the old ones; the LLM cache starts cold). Static recall gate unchanged: 316 → 202 →
 166, 53/53, traps 30 → 25 → 11 of 33. 594 tests pass.
+
+## [2026-10-29] direction | supported platforms: native Ubuntu and Windows + WSL2
+
+The human's direction: the tool must run on native Ubuntu and on Windows + WSL2, both first-class.
+Recorded in [[Reimplementation Assessment]] ("Technology stack", new "Platforms" item) with the rules
+it implies: every toolchain call goes through `run_toolchain_cmd`, toolchain paths are absolute, and
+files the binaries read are written with LF. [[Semana 1 — Contratos e Toolchain]] §8 gets a dated
+note in Portuguese. Prompted by two Windows failures in the desktop app. The first was
+`irqrace-probe` never having been built: it was built under WSL, after working around CRLF in
+`build-analysis.sh`. The second was stage 3 calling its ELF binary with a bare `subprocess.run`
+(`WinError 193`). `stage3.run_stage3` now uses `run_toolchain_cmd` and writes its query with LF.
+Re-run on the failed run's query: 10 verdicts (6 sat, 4 unsat). Open: no `.gitattributes`
+pinning `*.sh` to LF yet.
+
+## [2026-10-29] direction | desktop app: home screen, Racebench mode, generic mode with C1 wizard
+
+The human's direction: the desktop app opens on a home screen with two modes. The first runs the
+Racebench cases unattended. The second configures the program under analysis without ever editing
+the C1 YAML by hand: the file is imported, or written by a wizard. The wizard
+(`ui/c1_wizard.py`) has five pages: project, flows, masking, semantics, review. It validates
+through the same `Config.from_dict` the pipeline uses, offers the recall-safe defaults and flags
+every unsound option. The benchmark screen (`ui/benchmark_screen.py`) runs the selected cases at
+static (1–4) or full (1–6) depth and scores each with `evaluate_run`. A failing case becomes a row
+in the table and the batch continues; the summary goes to `runs/benchmarks/`. Also fixed:
+`resolve_c_source_files` resolved a relative `source_root` against the working directory, so from
+the vault root it read the old `../racebench` checkout instead of the vendored suite. Diary:
+[[Semana 8 — Integração das Trilhas A e B]] §3.15. Tests: 8 new in `test_desktop_modes.py`. On
+Windows the suite is 389 passed / 37 failed, and all 37 failures predate this change.
+
+## [2026-10-29] direction | LLM history tab highlights every code read; no C4 request ever issued
+
+The human's direction: the desktop's LLM history must show and highlight every request the model
+makes to read code, because what it read has to be evaluated. `ui/llm_history.py` separates code
+*given* in the C2 record's `<source>` blocks from code *requested* through C4, and renders a
+"what the LLM read" summary followed by the colour-tagged transcript. `TriageClient` now records the
+parsed requests and the resolver's replies as structured fields of `turns.jsonl`; older runs are
+reconstructed from the text. C4 is the project's own textual protocol, not MCP. Finding: none of
+the 164 existing transcripts contains a single C4 request. No main ablation row (`simple`,
+`+domain`, `+decomposition`, `+self-validation`) enables `progressive`; only the deferred
+`+progressive` row does. Every verdict so far rests only on the code the C2 record handed over, and
+the D#2 request distribution has never been measured ([[LLM Stage Design]]). Diary:
+[[Semana 8 — Integração das Trilhas A e B]] §3.16.
+
+## [2026-10-29] direction | LLM cache hits made visible; transcript stored with the cache
+The desktop "Completo" Racebench depth looked static-only, with no LLM conversation. Steps 5–6 did
+run, but the result cache (`.llm-cache/`) answered silently: `TriageClient.triage` and
+`RepairClient.repair` returned the cached verdict or patch without writing any transcript or log line.
+In `svp_simple_030_001` only 2 of 11 candidates have a `turns.jsonl`. Fix:
+- the cache now stores the transcript beside each entry;
+- a hit writes a `cache_hit` marker turn followed by the original conversation into the run;
+- the stage log and `log.ndjson` (`llm-cache-hit`) count API vs cache answers;
+- the history tab shows a cache banner;
+- a "Reutilizar respostas em cache" checkbox on the LLM screen forces fresh API calls.
+
+The 306 pre-existing entries have no transcript, and the tab says so. Diary:
+[[Semana 8 — Integração das Trilhas A e B]] §3.17.
+
+## [2026-10-30] direction | Racebench batch in two lanes: the LLM no longer waits for the static steps
+On the human's direction, "Executar todos" at full depth no longer runs each case end to end before
+the next. `run_batch` (`ui/benchmark_screen.py`) keeps the static steps on one thread, one case at a
+time, and hands each case that clears them to a pool for its LLM steps. The pool size is set on screen
+(1–16, default 4). Parallelism is per case; candidates inside a case stay in order. Also:
+- a failing LLM step keeps the case's static figures;
+- `write_manifest` retries `os.replace` on `PermissionError`, because the static lane now scans
+  manifests while LLM threads write them (a hazard read from the code, not observed in a run);
+- the batch JSON records `llm_workers`, `batch_wall_s` and `not_triaged`, because a rate-limited
+  candidate stays `uncertain`: recall does not show it, triage quality does.
+
+Verified end to end on the real screen with all 31 cases against a local fake endpoint (53/53 bugs,
+at most 4 calls in flight). Time saved and rate-limit behaviour remain unmeasured. Diary: [[Semana 8 — Integração das Trilhas A e B]] §3.18.
+
+## [2026-10-30] direction | Racebench LLM progress made visible; dropped connections retried; +progressive findings
+The screen looked stuck on `🤖 LLM`. The runs show it was not: with `claude-cli` cases ran in parallel,
+but the stuck-looking batch had the pool at 1 and about 26 s per candidate, with nothing moving on the
+row. Rows now show `🤖 Triagem 3/6` and the summary line shows the batch. Also:
+- `RemoteDisconnected` escaped `_post_once` and ended a whole case; it is now a retried transient;
+- no real transcript from the 2026-10-30 `+progressive` runs has a C4 request (small, interrupted sample);
+- `claude-sonnet-5-5` under `+progressive` failed on several candidates with a `reasoning_extraction`
+  safeguard error, also on a run without parallelism. Suspected cause, unverified: the transcript
+  `_render_messages` builds for the second call.
+
+Diary: [[Semana 8 — Integração das Trilhas A e B]] §3.18.
+
+## [2026-10-30] direction | LLM result cache removed from the project
+On the human's direction, no LLM answer is reused: every triage and repair is a new model call. This
+reverses the W2 decision. Removed: `llm/cache.py`, the `cache=` parameters, `--no-cache`, `--cache-only`,
+the cache-key hashes, the `sample` parameter of `triage()` and `repair()`, the checkbox and the
+`llm-cache-hit` event, plus the desktop's "Cache / Simulado (Offline)" mode, which copied verdicts and
+patches from an earlier run. Without the API, steps 5 and 6 are now `skipped`.
+
+Kept: provider prompt caching (the model still answers), `PromptConfig.hash`, the fingerprint, and the
+`.llm-cache/` directory on disk, unread by anything and left in place because deleting it cannot be
+undone. Cost: re-running a row pays again, and re-scoring without any call is no longer possible unless
+from saved JSON. Diary: [[Semana 8 — Integração das Trilhas A e B]] §3.19.
+
+## [2026-10-30] direction | Live read-only inspection of a running Racebench case
+A case can now be opened from the Racebench table as soon as it starts. The Pipeline tab follows the
+run's files without a stepper attached and with its buttons disabled, because a stepper on a run the
+benchmark threads are writing would be a second writer. It redraws only on change and keeps the
+selection and scroll. `Conversation` now writes the transcript turn by turn, so a watched conversation
+is visible as it happens and a failed one leaves what was said, which the Sonnet safeguard errors of
+this date did not. The test found a defect: the table was emptied before reading, so a half-written
+`triage.jsonl` left it blank. Diary: [[Semana 8 — Integração das Trilhas A e B]] §3.20.
+
+## [2026-10-30] direction | Prompt options: bugs were `likely_benign`, not infeasible; C4 made real
+Counted against the ground truth, the 33 real bugs ranked `likely_benign` on 2026-10-30 were all judged
+`feasible`: dead readers, per `harmfulness.md`. New rows `+c4` and `+racebench+c4`; the Racebench screen
+has its own selector (default `+racebench+c4`) and a "LLM: reais" column. C4 had never worked in the
+desktop: wrong source root (31/31 cases on `RecordBackedResolver`), `common.c` never loaded, and
+`all_call_paths` raising `ContractError`. `claude -p` no longer replays the model's prose, which removed
+the Sonnet safeguard error. Real calls: Haiku 4/6 bugs `likely_real`, Sonnet 3/3, 0 `benign`, and the
+first 4 real C4 requests of the project. Unresolved: 4 of 14 Haiku candidates failed with `unknown error`
+on the second call, cause unknown. Diary: [[Semana 8 — Integração das Trilhas A e B]] §3.21.
+
+## [2026-10-31] direction | Issue #8: the file travels with the line; patches can no longer land blind
+`apply_unified_diff` ignored file names and context, so a diff for one file silently overwrote lines of
+another, and "Aplicar patch" writes to disk. Hunks now go where their lines are, ignoring whitespace,
+or are refused; measured on 244 real patches. Also: `Patch.file`, compile check on the named file,
+`access_locations` in every list, per-file marks in both UIs, `c3/1.1.0` drop records with
+`accesses: [{file, line}]`, optional `Access.file` in matching. `realworld.py` lives on `semana-9` and
+needs the same change at integration. No link step in the compile check. Syntax Rate before this change
+is not comparable. Diary: [[Semana 8 — Integração das Trilhas A e B]] §3.22.
