@@ -18,7 +18,6 @@ from irqrace.llm.backends import (
     StructuredMode,
     Usage,
 )
-from irqrace.llm.cache import Cache
 from irqrace.llm.client import TriageClient, _parse_requests, render_record
 from irqrace.llm.fixtures import load_all
 from irqrace.llm.prompts import BY_NAME, PromptConfig
@@ -79,7 +78,7 @@ def _combined(verdict=Feasibility.feasible, harm=Harmfulness.harmful):
 
 
 def _client(config, backend):
-    return TriageClient(config, backend=backend, cache=Cache(enabled=False))
+    return TriageClient(config, backend=backend)
 
 
 # -- rendering -----------------------------------------------------------
@@ -254,54 +253,14 @@ def test_a_simple_row_costs_one_request_per_candidate():
     assert client.spend.requests == 1
 
 
-def test_the_cache_is_keyed_by_backend_so_two_models_do_not_collide(tmp_path):
-    """The whole point of the seam: the same candidate and row, two models,
-    two answers. A cache keyed only on the row would serve one for the other."""
-    cache = Cache(tmp_path)
-    a = FakeBackend(answers=[_combined(verdict=Feasibility.feasible)])
-    b = FakeBackend(answers=[_combined(verdict=Feasibility.infeasible)])
-    b.model = "v2"
-
-    first = TriageClient(BY_NAME["+domain"], backend=a, cache=cache).triage(RECORD)
-    second = TriageClient(BY_NAME["+domain"], backend=b, cache=cache).triage(RECORD)
-
-    assert first.bucket is Bucket.likely_real
-    assert second.bucket is Bucket.likely_infeasible
-
-
-def test_the_cache_returns_an_equal_triage_without_a_second_call(tmp_path):
-    cache = Cache(tmp_path)
-    fake = FakeBackend(answers=[_feas(), _harm()])
-    client = TriageClient(BY_NAME["+decomposition"], backend=fake, cache=cache)
-    first = client.triage(RECORD)
-    calls = len(fake.requests)
-    second = client.triage(RECORD)
-    assert len(fake.requests) == calls
-    assert second.model_dump() == first.model_dump()
-
-
-def test_the_cache_misses_when_the_evidence_changes_under_one_fingerprint(tmp_path):
-    """The fingerprint names a candidate, not what the model saw. A verdict
-    given without the source bodies must not be served once they are shipped."""
-    cache = Cache(tmp_path)
+def test_every_triage_calls_the_model():
+    """No answer is ever reused: the same candidate asked twice is two calls."""
     fake = FakeBackend(answers=[_feas(), _harm(), _feas(), _harm()])
-    client = TriageClient(BY_NAME["+decomposition"], backend=fake, cache=cache)
-    client.triage({**RECORD, "enclosing_source": []})
+    client = TriageClient(BY_NAME["+decomposition"], backend=fake)
+    client.triage(RECORD)
     calls = len(fake.requests)
     client.triage(RECORD)
-    assert len(fake.requests) > calls
-
-
-def test_the_cache_survives_a_rerun_that_only_changes_solver_timing(tmp_path):
-    cache = Cache(tmp_path)
-    fake = FakeBackend(answers=[_feas(), _harm()])
-    client = TriageClient(BY_NAME["+decomposition"], backend=fake, cache=cache)
-    solver = {"engine": "z3", "verdict": "inconclusive", "reason": "timeout",
-              "timeout_ms": 10000, "unconstrained": ["timing"], "wall_ms": 12}
-    client.triage({**RECORD, "solver_result": solver})
-    calls = len(fake.requests)
-    client.triage({**RECORD, "solver_result": {**solver, "wall_ms": 340}})
-    assert len(fake.requests) == calls
+    assert len(fake.requests) == 2 * calls
 
 
 def test_the_transcript_is_written_where_c3_says(tmp_path):
@@ -312,3 +271,25 @@ def test_the_transcript_is_written_where_c3_says(tmp_path):
     assert {l["role"] for l in lines} <= {"user", "assistant", "system"}
     structured = [l for l in lines if l.get("structured")]
     assert structured and all(l["backend"] == "fake:v1" for l in structured)
+
+
+def test_a_request_nobody_can_serve_is_answered_not_fatal():
+    """A typo in a model's request used to raise out of the conversation."""
+    fake = FakeBackend(
+        texts=['```request\n[{"kind": "no_such_kind", "args": {}}]\n```', "Answer."],
+        answers=[_combined()],
+    )
+    config = PromptConfig(name="p", domain_rules=True, progressive=True)
+    t = _client(config, fake).triage(RECORD)
+    assert t.not_triaged is None
+
+
+def test_call_paths_in_the_record_are_valid_replies():
+    from irqrace.llm.resolver import RecordBackedResolver
+
+    function = RECORD["call_paths"][0]["path"]["frames"][0]["function"]
+    reply = RecordBackedResolver(RECORD).resolve({
+        "schema_version": "c4/1.0.0", "request_id": "r", "candidate_id": RECORD["id"], "turn": 1,
+        "kind": "all_call_paths", "args": {"function": function},
+    })
+    assert reply["status"] == "ok" and "frames" in reply["payload"]["call_paths"][0]

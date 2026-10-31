@@ -18,14 +18,17 @@ from __future__ import annotations
 
 import datetime
 import json
+import threading
 import time
+from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Literal
 
 from irqrace import contracts
 from irqrace.llm.backends import Backend, BackendError, RefusalError, from_spec
-from irqrace.llm.cache import Cache
 from irqrace.llm.client import TriageClient
+from irqrace.llm.intervals import Budget, OverBudget, group_intervals, signal
 from irqrace.llm.prompts import FULL, PromptConfig
 from irqrace.llm.repair import Patch, RepairClient, witness_problems
 from irqrace.llm.resolver import (
@@ -106,17 +109,115 @@ def prepare_context(store: RunStore) -> list[dict[str, Any]]:
     return promoted
 
 
+def triage_records(
+    client: TriageClient,
+    records: list[dict[str, Any]],
+    *,
+    make_resolver: Callable[[dict[str, Any]], Any],
+    run_dir: Path,
+    workers: int = 1,
+    by_interval: bool = False,
+    budget: Budget | None = None,
+    should_stop: Callable[[], bool] = lambda: False,
+    on_start: Callable[[dict[str, Any]], None] | None = None,
+    on_done: Callable[[list[dict[str, Any]], dict[str, Triage | str]], None] | None = None,
+) -> dict[str, Triage | str]:
+    """One outcome per candidate id: a :class:`Triage`, or why there is none.
+
+    With *workers* above 1 the conversations run in parallel; they are I/O, and
+    each writes only its own directory. The outcome does not depend on *workers*,
+    except under a budget, where calls in flight decide exactly where it stops.
+    A candidate an interrupted run never reached has no entry. *on_done* runs on
+    the calling thread, one conversation at a time; *on_start* on the worker.
+    """
+    groups = group_intervals(records) if by_interval else [[r] for r in records]
+    if budget is not None:
+        groups = sorted(groups, key=signal)  # the sort is stable: ties keep their order
+    stop = threading.Event()
+
+    def converse(group: list[dict[str, Any]]) -> Triage | str | None:
+        lead = group[0]
+        if stop.is_set() or should_stop():
+            return None
+        if budget is not None and (reason := budget.exceeded(client.spend)):
+            return reason
+        if on_start is not None:
+            on_start(lead)
+        interval = {"same_interval": group[1:]} if len(group) > 1 else {}
+        try:
+            return client.triage(lead, resolver=make_resolver(lead), run_dir=run_dir, **interval)
+        except InterruptedError:
+            stop.set()
+            return None
+        except RefusalError as e:
+            return f"the model refused: {e}"
+        except (BackendError, RuntimeError, ValueError) as e:
+            return f"backend error: {e}"
+
+    outcomes: dict[str, Triage | str] = {}
+
+    def settle(group: list[dict[str, Any]], result: Triage | str | None) -> None:
+        if result is None:
+            return
+        settled: dict[str, Triage | str] = {}
+        for member in group:
+            if isinstance(result, Triage) and len(group) > 1:
+                settled[member["id"]] = result.model_copy(
+                    update={
+                        "candidate_id": member["id"],
+                        "fingerprint": member["fingerprint"],
+                        "interval_of": group[0]["id"],
+                    }
+                )
+            else:
+                settled[member["id"]] = result
+        outcomes.update(settled)
+        if on_done is not None:
+            on_done(group, settled)
+
+    if workers <= 1:
+        for group in groups:
+            settle(group, converse(group))
+        return outcomes
+    with ThreadPoolExecutor(max_workers=workers, thread_name_prefix="irqrace-triage") as pool:
+        futures = {pool.submit(converse, group): group for group in groups}
+        for future in as_completed(futures):
+            settle(futures[future], future.result())
+    return outcomes
+
+
+def triage_settings(workers: int, by_interval: bool, budget: Budget | None) -> dict[str, Any]:
+    """What a run did beyond the prompt, for ``manifest.json["llm"]``.
+
+    These change how much of the ranking a model looked at, so they travel with
+    the numbers.
+    """
+    return {
+        "workers": workers,
+        "by_interval": by_interval,
+        "budget": budget.as_manifest() if budget is not None else None,
+    }
+
+
 def triage_store(
     store: RunStore,
     *,
     config: PromptConfig = FULL,
     backend: Backend | str | None = None,
-    cache: Cache | None = None,
     samples: int = 1,
     resolver_mode: Literal["mock", "source", "auto"] = "auto",
     source_root: Path | str | None = None,
+    workers: int = 1,
+    by_interval: bool = False,
+    budget: Budget | None = None,
 ) -> dict[str, Any]:
     """Run Track B triage over all candidates in ``store`` and write C3 outputs.
+
+    :param workers: conversations at a time.
+    :param by_interval: one conversation per interval; see
+        :mod:`irqrace.llm.intervals`.
+    :param budget: what the run may spend. What it leaves out stays in the
+        report as ``uncertain``, with the reason.
 
     Writes:
     * ``llm/<cand_id>/turns.jsonl`` — full conversation transcript
@@ -131,7 +232,7 @@ def triage_store(
         if isinstance(backend, Backend)
         else from_spec(backend) if isinstance(backend, str) else from_spec()
     )
-    client = TriageClient(config, backend=resolved_backend, cache=cache)
+    client = TriageClient(config, backend=resolved_backend)
 
     manifest = store.read_manifest()
     manifest["llm"] = {
@@ -142,34 +243,36 @@ def triage_store(
         else datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d"),
         "votes": samples,
         "seed": None,
+        **triage_settings(workers, by_interval, budget),
     }
     store.write_manifest(manifest)
     store.set_stage("triage", "running", candidates_in=len(records))
 
     runs: list[list[Triage]] = []
     excluded: list[tuple[str, str]] = []
+    over_budget: dict[str, str] = {}
 
-    for sample in range(samples):
-        sample_triages: list[Triage] = []
-        for rec in records:
-            cid = rec["id"]
-            if any(c == cid for c, _ in excluded):
-                continue
-            resolver = resolver_for(
-                rec, source_root=source_root, mode=resolver_mode
-            )
-            try:
-                t = client.triage(
-                    rec,
-                    resolver=resolver,
-                    sample=sample,
-                    run_dir=store.root,
-                )
-                sample_triages.append(t)
-            except RefusalError as e:
-                excluded.append((cid, str(e)))
-            except BackendError as e:
-                excluded.append((cid, f"backend error: {e}"))
+    for _ in range(samples):
+        gone = {c for c, _ in excluded}
+        pending = [rec for rec in records if rec["id"] not in gone]
+        outcomes = triage_records(
+            client,
+            pending,
+            make_resolver=lambda rec: resolver_for(rec, source_root=source_root, mode=resolver_mode),
+            run_dir=store.root,
+            workers=workers,
+            by_interval=by_interval,
+            budget=budget,
+        )
+        sample_triages = []
+        for rec in pending:
+            outcome = outcomes[rec["id"]]
+            if isinstance(outcome, Triage):
+                sample_triages.append(outcome)
+            elif isinstance(outcome, OverBudget):
+                over_budget[rec["id"]] = outcome
+            else:
+                excluded.append((rec["id"], outcome))
         runs.append(sample_triages)
 
     if excluded and not any(runs):
@@ -188,7 +291,7 @@ def triage_store(
     # A candidate no sample could triage stays in the report as uncertain, with
     # the reason: a backend error is not evidence about the candidate.
     answered = {t.candidate_id for t in final}
-    reasons = dict(excluded)
+    reasons = {**over_budget, **dict(excluded)}
     for rec in records:
         if rec["id"] not in answered:
             reason = reasons.get(rec["id"], "no verdict was produced")
@@ -285,9 +388,7 @@ def repair_store(
     *,
     config: PromptConfig = FULL,
     backend: Backend | str | None = None,
-    cache: Cache | None = None,
     buckets: tuple[Bucket, ...] = (Bucket.likely_real,),
-    sample: int = 0,
 ) -> dict[str, Any]:
     """Run Track B repair on candidates in ``store`` matching ``buckets``.
 
@@ -308,7 +409,7 @@ def repair_store(
         if isinstance(backend, Backend)
         else from_spec(backend) if isinstance(backend, str) else from_spec()
     )
-    client = RepairClient(config, backend=resolved_backend, cache=cache)
+    client = RepairClient(config, backend=resolved_backend)
     store.set_stage("repair", "running", candidates_in=len(target_ids))
 
     patches: dict[str, Patch] = {}
@@ -320,7 +421,7 @@ def repair_store(
         if rec is None:
             continue
         try:
-            patch = client.repair(rec, sample=sample, run_dir=store.root)
+            patch = client.repair(rec, run_dir=store.root)
             patches[cid] = patch
             if probs := witness_problems(patch, rec):
                 witness_issues[cid] = probs

@@ -15,6 +15,7 @@ from pathlib import Path
 
 from . import TOOL_VERSION, contracts
 from .build import BuildError, build
+from .candidate import access_locations
 from .config import Config, ConfigError
 from .probe import ProbeError, probe
 from .racebench import VENDORED_SUITE
@@ -274,9 +275,8 @@ def cmd_stage3(args: argparse.Namespace) -> int:
         for line in (store.root / "solver" / "results.jsonl").read_text().splitlines():
             r = json.loads(line)
             c = by_id[r["candidate_id"]]
-            lines = [a["source"]["line"] for a in c["accesses"]]
             print(f"  - {r['candidate_id']} {c.get('pattern', ''):<3} "
-                  f"{lines} {r['verdict']}{' (' + r['reason'] + ')' if r.get('reason') else ''}"
+                  f"{access_locations(c['accesses'])} {r['verdict']}{' (' + r['reason'] + ')' if r.get('reason') else ''}"
                   f"  {r['wall_ms']} ms")
     print(f"  {store.root}")
     return 0
@@ -756,8 +756,8 @@ def cmd_llm_backends(args: argparse.Namespace) -> int:
 def cmd_llm_triage(args: argparse.Namespace) -> int:
     """Triage a C3 run directory or a single C2 context record."""
     from .llm.backends import BackendError, RefusalError, from_spec
-    from .llm.cache import Cache
     from .llm.client import TriageClient
+    from .llm.intervals import Budget
     from .llm.pipeline import triage_store
     from .llm.prompts import BY_NAME, DEFERRED, EXPERIMENTAL
     from .llm.resolver import resolver_for
@@ -772,8 +772,10 @@ def cmd_llm_triage(args: argparse.Namespace) -> int:
     except BackendError as e:
         return _err(str(e))
 
-    cache = Cache(enabled=not args.no_cache)
     target = Path(args.target)
+    budget = None
+    if args.max_requests is not None or args.max_tokens is not None or args.max_usd is not None:
+        budget = Budget(args.max_requests, args.max_tokens, args.max_usd)
 
     if target.is_dir():
         store = RunStore(target)
@@ -782,9 +784,11 @@ def cmd_llm_triage(args: argparse.Namespace) -> int:
                 store,
                 config=config,
                 backend=backend,
-                cache=cache,
                 samples=args.samples,
                 resolver_mode=args.resolver,
+                workers=args.workers,
+                by_interval=args.by_interval,
+                budget=budget,
             )
         except (BackendError, RefusalError) as e:
             return _err(str(e))
@@ -817,7 +821,7 @@ def cmd_llm_triage(args: argparse.Namespace) -> int:
         return _err(f"{target} does not exist")
 
     record = json.loads(target.read_text(encoding="utf-8"))
-    client = TriageClient(config, backend=backend, cache=cache)
+    client = TriageClient(config, backend=backend)
     resolver = resolver_for(record, mode=args.resolver)
     try:
         verdict = client.triage(record, resolver=resolver)
@@ -839,7 +843,6 @@ def cmd_llm_triage(args: argparse.Namespace) -> int:
 def cmd_llm_repair(args: argparse.Namespace) -> int:
     """Propose an interrupt-specific fix for a C3 run directory or a C2 record."""
     from .llm.backends import BackendError, RefusalError, from_spec
-    from .llm.cache import Cache
     from .llm.pipeline import repair_store
     from .llm.prompts import BY_NAME, DEFERRED, EXPERIMENTAL
     from .llm.repair import RepairClient, witness_problems
@@ -854,14 +857,13 @@ def cmd_llm_repair(args: argparse.Namespace) -> int:
     except BackendError as e:
         return _err(str(e))
 
-    cache = Cache(enabled=not args.no_cache)
     target = Path(args.target)
 
     if target.is_dir():
         store = RunStore(target)
         try:
             summary = repair_store(
-                store, config=config, backend=backend, cache=cache
+                store, config=config, backend=backend
             )
         except (BackendError, RefusalError, RuntimeError) as e:
             return _err(str(e))
@@ -892,7 +894,7 @@ def cmd_llm_repair(args: argparse.Namespace) -> int:
         return _err(f"{target} does not exist")
 
     record = json.loads(target.read_text(encoding="utf-8"))
-    client = RepairClient(config, backend=backend, cache=cache)
+    client = RepairClient(config, backend=backend)
     try:
         patch = client.repair(record)
     except (BackendError, RefusalError, RuntimeError) as e:
@@ -1039,7 +1041,12 @@ def build_parser() -> argparse.ArgumentParser:
     mt.add_argument("--row", default="+self-validation")
     mt.add_argument("--samples", type=int, default=1)
     mt.add_argument("--resolver", choices=("mock", "source", "auto"), default="auto")
-    mt.add_argument("--no-cache", action="store_true")
+    mt.add_argument("--workers", type=int, default=1, help="conversations at a time")
+    mt.add_argument("--by-interval", action="store_true",
+                    help="one conversation per (variable, A1, A2, pattern); every triple stays in the report")
+    mt.add_argument("--max-requests", type=int, help="budget: what is left out stays uncertain, with the reason")
+    mt.add_argument("--max-tokens", type=int, help="budget, in input plus output tokens")
+    mt.add_argument("--max-usd", type=float, help="budget, in dollars; needs a backend that reports prices")
     mt.add_argument("--json", action="store_true")
     mt.set_defaults(func=cmd_llm_triage)
 
@@ -1047,7 +1054,6 @@ def build_parser() -> argparse.ArgumentParser:
     mr.add_argument("target", help="path to a C3 run directory or C2 .json file")
     mr.add_argument("--backend", default="anthropic:claude-opus-5")
     mr.add_argument("--row", default="+self-validation")
-    mr.add_argument("--no-cache", action="store_true")
     mr.add_argument("--json", action="store_true")
     mr.set_defaults(func=cmd_llm_repair)
 

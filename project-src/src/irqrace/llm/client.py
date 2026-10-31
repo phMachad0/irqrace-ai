@@ -38,10 +38,9 @@ schema.
 from __future__ import annotations
 
 import dataclasses
-import functools
-import hashlib
 import json
 import re
+import threading
 import time
 from pathlib import Path
 from typing import Any
@@ -49,9 +48,9 @@ from typing import Any
 from irqrace import contracts
 from irqrace.llm import cost as _cost
 from irqrace.llm.backends import Backend, ChatRequest, from_spec
-from irqrace.llm.cache import Cache
+from irqrace.llm.intervals import render_interval
 from irqrace.llm.prompts import FULL, PromptConfig
-from irqrace.llm.resolver import RecordBackedResolver, Resolver, render_reply
+from irqrace.llm.resolver import RECALL_RULES, RecordBackedResolver, Resolver, render_reply
 from irqrace.llm.verdict import (
     CombinedAnswer,
     Feasibility,
@@ -76,17 +75,24 @@ class Conversation:
 
     candidate_id: str
     turns: list[dict[str, Any]] = dataclasses.field(default_factory=list)
+    #: Kept up to date turn by turn: a run being watched shows the conversation
+    #: as it happens, and one that fails half way leaves what was said so far.
+    live_path: Path | None = None
 
     def add(self, role: str, content: Any, **meta: Any) -> None:
         self.turns.append({"role": role, "content": content, **meta})
+        if self.live_path is not None:
+            self._dump(self.live_path)
 
-    def write(self, run_dir: Path) -> Path:
-        out = run_dir / "llm" / self.candidate_id
-        out.mkdir(parents=True, exist_ok=True)
-        path = out / "turns.jsonl"
+    def _dump(self, path: Path) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("w", encoding="utf-8") as fh:
             for turn in self.turns:
                 fh.write(json.dumps(turn, ensure_ascii=False) + "\n")
+
+    def write(self, run_dir: Path) -> Path:
+        path = run_dir / "llm" / self.candidate_id / "turns.jsonl"
+        self._dump(path)
         return path
 
 
@@ -121,19 +127,6 @@ def render_record(record: dict[str, Any]) -> str:
     return "\n".join(parts)
 
 
-def evidence_hash(record: dict[str, Any]) -> str:
-    """Identity of what the model is shown about *record*, for the cache key.
-
-    The rendered record, minus ``solver_result.wall_ms``: timing differs on every
-    run and changes no answer, so keeping it would defeat the cache's purpose of
-    surviving a re-run of the analyzer.
-    """
-    shown = json.loads(json.dumps(record))
-    if isinstance(shown.get("solver_result"), dict):
-        shown["solver_result"].pop("wall_ms", None)
-    return hashlib.sha256(render_record(shown).encode("utf-8")).hexdigest()
-
-
 FEASIBILITY_TASK = (
     "Decide whether the reported interleaving can actually occur in this "
     "program. Reason about the specific flows, priorities and masking state in "
@@ -157,8 +150,6 @@ class TriageClient:
     :param config: the prompt configuration -- the row.
     :param backend: a :class:`Backend`, or a ``provider:model`` spec string.
         Defaults to ``anthropic:claude-opus-5``.
-    :param cache: result cache. Pass ``Cache(enabled=False)`` when measuring
-        latency, since a hit returns in microseconds and would flatter it.
     """
 
     def __init__(
@@ -166,7 +157,6 @@ class TriageClient:
         config: PromptConfig = FULL,
         *,
         backend: Backend | str | None = None,
-        cache: Cache | None = None,
         temperature: float | None = None,
     ):
         self.config = config
@@ -175,10 +165,12 @@ class TriageClient:
             if isinstance(backend, Backend)
             else from_spec(backend) if isinstance(backend, str) else from_spec()
         )
-        self.cache = cache if cache is not None else Cache()
         self.temperature = temperature
         self.spend = _cost.Spend(spec=self.backend.spec)
         self.request_log: list[dict[str, Any]] = []
+        # One client serves every call of a parallel run; a conversation touches
+        # nothing shared except these totals.
+        self._totals = threading.Lock()
 
     @property
     def caveats(self) -> list[str]:
@@ -192,48 +184,36 @@ class TriageClient:
         record: dict[str, Any],
         *,
         resolver: Resolver | None = None,
-        sample: int = 0,
         run_dir: Path | None = None,
+        same_interval: list[dict[str, Any]] | None = None,
     ) -> Triage:
-        """Triage one candidate. Never returns ``None`` and never drops."""
+        """Triage one candidate. Never returns ``None`` and never drops.
+
+        :param same_interval: the other triples this answer stands for; see
+            :mod:`irqrace.llm.intervals`.
+        """
         contracts.validate("c2", record, what=f"candidate {record.get('id')}")
-        fingerprint = record["fingerprint"]
-
-        evidence = evidence_hash(record)
-
-        cached = self.cache.get(
-            fingerprint, self.config.hash(), self.backend.spec, sample,
-            _verdict_schema_hash(), evidence,
-        )
-        if cached is not None:
-            return Triage.model_validate(cached)
-
-        self.spend.candidates += 1
+        with self._totals:
+            self.spend.candidates += 1
         resolver = resolver or RecordBackedResolver(record)
-        convo = Conversation(candidate_id=record["id"])
+        convo = Conversation(
+            candidate_id=record["id"],
+            live_path=run_dir / "llm" / record["id"] / "turns.jsonl" if run_dir is not None else None,
+        )
         rendered = render_record(record)
+        if same_interval:
+            rendered += "\n\n" + render_interval(record, same_interval)
 
         if self.config.decomposition:
             triage = self._decomposed(record, rendered, resolver, convo)
         else:
             triage = self._combined(record, rendered, resolver, convo)
 
-        if run_dir is not None:
-            convo.write(run_dir)
         if isinstance(resolver, RecordBackedResolver):
-            self.request_log.extend(
-                {**r, "candidate_id": record["id"]} for r in resolver.log
-            )
-
-        self.cache.put(
-            fingerprint,
-            self.config.hash(),
-            self.backend.spec,
-            triage.model_dump(mode="json"),
-            sample,
-            _verdict_schema_hash(),
-            evidence,
-        )
+            with self._totals:
+                self.request_log.extend(
+                    {**r, "candidate_id": record["id"]} for r in resolver.log
+                )
         return triage
 
     # -- conversation shapes ---------------------------------------------
@@ -360,10 +340,10 @@ class TriageClient:
                 )
             )
             text = response.text
-            convo.add("assistant", text, stage=stage, turn=turn)
 
             requests = _parse_requests(text, turn)
             if not requests:
+                convo.add("assistant", text, stage=stage, turn=turn)
                 # The model answered instead of asking. Keep its prose in the
                 # history -- the structured turn that follows converts it,
                 # which is the two-step IRIS recommends.
@@ -376,18 +356,20 @@ class TriageClient:
                 )
                 return messages
 
-            replies = []
             for req in requests:
                 req.setdefault("schema_version", "c4/1.0.0")
                 req.setdefault("candidate_id", convo.candidate_id)
                 req["turn"] = turn
-                contracts.validate("c4-request", req, what=req["request_id"])
-                replies.append(render_reply(resolver.resolve(req)))
+            # The parsed requests and the resolver's replies are kept as data
+            # next to the text: what the model read is an evaluation question,
+            # and answering it from prose would mean re-parsing the transcript.
+            convo.add("assistant", text, stage=stage, turn=turn, requests=requests)
+            replies = [_answer(req, resolver) for req in requests]
 
             messages.append({"role": "assistant", "content": text})
-            reply_text = "\n\n---\n\n".join(replies)
+            reply_text = "\n\n---\n\n".join(render_reply(r) for r in replies)
             messages.append({"role": "user", "content": reply_text})
-            convo.add("user", reply_text, stage=stage, turn=turn, kind="c4_replies")
+            convo.add("user", reply_text, stage=stage, turn=turn, kind="c4_replies", replies=replies)
 
         # Budget reached. Recorded, not swallowed: a candidate that keeps
         # asking is evidence about the context record, which is the point of
@@ -416,22 +398,28 @@ class TriageClient:
             response.usage = dataclasses.replace(
                 response.usage, latency_s=time.perf_counter() - started
             )
-        self.spend.record(response.usage)
+        with self._totals:
+            self.spend.record(response.usage)
         return response
 
 
-@functools.lru_cache(maxsize=1)
-def _verdict_schema_hash() -> str:
-    """Identity of the answer schema, for the cache key.
+def _answer(request: dict[str, Any], resolver: Resolver) -> dict[str, Any]:
+    """Resolve one C4 request. A request we cannot serve is an answer, not a crash.
 
-    Changing what is asked for changes the experiment as much as changing the
-    prompt does, so it belongs in the key alongside the prompt-asset hash.
+    The request comes from the model and the reply from code that has rarely seen
+    its questions: neither failing may cost the candidate its verdict. It goes
+    back as ``unsupported``, which carries the rule for what it could not settle.
     """
-    blob = json.dumps(
-        [m.model_json_schema() for m in (FeasibilityAnswer, HarmfulnessAnswer, CombinedAnswer)],
-        sort_keys=True,
-    )
-    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+    try:
+        contracts.validate("c4-request", request, what=request["request_id"])
+        return resolver.resolve(request)
+    except contracts.ContractError:
+        return {
+            "request_id": request["request_id"],
+            "status": "unsupported",
+            "payload": {},
+            "recall_rule": RECALL_RULES["unsupported"],
+        }
 
 
 def _parse_requests(text: str, turn: int) -> list[dict[str, Any]]:
