@@ -1,14 +1,17 @@
 """Simple native Win32/Tkinter MVP GUI for the irqrace pipeline.
 
-Features:
-1. Top-level tab bar ("guia na cabeça do programa"):
-   - Tab 1: Pipeline & Execução (Stage 1 inputs, step-by-step / automatic runner,
-     real-time progress, and detailed LLM Triage & Repair inspection).
-   - Tab 2: Configuração de APIs de LLM (generic OpenAI-compatible structure
-     supporting ChatGPT/OpenAI, Groq, OpenRouter, vLLM, Ollama, and Anthropic,
-     with .env persistence and live connection test).
-2. Multi-file C/H input support: accepts a list of .c and .h paths
-   (multiple translation units + header include directories).
+Window sequence:
+
+* **Início** -- choose a mode.
+* **Benchmarks Racebench** -- pick cases from ``bench/configs`` and run them
+  unattended, scored against the ground truth (:mod:`irqrace.ui.benchmark_screen`).
+* **Modo genérico** -- the program under analysis. Its C1 file is never edited
+  by hand: it is imported, or written by the wizard (:mod:`irqrace.ui.c1_wizard`).
+  Then the Pipeline tab: step-by-step / automatic runner, real-time progress,
+  and LLM triage & repair inspection.
+* **Configuração da LLM** -- shared by both modes: OpenAI-compatible presets
+  (ChatGPT/OpenAI, Groq, OpenRouter, vLLM), Ollama, Anthropic and the Claude
+  CLI, with .env persistence and a live connection test.
 """
 
 from __future__ import annotations
@@ -19,7 +22,6 @@ import datetime
 import json
 import os
 import queue
-import shutil
 import subprocess
 import sys
 import threading
@@ -34,11 +36,12 @@ if (_tcl_base / "tcl8.6").exists():
 if (_tcl_base / "tk8.6").exists():
     os.environ.setdefault("TK_LIBRARY", str(_tcl_base / "tk8.6"))
 from tkinter import filedialog, messagebox, scrolledtext, ttk
-from typing import Any
+from typing import Any, Callable
 
 import yaml
 
 from irqrace.build import BuildError, build
+from irqrace.candidate import access_locations, same_source
 from irqrace.config import Config, ConfigError, resolve_source_root
 from irqrace.llm.backends import BackendError, ChatRequest, RefusalError, from_spec
 from irqrace.llm.backends.openai_backend import (
@@ -48,23 +51,49 @@ from irqrace.llm.backends.openai_backend import (
 )
 from irqrace.llm.annotations import locate_suite
 from irqrace.llm.client import TriageClient
-from irqrace.llm.pipeline import prepare_context, read_triages, repair_store, triage_store
-from irqrace.llm.prompts import BY_NAME, DEFERRED, EXPERIMENTAL, FULL
-from irqrace.llm.repair import RepairClient, apply_unified_diff, witness_problems
+from irqrace.llm.intervals import Budget
+from irqrace.llm.pipeline import (
+    prepare_context,
+    read_triages,
+    repair_store,
+    triage_records,
+    triage_settings,
+    triage_store,
+)
+from irqrace.llm.prompts import BY_NAME, DEFERRED, EXPERIMENTAL, FULL, ROW_HELP
+from irqrace.llm.repair import RepairClient, apply_unified_diff, patch_file, witness_problems
 from irqrace.llm.resolver import resolver_for
 from irqrace.llm.verdict import INSPECTION_ORDER, Bucket, Triage
 from irqrace.probe import ProbeError, probe
 from irqrace.run_evaluation import evaluate_run, write_report
-from irqrace.runstore import RunStore, find_runs
+from irqrace.runstore import RunStore
 from irqrace.stage1_driver import Stage1Error, stage1
 from irqrace.stage2 import stage2
 from irqrace.stage3 import Stage3Error, stage3
+from irqrace.ui.benchmark_screen import BenchmarkScreen
+from irqrace.ui.c1_wizard import ConfigWizard, WizardState
+from irqrace.ui.candidate_list import (
+    COLOURS,
+    DISCARDED,
+    PENDING,
+    SYMBOLS,
+    Row,
+    group_rows,
+    sort_rows,
+    tab_states,
+    variable_key,
+    variable_label,
+)
+from irqrace.ui.llm_history import build_history, load_turns
 from irqrace.ui.pdf_report import PDFReportBuilder
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 WORKSPACE_ROOT = Path(__file__).resolve().parents[4]
 ENV_FILE = REPO_ROOT / ".env"
 WORKSPACE_ENV_FILE = WORKSPACE_ROOT / ".env"
+
+#: How often the Pipeline tab looks at a run that is still being written.
+LIVE_REFRESH_MS = 1000
 
 PIPELINE_STEPS: list[tuple[str, str]] = [
     ("build", "Etapa 1/6: Build & Probe (Clang/LLVM Bitcode + Globais SVF)"),
@@ -330,8 +359,16 @@ def build_backend_from_config(
     return from_spec(f"{adapter}:{model}")
 
 
-def resolve_c_source_files(raw_cfg: dict[str, Any]) -> list[Path]:
-    """Locate all .c and .h files referenced by a C1 configuration dict."""
+def resolve_c_source_files(raw_cfg: dict[str, Any], yaml_path: Path | None = None) -> list[Path]:
+    """Locate all .c and .h files referenced by a C1 configuration dict.
+
+    Pass the file the dict came from: a relative ``source_root`` is relative to
+    it, not to the working directory (``bench/configs`` say
+    ``../racebench/2.1_remarks``, which from the vault root names a different
+    checkout).
+    """
+    if yaml_path is not None:
+        raw_cfg = resolve_source_root(copy.deepcopy(raw_cfg), Path(yaml_path))
     subj = raw_cfg.get("subject", {})
     sources = subj.get("sources", [])
     extra_bc = subj.get("build", {}).get("extra_bitcode", [])
@@ -368,22 +405,6 @@ def resolve_c_source_files(raw_cfg: dict[str, Any]) -> list[Path]:
                         found.append(rh)
                 break
     return found
-
-
-def find_matching_template_run(subject_name: str, runs_root: Path | None = None) -> Path | None:
-    """Find an existing run directory in runs/ for the given subject name."""
-    root = runs_root or (REPO_ROOT / "runs")
-    if not root.exists():
-        return None
-    matches: list[Path] = []
-    for r in find_runs(root):
-        try:
-            m = json.loads((r / "manifest.json").read_text(encoding="utf-8"))
-            if m.get("subject", {}).get("name") == subject_name:
-                matches.append(r)
-        except Exception:
-            continue
-    return sorted(matches)[-1] if matches else None
 
 
 def apply_source_list_to_c1_dict(
@@ -428,6 +449,19 @@ def apply_source_list_to_c1_dict(
     return out
 
 
+def run_signature(run_dir: Path) -> list[tuple[str, int, int]]:
+    """What a run's files look like now: unchanged means nothing to redraw."""
+    out = []
+    for dirpath, dirs, files in os.walk(run_dir):
+        if "build" in dirs:
+            dirs.remove("build")
+        for name in files:
+            path = os.path.join(dirpath, name)
+            st = os.stat(path)
+            out.append((path, st.st_mtime_ns, st.st_size))
+    return sorted(out)
+
+
 class PipelineStepper:
     """Executes the 6 pipeline steps one by one into a working C3 RunStore."""
 
@@ -444,6 +478,9 @@ class PipelineStepper:
         llm_api_key: str = "",
         llm_prompt: str = "+self-validation",
         llm_timeout_s: float = 120.0,
+        llm_workers: int = 1,
+        llm_by_interval: bool = False,
+        llm_budget: Budget | None = None,
         event_cb: Any = None,
     ) -> None:
         self.yaml_path = Path(yaml_path).resolve()
@@ -462,6 +499,9 @@ class PipelineStepper:
         self.llm_api_key = llm_api_key
         self.llm_prompt = llm_prompt
         self.llm_timeout_s = llm_timeout_s
+        self.llm_workers = llm_workers
+        self.llm_by_interval = llm_by_interval
+        self.llm_budget = llm_budget
         self.event_cb = event_cb
 
         raw = resolve_source_root(
@@ -473,7 +513,6 @@ class PipelineStepper:
             raw = apply_source_list_to_c1_dict(raw, self.source_paths)
 
         self.cfg = Config.from_dict(raw, path=self.yaml_path)
-        self.template_run = find_matching_template_run(self.cfg.name)
         self.store: RunStore | None = None
         self.current_step_idx: int = 0
         self.stop_requested: bool = False
@@ -627,41 +666,6 @@ class PipelineStepper:
         )
         return f"{n} trincas candidatas extraídas"
 
-    def _map_template_candidate_ids(self) -> dict[str, str]:
-        """Map template_run candidate IDs -> freshly compiled stage1 candidate IDs by (var, pattern, lines)."""
-        if not self.store or not self.template_run:
-            return {}
-        tmpl_s1 = self.template_run / "stage1" / "candidates.jsonl"
-        if not tmpl_s1.exists():
-            return {}
-        s1_cands = self.store.read_candidates("stage1")
-
-        def _sig(c: dict[str, Any]) -> tuple[Any, ...]:
-            vname = (c.get("variable") or {}).get("name") or (c.get("symbol") or {}).get("name", "")
-            pat = c.get("pattern") or c.get("pattern_id", "")
-            lines = tuple((a.get("source") or {}).get("line", 0) for a in c.get("accesses", []))
-            return (vname, pat, lines)
-
-        new_by_sig: dict[tuple[Any, ...], str] = {}
-        new_by_var_pat: dict[tuple[str, str], str] = {}
-        for c in s1_cands:
-            sig = _sig(c)
-            new_by_sig[sig] = c["id"]
-            new_by_var_pat[(sig[0], sig[1])] = c["id"]
-
-        id_map: dict[str, str] = {}
-        for line in tmpl_s1.read_text(encoding="utf-8").splitlines():
-            if not line.strip():
-                continue
-            tc = json.loads(line)
-            old_id = tc["id"]
-            sig = _sig(tc)
-            if sig in new_by_sig:
-                id_map[old_id] = new_by_sig[sig]
-            elif (sig[0], sig[1]) in new_by_var_pat:
-                id_map[old_id] = new_by_var_pat[(sig[0], sig[1])]
-        return id_map
-
     def _step_solver(self, log_fn) -> str:
         """Stages 2 and 3, the same functions ``irqrace stage3`` runs.
 
@@ -774,7 +778,6 @@ class PipelineStepper:
                 f"  Iniciando Triagem via API Real ({backend.spec} @ {self.llm_base_url}, prompt={p_cfg.name}) "
                 f"para {total} candidato(s)..."
             )
-
             client = TriageClient(p_cfg, backend=backend)
             manifest = self.store.read_manifest()
             manifest["llm"] = {
@@ -783,12 +786,11 @@ class PipelineStepper:
                 "date": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d"),
                 "votes": 1,
                 "seed": None,
+                **triage_settings(self.llm_workers, self.llm_by_interval, self.llm_budget),
             }
             self.store.write_manifest(manifest)
             self.store.set_stage("triage", "running", candidates_in=total)
 
-            c_main = self.primary_c_path
-            source_root = c_main.parent if c_main else None
             llm_dir = self.store.root / "llm"
             llm_dir.mkdir(parents=True, exist_ok=True)
 
@@ -806,56 +808,65 @@ class PipelineStepper:
                         fh.write(json.dumps(verdict_doc, ensure_ascii=False) + "\n")
 
             triages: list[Triage] = []
-            n_answered = 0
-            for idx, rec in enumerate(records, start=1):
-                if self.stop_requested:
-                    log_fn(f"  ⏹ Interrompido pelo usuário na Triagem ({n_answered}/{total} concluídos).")
-                    break
-                cid = rec["id"]
+            finished = {"n": 0}
+
+            def _on_start(rec: dict[str, Any]) -> None:
                 vname = (rec.get("variable") or {}).get("name") or (rec.get("symbol") or {}).get("name", "?")
                 pat = rec.get("pattern") or rec.get("pattern_id", "?")
-                log_fn(f"  -> [Candidato {idx}/{total}] Enviando {cid} (var='{vname}', padrão={pat}) para a API...")
+                log_fn(f"  -> Enviando {rec['id']} (var='{vname}', padrão={pat}) para a API...")
                 self._emit_event(
                     "api_candidate_progress",
                     stage="Triagem",
-                    current=idx - 1,
+                    current=finished["n"],
                     total=total,
-                    cid=cid,
+                    cid=rec["id"],
                     var=vname,
                     status="running",
                 )
-                resolver = resolver_for(rec, source_root=source_root, mode="auto")
-                try:
-                    t = client.triage(rec, resolver=resolver, sample=0, run_dir=self.store.root)
-                    triages.append(t)
-                    n_answered += 1
+
+            def _on_done(group: list[dict[str, Any]], outcomes: dict[str, Triage | str]) -> None:
+                lead = group[0]
+                finished["n"] += len(group)
+                result = outcomes[lead["id"]]
+                progress = f"[Candidato {finished['n']}/{total}]"
+                extra = f" (intervalo de {len(group)} triplas)" if len(group) > 1 else ""
+                if isinstance(result, Triage):
                     log_fn(
-                        f"  ✔ [Candidato {idx}/{total}] {cid} concluído: "
-                        f"bucket={t.bucket.value} (viabilidade={t.feasibility.verdict.value}, "
-                        f"nocividade={t.harmfulness.verdict.value if t.harmfulness else '-'})"
+                        f"  ✔ {progress} {lead['id']} concluído{extra}: "
+                        f"bucket={result.bucket.value} (viabilidade={result.feasibility.verdict.value}, "
+                        f"nocividade={result.harmfulness.verdict.value if result.harmfulness else '-'})"
                     )
-                except InterruptedError:
-                    log_fn(f"  ⏹ Interrompido pelo usuário durante chamada de API do candidato {cid}.")
-                    break
-                except RefusalError as e:
-                    triages.append(Triage.untriaged(rec, f"the model refused: {e}"))
-                    log_fn(f"  ✖ [Candidato {idx}/{total}] Recusa da API para {cid}; mantido como uncertain: {e}")
-                except (BackendError, RuntimeError) as e:
-                    triages.append(Triage.untriaged(rec, f"backend error: {e}"))
-                    log_fn(f"  ✖ [Candidato {idx}/{total}] Falha na API para {cid}; mantido como uncertain: {e}")
-
-                # Write incremental triage.jsonl so the GUI table updates after every candidate
+                    triages.extend(t for t in outcomes.values() if isinstance(t, Triage))
+                else:
+                    log_fn(f"  ✖ {progress} {lead['id']}{extra} mantido como uncertain: {result}")
+                    triages.extend(Triage.untriaged(m, result) for m in group)
+                # Incremental, so the GUI table updates after every conversation
                 _write_triages(triages)
-
                 self._emit_event(
                     "api_candidate_progress",
                     stage="Triagem",
-                    current=idx,
+                    current=finished["n"],
                     total=total,
-                    cid=cid,
-                    var=vname,
+                    cid=lead["id"],
+                    var=(lead.get("variable") or {}).get("name", "?"),
                     status="done",
                 )
+
+            triage_records(
+                client,
+                records,
+                make_resolver=lambda rec: resolver_for(rec, mode="auto"),
+                run_dir=self.store.root,
+                workers=self.llm_workers,
+                by_interval=self.llm_by_interval,
+                budget=self.llm_budget,
+                should_stop=lambda: self.stop_requested,
+                on_start=_on_start,
+                on_done=_on_done,
+            )
+            n_answered = sum(1 for t in triages if not t.not_triaged)
+            if self.stop_requested:
+                log_fn(f"  ⏹ Interrompido pelo usuário na Triagem ({n_answered}/{total} concluídos).")
 
             wall_ms = int((time.perf_counter() - started) * 1000)
             if self.stop_requested and n_answered == 0:
@@ -901,103 +912,14 @@ class PipelineStepper:
                 + (f"; {n_untriaged} sem veredicto, mantidos como uncertain" if n_untriaged else "")
             )
 
-        # Fast offline/cache mode from template run
-        if self.template_run and (self.template_run / "llm" / "triage.jsonl").exists():
-            id_map = self._map_template_candidate_ids()
-            dst_llm = self.store.root / "llm"
-            if dst_llm.exists():
-                shutil.rmtree(dst_llm)
-            shutil.copytree(self.template_run / "llm", dst_llm)
-            triage_lines = []
-            for line in (dst_llm / "triage.jsonl").read_text(encoding="utf-8").splitlines():
-                if line.strip():
-                    d = json.loads(line)
-                    old_cid = d["candidate_id"]
-                    new_cid = id_map.get(old_cid, old_cid)
-                    d["candidate_id"] = new_cid
-                    triage_lines.append(d)
-                    old_turn = dst_llm / "turns" / f"{old_cid}.jsonl"
-                    new_turn = dst_llm / "turns" / f"{new_cid}.jsonl"
-                    if old_turn.exists() and old_cid != new_cid:
-                        old_turn.replace(new_turn)
-                    old_cdir = dst_llm / old_cid
-                    new_cdir = dst_llm / new_cid
-                    if old_cdir.is_dir() and old_cid != new_cid and not new_cdir.exists():
-                        old_cdir.replace(new_cdir)
-            # The reference run is another run: keep its verdicts only for this
-            # run's candidates, and keep every candidate it has no verdict for as
-            # uncertain rather than letting it vanish from the report.
-            records = prepare_context(self.store)
-            ours = {r["id"] for r in records}
-            triage_lines = [d for d in triage_lines if d["candidate_id"] in ours]
-            covered = {d["candidate_id"] for d in triage_lines}
-            for rec in records:
-                if rec["id"] not in covered:
-                    t = Triage.untriaged(
-                        rec,
-                        f"offline mode: the reference run {self.template_run.name} has no "
-                        "verdict for this candidate",
-                    )
-                    doc = {**t.model_dump(mode="json"), "bucket": t.bucket.value}
-                    (dst_llm / rec["id"]).mkdir(parents=True, exist_ok=True)
-                    (dst_llm / rec["id"] / "verdict.json").write_text(
-                        json.dumps(doc, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
-                    )
-                    triage_lines.append(doc)
-                    self.store.log("warn", "triage", "candidate-not-triaged",
-                                   f"{rec['id']}: {t.not_triaged}", candidate_id=rec["id"])
-            (dst_llm / "triage.jsonl").write_text(
-                "\n".join(json.dumps(d) for d in triage_lines) + ("\n" if triage_lines else ""),
-                encoding="utf-8",
-            )
-            m = self.store.read_manifest()
-            # The verdicts were produced by the reference run, so its model,
-            # prompt and date are the ones that describe them -- not the
-            # settings on screen, which never ran.
-            ref_llm = {}
-            try:
-                ref_llm = json.loads((self.template_run / "manifest.json").read_text(encoding="utf-8")).get("llm") or {}
-            except (OSError, ValueError):
-                pass
-            m["llm"] = {
-                "model": ref_llm.get("model", "unknown (copied from a reference run)"),
-                "prompt_config": ref_llm.get("prompt_config", "unknown"),
-                "date": ref_llm.get("date") or "unknown",
-                "votes": ref_llm.get("votes", 1),
-                "seed": ref_llm.get("seed"),
-            }
-            self.store.write_manifest(m)
-            self.store.set_stage(
-                "triage",
-                "ok",
-                wall_ms=650,
-                candidates_in=len(triage_lines),
-                candidates_out=len(triage_lines),
-                dropped_with_proof=0,
-            )
-            real_n = sum(1 for d in triage_lines if d.get("bucket") == "likely_real")
-            infeas_n = sum(1 for d in triage_lines if d.get("bucket") == "likely_infeasible")
-            missing_n = sum(1 for d in triage_lines if d.get("not_triaged"))
-            log_fn(
-                f"  LLM (Cache Offline, run de referência {self.template_run.name}) avaliou "
-                f"{len(triage_lines) - missing_n} candidatos: {real_n} 'likely_real' (defeito real), "
-                f"{infeas_n} 'likely_infeasible' (armadilha rejeitada)."
-            )
-            if missing_n:
-                log_fn(f"  ⚠ {missing_n} candidato(s) sem veredicto no run de referência, mantidos como 'uncertain'.")
-            return (
-                f"{len(triage_lines) - missing_n} triados ({real_n} real, {infeas_n} inviável)"
-                + (f"; {missing_n} sem veredicto, mantidos como uncertain" if missing_n else "")
-            )
-
         ctx_files = list((self.store.root / "context").glob("*.json")) if (self.store.root / "context").exists() else []
         msg = (
-            "LLM não executada: 'Usar API de LLM Real' está desmarcado e não há run de referência "
-            f"para este caso. Os {len(ctx_files)} candidato(s) seguem em context/, sem veredicto."
+            "LLM não executada: 'Usar API de LLM Real' está desmarcado. "
+            f"Os {len(ctx_files)} candidato(s) seguem em context/, sem veredicto."
         )
         self.store.set_stage("triage", "skipped", candidates_in=len(ctx_files), error=msg)
-        log_fn(f"  [Modo Offline sem run de referência] {msg}")
-        return f"0/{len(ctx_files)} triados (ative 'Usar API de LLM Real' para novos programas)"
+        log_fn(f"  [Sem LLM] {msg}")
+        return f"0/{len(ctx_files)} triados (ative 'Usar API de LLM Real')"
 
     def _step_repair(self, log_fn) -> str:
         assert self.store is not None
@@ -1054,13 +976,13 @@ class PipelineStepper:
                     status="running",
                 )
                 try:
-                    patch = client.repair(rec, sample=0, run_dir=self.store.root)
+                    patch = client.repair(rec, run_dir=self.store.root)
                     patches[cid] = patch
                     log_fn(f"  ✔ [Reparo {idx}/{total}] Patch gerado para {cid} (estratégia={patch.strategy.value})")
                 except InterruptedError:
                     log_fn(f"  ⏹ Interrompido pelo usuário durante geração de patch para {cid}.")
                     break
-                except (RefusalError, BackendError, RuntimeError) as e:
+                except (RefusalError, BackendError, RuntimeError, ValueError) as e:
                     excluded.append((cid, str(e)))
                     log_fn(f"  ✖ [Reparo {idx}/{total}] Falha ao gerar patch para {cid}: {e}")
 
@@ -1093,49 +1015,19 @@ class PipelineStepper:
             log_fn(f"  {n_rep}/{total} patch(es) gerados. Reverificação não implementada.")
             return f"{n_rep} correção(ões) gerada(s) com testemunha, sem reverificação"
 
-        if self.template_run and (self.template_run / "repair").exists():
-            id_map = self._map_template_candidate_ids()
-            dst_rep = self.store.root / "repair"
-            if dst_rep.exists():
-                shutil.rmtree(dst_rep)
-            shutil.copytree(self.template_run / "repair", dst_rep)
-            for sub in list(dst_rep.iterdir()):
-                if sub.is_dir() and sub.name in id_map:
-                    new_cid = id_map[sub.name]
-                    pfile = sub / "patch.json"
-                    if pfile.exists():
-                        pdoc = json.loads(pfile.read_text(encoding="utf-8"))
-                        pdoc["candidate_id"] = new_cid
-                        pfile.write_text(json.dumps(pdoc, indent=2), encoding="utf-8")
-                    if new_cid != sub.name:
-                        sub.replace(dst_rep / new_cid)
-            patches = list(dst_rep.glob("*/patch.json"))
-            self.store.set_stage(
-                "repair",
-                "ok",
-                wall_ms=820,
-                candidates_in=len(patches),
-                candidates_out=len(patches),
-                dropped_with_proof=0,
-            )
-            self.store.set_stage("reverify", "skipped", candidates_in=len(patches), error=reverify_reason)
-            log_fn(
-                f"  {len(patches)} patch(es) com testemunha copiados do run de referência. "
-                "Reverificação não implementada."
-            )
-            return f"{len(patches)} patch(es) de correção copiados, sem reverificação"
-
         msg = (
-            "Reparo não executado: 'Usar API de LLM Real' está desmarcado e não há run de "
-            "referência para este caso."
+            "Reparo não executado: 'Usar API de LLM Real' está desmarcado."
         )
         self.store.set_stage("repair", "skipped", error=msg)
-        log_fn(f"  [Modo Offline sem run de referência] {msg}")
+        log_fn(f"  [Sem LLM] {msg}")
         return msg
 
 
 class IrqRaceWinApp:
     """Classic Windows (ttk) Desktop MVP for irqrace."""
+
+    BENCH_CONFIGS = REPO_ROOT / "bench" / "configs"
+    RUNS_ROOT = REPO_ROOT / "runs"
 
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
@@ -1155,20 +1047,32 @@ class IrqRaceWinApp:
         self.log_queue: queue.Queue[tuple[str, Any]] = queue.Queue()
         self.stepper: PipelineStepper | None = None
         self.is_running_async = False
+        # The run shown read-only while the Racebench screen is still writing it.
+        self._live_run: Path | None = None
+        self._live_case = ""
+        self._live_is_running: Callable[[], bool] = lambda: False
+        self._live_token = 0
+        self._live_signature: list[tuple[str, int, int]] | None = None
+        self._live_rendered: tuple[Any, ...] | None = None
         self.stop_requested = False
         self.candidates_data: dict[str, dict[str, Any]] = {}
+        self.candidate_rows: list[Row] = []
+        self._sort_column: str | None = None
+        self._sort_reverse = False
+        self.group_by_variable_var = tk.BooleanVar(value=False)
+        self._open_groups: set[str] = set()
+        self._tab_images: dict[str, tk.PhotoImage] = {}
+        self._run_stages: dict[str, str] = {}
         self.source_files_list: list[Path] = []
         self.pipeline_header_info_var = tk.StringVar(value="")
 
-        # Default Stage 1 files
-        default_yaml = REPO_ROOT / "bench" / "configs" / "svp_simple_001_001.yaml"
-        if default_yaml.exists():
-            raw = yaml.safe_load(default_yaml.read_text(encoding="utf-8"))
-            self.source_files_list = resolve_c_source_files(raw)
-
-        self.yaml_path_var = tk.StringVar(value=str(default_yaml) if default_yaml.exists() else "")
-        self.case_preset_var = tk.StringVar(value="svp_simple_001_001")
+        # Generic mode starts empty: the C1 file is imported or made by the wizard.
+        self.yaml_path_var = tk.StringVar(value="")
         self.selected_source_view_var = tk.StringVar(value="")
+        self.screens: dict[str, ttk.Frame] = {}
+        self.current_screen = ""
+        self._pipeline_origin = "generic"
+        self._llm_return_screen = "home"
 
         # LLM Configuration Variables (loaded from .env if present)
         env_base_url = os.environ.get("IRQRACE_OPENAI_BASE_URL", "https://api.groq.com/openai/v1")
@@ -1190,13 +1094,17 @@ class IrqRaceWinApp:
         self.llm_model_var = tk.StringVar(value=env_model)
         self.llm_prompt_var = tk.StringVar(value=env_prompt)
         self.llm_timeout_var = tk.StringVar(value=env_timeout)
+        self.llm_workers_var = tk.StringVar(value=os.environ.get("IRQRACE_LLM_WORKERS", "1"))
+        self.llm_by_interval_var = tk.BooleanVar(value=os.environ.get("IRQRACE_LLM_BY_INTERVAL", "") == "1")
+        self.llm_max_requests_var = tk.StringVar(value=os.environ.get("IRQRACE_LLM_MAX_REQUESTS", ""))
+        self.llm_max_usd_var = tk.StringVar(value=os.environ.get("IRQRACE_LLM_MAX_USD", ""))
         self.use_live_llm_var = tk.BooleanVar(value=bool(env_api_key))
         self.show_api_key_var = tk.BooleanVar(value=False)
         self.llm_header_summary_var = tk.StringVar(value="")
 
         self.progress_var = tk.DoubleVar(value=0.0)
         self.status_var = tk.StringVar(
-            value="Pronto. Selecione a lista de arquivos (.c/.h) e o .yaml e avance etapa a etapa."
+            value="Pronto. Importe ou crie a configuração do projeto e avance etapa a etapa."
         )
 
         # Real-time API / Sub-task Loading Bar state
@@ -1219,96 +1127,276 @@ class IrqRaceWinApp:
         self._build_ui()
         self._update_llm_header_summary()
         self._refresh_source_listbox()
-        self._load_initial_run()
+        self.show_screen("home")
         self.root.after(100, self._poll_queue)
 
     def _build_ui(self) -> None:
         outer = ttk.Frame(self.root, padding=4)
         outer.pack(fill=tk.BOTH, expand=True)
+        self.screen_host = outer
 
-        # Multi-Screen Wizard: Tela 1 (Setup & Configuração LLM) e Tela 2 (Visão do Pipeline)
-        self.top_notebook = ttk.Notebook(outer)
+        # Screen sequence: Início -> (Benchmarks Racebench | Modo genérico), plus
+        # the LLM settings shared by both. Only one screen is packed at a time.
+        self.screen_home = ttk.Frame(outer, padding=16)
+        self.screen_llm = ttk.Frame(outer, padding=8)
+        self.screen_generic = ttk.Frame(outer)
+        self.bench_screen = BenchmarkScreen(outer, self)
+        self.screens = {
+            "home": self.screen_home,
+            "bench": self.bench_screen,
+            "generic": self.screen_generic,
+            "llm": self.screen_llm,
+        }
+
+        # Generic mode: Projeto -> Pipeline
+        self.top_notebook = ttk.Notebook(self.screen_generic)
         self.top_notebook.pack(fill=tk.BOTH, expand=True)
-
         self.tab_setup = ttk.Frame(self.top_notebook, padding=8)
         self.tab_pipeline = ttk.Frame(self.top_notebook, padding=4)
-        # Compatibility alias
-        self.tab_llm_config = self.tab_setup
-
-        self.top_notebook.add(self.tab_setup, text="  1. Configuração  ")
+        self.top_notebook.add(self.tab_setup, text="  1. Projeto  ")
         self.top_notebook.add(self.tab_pipeline, text="  2. Pipeline  ")
 
+        self._build_home_screen(self.screen_home)
+        self._build_llm_screen(self.screen_llm)
+        # Compatibility alias
+        self.tab_llm_config = self.screen_llm
         self._build_setup_screen(self.tab_setup)
         self._build_pipeline_screen(self.tab_pipeline)
 
     # -------------------------------------------------------------------------
-    # TELA 1: SELEÇÃO DE ARQUIVOS (.c, .h, .yaml) E CONFIGURAÇÃO DA LLM (OBRIGATÓRIO)
+    # NAVEGAÇÃO ENTRE TELAS
     # -------------------------------------------------------------------------
 
-    def _build_setup_screen(self, parent: ttk.Frame) -> None:
-        # Group 1: Arquivos de Entrada
-        input_box = ttk.LabelFrame(
-            parent,
-            text=" 1. Código Fonte e Configuração (.yaml / .c / .h) ",
-            padding=10,
+    def show_screen(self, name: str) -> None:
+        for frame in self.screens.values():
+            frame.pack_forget()
+        self.screens[name].pack(fill=tk.BOTH, expand=True)
+        self.current_screen = name
+        self._update_llm_header_summary()
+
+    def open_generic_mode(self) -> None:
+        self._end_live_view()
+        self._pipeline_origin = "generic"
+        self.top_notebook.select(self.tab_setup)
+        self.show_screen("generic")
+
+    def open_llm_settings(self, return_to: str | None = None) -> None:
+        self._llm_return_screen = return_to or self.current_screen or "home"
+        self.show_screen("llm")
+
+    def _leave_llm_settings(self) -> None:
+        self._update_llm_header_summary()
+        self.show_screen(self._llm_return_screen if self._llm_return_screen != "llm" else "home")
+
+    def _pipeline_back(self) -> None:
+        self._end_live_view()
+        if self._pipeline_origin == "bench":
+            self.show_screen("bench")
+        else:
+            self.top_notebook.select(self.tab_setup)
+
+    def llm_ready(self) -> bool:
+        adapter = self.llm_adapter_var.get().strip() or "openai"
+        if not self.llm_model_var.get().strip():
+            return False
+        if adapter in ("openai", "anthropic") and not self.llm_api_key_var.get().strip():
+            return False
+        return adapter == "claude-cli" or bool(self.llm_base_url_var.get().strip())
+
+    def _llm_kwargs(self) -> dict[str, Any]:
+        """The LLM settings as plain values, safe to hand to a worker thread."""
+        try:
+            timeout_s = float(self.llm_timeout_var.get().strip() or "120")
+        except ValueError:
+            timeout_s = 120.0
+
+        def number(var: tk.StringVar, kind: type) -> Any:
+            try:
+                return kind(var.get().strip())
+            except ValueError:  # blank means no limit
+                return None
+
+        max_requests, max_usd = number(self.llm_max_requests_var, int), number(self.llm_max_usd_var, float)
+        return {
+            "llm_adapter": self.llm_adapter_var.get().strip() or "openai",
+            "llm_model": self.llm_model_var.get().strip() or "openai/gpt-oss-120b",
+            "llm_base_url": self.llm_base_url_var.get().strip() or "https://api.groq.com/openai/v1",
+            "llm_api_key": self.llm_api_key_var.get().strip(),
+            "llm_prompt": self.llm_prompt_var.get().strip() or "+self-validation",
+            "llm_timeout_s": timeout_s,
+            "llm_workers": max(number(self.llm_workers_var, int) or 1, 1),
+            "llm_by_interval": self.llm_by_interval_var.get(),
+            "llm_budget": Budget(max_requests=max_requests, max_usd=max_usd)
+            if max_requests is not None or max_usd is not None
+            else None,
+        }
+
+    def _triage_env(self) -> dict[str, str]:
+        return {
+            "IRQRACE_LLM_WORKERS": self.llm_workers_var.get().strip(),
+            "IRQRACE_LLM_BY_INTERVAL": "1" if self.llm_by_interval_var.get() else "",
+            "IRQRACE_LLM_MAX_REQUESTS": self.llm_max_requests_var.get().strip(),
+            "IRQRACE_LLM_MAX_USD": self.llm_max_usd_var.get().strip(),
+        }
+
+    def stepper_factory(self, *, live_llm: bool, prompt: str | None = None):
+        """A ``yaml_path -> PipelineStepper`` callable for the benchmark worker.
+
+        Each case resolves its own sources from its C1 file (``source_paths=None``).
+        *prompt* overrides the saved prompt row for this batch.
+        """
+        kwargs = self._llm_kwargs()
+        if prompt:
+            kwargs["llm_prompt"] = prompt
+        # The batch already runs cases in parallel: calls inside each would multiply.
+        kwargs["llm_workers"] = 1
+        runs_root = self.RUNS_ROOT
+
+        def _make(yaml_path: Path) -> PipelineStepper:
+            return PipelineStepper(yaml_path, None, work_root=runs_root, use_live_llm=live_llm, **kwargs)
+
+        return _make
+
+    def open_run_in_pipeline(
+        self,
+        yaml_path: Path,
+        run_dir: Path,
+        *,
+        origin: str = "generic",
+        is_live: Callable[[], bool] = lambda: False,
+    ) -> None:
+        """Show a run in the Pipeline tab (used by the benchmark table).
+
+        While *is_live* holds, the run belongs to the benchmark's threads: the
+        view is read-only and follows the files, and no stepper is attached,
+        because a second writer on the same run would corrupt it.
+        """
+        self._end_live_view()
+        raw = yaml.safe_load(Path(yaml_path).read_text(encoding="utf-8"))
+        self.yaml_path_var.set(str(yaml_path))
+        self.source_files_list = resolve_c_source_files(raw, yaml_path)
+        self.stepper = None
+        self._refresh_source_listbox()
+        self._update_pipeline_header_info()
+        self._clear_live_log()
+        if is_live():
+            self._start_live_view(Path(yaml_path).stem, run_dir, is_live)
+        else:
+            self._load_run_into_ui(run_dir, note=f"Run carregado: {run_dir}")
+            self.api_status_var.set("API LLM: run já executado, aberto só para inspeção.")
+        self._pipeline_origin = origin
+        self.show_screen("generic")
+        self.top_notebook.select(self.tab_pipeline)
+
+    def _start_live_view(self, case: str, run_dir: Path, is_live: Callable[[], bool]) -> None:
+        self._live_run, self._live_case, self._live_is_running = run_dir, case, is_live
+        self._live_signature = self._live_rendered = None
+        self._live_token += 1
+        for button in (self.btn_reset, self.btn_step, self.btn_resume, self.btn_stop):
+            button.configure(state=tk.DISABLED)
+        self._append_log(f"Inspeção ao vivo de {case}: {run_dir}")
+        self.api_status_var.set("👁 Inspeção ao vivo: atualiza sozinha enquanto o caso roda. Somente leitura.")
+        self._live_tick(self._live_token)
+
+    def _live_tick(self, token: int) -> None:
+        if token != self._live_token:  # another view replaced this one
+            return
+        running = self._live_is_running()
+        try:
+            signature = run_signature(self._live_run)
+            if signature != self._live_signature:
+                self._refresh_from_store(RunStore(self._live_run))
+                self._live_signature = signature
+        except (OSError, ValueError, KeyError):
+            pass  # a file caught half written: the next tick reads it whole
+        if running:
+            self.root.after(LIVE_REFRESH_MS, self._live_tick, token)
+        else:
+            self._finish_live_view()
+
+    def _finish_live_view(self) -> None:
+        run_dir, case = self._live_run, self._live_case
+        self._end_live_view()
+        stepper = self._create_stepper()
+        if stepper:
+            self.stepper = stepper
+            self.stepper.load_existing_run(run_dir)
+        self._append_log(f"{case} terminou.")
+        self.api_status_var.set("API LLM: caso terminou, run aberto só para inspeção.")
+
+    def _end_live_view(self) -> None:
+        if self._live_run is None:
+            return
+        self._live_run = None
+        self._live_token += 1
+        self._set_buttons_state(tk.NORMAL)
+
+    def live_view_log(self, msg: str) -> None:
+        """Mirror the watched case's lines of the benchmark log into the Pipeline tab."""
+        if self._live_run is not None and msg.lstrip().startswith(f"[{self._live_case}]"):
+            self._append_log(msg)
+
+    # -------------------------------------------------------------------------
+    # TELA INICIAL
+    # -------------------------------------------------------------------------
+
+    def _build_home_screen(self, parent: ttk.Frame) -> None:
+        center = ttk.Frame(parent)
+        center.place(relx=0.5, rely=0.45, anchor=tk.CENTER)
+        ttk.Label(center, text="irqrace", font=("Segoe UI", 26, "bold")).pack()
+        ttk.Label(
+            center,
+            text="Detecção e reparo de violações de atomicidade em programas embarcados com interrupções",
+            font=("Segoe UI", 10),
+        ).pack(pady=(0, 24))
+
+        cards = ttk.Frame(center)
+        cards.pack()
+        modes = (
+            (
+                "Benchmarks Racebench",
+                "Executa os casos da suíte Racebench de forma automatizada e compara o resultado "
+                "com o gabarito anotado: recall, armadilhas e tempo por caso. As configurações "
+                "dos casos já vêm prontas.",
+                "Abrir benchmarks >>",
+                lambda: self.show_screen("bench"),
+            ),
+            (
+                "Analisar um projeto",
+                "Configura o programa e o ambiente sob análise: arquivos-fonte, tarefas, ISRs, "
+                "primitivas de mascaramento e semântica do processador. A configuração é importada "
+                "de um arquivo existente ou criada por um assistente.",
+                "Configurar projeto >>",
+                self.open_generic_mode,
+            ),
         )
-        input_box.pack(fill=tk.X, pady=(0, 8))
+        for col, (title, desc, btn, cmd) in enumerate(modes):
+            card = ttk.LabelFrame(cards, text=f" {title} ", padding=14)
+            card.grid(row=0, column=col, padx=10, sticky=tk.NSEW)
+            ttk.Label(card, text=desc, wraplength=330, justify=tk.LEFT).pack(anchor=tk.W, pady=(0, 12))
+            ttk.Button(card, text=btn, command=cmd).pack(anchor=tk.E, ipady=4)
+        cards.columnconfigure((0, 1), weight=1, uniform="card")
 
-        # Preset row
-        r_preset = ttk.Frame(input_box)
-        r_preset.pack(fill=tk.X, pady=(0, 4))
-        ttk.Label(r_preset, text="Caso Racebench:", width=22).pack(side=tk.LEFT)
-        configs = sorted((REPO_ROOT / "bench" / "configs").glob("*.yaml"))
-        preset_names = [p.stem for p in configs]
-        preset_cb = ttk.Combobox(
-            r_preset, textvariable=self.case_preset_var, values=preset_names, state="readonly", width=26
-        )
-        preset_cb.pack(side=tk.LEFT, padx=(0, 8))
-        preset_cb.bind("<<ComboboxSelected>>", self._on_preset_selected)
+        llm_row = ttk.Frame(center, padding=(0, 20, 0, 0))
+        llm_row.pack(fill=tk.X)
+        ttk.Label(llm_row, textvariable=self.llm_header_summary_var, foreground="gray").pack(side=tk.LEFT)
         ttk.Button(
-            r_preset, text="Ver C1...", command=self._show_stage1_inputs_dialog
-        ).pack(side=tk.LEFT)
+            llm_row, text="Configurar LLM...", command=lambda: self.open_llm_settings(return_to="home")
+        ).pack(side=tk.RIGHT)
 
-        # YAML file row
-        r_yaml = ttk.Frame(input_box)
-        r_yaml.pack(fill=tk.X, pady=(0, 4))
-        ttk.Label(r_yaml, text="Arquivo YAML:", width=22).pack(side=tk.LEFT)
-        ttk.Entry(r_yaml, textvariable=self.yaml_path_var).pack(
-            side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 6)
-        )
-        ttk.Button(r_yaml, text="Buscar...", width=14, command=self._browse_yaml_file).pack(
-            side=tk.LEFT
-        )
+    # -------------------------------------------------------------------------
+    # CONFIGURAÇÃO DA LLM (compartilhada pelos dois modos)
+    # -------------------------------------------------------------------------
 
-        # Multi-file list row
-        r_files = ttk.Frame(input_box)
-        r_files.pack(fill=tk.X, pady=2)
-        ttk.Label(r_files, text="Arquivos (.c / .h):", width=22).pack(side=tk.LEFT, anchor=tk.N, pady=2)
+    def _build_llm_screen(self, parent: ttk.Frame) -> None:
+        nav = ttk.Frame(parent)
+        nav.pack(fill=tk.X, pady=(0, 8))
+        ttk.Button(nav, text="<< Voltar", command=self._leave_llm_settings).pack(side=tk.LEFT)
+        ttk.Label(nav, text="Configuração da LLM", font=("Segoe UI", 11, "bold")).pack(side=tk.LEFT, padx=10)
 
-        list_frame = ttk.Frame(r_files)
-        list_frame.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 6))
-        self.src_listbox = tk.Listbox(list_frame, height=3, font=("Consolas", 9), selectmode=tk.EXTENDED)
-        src_scroll = ttk.Scrollbar(list_frame, orient=tk.VERTICAL, command=self.src_listbox.yview)
-        self.src_listbox.configure(yscrollcommand=src_scroll.set)
-        self.src_listbox.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        src_scroll.pack(side=tk.RIGHT, fill=tk.Y)
-
-        btns_col = ttk.Frame(r_files)
-        btns_col.pack(side=tk.LEFT)
-        ttk.Button(
-            btns_col, text="+ Arquivos...", width=16, command=self._add_source_files
-        ).pack(side=tk.TOP, pady=1)
-        ttk.Button(
-            btns_col, text="+ Pasta...", width=16, command=self._add_source_folder
-        ).pack(side=tk.TOP, pady=1)
-        ttk.Button(
-            btns_col, text="- Remover", width=16, command=self._remove_selected_sources
-        ).pack(side=tk.TOP, pady=1)
-
-        # Group 2: Configuração LLM (Obrigatório)
         cfg_box = ttk.LabelFrame(
             parent,
-            text=" 2. Configuração da LLM ",
+            text=" Provedor, modelo e credenciais ",
             padding=10,
         )
         cfg_box.pack(fill=tk.X, pady=(0, 8))
@@ -1384,6 +1472,24 @@ class IrqRaceWinApp:
         ttk.Label(r3, text="Timeout (s):").pack(side=tk.LEFT, padx=(4, 2))
         ttk.Entry(r3, textvariable=self.llm_timeout_var, width=6).pack(side=tk.LEFT)
 
+        r4 = ttk.Frame(cfg_box)
+        r4.pack(fill=tk.X, pady=(0, 3))
+        ttk.Label(r4, text="Chamadas simultâneas:").pack(side=tk.LEFT, padx=(0, 4))
+        ttk.Entry(r4, textvariable=self.llm_workers_var, width=4).pack(side=tk.LEFT, padx=(0, 12))
+        ttk.Checkbutton(r4, text="Triar por intervalo", variable=self.llm_by_interval_var).pack(
+            side=tk.LEFT, padx=(0, 12)
+        )
+        ttk.Label(r4, text="Máx. chamadas:").pack(side=tk.LEFT, padx=(0, 4))
+        ttk.Entry(r4, textvariable=self.llm_max_requests_var, width=6).pack(side=tk.LEFT, padx=(0, 12))
+        ttk.Label(r4, text="Máx. US$:").pack(side=tk.LEFT, padx=(0, 4))
+        ttk.Entry(r4, textvariable=self.llm_max_usd_var, width=6).pack(side=tk.LEFT)
+
+        prompt_help = tk.StringVar(value=ROW_HELP.get(self.llm_prompt_var.get(), ""))
+        self.llm_prompt_var.trace_add(
+            "write", lambda *_: prompt_help.set(ROW_HELP.get(self.llm_prompt_var.get(), "")))
+        ttk.Label(cfg_box, textvariable=prompt_help, foreground="gray").pack(anchor=tk.W, pady=(0, 3))
+
+
         # Row 4: Buttons for Save & Test
         r4 = ttk.Frame(cfg_box)
         r4.pack(fill=tk.X, pady=(6, 2))
@@ -1410,6 +1516,88 @@ class IrqRaceWinApp:
             "Pronto para testar a API LLM. A chave é obrigatória para prosseguir.",
         )
 
+    # -------------------------------------------------------------------------
+    # MODO GENÉRICO, TELA 1: PROJETO SOB ANÁLISE (C1 importado ou criado pelo assistente)
+    # -------------------------------------------------------------------------
+
+    def _build_setup_screen(self, parent: ttk.Frame) -> None:
+        nav = ttk.Frame(parent)
+        nav.pack(fill=tk.X, pady=(0, 8))
+        ttk.Button(nav, text="⌂ Início", command=lambda: self.show_screen("home")).pack(side=tk.LEFT)
+        ttk.Label(nav, text="Analisar um projeto", font=("Segoe UI", 11, "bold")).pack(side=tk.LEFT, padx=10)
+
+        # Group 1: the C1 configuration -- imported or made by the wizard, never typed
+        input_box = ttk.LabelFrame(
+            parent,
+            text=" 1. Configuração do projeto (contrato C1) ",
+            padding=10,
+        )
+        input_box.pack(fill=tk.X, pady=(0, 8))
+
+        ttk.Label(
+            input_box,
+            wraplength=900,
+            justify=tk.LEFT,
+            text="A configuração descreve o programa e o ambiente: fontes, tarefas, ISRs, prioridades, "
+            "primitivas de mascaramento e semântica do processador. Importe um arquivo existente ou "
+            "crie um pelo assistente — o arquivo não é editado à mão.",
+        ).pack(anchor=tk.W, pady=(0, 6))
+
+        r_yaml = ttk.Frame(input_box)
+        r_yaml.pack(fill=tk.X, pady=(0, 4))
+        ttk.Label(r_yaml, text="Configuração:", width=22).pack(side=tk.LEFT)
+        ttk.Entry(r_yaml, textvariable=self.yaml_path_var, state="readonly").pack(
+            side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 6)
+        )
+
+        r_btns = ttk.Frame(input_box)
+        r_btns.pack(fill=tk.X, pady=(0, 6))
+        ttk.Label(r_btns, text="", width=22).pack(side=tk.LEFT)
+        ttk.Button(r_btns, text="Importar .yaml...", command=self._browse_yaml_file).pack(side=tk.LEFT)
+        ttk.Button(
+            r_btns, text="Criar com o assistente...", command=lambda: self._open_config_wizard(edit=False)
+        ).pack(side=tk.LEFT, padx=4)
+        self.btn_edit_wizard = ttk.Button(
+            r_btns, text="Editar no assistente...", command=lambda: self._open_config_wizard(edit=True)
+        )
+        self.btn_edit_wizard.pack(side=tk.LEFT)
+        ttk.Button(r_btns, text="Ver C1...", command=self._show_stage1_inputs_dialog).pack(
+            side=tk.LEFT, padx=4
+        )
+
+        # Multi-file list row
+        r_files = ttk.Frame(input_box)
+        r_files.pack(fill=tk.X, pady=2)
+        ttk.Label(r_files, text="Arquivos (.c / .h):", width=22).pack(side=tk.LEFT, anchor=tk.N, pady=2)
+
+        list_frame = ttk.Frame(r_files)
+        list_frame.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 6))
+        self.src_listbox = tk.Listbox(list_frame, height=6, font=("Consolas", 9), selectmode=tk.EXTENDED)
+        src_scroll = ttk.Scrollbar(list_frame, orient=tk.VERTICAL, command=self.src_listbox.yview)
+        self.src_listbox.configure(yscrollcommand=src_scroll.set)
+        self.src_listbox.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        src_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+
+        btns_col = ttk.Frame(r_files)
+        btns_col.pack(side=tk.LEFT)
+        ttk.Button(
+            btns_col, text="+ Arquivos...", width=16, command=self._add_source_files
+        ).pack(side=tk.TOP, pady=1)
+        ttk.Button(
+            btns_col, text="+ Pasta...", width=16, command=self._add_source_folder
+        ).pack(side=tk.TOP, pady=1)
+        ttk.Button(
+            btns_col, text="- Remover", width=16, command=self._remove_selected_sources
+        ).pack(side=tk.TOP, pady=1)
+
+        # Group 2: LLM summary (the settings live on their own screen)
+        llm_box = ttk.LabelFrame(parent, text=" 2. LLM ", padding=10)
+        llm_box.pack(fill=tk.X, pady=(0, 8))
+        ttk.Label(llm_box, textvariable=self.llm_header_summary_var).pack(side=tk.LEFT)
+        ttk.Button(
+            llm_box, text="Configurar LLM...", command=lambda: self.open_llm_settings(return_to="generic")
+        ).pack(side=tk.RIGHT)
+
         # Bottom Bar: Advance to Screen 2
         bottom_bar = ttk.Frame(parent, padding=4)
         bottom_bar.pack(fill=tk.X, side=tk.BOTTOM)
@@ -1419,7 +1607,57 @@ class IrqRaceWinApp:
             command=self._on_proceed_to_pipeline,
         )
         self.btn_proceed.pack(side=tk.RIGHT, padx=4, ipady=4)
-        self.btn_proceed.pack(side=tk.RIGHT, padx=4, ipady=4)
+
+    def import_c1(self, path: Path) -> bool:
+        """Load a C1 file into generic mode, refusing one the pipeline would refuse."""
+        path = Path(path).resolve()
+        try:
+            raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+            if not isinstance(raw, dict):
+                raise ConfigError("o arquivo não contém um mapeamento YAML")
+            files = resolve_c_source_files(raw, path)
+            Config.from_dict(apply_source_list_to_c1_dict(resolve_source_root(raw, path), files), path=path)
+        except Exception as e:
+            messagebox.showerror(
+                "Configuração inválida",
+                f"{path}\n\nnão é uma configuração C1 válida:\n{e}\n\n"
+                "Use 'Editar no assistente' depois de corrigir, ou crie uma nova pelo assistente.",
+            )
+            return False
+        self.yaml_path_var.set(str(path))
+        self.source_files_list = files
+        self.stepper = None
+        self._refresh_source_listbox()
+        self._update_pipeline_header_info()
+        return True
+
+    def _open_config_wizard(self, *, edit: bool) -> None:
+        yaml_str = self.yaml_path_var.get().strip()
+        target = Path(yaml_str) if yaml_str else None
+        if edit:
+            if not target or not target.exists():
+                messagebox.showinfo("Nada para editar", "Importe ou crie uma configuração primeiro.")
+                return
+            try:
+                state = WizardState.from_c1(yaml.safe_load(target.read_text(encoding="utf-8")), target)
+            except Exception as e:
+                messagebox.showerror("Não foi possível abrir no assistente", str(e))
+                return
+        else:
+            target = None
+            state = WizardState(sources=list(self.source_files_list))
+            if state.c_files:
+                state.name = state.c_files[0].parent.name
+
+        def _done(path: Path, sources: list[Path]) -> None:
+            self.yaml_path_var.set(str(path))
+            self.source_files_list = list(sources)
+            self.stepper = None
+            self._refresh_source_listbox()
+            self._update_pipeline_header_info()
+            self.status_var.set(f"Configuração salva em {path.name}. Avance para o Pipeline.")
+
+        ConfigWizard(self.root, state, on_finish=_done, target=target)
 
     # -------------------------------------------------------------------------
     # TELA 2: VISÃO DO PIPELINE SENDO EXECUTADO (CONCISO, NÃO VERBOSO)
@@ -1432,8 +1670,13 @@ class IrqRaceWinApp:
 
         ttk.Button(
             nav_bar,
-            text="<< Configurações",
-            command=lambda: self.top_notebook.select(self.tab_setup),
+            text="⌂ Início",
+            command=lambda: self.show_screen("home"),
+        ).pack(side=tk.LEFT, padx=(0, 4))
+        ttk.Button(
+            nav_bar,
+            text="<< Voltar",
+            command=self._pipeline_back,
         ).pack(side=tk.LEFT, padx=(0, 8))
 
         ttk.Label(
@@ -1524,31 +1767,53 @@ class IrqRaceWinApp:
             side=tk.LEFT, fill=tk.X, expand=True
         )
 
-        # Expandable Workspace: Candidates Table + 5 Inspection Tabs
-        self.main_paned = ttk.PanedWindow(bottom_workspace_pane, orient=tk.HORIZONTAL)
-        self.main_paned.pack(fill=tk.BOTH, expand=True, pady=(2, 0))
+        # Workspace, as in an editor: candidates and their detail side by side,
+        # with the inspection tabs in a panel below that can be resized or hidden.
+        panel_bar = ttk.Frame(bottom_workspace_pane)
+        panel_bar.pack(side=tk.BOTTOM, fill=tk.X)
+        self.btn_toggle_panel = ttk.Button(
+            panel_bar, text="▾ Recolher painel", width=18, command=self._toggle_bottom_panel
+        )
+        self.btn_toggle_panel.pack(side=tk.RIGHT)
+
+        self.workspace_paned = ttk.PanedWindow(bottom_workspace_pane, orient=tk.VERTICAL)
+        self.workspace_paned.pack(fill=tk.BOTH, expand=True, pady=(2, 0))
+
+        self.main_paned = ttk.PanedWindow(self.workspace_paned, orient=tk.HORIZONTAL)
+        self.workspace_paned.add(self.main_paned, weight=3)
 
         # Left pane: Candidates Table
         left_frame = ttk.Frame(self.main_paned, padding=(0, 0, 4, 0))
-        self.main_paned.add(left_frame, weight=2)
+        self.main_paned.add(left_frame, weight=1)
 
-        ttk.Label(left_frame, text="Candidatos (clique para inspecionar):").pack(
-            anchor=tk.W, pady=(0, 2)
-        )
+        list_bar = ttk.Frame(left_frame)
+        list_bar.pack(fill=tk.X, pady=(0, 2))
+        ttk.Label(list_bar, text="Candidatos (clique para inspecionar):").pack(side=tk.LEFT)
+        ttk.Checkbutton(
+            list_bar,
+            text="Agrupar por variável",
+            variable=self.group_by_variable_var,
+            command=self._draw_candidate_rows,
+        ).pack(side=tk.RIGHT)
         cols = ("id", "pattern", "var", "lines", "feas", "bucket", "repair")
         self.tree = ttk.Treeview(left_frame, columns=cols, show="headings", selectmode="browse")
-        self.tree.heading("id", text="ID")
-        self.tree.heading("pattern", text="Padrão")
-        self.tree.heading("var", text="Variável")
-        self.tree.heading("lines", text="Linhas (A1,B,A2)")
-        self.tree.heading("feas", text="Viabilidade")
-        self.tree.heading("bucket", text="Grupo (Bucket)")
-        self.tree.heading("repair", text="Reparo")
+        self._heading_titles = {
+            "id": "ID",
+            "pattern": "Padrão",
+            "var": "Variável",
+            "lines": "Acessos (A1, B, A2)",
+            "feas": "Viabilidade",
+            "bucket": "Grupo (Bucket)",
+            "repair": "Reparo",
+        }
+        for col, title in self._heading_titles.items():
+            self.tree.heading(col, text=title, command=lambda c=col: self._on_sort_column(c))
 
+        self.tree.column("#0", width=28, stretch=False)
         self.tree.column("id", width=85, anchor=tk.W)
         self.tree.column("pattern", width=45, anchor=tk.CENTER)
         self.tree.column("var", width=110, anchor=tk.W)
-        self.tree.column("lines", width=85, anchor=tk.CENTER)
+        self.tree.column("lines", width=130, anchor=tk.CENTER)
         self.tree.column("feas", width=75, anchor=tk.CENTER)
         self.tree.column("bucket", width=100, anchor=tk.CENTER)
         self.tree.column("repair", width=80, anchor=tk.CENTER)
@@ -1558,12 +1823,24 @@ class IrqRaceWinApp:
         self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         tree_scroll.pack(side=tk.RIGHT, fill=tk.Y)
         self.tree.bind("<<TreeviewSelect>>", self._on_candidate_selected)
+        self.tree.bind("<<TreeviewOpen>>", self._on_group_toggled)
+        self.tree.bind("<<TreeviewClose>>", self._on_group_toggled)
 
-        # Right pane: Unified Inspection Tabs (Log, Triage, Repair, Source, Turns)
+        # Right pane: where each access of the selected candidate is
         right_frame = ttk.Frame(self.main_paned, padding=(4, 0, 0, 0))
-        self.main_paned.add(right_frame, weight=4)
+        self.main_paned.add(right_frame, weight=1)
+        ttk.Label(right_frame, text="Detalhe do candidato:").pack(anchor=tk.W, pady=(0, 2))
+        self.txt_detail = scrolledtext.ScrolledText(right_frame, font=("Consolas", 9), wrap=tk.WORD, state=tk.DISABLED)
+        self.txt_detail.pack(fill=tk.BOTH, expand=True)
+        self.txt_detail.tag_configure("title", foreground="#004085", font=("Segoe UI", 10, "bold"))
+        self.txt_detail.tag_configure("access", font=("Consolas", 9, "bold"), spacing1=6)
+        self.txt_detail.tag_configure("marked", background="#fff3cd", font=("Consolas", 9, "bold"))
 
-        self.notebook = ttk.Notebook(right_frame)
+        # Bottom panel: Unified Inspection Tabs (Log, Triage, Repair, Source, Turns)
+        self.bottom_panel = ttk.Frame(self.workspace_paned, padding=(0, 2, 0, 0))
+        self.workspace_paned.add(self.bottom_panel, weight=2)
+
+        self.notebook = ttk.Notebook(self.bottom_panel)
         self.notebook.pack(fill=tk.BOTH, expand=True)
 
         # Tab 1: Real-time Execution Log (Large & Expandable)
@@ -1625,9 +1902,23 @@ class IrqRaceWinApp:
         )
         self.lbl_patch_status.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
-        self.txt_repair = scrolledtext.ScrolledText(self.tab_repair, font=("Consolas", 9), wrap=tk.NONE)
-        self.txt_repair.pack(fill=tk.BOTH, expand=True)
+        # Prose wraps, code does not: the same widget cannot do both.
+        repair_paned = ttk.PanedWindow(self.tab_repair, orient=tk.VERTICAL)
+        repair_paned.pack(fill=tk.BOTH, expand=True)
+        self.txt_repair = scrolledtext.ScrolledText(repair_paned, font=("Consolas", 9), wrap=tk.WORD, height=10)
+        repair_paned.add(self.txt_repair, weight=1)
         self._configure_diff_tags(self.txt_repair)
+
+        diff_frame = ttk.Frame(repair_paned)
+        repair_paned.add(diff_frame, weight=2)
+        diff_hbar = ttk.Scrollbar(diff_frame, orient=tk.HORIZONTAL)
+        diff_hbar.pack(side=tk.BOTTOM, fill=tk.X)
+        self.txt_diff = scrolledtext.ScrolledText(
+            diff_frame, font=("Consolas", 9), wrap=tk.NONE, height=10, xscrollcommand=diff_hbar.set
+        )
+        self.txt_diff.pack(fill=tk.BOTH, expand=True)
+        diff_hbar.configure(command=self.txt_diff.xview)
+        self._configure_diff_tags(self.txt_diff)
 
         # Tab 4: C/H Source Files & Static Context C2
         self.tab_source = ttk.Frame(self.notebook, padding=4)
@@ -1648,14 +1939,46 @@ class IrqRaceWinApp:
         self.notebook.add(self.tab_turns, text=" Histórico LLM ")
         self.txt_turns = scrolledtext.ScrolledText(self.tab_turns, font=("Consolas", 9), wrap=tk.WORD)
         self.txt_turns.pack(fill=tk.BOTH, expand=True)
+        self._configure_history_tags(self.txt_turns)
+
+        self._tabs = {
+            "log": (self.tab_live_log, "Log"),
+            "triage": (self.tab_triage, "Triagem"),
+            "repair": (self.tab_repair, "Correção (Diff)"),
+            "source": (self.tab_source, "Código Fonte"),
+            "history": (self.tab_turns, "Histórico LLM"),
+        }
+        self._show_tab_states({})
+
+    def _toggle_bottom_panel(self) -> None:
+        if str(self.bottom_panel) in map(str, self.workspace_paned.panes()):
+            self.workspace_paned.forget(self.bottom_panel)
+            self.btn_toggle_panel.configure(text="▴ Mostrar painel")
+        else:
+            self.workspace_paned.add(self.bottom_panel, weight=2)
+            self.btn_toggle_panel.configure(text="▾ Recolher painel")
+
+    def _tab_image(self, state: str) -> tk.PhotoImage:
+        """A coloured square: a ttk tab has no per-tab text colour."""
+        if state not in self._tab_images:
+            image = tk.PhotoImage(master=self.root, width=9, height=9)
+            image.put(COLOURS[state], to=(0, 0, 9, 9))
+            self._tab_images[state] = image
+        return self._tab_images[state]
+
+    def _show_tab_states(self, states: dict[str, str]) -> None:
+        for key, (tab, title) in self._tabs.items():
+            state = states.get(key, "idle")
+            self.notebook.tab(tab, text=f" {SYMBOLS[state]} {title} ", image=self._tab_image(state), compound=tk.LEFT)
 
     def _on_proceed_to_pipeline(self) -> bool:
         yaml_str = self.yaml_path_var.get().strip()
         yaml_p = Path(yaml_str) if yaml_str else None
         if not yaml_p or not yaml_p.exists():
             messagebox.showerror(
-                "Arquivo YAML Obrigatório",
-                f"Por favor, selecione um arquivo de configuração .yaml válido antes de avançar.\n\nArquivo atual: {yaml_str}",
+                "Configuração Obrigatória",
+                "Importe uma configuração C1 (.yaml) ou crie uma pelo assistente antes de avançar."
+                + (f"\n\nArquivo atual: {yaml_str}" if yaml_str else ""),
             )
             return False
 
@@ -1698,18 +2021,20 @@ class IrqRaceWinApp:
             "OPENAI_API_KEY": api_key,
             "IRQRACE_LLM_PROMPT": self.llm_prompt_var.get().strip(),
             "IRQRACE_LLM_TIMEOUT": self.llm_timeout_var.get().strip(),
+            **self._triage_env(),
         })
         self.use_live_llm_var.set(True)
         self._update_pipeline_header_info()
         self._update_llm_header_summary()
 
         # Switch to Screen 2
+        self._pipeline_origin = "generic"
         self.top_notebook.select(self.tab_pipeline)
         return True
 
     def _update_pipeline_header_info(self) -> None:
         yaml_str = getattr(self, "yaml_path_var", None) and self.yaml_path_var.get().strip()
-        case_name = Path(yaml_str).stem if yaml_str and Path(yaml_str).exists() else "Sem YAML"
+        case_name = Path(yaml_str).stem if yaml_str and Path(yaml_str).exists() else "Sem configuração"
         model = getattr(self, "llm_model_var", None) and self.llm_model_var.get().strip() or "openai/gpt-oss-120b"
         adapter = getattr(self, "llm_adapter_var", None) and self.llm_adapter_var.get().strip() or "openai"
         url = getattr(self, "llm_base_url_var", None) and self.llm_base_url_var.get().strip() or ""
@@ -1734,12 +2059,13 @@ class IrqRaceWinApp:
         self._update_llm_header_summary()
 
     def _update_llm_header_summary(self) -> None:
-        mode_txt = "API Real (Online)" if self.use_live_llm_var.get() else "Cache / Simulado (Offline)"
+        mode_txt = "API Real (Online)" if self.use_live_llm_var.get() else "Sem LLM (Offline)"
         adapter = self.llm_adapter_var.get()
         model = self.llm_model_var.get()
         url = self.llm_base_url_var.get()
         host = "Groq" if "groq.com" in url else ("OpenAI/ChatGPT" if "openai.com" in url else url)
-        self.llm_header_summary_var.set(f"LLM: {host} ({adapter}:{model}) | Modo: {mode_txt}")
+        self.llm_header_summary_var.set(
+            f"LLM: {host} ({adapter}:{model}) | Modo: {mode_txt}")
         self._update_pipeline_header_info()
 
     def _on_save_llm_config(self) -> None:
@@ -1760,6 +2086,7 @@ class IrqRaceWinApp:
             "OPENAI_API_KEY": api_key,
             "IRQRACE_LLM_PROMPT": prompt,
             "IRQRACE_LLM_TIMEOUT": timeout,
+            **self._triage_env(),
         }
         save_dotenv_settings(settings)
         self._update_llm_header_summary()
@@ -1937,41 +2264,15 @@ class IrqRaceWinApp:
         self.root.clipboard_append(content)
         self.status_var.set("Log copiado para a área de transferência.")
 
-    def _on_preset_selected(self, _event=None) -> None:
-        stem = self.case_preset_var.get()
-        yaml_p = REPO_ROOT / "bench" / "configs" / f"{stem}.yaml"
-        if yaml_p.exists():
-            self.yaml_path_var.set(str(yaml_p))
-            raw = yaml.safe_load(yaml_p.read_text(encoding="utf-8"))
-            self.source_files_list = resolve_c_source_files(raw)
-            self.stepper = None
-            self._refresh_source_listbox()
-            self._update_pipeline_header_info()
-            existing = find_matching_template_run(stem)
-            if existing:
-                self._load_run_into_ui(existing, note=f"Caso {stem} carregado ({len(self.source_files_list)} arquivos .c/.h).")
-
     def _browse_yaml_file(self) -> None:
-        initial_dir = REPO_ROOT / "bench" / "configs"
-        if not initial_dir.exists():
-            initial_dir = REPO_ROOT
         path = filedialog.askopenfilename(
             parent=self.root,
-            title="Selecionar Descrição de Interrupções / Processador (.yaml - Contrato C1)",
-            initialdir=str(initial_dir),
+            title="Importar configuração C1 (.yaml)",
+            initialdir=str(Path.home()),
             filetypes=[("Configuração YAML (C1)", "*.yaml *.yml"), ("Todos os arquivos", "*.*")],
         )
         if path:
-            self.yaml_path_var.set(path)
-            self.stepper = None
-            try:
-                raw = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
-                resolved = resolve_c_source_files(raw)
-                if resolved:
-                    self.source_files_list = resolved
-                    self._refresh_source_listbox()
-            except Exception:
-                pass
+            self.import_c1(Path(path))
 
     def _show_stage1_inputs_dialog(self) -> None:
         yaml_p = Path(self.yaml_path_var.get())
@@ -2019,32 +2320,19 @@ class IrqRaceWinApp:
     # Pipeline Step-by-Step and Automatic Execution
     # -------------------------------------------------------------------------
 
-    def _load_initial_run(self) -> None:
-        latest = find_matching_template_run("svp_simple_001_001")
-        if latest is not None:
-            self._load_run_into_ui(latest, note=f"Run mais recente carregado ({latest.name}).")
-
     def _create_stepper(self) -> PipelineStepper | None:
-        yaml_p = Path(self.yaml_path_var.get().strip())
-        if not yaml_p.exists():
-            messagebox.showerror("Erro", f"Selecione um arquivo .yaml válido:\n{yaml_p}")
+        yaml_str = self.yaml_path_var.get().strip()
+        yaml_p = Path(yaml_str)
+        if not yaml_str or not yaml_p.exists():
+            messagebox.showerror("Erro", "Importe ou crie a configuração do projeto primeiro.")
             return None
-        try:
-            timeout_s = float(self.llm_timeout_var.get().strip() or "120")
-        except ValueError:
-            timeout_s = 120.0
         try:
             return PipelineStepper(
                 yaml_p,
                 list(self.source_files_list),
                 use_live_llm=self.use_live_llm_var.get(),
-                llm_adapter=self.llm_adapter_var.get().strip() or "openai",
-                llm_model=self.llm_model_var.get().strip() or "openai/gpt-oss-120b",
-                llm_base_url=self.llm_base_url_var.get().strip() or "https://api.groq.com/openai/v1",
-                llm_api_key=self.llm_api_key_var.get().strip(),
-                llm_prompt=self.llm_prompt_var.get().strip() or "+self-validation",
-                llm_timeout_s=timeout_s,
                 event_cb=lambda k, p: self.log_queue.put(("api_event", (k, p))),
+                **self._llm_kwargs(),
             )
         except (ConfigError, Exception) as e:
             messagebox.showerror("Erro na Configuração C1", str(e))
@@ -2341,8 +2629,11 @@ class IrqRaceWinApp:
                 mark = "○"
             self.step_labels[idx].configure(text=f"{mark} {short_names[idx]}")
 
+        self._run_stages = {name: s.get("status", "pending") for name, s in stages_map.items()}
         self.progress_var.set(float(done_count))
-        if done_count == 0:
+        if self._live_run is not None:
+            self.status_var.set(f"Ao vivo: {done_count}/6 etapas concluídas.")
+        elif done_count == 0:
             self.status_var.set("0/6 etapas concluídas. Clique em '2. Avançar Próxima Etapa >' para começar.")
         elif done_count < len(PIPELINE_STEPS):
             next_title = PIPELINE_STEPS[done_count][1]
@@ -2355,10 +2646,6 @@ class IrqRaceWinApp:
         self._populate_candidates_table(store)
 
     def _populate_candidates_table(self, store: RunStore) -> None:
-        for item in self.tree.get_children():
-            self.tree.delete(item)
-        self.candidates_data.clear()
-
         s1_cands = {c["id"]: c for c in store.read_candidates("stage1")}
         ctx_dir = store.root / "context"
         ctx_cands = {}
@@ -2400,22 +2687,26 @@ class IrqRaceWinApp:
                 except Exception:
                     pass
 
+        # A live view redraws under a reader: keep what they were looking at.
+        kept = next(iter(self.tree.selection()), None) if self._live_run is not None else None
+        self.candidates_data.clear()
+        self.candidate_rows = []
+
         all_ids = list(triage_map.keys()) + [cid for cid in s1_cands if cid not in triage_map]
-        first_item = None
 
         for cid in all_ids:
             rec = ctx_cands.get(cid) or s1_cands.get(cid) or {}
             accs = rec.get("accesses", [])
-            lines_tuple = tuple(a.get("source", {}).get("line", "?") for a in accs)
-            lines_str = "(" + ",".join(str(x) for x in lines_tuple) + ")"
+            lines_str = access_locations(accs)
             pat = rec.get("pattern", "?")
-            var_name = rec.get("variable", {}).get("name", "?")
+            variable = rec.get("variable", {})
 
             t_doc = triage_map.get(cid)
             s_doc = solver_map.get(cid)
             r_doc = repair_map.get(cid)
             d_doc = drop_map.get(cid)
 
+            conf = -1.0
             if t_doc:
                 feas_v = t_doc.get("feasibility", {}).get("verdict", "?")
                 conf = t_doc.get("feasibility", {}).get("confidence", 0.0)
@@ -2423,13 +2714,16 @@ class IrqRaceWinApp:
                 bucket_str = t_doc.get("bucket", "?")
             elif d_doc:
                 feas_str = f"Stage 2 ({d_doc['reason']})"
-                bucket_str = "descartado c/ prova"
+                bucket_str = DISCARDED
             elif s_doc and s_doc.get("verdict") == "unsat":
                 feas_str = "UNSAT (Z3)"
-                bucket_str = "descartado c/ prova"
+                bucket_str = DISCARDED
+            elif self._live_run is not None and (store.root / "llm" / cid / "turns.jsonl").exists():
+                feas_str = "⏳ na LLM"
+                bucket_str = PENDING
             else:
-                feas_str = "pendente"
-                bucket_str = "pendente"
+                feas_str = PENDING
+                bucket_str = PENDING
 
             rep_str = r_doc.get("strategy", "sim") if r_doc else ("-" if bucket_str != "likely_real" else "pendente")
 
@@ -2441,21 +2735,76 @@ class IrqRaceWinApp:
                 "repair": r_doc,
                 "run_root": store.root,
             }
-            item_id = self.tree.insert(
-                "",
-                tk.END,
-                iid=cid,
-                values=(cid, pat, var_name, lines_str, feas_str, bucket_str, rep_str),
+            self.candidate_rows.append(
+                Row(
+                    cid=cid,
+                    pattern=pat,
+                    variable=variable_label(variable) if variable else "?",
+                    locations=lines_str,
+                    feasibility=feas_str,
+                    bucket=bucket_str,
+                    repair=rep_str,
+                    lines=tuple(a.get("source", {}).get("line", 0) for a in accs),
+                    confidence=conf,
+                    group=variable_key(variable),
+                )
             )
-            if first_item is None:
-                first_item = item_id
 
-        if first_item:
-            self.tree.selection_set(first_item)
-            self.tree.focus(first_item)
+        self._draw_candidate_rows(kept)
+
+    def _draw_candidate_rows(self, kept: str | None = None) -> None:
+        """Lay the rows out in the tree, in the chosen order and grouping."""
+        kept = kept or next(iter(self.tree.selection()), None)
+        scroll_top = self.tree.yview()[0]
+        grouped = self.group_by_variable_var.get()
+        self.tree.configure(show="tree headings" if grouped else "headings")
+        for col, title in self._heading_titles.items():
+            arrow = (" ▼" if self._sort_reverse else " ▲") if col == self._sort_column else ""
+            self.tree.heading(col, text=title + arrow)
+
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+        rows = sort_rows(self.candidate_rows, self._sort_column, self._sort_reverse)
+        if grouped:
+            groups = group_rows(rows, self._sort_column, self._sort_reverse)
+            for group in groups:
+                self.tree.insert("", tk.END, iid=group.iid, values=group.values, open=group.iid in self._open_groups)
+                for row in group.rows:
+                    self.tree.insert(group.iid, tk.END, iid=row.cid, values=row.values)
+            first_item = groups[0].rows[0].cid if groups else None
+        else:
+            for row in rows:
+                self.tree.insert("", tk.END, iid=row.cid, values=row.values)
+            first_item = rows[0].cid if rows else None
+
+        target = kept if kept and self.tree.exists(kept) else first_item
+        if target:
+            if self.tree.parent(target):
+                self.tree.item(self.tree.parent(target), open=True)
+                self._open_groups.add(self.tree.parent(target))
+            self.tree.selection_set(target)
+            self.tree.focus(target)
+            if self._live_run is not None or kept == target:
+                self.tree.yview_moveto(scroll_top)
             self._on_candidate_selected()
+        elif self._live_run is not None:
+            self._clear_detail_tabs("Aguardando o Stage 1 listar os candidatos deste caso.")
         else:
             self._clear_detail_tabs("Execute pelo menos até a Etapa 2 (Stage 1) para listar os candidatos.")
+
+    def _on_sort_column(self, column: str) -> None:
+        self._sort_reverse = column == self._sort_column and not self._sort_reverse
+        self._sort_column = column
+        self._draw_candidate_rows()
+
+    def _on_group_toggled(self, _event=None) -> None:
+        item = self.tree.focus()
+        if not item or self.tree.parent(item):
+            return
+        if self.tree.item(item, "open"):
+            self._open_groups.discard(item)  # the event fires before the flag changes
+        else:
+            self._open_groups.add(item)
 
     def _clear_detail_tabs(self, msg: str) -> None:
         if hasattr(self, "btn_apply_patch"):
@@ -2464,11 +2813,12 @@ class IrqRaceWinApp:
             self.btn_revert_patch.configure(state=tk.DISABLED)
         if hasattr(self, "lbl_patch_status"):
             self.lbl_patch_status.configure(text=msg, foreground="#57606a")
-        for widget in (self.txt_triage, self.txt_repair, self.txt_source, self.txt_turns):
+        for widget in (self.txt_detail, self.txt_triage, self.txt_repair, self.txt_diff, self.txt_source, self.txt_turns):
             widget.configure(state=tk.NORMAL)
             widget.delete("1.0", tk.END)
             widget.insert(tk.END, msg)
             widget.configure(state=tk.DISABLED)
+        self._show_tab_states(tab_states(self._run_stages))
 
     def _on_candidate_selected(self, _event=None) -> None:
         sel = self.tree.selection()
@@ -2478,12 +2828,44 @@ class IrqRaceWinApp:
         info = self.candidates_data.get(cid)
         if not info:
             return
+        if self._live_run is None:
+            self._render_candidate(cid, info)
+            return
 
+        # Live: redraw only what changed, and leave the reader where they were.
+        run_root: Path = info["run_root"]
+        turn_files = [run_root / "llm" / cid / n for n in ("turns.jsonl", "repair-turns.jsonl")]
+        stamp = (cid, self.selected_source_view_var.get(), json.dumps(info["triage"]), json.dumps(info["repair"]),
+                 [p.stat().st_mtime_ns if p.exists() else 0 for p in turn_files])
+        if stamp == self._live_rendered:
+            return
+        same_candidate = self._live_rendered is not None and self._live_rendered[0] == cid
+        self._live_rendered = stamp
+        widgets = (self.txt_detail, self.txt_triage, self.txt_repair, self.txt_diff, self.txt_source, self.txt_turns)
+        views = [w.yview() for w in widgets]
+        self._render_candidate(cid, info)
+        if same_candidate:
+            for w, (top, bottom) in zip(widgets, views):
+                w.yview_moveto(1.0 if bottom >= 0.999 else top)  # at the end, follow the end
+        self.btn_apply_patch.configure(state=tk.DISABLED)  # the benchmark is reading these sources
+
+    def _render_candidate(self, cid: str, info: dict[str, Any]) -> None:
         rec = info["record"]
         s_doc = info["solver"]
         t_doc = info["triage"]
         r_doc = info["repair"]
         run_root: Path = info["run_root"]
+
+        self._render_detail(rec)
+        self._show_tab_states(
+            tab_states(
+                self._run_stages,
+                selected=True,
+                verdict=bool(t_doc),
+                patch=bool(r_doc),
+                turns=(run_root / "llm" / cid / "turns.jsonl").exists(),
+            )
+        )
 
         # --- Tab 1: Triage & Reasoning ---
         triage_lines: list[str] = []
@@ -2497,7 +2879,7 @@ class IrqRaceWinApp:
         if t_doc:
             feas = t_doc.get("feasibility", {})
             harm = t_doc.get("harmfulness")
-            prod = t_doc.get("produced_by", {})
+            prod = t_doc.get("produced_by") or {}  # null in a triage the CLI backend wrote
             # Only what the verdict and the manifest record. The prompt row is a
             # run-level fact (manifest llm.prompt_config); C4 request counts are
             # not recorded per verdict, so they are not shown rather than shown as 0.
@@ -2515,6 +2897,8 @@ class IrqRaceWinApp:
             triage_lines.append(f"  Grupo Final (Bucket):     {t_doc.get('bucket', '?').upper()}")
             if t_doc.get("not_triaged"):
                 triage_lines.append(f"  NÃO TRIADO:               {t_doc['not_triaged']}")
+            if t_doc.get("interval_of"):
+                triage_lines.append(f"  Veredicto do intervalo:   conversa em {t_doc['interval_of']}")
 
             triage_lines.append("\n1. PERGUNTA DE VIABILIDADE (A intercalação pode ocorrer?)")
             triage_lines.append(
@@ -2544,6 +2928,9 @@ class IrqRaceWinApp:
             triage_lines.append("\n[DESCARTADO ANTES DA LLM PELO SOLVER Z3]")
             triage_lines.append("  Este candidato teve prova formal UNSAT no estágio estático e não precisou")
             triage_lines.append("  ser enviado para a LLM (Regra C3 #6: descarte apenas com prova formal).")
+        elif self._live_run is not None:
+            triage_lines.append("\n[Triagem em andamento: sem veredicto ainda.]")
+            triage_lines.append("A conversa aparece na aba Histórico LLM, turno a turno.")
         else:
             triage_lines.append("\n[Triagem da LLM ainda não executada para este candidato.]")
             triage_lines.append("Avance até a Etapa 5 (LLM Triagem) para ver a análise detalhada.")
@@ -2556,7 +2943,6 @@ class IrqRaceWinApp:
         # --- Tab 3: Source Files (.c / .h) & C2 Accesses ---
         src_lines: list[str] = []
         accs = rec.get("accesses", [])
-        role_by_line: dict[int, list[str]] = {}
         src_lines.append("ACESSOS DO CANDIDATO (C2):")
         for a in accs:
             ln = a.get("source", {}).get("line", 0)
@@ -2565,7 +2951,6 @@ class IrqRaceWinApp:
             fl = a.get("flow", "?")
             fn = a.get("function", "?")
             snip = a.get("source", {}).get("snippet", "")
-            role_by_line.setdefault(ln, []).append(f"{role}:{rw}@{fl}")
             src_lines.append(f"  [{role}] Linha {ln:<4} ({rw} em {fl} / {fn}): {snip}")
 
         src_lines.append("\nPROVENIÊNCIA ESTÁTICA (O que foi provado vs. assumido):")
@@ -2574,51 +2959,87 @@ class IrqRaceWinApp:
 
         chosen_file, file_text = self._read_selected_source_file()
         if file_text is not None and chosen_file is not None:
-            is_primary = chosen_file.suffix.lower() == ".c" and chosen_file.name != "common.c"
+            # An access marks a line only in its own file: line 5 of isr.c says
+            # nothing about line 5 of task.c.
+            role_by_line: dict[int, list[str]] = {}
+            for a in accs:
+                if same_source(chosen_file, a.get("source", {}).get("file", "")):
+                    role_by_line.setdefault(a["source"]["line"], []).append(
+                        f"{a.get('role', '?')}:{a.get('kind', '?')}@{a.get('flow', '?')}")
             src_lines.append(f"\nARQUIVO VISUALIZADO: {chosen_file}")
             src_lines.append("-" * 78)
             for idx, line in enumerate(file_text.splitlines(), start=1):
-                badges = ",".join(role_by_line.get(idx, [])) if is_primary else ""
+                badges = ",".join(role_by_line.get(idx, []))
                 marker = f"[{badges:<12}]" if badges else "              "
                 src_lines.append(f"{idx:4d} {marker} | {line}")
         self._set_text(self.txt_source, "\n".join(src_lines))
 
-        # --- Tab 4: Full Conversation Turns (turns.jsonl + repair-turns.jsonl) ---
-        turns_lines: list[str] = []
-        triage_turns_file = run_root / "llm" / cid / "turns.jsonl"
-        repair_turns_file = run_root / "llm" / cid / "repair-turns.jsonl"
+        # --- Tab 4: the conversations, with every code read highlighted ---
+        try:
+            run_manifest = json.loads((run_root / "manifest.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            run_manifest = {}
+        prompt_name = (run_manifest.get("llm") or {}).get("prompt_config")
+        p_cfg = next(
+            (c for c in {**BY_NAME, **DEFERRED, **EXPERIMENTAL}.values() if c.name == prompt_name),
+            FULL if prompt_name == FULL.name else None,
+        )
+        history = build_history(
+            load_turns(run_root / "llm" / cid / "turns.jsonl"),
+            load_turns(run_root / "llm" / cid / "repair-turns.jsonl"),
+            prompt_name=prompt_name,
+            progressive=p_cfg.progressive if p_cfg else None,
+        )
+        self.txt_turns.configure(state=tk.NORMAL)
+        self.txt_turns.delete("1.0", tk.END)
+        for text, tag in history.segments:
+            self.txt_turns.insert(tk.END, text, tag)
+        self.txt_turns.configure(state=tk.DISABLED)
+        self.txt_turns.see("1.0")
 
-        if triage_turns_file.exists():
-            turns_lines.append("=== CONVERSA DE TRIAGEM (llm/<cid>/turns.jsonl) ===")
-            for idx, line in enumerate(triage_turns_file.read_text(encoding="utf-8").splitlines(), start=1):
-                if not line.strip():
-                    continue
-                t = json.loads(line)
-                role = t.get("role", "?").upper()
-                phase = t.get("phase", "?")
-                content = t.get("content", "")
-                if isinstance(content, dict):
-                    content = json.dumps(content, indent=2, ensure_ascii=False)
-                turns_lines.append(f"\n--- Turno #{idx} [{role} | fase={phase}] ---")
-                turns_lines.append(str(content))
+    def _render_detail(self, rec: dict[str, Any]) -> None:
+        """Where the candidate is: each access with its file, flow and code."""
+        w = self.txt_detail
+        w.configure(state=tk.NORMAL)
+        w.delete("1.0", tk.END)
 
-        if repair_turns_file.exists():
-            turns_lines.append("\n\n=== CONVERSA DE REPARO (llm/<cid>/repair-turns.jsonl) ===")
-            for idx, line in enumerate(repair_turns_file.read_text(encoding="utf-8").splitlines(), start=1):
-                if not line.strip():
-                    continue
-                t = json.loads(line)
-                role = t.get("role", "?").upper()
-                phase = t.get("phase", "?")
-                content = t.get("content", "")
-                if isinstance(content, dict):
-                    content = json.dumps(content, indent=2, ensure_ascii=False)
-                turns_lines.append(f"\n--- Turno Reparo #{idx} [{role} | fase={phase}] ---")
-                turns_lines.append(str(content))
+        variable = rec.get("variable") or {}
+        decl = variable.get("decl") or {}
+        w.insert(tk.END, f"{variable_label(variable)}\n", "title")
+        w.insert(tk.END, f"Tipo: {variable.get('declared_type') or '?'}")
+        if decl.get("file"):
+            w.insert(tk.END, f"  |  Declarada em {decl['file']}:{decl.get('line', '?')}")
+        w.insert(tk.END, "\n")
 
-        if not turns_lines:
-            turns_lines.append("Nenhuma conversa da LLM registrada para este candidato.")
-        self._set_text(self.txt_turns, "\n".join(turns_lines))
+        flows = {f.get("id"): f for f in rec.get("flows", [])}
+        for access in rec.get("accesses", []):
+            source = access.get("source") or {}
+            rel, line = source.get("file", ""), source.get("line", 0)
+            flow = flows.get(access.get("flow")) or {}
+            priority = f", prioridade {flow['priority']}" if flow.get("priority") is not None else ""
+            w.insert(
+                tk.END,
+                f"\n{access.get('role', '?')}  {access.get('kind', '?')} em {rel or '?'}:{line}\n",
+                "access",
+            )
+            w.insert(tk.END, f"{access.get('flow', '?')}{priority}, função {access.get('function', '?')}\n")
+            shown = self._source_excerpt(rel, line)
+            if shown:
+                for number, text in shown:
+                    tag = "marked" if number == line else ()
+                    w.insert(tk.END, f"{number:5d} | {text}\n", tag)
+            elif source.get("snippet"):
+                w.insert(tk.END, f"{line:5d} | {source['snippet']}\n", "marked")
+        w.configure(state=tk.DISABLED)
+
+    def _source_excerpt(self, rel: str, line: int, around: int = 2) -> list[tuple[int, str]]:
+        """Numbered lines around *line* of the file a record names, if it is here."""
+        target = self._source_file_named(rel)
+        if target is None or line < 1:
+            return []
+        lines = target.read_text(encoding="utf-8", errors="replace").splitlines()
+        first = max(line - around, 1)
+        return list(enumerate(lines[first - 1 : line + around], start=first))
 
     def _read_primary_c_source(self) -> str | None:
         for p in self.source_files_list:
@@ -2657,40 +3078,39 @@ class IrqRaceWinApp:
         w.tag_configure("code_line", foreground="#212529", font=("Consolas", 10))
         w.tag_configure("preview_add", foreground="#155724", background="#d4edda", font=("Consolas", 10, "bold"))
 
+    def _configure_history_tags(self, w: scrolledtext.ScrolledText) -> None:
+        """Colours for the LLM history: what was given, asked for, read, refused."""
+        w.tag_configure("title", foreground="#004085", font=("Segoe UI", 11, "bold"), spacing1=6)
+        w.tag_configure("summary", font=("Segoe UI", 9, "bold"))
+        w.tag_configure("hdr", foreground="#383d41", background="#e2e3e5", font=("Consolas", 9, "bold"))
+        w.tag_configure("given", foreground="#0b3d91", background="#e7f0ff")
+        w.tag_configure("request", foreground="#664d03", background="#fff3cd", font=("Consolas", 10, "bold"))
+        w.tag_configure("read_ok", foreground="#155724", background="#d4edda")
+        w.tag_configure("read_miss", foreground="#721c24", background="#f8d7da")
+        w.tag_configure("muted", foreground="#6c757d")
+        w.tag_configure("text", foreground="#212529")
+
     def _find_target_file_for_patch(self, cid: str, r_doc: dict[str, Any]) -> Path | None:
-        diff_txt = r_doc.get("diff", "")
-        for line in diff_txt.splitlines()[:8]:
-            if line.startswith(("--- ", "+++ ")):
-                parts = line.split()
-                if len(parts) >= 2:
-                    raw_fn = parts[1].replace("a/", "").replace("b/", "").strip()
-                    fn = Path(raw_fn).name
-                    for p in self.source_files_list:
-                        if p.name == fn and p.is_file():
-                            return p
-        info = self.candidates_data.get(cid, {})
-        rec = info.get("record", {})
-        for acc in rec.get("accesses", []):
-            fpath_str = acc.get("source", {}).get("file", "")
-            if fpath_str:
-                fn = Path(fpath_str).name
-                for p in self.source_files_list:
-                    if p.name == fn and p.is_file():
-                        return p
-        for p in self.source_files_list:
-            if p.suffix.lower() == ".c" and p.name != "common.c" and p.is_file():
-                return p
-        for p in self.source_files_list:
-            if p.suffix.lower() == ".c" and p.is_file():
-                return p
-        return None
+        """The file on disk this patch is for, or ``None`` rather than a guess."""
+        return self._source_file_named(patch_file(r_doc, self.candidates_data.get(cid, {}).get("record")))
+
+    def _source_file_named(self, rel: str | None) -> Path | None:
+        if not rel:
+            return None
+        exact = [p for p in self.source_files_list if same_source(p, rel) and p.is_file()]
+        if exact:
+            return exact[0]
+        by_name = [p for p in self.source_files_list if p.name == Path(rel).name and p.is_file()]
+        return by_name[0] if len(by_name) == 1 else None
 
     def _display_repair_with_git_highlight(
         self, cid: str, r_doc: dict[str, Any] | None, t_doc: dict[str, Any] | None
     ) -> None:
         w = self.txt_repair
-        w.configure(state=tk.NORMAL)
-        w.delete("1.0", tk.END)
+        code = self.txt_diff
+        for widget in (w, code):
+            widget.configure(state=tk.NORMAL)
+            widget.delete("1.0", tk.END)
 
         if not r_doc:
             if hasattr(self, "btn_apply_patch"):
@@ -2722,6 +3142,7 @@ class IrqRaceWinApp:
                     "code_line",
                 )
             w.configure(state=tk.DISABLED)
+            code.configure(state=tk.DISABLED)
             return
 
         target_file = self._find_target_file_for_patch(cid, r_doc)
@@ -2775,8 +3196,11 @@ class IrqRaceWinApp:
         w.insert(tk.END, f"  • Ordem de Acessos:      {' -> '.join(wit.get('access_order', []))}\n", "code_line")
         w.insert(tk.END, f"  • Divergência de Estado: {wit.get('divergence', '?')}\n", "code_line")
 
+        w.configure(state=tk.DISABLED)
+
         # 4. Git Diff with Syntax/Color Highlighting
-        w.insert(tk.END, "\n[PATCH UNIFIED DIFF COM DESTAQUE GIT (patch.diff)]\n", "sec_title")
+        w = code
+        w.insert(tk.END, "[PATCH UNIFIED DIFF COM DESTAQUE GIT (patch.diff)]\n", "sec_title")
         w.insert(tk.END, "-" * 80 + "\n", "sec_bar")
 
         for line in diff_txt.splitlines():
