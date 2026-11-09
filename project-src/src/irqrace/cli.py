@@ -15,7 +15,7 @@ from pathlib import Path
 
 from . import TOOL_VERSION, contracts
 from .build import BuildError, build
-from .candidate import access_locations
+from .candidate import access_locations, drop_locations
 from .config import Config, ConfigError
 from .probe import ProbeError, probe
 from .racebench import VENDORED_SUITE
@@ -247,7 +247,7 @@ def cmd_stage2(args: argparse.Namespace) -> int:
           f"({', '.join(f'{k} {v}' for k, v in sorted(s2['reasons'].items())) or 'none'})")
     print(f"  masking fixpoint in {s2['rounds']} round(s), {s2['wall_ms']} ms")
     for d in store.read_drops() if args.verbose else []:
-        print(f"  - {d['candidate_id']} {d['pattern']} {d['lines']} "
+        print(f"  - {d['candidate_id']} {d['pattern']} {drop_locations(d)} "
               f"[{d['reason']}] {d['proof']}")
     print(f"  {store.root}")
     return 0
@@ -1162,7 +1162,7 @@ def cmd_llm_report(args: argparse.Namespace) -> int:
         if r["not_triaged"]:
             feas = f"NOT TRIAGED: {r['not_triaged'][:60]}"
         gt = f"{r['gt']} #{r['gt_index']}" if r["gt"] else "-"
-        print(f"| {r['subject']} | {r['id']} | {r['pattern']} | {tuple(r['lines'])} | {gt} | "
+        print(f"| {r['subject']} | {r['id']} | {r['pattern']} | {access_locations([{'source': {'file': f, 'line': n}} for f, n in zip(r['files'], r['lines'])])} | {gt} | "
               f"{r['fate']} | {short(r['solver'])} | {feas} | {short(r['harmfulness'])} | {short(r['bucket'])} |")
 
     def tally(kind: str) -> str:

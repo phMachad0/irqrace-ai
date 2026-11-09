@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 
 from irqrace import contracts
-from irqrace.candidate import access_locations, same_source
+from irqrace.candidate import access_locations, drop_locations, same_source
 from irqrace.evaluation import match_subject
 from irqrace.groundtruth import Access, Annotation
 from irqrace.llm.repair import (
@@ -192,6 +192,13 @@ def test_paths_are_compared_whole() -> None:
     assert same_source("/repo/src/a/util.c", "a/util.c")
     assert not same_source("/repo/src/b/util.c", "a/util.c")
     assert not same_source("/repo/src/myutil.c", "util.c")
+
+
+def test_a_drop_record_prints_its_files() -> None:
+    drop = {"lines": [8, 5, 11], "accesses": [
+        {"file": "task.c", "line": 8}, {"file": "isr.c", "line": 5}, {"file": "task.c", "line": 11}]}
+    assert drop_locations(drop) == "task.c:8, isr.c:5, task.c:11"
+    assert drop_locations({"lines": [8, 5, 11]}) == "(8,5,11)"  # c3/1.0.0: no files to show
 
 
 def test_two_files_with_one_name_are_told_apart_on_screen() -> None:

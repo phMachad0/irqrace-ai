@@ -2,7 +2,7 @@
 type: project
 tags: [wiki, project, diario, pt-br]
 sources: ["[[Roadmap]]", "[[Pipeline Design]]", "[[LLM Stage Design]]", "[[Triples Only]]", "[[Soundness Assumptions]]", "[[Racebench]]", "[[LLM Triage]]", "[[Precision Metrics]]"]
-updated: 2026-10-29
+updated: 2026-11-09
 status: draft
 ---
 
@@ -1270,6 +1270,21 @@ porque patches que antes "aplicavam" agora falham.
 - **Gabarito:** `Access.file` é opcional e, quando existe, entra no casamento. O Racebench não o usa.
   `realworld.py`, que só existe na branch `semana-9`, ainda precisa da mesma mudança na integração.
 - **Alvo do patch no desktop:** compara o caminho inteiro e devolve `None` em vez de adivinhar.
+- **Três lugares que ficaram para trás (corrigidos em 9 nov).** Uma revisão da *issue* contra o código
+  achou três saídas que ainda mostravam só a linha: o log de descartes do Stage 2 no desktop, o
+  `irqrace stage2 -v` e a tabela do `irqrace llm report`. As duas primeiras leem o registro de descarte,
+  e para ele há agora um auxiliar que usa `accesses` quando o registro é `c3/1.1.0` e cai para `lines`
+  quando é `c3/1.0.0`, que não tem arquivo para mostrar:
+
+```python
+# project-src/src/irqrace/candidate.py
+def drop_locations(drop: dict[str, Any]) -> str:
+    if drop.get("accesses"):
+        return access_locations([{"source": a} for a in drop["accesses"]])
+    return "(" + ",".join(str(line) for line in drop.get("lines", [])) + ")"
+```
+
+  A tabela já tinha `files` em cada linha e passou a usar `access_locations` direto.
 
 **Testes.** `tests/test_multifile.py` traz o programa de dois arquivos da *issue*, rodando o pipeline
 real.
@@ -1377,6 +1392,37 @@ estão em locais, antes `obj_14`, `obj_17` e `obj_55`, agora `svp_simple_009_001
 rodando o código antigo e o novo sobre esse caso. Comparar esses IDs com execuções anteriores a esta mudança
 não vai casar. O recall gate do caso continua passando.
 
+### 3.26. Um limite do Z3 que não depende da carga da máquina (31 out, *issue* #10)
+
+Esta seção é da Trilha A (o Stage 3), mas o *commit* saiu na mesma leva de 31 out e mexe no contrato C1
+que a Trilha B lê, por isso fica registrada aqui.
+
+**O problema.** O limite do Stage 3 era de relógio: 10 s por candidato. Com o mesmo C1, o mesmo código e
+a mesma máquina, o `brake3` deu 3 `unsat` e 49 `inconclusive` numa execução e 0 e 73 noutra, feita com a
+máquina ocupada por outro teste. O recall não muda, porque só `unsat` descarta e `inconclusive` segue para
+a LLM. Mas mudam quantos candidatos chegam à triagem e o custo, e uma tabela da monografia não pode
+depender da carga da máquina.
+
+**A correção.** O Z3 tem um contador próprio de trabalho, o *rlimit* (*resource limit*): ele soma passos
+internos do *solver*, e não milissegundos, então para no mesmo ponto com a máquina livre ou ocupada. O
+limite que decide passa a ser esse, 4·10⁹ unidades por candidato, cerca de 10 s no `brake3` da máquina de
+referência. O relógio sobe para 120 s e vira só salvaguarda. Os dois terminam em `inconclusive`, nunca em
+`unsat`:
+
+```cpp
+// project-src/analysis/src/irqrace-stage3.cpp
+  bool spent() const { return qy.rlimit && rlimitUsed >= qy.rlimit; }
+```
+
+O contador do Z3 é cumulativo durante a vida do *solver*, que é incremental (um por candidato), então o
+código guarda o último valor lido e soma só a diferença a cada `check`. O C1 passa a `c1/2.1.0`, com o
+campo `solver.rlimit`, e `c1/2.0.0` continua aceito. O manifesto conta quantos candidatos cada limite
+parou.
+
+**A medição.** Segundo o *commit*, duas execuções simultâneas do `brake3` concordaram nos 128 vereditos e
+em cada contagem de passos, e nenhuma foi parada pelo relógio. O critério de pronto da *issue*, a bateria
+de 18 programas com `-j 1` e `-j 3`, depende de `realworld.py`, que só existe na `semana-9`.
+
 ## 4. Achados e decisões
 
 1. **O mesmo defeito, em seis lugares.** Stage 2 e Z3 simulados, reverificação `ok` sem execução,
@@ -1446,6 +1492,34 @@ da *fixture* desatualizada sumiu com a §3.9). O desktop roda build → stage 1 
 contexto sobre um caso real (conferido em `svp_simple_001_001`, §3.7), e a triagem e o reparo
 operam sobre o que esses estágios produzem — nos testes, com um *backend* simulado; ao vivo, depois
 do *merge*, ainda não. O relatório e o dashboard só mostram números medidos.
+
+**Atualização de 9 nov, depois das *issues* de 31 out (§3.22–3.26).** Uma revisão das *issues* #8–#17
+contra o código, na branch `track-b/issues-8-17`, deu este quadro:
+
+| *Issue* | Estado |
+| --- | --- |
+| #8 multi-arquivo | resolvida; três saídas que só mostravam a linha foram corrigidas em 9 nov (§3.22). A compilação do patch continua sem *link* |
+| #9 triagem por intervalo e orçamento | código pronto, sem medição: falta comparar o veredito por grupo com o por tripla. Fica aberta |
+| #10 *rlimit* do Z3 (Trilha A) | resolvida (§3.26); o critério de pronto nos 18 programas depende da `semana-9` |
+| #11 triagem nos 18 programas reais (W9) | não feita: exige `realworld.py` e uma execução com LLM paga |
+| #12 nomes pela *debug info* | resolvida para pilha e *heap*; objetos C++ acessados por `this` não |
+| #13, #14, #15, #17 desktop | resolvidas (§3.23) |
+| #16 paralelo + prompt único | parte 1 pronta (§3.24); parte 2 não começou. Fica aberta |
+
+Nenhuma delas está fechada no GitHub: os `Closes #N` dos *commits* só valem quando a branch entrar na
+`main` por um PR, e esse PR ainda não existe.
+
+Suíte no Windows: **494 passando, 181 puladas, 1 falhando.** As puladas são os Stages 2 e 3, sem binários
+no Windows. A falha é `test_generated_configs_on_disk_are_current`: no Windows, o gerador de C1 escreve
+`..\racebench\…` em vez de `../racebench/…`. É código da Trilha A e não foi mexido. Um teste do desktop lia
+um C1 fora do repositório, ainda em `c1/1.0.0`, e falhava por isso. Agora ele é pulado quando esse arquivo
+não existe ou é de outra versão.
+
+Suíte no WSL, com `env -u IRQRACE_RACEBENCH` e com os Stages 2 e 3 reais: **619 passando, 2 puladas, 12
+erros.** Os 12 são todos `ModuleNotFoundError: No module named 'tkinter'`: o *venv* do WSL
+(`/opt/irqrace-venv`) não tem Tk, e os testes que abrem o desktop não chegam a rodar. Esses testes foram
+conferidos no Windows. Os módulos `test_desktop_ui.py` e `test_desktop_modes.py` nem são coletados lá,
+pelo mesmo motivo, e foram excluídos com `--ignore`.
 
 Falta:
 

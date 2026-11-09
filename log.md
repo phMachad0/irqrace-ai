@@ -1720,3 +1720,19 @@ or are refused; measured on 244 real patches. Also: `Patch.file`, compile check 
 `accesses: [{file, line}]`, optional `Access.file` in matching. `realworld.py` lives on `semana-9` and
 needs the same change at integration. No link step in the compile check. Syntax Rate before this change
 is not comparable. Diary: [[Semana 8 — Integração das Trilhas A e B]] §3.22.
+
+## [2026-11-09] lint | Track B issues #8–#17 checked against the code; #8 residue fixed
+All ten are still open on GitHub, because the `Closes #N` commits on `track-b/issues-8-17` have no PR
+into `main` yet. In the code: #8, #13, #14, #15 and #17 are done. #9 and #16 part 1 are built but not
+measured. #16 part 2 and #11 (the W9 LLM run on the 18 programs, which needs `realworld.py` from
+`semana-9`) have not started. On Track A, #10 (Z3 rlimit) and #12 (debug-info names, stack/heap only)
+are done.
+
+Fixed: three outputs still printed only the line, so they now go through
+`candidate.drop_locations`/`access_locations`. They are the desktop's stage-2 drop log,
+`irqrace stage2 -v` and `irqrace llm report`. Also fixed: a desktop test that read a stale `c1/1.0.0`
+file outside the repo now skips. Windows suite: 494 passed, 1 failed. The failure is
+`config_for` writing backslashes, which is Track A code and was left untouched.
+
+#10 had no diary entry, so it now has one. Diary:
+[[Semana 8 — Integração das Trilhas A e B]] §3.22, §3.26 and §6.

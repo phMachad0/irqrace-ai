@@ -241,11 +241,19 @@ def test_broken_c_code_raises_build_error_loudly(tmp_path: Path) -> None:
 
 def test_load_lucas_folder_and_compile_via_wsl(tmp_path: Path) -> None:
     """Verify C:\\Users\\luoma\\Desktop\\racebench\\lucas compiles via real WSL clang-14 + runs irqrace-stage1."""
-    lucas_dir = Path(r"C:\Users\luoma\Desktop\racebench\lucas")
-    if not lucas_dir.exists():
-        return
+    import pytest
+    import yaml
 
+    lucas_dir = Path(r"C:\Users\luoma\Desktop\racebench\lucas")
     yaml_path = lucas_dir / "lucas_config.yaml"
+    if not yaml_path.exists():
+        pytest.skip(f"{yaml_path} is not on this machine")
+    # The folder lives outside the repository, so nothing migrates its C1 when
+    # the contract moves on; a stale one says nothing about the desktop.
+    version = (yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}).get("schema_version", "")
+    if not str(version).startswith("c1/2."):
+        pytest.skip(f"{yaml_path} is {version or 'unversioned'}, not c1/2.x")
+
     files = sorted(list(lucas_dir.rglob("*.c")) + list(lucas_dir.rglob("*.h")))
 
     stepper = PipelineStepper(yaml_path, files, work_root=tmp_path)

@@ -38,6 +38,17 @@ def access_locations(accesses: list[dict[str, Any]]) -> str:
     )
 
 
+def drop_locations(drop: dict[str, Any]) -> str:
+    """A stage-2 drop record's locations, as :func:`access_locations` prints them.
+
+    ``accesses`` carries the files since ``c3/1.1.0``; a ``c3/1.0.0`` record has
+    only ``lines``, and those print as the lines they are.
+    """
+    if drop.get("accesses"):
+        return access_locations([{"source": a} for a in drop["accesses"]])
+    return "(" + ",".join(str(line) for line in drop.get("lines", [])) + ")"
+
+
 def same_source(path: Path | str, rel: str) -> bool:
     """Whether the file at *path* is the one a record names *rel*.
 

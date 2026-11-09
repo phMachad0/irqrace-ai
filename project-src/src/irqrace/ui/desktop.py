@@ -41,7 +41,7 @@ from typing import Any, Callable
 import yaml
 
 from irqrace.build import BuildError, build
-from irqrace.candidate import access_locations, same_source
+from irqrace.candidate import access_locations, drop_locations, same_source
 from irqrace.config import Config, ConfigError, resolve_source_root
 from irqrace.llm.backends import BackendError, ChatRequest, RefusalError, from_spec
 from irqrace.llm.backends.openai_backend import (
@@ -691,7 +691,7 @@ class PipelineStepper:
             f"{s2['dropped']} descartados com prova ({reasons}) [{s2['wall_ms']} ms]"
         )
         for d in self.store.read_drops():
-            log_fn(f"    - {d['candidate_id']} {d['pattern']} {d['lines']} [{d['reason']}]")
+            log_fn(f"    - {d['candidate_id']} {d['pattern']} {drop_locations(d)} [{d['reason']}]")
 
         log_fn("  Stage 3: execução simbólica sobre o IR com Z3...")
         s3 = stage3(self.cfg, self.store, bitcode)
