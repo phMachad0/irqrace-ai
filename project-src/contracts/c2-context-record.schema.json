@@ -8,7 +8,7 @@
   "additionalProperties": false,
 
   "properties": {
-    "schema_version": { "const": "c2/2.0.0" },
+    "schema_version": { "enum": ["c2/2.0.0", "c2/2.1.0"] },
 
     "id": {
       "type": "string",
@@ -54,6 +54,7 @@
         "volatile": { "type": ["boolean", "null"] },
         "decl": { "$ref": "common.defs.schema.json#/$defs/SourceRange" },
         "storage": { "enum": ["global", "heap", "stack", "unknown"], "default": "global" },
+        "function": { "type": "string", "description": "For a local or an allocation: the function it belongs to. Two locals of one name are two variables." },
         "aliases": {
           "type": "array",
           "items": { "type": "string" },

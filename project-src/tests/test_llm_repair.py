@@ -12,7 +12,6 @@ from irqrace.llm.backends import (
     StructuredMode,
     Usage,
 )
-from irqrace.llm.cache import Cache
 from irqrace.llm.fixtures import load_all
 from irqrace.llm.prompts import FULL
 from irqrace.llm.repair import (
@@ -82,6 +81,7 @@ def _patch(strategy=Strategy.mask_interval, irqs=(1,), lo=32, hi=35,
             access_order=list(order),
             divergence="the array element keeps the value 0 in every serial run",
         ),
+        file="svp_simple_001/svp_simple_001_001.c",
         strategy=strategy,
         masked_irqs=list(irqs),
         covers_from_line=lo,
@@ -264,10 +264,10 @@ def test_a_witness_that_does_not_interleave_is_caught():
     assert any("between the local pair" in p for p in problems)
 
 
-# -- RepairClient, caching, artifacts & score_repairs ----------------------
+# -- RepairClient, artifacts & score_repairs ----------------------
 
 
-def test_repair_client_caches_and_writes_artifacts(tmp_path):
+def test_repair_client_writes_artifacts_and_never_reuses_a_patch(tmp_path):
     f = next(f for f in FIXTURES if f.subject == "svp_simple_001_001" and f.is_real)
     patch = _patch(
         irqs=(1, 2),
@@ -275,11 +275,10 @@ def test_repair_client_caches_and_writes_artifacts(tmp_path):
         hi=35,
         flow=f.record["preemption"]["preempting_flow"],
     )
-    backend = FakeRepairBackend([patch])
-    cache = Cache(tmp_path / "cache")
+    backend = FakeRepairBackend([patch, patch])
     run_dir = tmp_path / "run"
 
-    client = RepairClient(FULL, backend=backend, cache=cache)
+    client = RepairClient(FULL, backend=backend)
     out1 = client.repair(f.record, run_dir=run_dir)
     assert out1 == patch
     assert client.spend.requests == 1
@@ -288,11 +287,9 @@ def test_repair_client_caches_and_writes_artifacts(tmp_path):
     assert (run_dir / "repair" / f.candidate_id / "patch.json").is_file()
     assert (run_dir / "llm" / f.candidate_id / "repair-turns.jsonl").is_file()
 
-    # Second call hits cache without invoking the backend
-    client2 = RepairClient(FULL, backend=FakeRepairBackend([]), cache=cache)
-    out2 = client2.repair(f.record)
-    assert out2 == patch
-    assert client2.spend.requests == 0
+    # The same candidate again is a second call, not a stored answer
+    client.repair(f.record)
+    assert client.spend.requests == 2
 
 
 def test_score_repairs_aggregates_all_metrics():

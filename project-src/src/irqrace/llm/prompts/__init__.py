@@ -17,9 +17,9 @@ that the prompt is reviewable in a diff, and so a prose change is not a code
 change.
 
 **The config hash covers the asset contents, not just the flags.** Editing
-``domain_rules.md`` without that would leave the result cache serving answers
-produced by the previous wording, and the ablation would silently compare a row
-against a stale version of itself.
+``domain_rules.md`` without that would leave two different prompts reported
+under one identity, and the ablation would silently compare a row against
+another version of itself.
 """
 
 from __future__ import annotations
@@ -57,7 +57,7 @@ def _read(name: str) -> str:
 class PromptConfig:
     """One row of the ablation.
 
-    :param name: row label, used in reports and in the cache key.
+    :param name: row label, used in reports.
     :param domain_rules: D#1 -- few-shot teaching of the interrupt pattern table.
     :param progressive: D#2 -- the model may request context through C4.
     :param decomposition: D#3 -- feasibility and harmfulness in separate
@@ -78,11 +78,11 @@ class PromptConfig:
     self_validation: bool = False
     max_request_rounds: int = 4
     #: Extra assets appended to every question's prompt -- an experimental
-    #: benchmark-semantics add-on, say. Part of the cache key like any asset.
+    #: benchmark-semantics add-on, say. Part of the hash like any asset.
     extra: tuple[str, ...] = ()
 
     def assets(self, stage: str | None = None) -> tuple[str, ...]:
-        """Asset filenames in render order. Order is part of the cache key.
+        """Asset filenames in render order. Order is part of the hash.
 
         Per question: the feasibility question gets the interrupt pattern table
         and the feasibility checklist, the harmfulness question the
@@ -151,16 +151,11 @@ def _sha(text: str) -> str:
 #: The active rows, cumulative, in the order they are reported. ``ABLATION[-1]``
 #: is the full pipeline and is what the deployed stage runs.
 #:
-#: **Progressive prompting (D#2) is deferred** until the static pipeline exists
-#: (2026-09-27, Lucas). Until Track A's resolver lands in W8 the only C4
-#: backend is :class:`~irqrace.llm.resolver.RecordBackedResolver`, which can
-#: only re-serve the record the model already has or answer ``not_found`` -- so
-#: a request round costs a full re-send of the history and cannot add
-#: information. No active row opens the request loop; the loop itself and its
-#: tests stay, and :data:`DEFERRED` keeps the row's definition for when it
-#: returns. The row names below keep their meaning *relative to the row before*,
-#: and the config hash changes with the assets, so no cached answer from the
-#: progressive versions can be served for these.
+#: **Progressive prompting (D#2) stays out of the ablation** (2026-09-27, Lucas):
+#: it was deferred while the only C4 backend could not add information, and the
+#: reported rows have not been re-measured with it. It is selectable through
+#: :data:`EXPERIMENTAL`; :data:`DEFERRED` keeps the ablation's own row. The row
+#: names below keep their meaning *relative to the row before*.
 ABLATION: tuple[PromptConfig, ...] = (
     PromptConfig(name="simple"),
     PromptConfig(name="+domain", domain_rules=True),
@@ -186,8 +181,22 @@ BY_NAME = {c.name: c for c in ABLATION}
 
 #: Rows outside the ablation, for experiments. Selectable by name wherever a row
 #: is; never part of the reported ablation table.
+_RACEBENCH = dataclasses.replace(FULL, name="+racebench", extra=("racebench_semantics.md",))
+
 EXPERIMENTAL: dict[str, PromptConfig] = {
-    "+racebench": dataclasses.replace(
-        FULL, name="+racebench", extra=("racebench_semantics.md",)
-    ),
+    "+c4": dataclasses.replace(FULL, name="+c4", progressive=True),
+    "+racebench": _RACEBENCH,
+    "+racebench+c4": dataclasses.replace(_RACEBENCH, name="+racebench+c4", progressive=True),
+}
+
+#: What each row is for, as the interface shows it.
+ROW_HELP: dict[str, str] = {
+    "simple": "Sem regras do domínio. Linha de base da ablação.",
+    "+domain": "Regras de interrupção, perguntas juntas. Linha da ablação.",
+    "+decomposition": "Viabilidade e dano em perguntas separadas. Linha da ablação.",
+    "+self-validation": "Prompt completo para código real, sem pedidos de código (C4).",
+    "+progressive": "Pedidos C4 sem decomposição nem autovalidação. Linha da ablação; prefira +c4.",
+    "+c4": "Prompt completo para código real, e a LLM pode pedir código (C4). Mais chamadas por candidato.",
+    "+racebench": "Critérios do Racebench: a intercalação é o defeito, mesmo com leitor morto. Sem C4.",
+    "+racebench+c4": "Critérios do Racebench, e a LLM pode pedir código (C4). Recomendado para esta suíte.",
 }

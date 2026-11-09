@@ -43,7 +43,7 @@ FLOWS = [
 ]
 
 
-def run_c(tmp_path, body, *, flows=("main", "isr_1"), timeout_ms=10000):
+def run_c(tmp_path, body, *, flows=("main", "isr_1"), timeout_ms=10000, rlimit=0):
     """Compile `body`, run stages 1-3, return the run store."""
     tmp_path.mkdir(parents=True, exist_ok=True)
     src = tmp_path / "t.c"
@@ -54,7 +54,7 @@ def run_c(tmp_path, body, *, flows=("main", "isr_1"), timeout_ms=10000):
         "masking": {"primitives": [{"function": "disable_isr", "effect": "disable"},
                                    {"function": "enable_isr", "effect": "enable"}]},
         "externals": {"models": [{"function": "rand", "effect": "none"}]},
-        "analysis": {"solver": {"timeout_ms": timeout_ms}},
+        "analysis": {"solver": {"timeout_ms": timeout_ms, "rlimit": rlimit}},
     })
     store = RunStore.create(cfg, run_root=tmp_path / "runs")
     result = build(cfg, store.root / "build")
@@ -369,6 +369,80 @@ void t_isr_1(void) { int r = a[0];   /* R */ }
         r = verdict(store, *lines)
         assert r["verdict"] == "inconclusive", (k, r)
         assert store.check() == []
+
+
+SEARCH_ONLY = """\
+volatile int a[2];
+void t_main(void) {
+  int k = rand() & 1;
+  a[k] = 1;                          /* W1 */
+  a[1 - k] = 2;                      /* W2 */
+}
+void t_isr_1(void) { int r = a[0];   /* R */ }
+"""
+
+
+def test_a_spent_resource_limit_is_inconclusive_and_never_unsat(tmp_path):
+    """Issue #10: the limit that decides counts steps. It stops a search the way
+    the clock does, with the same rule: a search cut short proves nothing."""
+    lines = [line_of(SEARCH_ONLY, m) for m in ("/* W1 */", "/* R */", "/* W2 */")]
+    free = verdict(run_c(tmp_path / "free", SEARCH_ONLY), *lines)
+    assert free["verdict"] == "unsat" and free["rlimit"] == 0
+
+    store = run_c(tmp_path / "tight", SEARCH_ONLY, rlimit=1)
+    r = verdict(store, *lines)
+    assert r["verdict"] == "inconclusive" and r["reason"] == "rlimit"
+    assert r["rlimit_used"] >= 1
+    assert store.check() == []
+    solver = store.read_manifest()["solver"]
+    assert solver["rlimit"] == 1 and solver["stopped"]["rlimit"] >= 1
+
+
+def test_a_verdict_under_the_resource_limit_repeats_step_for_step(tmp_path):
+    """The whole point of counting steps: nothing here depends on the clock."""
+    lines = [line_of(SEARCH_ONLY, m) for m in ("/* W1 */", "/* R */", "/* W2 */")]
+    first = verdict(run_c(tmp_path / "1", SEARCH_ONLY, rlimit=10_000_000), *lines)
+    second = verdict(run_c(tmp_path / "2", SEARCH_ONLY, rlimit=10_000_000), *lines)
+    assert first["verdict"] == second["verdict"] == "unsat"
+    assert first["rlimit_used"] == second["rlimit_used"] > 0
+
+
+def test_a_local_is_named_as_the_source_names_it(tmp_path):
+    """Issue #12: clang drops the names of local values, and debug info keeps them."""
+    body = """\
+int *volatile slot;
+void t_main(void) {
+  volatile int level = 0;            /* DECL */
+  slot = (int *)&level;
+  level = 1;                         /* W1 */
+  level = 2;                         /* W2 */
+}
+void t_isr_1(void) { int r = *slot;  /* R */ }
+"""
+    store = run_c(tmp_path, body)
+    variables = [c["variable"] for c in store.read_candidates("stage1")]
+    local = next(v for v in variables if v["storage"] == "stack")
+    assert (local["name"], local["function"]) == ("level", "t_main")
+    assert local["decl"]["line"] == line_of(body, "/* DECL */")
+    assert local["declared_type"] == "volatile int" and local["volatile"] is True
+    assert isinstance(local["svf_node"], int), "the id stays, as an id"
+
+
+def test_an_allocation_says_where_it_was_made(tmp_path):
+    body = """\
+void *malloc(unsigned long);
+volatile int *volatile slot;
+void t_main(void) {
+  slot = malloc(4);                  /* ALLOC */
+  *slot = 1;                         /* W1 */
+  *slot = 2;                         /* W2 */
+}
+void t_isr_1(void) { int r = *slot;  /* R */ }
+"""
+    store = run_c(tmp_path, body)
+    heap = next(c["variable"] for c in store.read_candidates("stage1") if c["variable"]["storage"] == "heap")
+    assert heap["name"] == "malloc in t_main()"
+    assert heap["decl"]["line"] == line_of(body, "/* ALLOC */")
 
 
 def test_an_unresolved_indirect_call_reaches_every_compatible_target(tmp_path):

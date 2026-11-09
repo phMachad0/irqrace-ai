@@ -86,6 +86,6 @@ def canonical_json(obj: Any) -> str:
 
     Sorted keys, no insignificant whitespace, no non-ASCII escaping surprises.
     Two documents that differ only in key order must hash the same, or run
-    comparison and Track B's result cache both break.
+    comparison breaks.
     """
     return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False)

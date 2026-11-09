@@ -1,4 +1,4 @@
-schema_version: c1/2.0.0
+schema_version: c1/2.1.0
 subject:
   name: svp_simple_023_001
   source_root: ../racebench/2.1_remarks

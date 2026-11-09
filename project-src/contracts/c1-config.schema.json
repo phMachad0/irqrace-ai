@@ -8,7 +8,7 @@
   "additionalProperties": false,
 
   "properties": {
-    "schema_version": { "const": "c1/2.0.0" },
+    "schema_version": { "enum": ["c1/2.0.0", "c1/2.1.0"] },
 
     "subject": {
       "type": "object",
@@ -194,7 +194,8 @@
           "additionalProperties": false,
           "properties": {
             "enabled": { "type": "boolean", "default": true },
-            "timeout_ms": { "type": "integer", "default": 10000, "minimum": 0 },
+            "timeout_ms": { "type": "integer", "default": 120000, "minimum": 0, "description": "Wall-clock safeguard per candidate. It depends on the machine's load, so it sits well above what rlimit allows." },
+            "rlimit": { "type": "integer", "default": 4000000000, "minimum": 0, "description": "Z3 resource units per candidate: the limit that decides, because it counts steps and not time. 0 turns it off." },
             "on_timeout": {
               "const": "inconclusive",
               "default": "inconclusive",

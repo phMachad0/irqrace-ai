@@ -3,7 +3,6 @@
 
     python3 scripts/run-repair.py --backend anthropic:claude-opus-5
     python3 scripts/run-repair.py --backend ollama:qwen2.5-coder:32b
-    python3 scripts/run-repair.py --cache-only
 
 Runs :class:`~irqrace.llm.repair.RepairClient` over the 10 bug points in the
 labelled fixture set and reports:
@@ -47,7 +46,6 @@ def load_env(path: Path = REPO / ".env") -> list[str]:
 
 
 from irqrace.llm.backends import BackendError, RefusalError, from_spec  # noqa: E402
-from irqrace.llm.cache import Cache  # noqa: E402
 from irqrace.llm.fixtures import load_all  # noqa: E402
 from irqrace.llm.prompts import BY_NAME, DEFERRED, FULL  # noqa: E402
 from irqrace.llm.repair import (  # noqa: E402
@@ -58,16 +56,14 @@ from irqrace.llm.repair import (  # noqa: E402
 from irqrace.llm.repair_references import references_for  # noqa: E402
 
 
-def run_repairs(config, bug_fixtures, backend, cache, sample, run_dir):
-    client = RepairClient(config, backend=backend, cache=cache)
+def run_repairs(config, bug_fixtures, backend, run_dir):
+    client = RepairClient(config, backend=backend)
     patches: dict[str, Patch] = {}
     excluded: list[tuple[str, str]] = []
     for fixture in bug_fixtures:
         cid = fixture.candidate_id
         try:
-            patches[cid] = client.repair(
-                fixture.record, sample=sample, run_dir=run_dir
-            )
+            patches[cid] = client.repair(fixture.record, run_dir=run_dir)
         except RefusalError as e:
             excluded.append((cid, str(e)))
         except (BackendError, RuntimeError) as e:
@@ -115,13 +111,6 @@ def main(argv: list[str] | None = None) -> int:
         default=FULL.name,
         help="prompt configuration name (default: +self-validation)",
     )
-    ap.add_argument("--sample", type=int, default=0)
-    ap.add_argument("--no-cache", action="store_true")
-    ap.add_argument(
-        "--cache-only",
-        action="store_true",
-        help="never call the backend; a cache miss is reported as excluded",
-    )
     ap.add_argument("--run-dir", type=Path, help="write C3 repair artifacts here")
     ap.add_argument("--json", type=Path, help="write repair results as JSON")
     ap.add_argument("--out", type=Path, help="write markdown summary table here")
@@ -145,31 +134,18 @@ def main(argv: list[str] | None = None) -> int:
         print(e, file=sys.stderr)
         return 2
 
-    if args.cache_only:
-        if args.no_cache:
-            print("--cache-only and --no-cache contradict each other", file=sys.stderr)
-            return 2
-
-        def _no_request(request):
-            raise BackendError("--cache-only: cache miss, no request sent")
-
-        backend.chat = _no_request
-
     fixtures = load_all()
     bugs = [f for f in fixtures if f.is_real]
     refs = references_for(fixtures)
     records_by_id = {f.candidate_id: f.record for f in bugs}
     subjects_by_id = {f.candidate_id: f.subject for f in bugs}
 
-    cache = Cache(enabled=not args.no_cache)
     print(f"backend: {backend.spec}")
     for caveat in backend.capabilities.caveats():
         print(f"  [!] {caveat}")
     print(f"bug points to repair: {len(bugs)}\n")
 
-    patches, excluded, client = run_repairs(
-        config, bugs, backend, cache, args.sample, args.run_dir
-    )
+    patches, excluded, client = run_repairs(config, bugs, backend, args.run_dir)
     s = score_repairs(patches, records_by_id, refs, n_expected=len(bugs))
 
     print(f"--- repair ({config.name}) ---")

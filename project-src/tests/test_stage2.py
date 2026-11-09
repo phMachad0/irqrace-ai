@@ -46,7 +46,7 @@ def through_stage2(name, tmp_path):
 
 def by_lines(records, *lines):
     for r in records:
-        got = [a["source"]["line"] for a in r["accesses"]] if "accesses" in r else r["lines"]
+        got = r["lines"] if "lines" in r else [a["source"]["line"] for a in r["accesses"]]
         if got == list(lines):
             return r
     return None

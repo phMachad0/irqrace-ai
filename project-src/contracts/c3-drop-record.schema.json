@@ -14,6 +14,18 @@
     "pattern": { "type": "string" },
     "variable": { "type": "string" },
     "lines": { "type": "array", "items": { "type": "integer", "minimum": 1 }, "minItems": 3, "maxItems": 3 },
+    "accesses": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "description": "A1, B, A2 with their files. A line alone does not locate an access in a multi-file subject. Since c3/1.1.0.",
+      "items": {
+        "type": "object",
+        "required": ["file", "line"],
+        "additionalProperties": false,
+        "properties": { "file": { "type": "string", "minLength": 1 }, "line": { "type": "integer", "minimum": 1 } }
+      }
+    },
     "local_flow": { "$ref": "common.defs.schema.json#/$defs/FlowId" },
     "remote_flow": { "$ref": "common.defs.schema.json#/$defs/FlowId" },
     "reason": {

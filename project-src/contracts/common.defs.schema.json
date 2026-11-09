@@ -255,7 +255,7 @@
         "engine_version": { "type": "string" },
         "reason": {
           "type": ["string", "null"],
-          "description": "Required when verdict is 'inconclusive': 'timeout', 'unsupported-construct:<what>', 'encoding-incomplete:<what>'."
+          "description": "Required when verdict is 'inconclusive': 'rlimit', 'timeout', 'budget', 'solver-unknown', 'unsupported-construct:<what>', 'encoding-incomplete:<what>'."
         },
         "assignment": { "type": ["object", "null"], "additionalProperties": true, "description": "Satisfying assignment when verdict is 'sat'." },
         "unconstrained": {
@@ -264,7 +264,9 @@
           "description": "Program facts deliberately left unconstrained in the encoding — e.g. timing, since Racebench guarantees no periodicity. Anything listed here weakens the SAT reading but never the UNSAT one."
         },
         "wall_ms": { "type": "integer", "minimum": 0 },
-        "timeout_ms": { "type": "integer", "minimum": 0 }
+        "timeout_ms": { "type": "integer", "minimum": 0 },
+        "rlimit": { "type": "integer", "minimum": 0, "description": "Z3 resource units this candidate could use; 0 is no limit. A step count, so the verdict does not depend on the machine's load (issue #10)." },
+        "rlimit_used": { "type": "integer", "minimum": 0 }
       }
     },
 

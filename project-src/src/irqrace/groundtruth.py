@@ -74,6 +74,8 @@ class Access:
     kind: str  # "read" | "write"
     line: int
     raw: str
+    #: Set when the suite says which file; Racebench's cases are one file each.
+    file: str | None = None
 
     @property
     def letter(self) -> str:

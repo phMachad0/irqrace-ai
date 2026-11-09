@@ -4,7 +4,6 @@ import json
 
 from irqrace import cli, contracts
 from irqrace.config import Config
-from irqrace.llm import cache as cache_mod
 from irqrace.llm.backends import (
     Backend,
     BackendError,
@@ -14,7 +13,6 @@ from irqrace.llm.backends import (
     StructuredMode,
     Usage,
 )
-from irqrace.llm.cache import Cache
 from irqrace.llm.fixtures import load_all
 from irqrace.llm.pipeline import (
     prepare_context,
@@ -96,6 +94,7 @@ def _patch() -> Patch:
             access_order=["A1", "B", "A2"],
             divergence="reader observes torn element",
         ),
+        file=BUG.record["accesses"][0]["source"]["file"],
         strategy=Strategy.mask_interval,
         masked_irqs=[1, 2],
         covers_from_line=32,
@@ -127,7 +126,6 @@ def test_prepare_context_writes_per_candidate_c2_records(tmp_path):
 
 def test_triage_and_repair_store_preserve_c3_rule_6_and_manifest(tmp_path):
     store = _seed_store(tmp_path)
-    cache = Cache(tmp_path / "cache")
 
     # FULL config uses decomposition: BUG gets (feasible, harmful), TRAP gets (infeasible,)
     triage_backend = FakeBackend(
@@ -137,7 +135,6 @@ def test_triage_and_repair_store_preserve_c3_rule_6_and_manifest(tmp_path):
         store,
         config=FULL,
         backend=triage_backend,
-        cache=cache,
         resolver_mode="mock",
     )
     assert summary["candidates_in"] == 2
@@ -159,7 +156,6 @@ def test_triage_and_repair_store_preserve_c3_rule_6_and_manifest(tmp_path):
         store,
         config=FULL,
         backend=repair_backend,
-        cache=cache,
     )
     assert set(rep_summary["patches"].keys()) == {BUG.candidate_id}
     assert (store.root / "repair" / BUG.candidate_id / "patch.diff").is_file()
@@ -176,31 +172,15 @@ def test_triage_and_repair_store_preserve_c3_rule_6_and_manifest(tmp_path):
     assert store.check() == []
 
 
-def test_cli_llm_triage_and_repair_commands_over_cached_store(monkeypatch, tmp_path):
+def test_cli_llm_triage_and_repair_commands(monkeypatch, tmp_path):
     from irqrace.llm import backends
 
-    monkeypatch.setitem(backends.REGISTRY, "fake", lambda model: FakeBackend([]))
-
-    store = _seed_store(tmp_path)
-    cache_dir = tmp_path / "cache"
-    monkeypatch.setattr(cache_mod, "DEFAULT_DIR", cache_dir)
-
-    # Pre-warm cache using FakeBackend so CLI succeeds offline
-    triage_store(
-        store,
-        config=FULL,
-        backend=FakeBackend(
-            [_feas(Feasibility.feasible), _harm(Harmfulness.harmful), _feas(Feasibility.infeasible)]
-        ),
-        cache=Cache(cache_dir),
-        resolver_mode="mock",
-    )
-    repair_store(
-        store,
-        config=FULL,
-        backend=FakeBackend([_patch()]),
-        cache=Cache(cache_dir),
-    )
+    # One backend per command: triage first, then repair.
+    fakes = iter([
+        FakeBackend([_feas(Feasibility.feasible), _harm(Harmfulness.harmful), _feas(Feasibility.infeasible)]),
+        FakeBackend([_patch()]),
+    ])
+    monkeypatch.setitem(backends.REGISTRY, "fake", lambda model: next(fakes))
 
     store2 = _seed_store(tmp_path, run_id="r-w8-cli")
     rc1 = cli.main(
@@ -252,7 +232,7 @@ def test_a_candidate_the_backend_fails_on_stays_in_the_report_as_uncertain(tmp_p
         fail_for=TRAP.candidate_id,
     )
     summary = triage_store(
-        store, config=FULL, backend=backend, cache=Cache(enabled=False), resolver_mode="mock",
+        store, config=FULL, backend=backend, resolver_mode="mock",
     )
 
     assert summary["candidates_in"] == summary["candidates_out"] == 2

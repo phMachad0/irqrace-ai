@@ -24,8 +24,13 @@ What a verdict means, precisely:
   encoding havocs everything a concurrently running flow may write, and
   everything a loop may write, so a SAT witness may be spurious. The record's
   ``unconstrained`` list says what was havocked.
-* ``inconclusive`` -- timeout, exploration budget, or a construct the encoding
-  cannot express soundly. Kept and passed on, with the reason (H2).
+* ``inconclusive`` -- resource limit, timeout, exploration budget, or a construct
+  the encoding cannot express soundly. Kept and passed on, with the reason (H2).
+
+The limit that decides is ``rlimit``, Z3's own step count: two runs of one input
+then agree candidate by candidate, whatever else the machine was doing. The
+clock stays, far above it, as a safeguard; a run it stopped says so in
+``manifest.json["solver"]["stopped"]``.
 """
 
 from __future__ import annotations
@@ -40,7 +45,7 @@ from typing import Any
 
 from .config import Config
 from .stage2 import Stage2, Stage2Error
-from .toolchain import REPO_ROOT
+from .toolchain import REPO_ROOT, run_toolchain_cmd
 
 STAGE3_PATH = REPO_ROOT / "analysis" / "build" / "bin" / "irqrace-stage3"
 
@@ -65,11 +70,12 @@ def _instruction(prog: dict[str, Any], access: dict[str, Any]) -> tuple[str, int
 
 
 def build_query(analysis: dict[str, Any], cfg: Config, candidates: list[dict[str, Any]],
-                s2: Stage2, *, timeout_ms: int, max_states: int = MAX_STATES) -> str:
+                s2: Stage2, *, timeout_ms: int, rlimit: int = 0,
+                max_states: int = MAX_STATES) -> str:
     m, c = s2.m, s2.c
     prog = {f["name"]: f for f in analysis["program"]["functions"]}
     accesses = {a["id"]: a for a in analysis["accesses"]}
-    out = [f"timeout_ms {timeout_ms}", f"max_states {max_states}"]
+    out = [f"timeout_ms {timeout_ms}", f"rlimit {rlimit}", f"max_states {max_states}"]
     out += [f"primitive {p.function}" for p in cfg.masking_primitives]
     out += [f"model {x['function']} {x['effect']}" for x in cfg.data["externals"]["models"]]
     out.append(f"externals {cfg.data['externals']['default']}")
@@ -107,15 +113,17 @@ def run_stage3(bitcode: Path, query: str, *, n_candidates: int, timeout_ms: int,
     exe = Path(binary or STAGE3_PATH)
     if not exe.exists():
         raise Stage3Error(f"irqrace-stage3 not built at {exe}; run scripts/build-analysis.sh")
-    with tempfile.NamedTemporaryFile("w", suffix=".query", delete=False) as fh:
+    # newline="\n": on Windows the binary runs under WSL and would read CRLF.
+    with tempfile.NamedTemporaryFile("w", suffix=".query", delete=False,
+                                     newline="\n") as fh:
         fh.write(query)
         qpath = fh.name
     try:
         # Each candidate has its own deadline inside the binary; this outer one
         # only catches a hang, and a hang is a failure, not a verdict.
         limit = 120 + n_candidates * (timeout_ms / 1000.0 + 1)
-        proc = subprocess.run([str(exe), "--query", qpath, str(bitcode)],
-                              capture_output=True, text=True, timeout=limit)
+        proc = run_toolchain_cmd([str(exe), "--query", qpath, str(bitcode)],
+                                 timeout=limit)
     finally:
         Path(qpath).unlink(missing_ok=True)
     if proc.returncode != 0:
@@ -129,7 +137,7 @@ def run_stage3(bitcode: Path, query: str, *, n_candidates: int, timeout_ms: int,
 
 
 SOLVER_FIELDS = ("verdict", "engine", "engine_version", "reason", "assignment",
-                 "unconstrained", "wall_ms", "timeout_ms")
+                 "unconstrained", "wall_ms", "timeout_ms", "rlimit", "rlimit_used")
 
 
 def _note(result: dict[str, Any]) -> dict[str, str]:
@@ -153,6 +161,7 @@ def stage3(cfg: Config, store, bitcode: Path) -> dict[str, Any]:
     candidates = store.read_candidates("stage2")
     solver_cfg = cfg.analysis["solver"]
     timeout_ms = int(solver_cfg["timeout_ms"])
+    rlimit = int(solver_cfg["rlimit"])
 
     if not solver_cfg["enabled"]:
         store.set_stage("solver", "skipped")
@@ -170,7 +179,7 @@ def stage3(cfg: Config, store, bitcode: Path) -> dict[str, Any]:
     try:
         analysis = json.loads((store.root / "stage1" / "accesses.json").read_text())
         s2 = Stage2(analysis, cfg)
-        query = build_query(analysis, cfg, candidates, s2, timeout_ms=timeout_ms)
+        query = build_query(analysis, cfg, candidates, s2, timeout_ms=timeout_ms, rlimit=rlimit)
         (store.root / "solver" / "query.txt").write_text(query)
         results = run_stage3(bitcode, query, n_candidates=len(candidates),
                              timeout_ms=timeout_ms)
@@ -208,7 +217,12 @@ def stage3(cfg: Config, store, bitcode: Path) -> dict[str, Any]:
     wall = int((time.perf_counter() - t0) * 1000)
     engine = results[0]["engine_version"] if results else ""
     m = store.read_manifest()
-    m["solver"] = {"enabled": True, "engine_version": engine, "timeout_ms": timeout_ms}
+    stopped: dict[str, int] = {}
+    for r in results:
+        if r["verdict"] == "inconclusive" and r.get("reason") in ("rlimit", "timeout", "budget"):
+            stopped[r["reason"]] = stopped.get(r["reason"], 0) + 1
+    m["solver"] = {"enabled": True, "engine_version": engine, "timeout_ms": timeout_ms,
+                   "rlimit": rlimit, "stopped": stopped}
     store.write_manifest(m)
     store.set_stage("solver", "ok", candidates_in=len(candidates), candidates_out=len(kept),
                     dropped_with_proof=counts.get("unsat", 0), wall_ms=wall)

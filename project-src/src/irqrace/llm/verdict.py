@@ -204,8 +204,7 @@ class Triage(BaseModel):
     """One candidate's triage result. The bucket is derived, not parsed.
 
     ``candidate_id`` and ``fingerprint`` are copied from the C2 record so the
-    result can be joined back without carrying the record around, and so the
-    cache in :mod:`irqrace.llm.cache` can key on the fingerprint.
+    result can be joined back without carrying the record around.
     """
 
     candidate_id: str
@@ -216,6 +215,9 @@ class Triage(BaseModel):
     #: Why no model answered for this candidate, when none did. ``None`` on
     #: every verdict a model gave.
     not_triaged: str | None = None
+    #: The candidate whose conversation answered for this one, when triage ran
+    #: by interval. The transcript is in that candidate's ``llm/`` directory.
+    interval_of: str | None = None
 
     @classmethod
     def untriaged(cls, record: dict[str, Any], reason: str) -> "Triage":

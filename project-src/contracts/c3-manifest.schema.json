@@ -7,7 +7,7 @@
   "required": ["schema_version", "run_id", "created", "tool_version", "config_hash", "semantics"],
   "additionalProperties": false,
   "properties": {
-    "schema_version": { "const": "c3/1.0.0" },
+    "schema_version": { "enum": ["c3/1.0.0", "c3/1.1.0"] },
     "run_id": { "type": "string" },
     "created": { "type": "string", "format": "date-time" },
     "tool_version": { "type": "string" },
@@ -61,7 +61,13 @@
       "properties": {
         "enabled": { "type": "boolean" },
         "engine_version": { "type": "string" },
-        "timeout_ms": { "type": "integer" }
+        "timeout_ms": { "type": "integer" },
+        "rlimit": { "type": "integer" },
+        "stopped": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" },
+          "description": "How many candidates each limit stopped, by reason: 'rlimit', 'timeout', 'budget'. A run where 'timeout' is not 0 depended on the machine's load."
+        }
       }
     },
     "llm": {
@@ -72,7 +78,18 @@
         "prompt_config": { "type": "string" },
         "date": { "type": "string" },
         "votes": { "type": "integer" },
-        "seed": { "type": ["integer", "null"] }
+        "seed": { "type": ["integer", "null"] },
+        "workers": { "type": "integer", "minimum": 1, "description": "Conversations at a time." },
+        "by_interval": { "type": "boolean", "description": "One conversation per (variable, A1, A2, pattern). Changes how much of the ranking a model looked at, so it travels with the numbers." },
+        "budget": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "max_requests": { "type": ["integer", "null"] },
+            "max_tokens": { "type": ["integer", "null"] },
+            "max_usd": { "type": ["number", "null"] }
+          }
+        }
       }
     },
     "stages": {

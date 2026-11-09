@@ -39,8 +39,6 @@ from __future__ import annotations
 
 import dataclasses
 import enum
-import functools
-import hashlib
 import json
 import re
 import shutil
@@ -58,10 +56,10 @@ from irqrace.llm.client import (
     MAX_TOKENS,
     Conversation,
     TriageClient,
-    evidence_hash,
     render_record,
 )
 from irqrace.llm.prompts import FULL, PromptConfig, _read
+from irqrace.llm.resolver import _load_subject_sources
 
 
 class Strategy(str, enum.Enum):
@@ -104,6 +102,12 @@ class Patch(BaseModel):
 
     reasoning: str
     witness: Witness
+    file: str = Field(
+        description=(
+            "The one file the diff changes: its path exactly as in the `location` "
+            "of the <source> block, without the line numbers."
+        )
+    )
     strategy: Strategy
     masked_irqs: list[int] = Field(
         description="Interrupt numbers the patch masks. -1 means all."
@@ -144,23 +148,12 @@ def default_repair_prompt() -> str:
     return _read("repair.md")
 
 
-@functools.lru_cache(maxsize=1)
-def _patch_schema_hash() -> str:
-    blob = json.dumps(Patch.model_json_schema(), sort_keys=True)
-    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
-
-
-def _repair_config_hash(config: PromptConfig, repair_prompt: str) -> str:
-    blob = f"repair:{config.hash()}:{hashlib.sha256(repair_prompt.encode('utf-8')).hexdigest()}"
-    return hashlib.sha256(blob.encode("utf-8")).hexdigest()[:16]
-
-
 class RepairClient:
-    """Runs the repair stage. Shares the backend seam and cache with triage."""
+    """Runs the repair stage. Shares the backend seam with triage."""
 
     def __init__(self, config: PromptConfig = FULL, **kwargs: Any):
         # Composition over inheritance: repair reuses the triage client's
-        # backend handling, accounting, caching and transcript writing, and
+        # backend handling, accounting and transcript writing, and
         # differs only in the prompt and the schema.
         self._triage = TriageClient(config, **kwargs)
 
@@ -181,7 +174,6 @@ class RepairClient:
         record: dict[str, Any],
         repair_prompt: str | None = None,
         *,
-        sample: int = 0,
         run_dir: Path | None = None,
     ) -> Patch:
         """Propose one patch. Raises rather than returning a partial fix."""
@@ -189,30 +181,14 @@ class RepairClient:
         prompt_text = (
             repair_prompt if repair_prompt is not None else default_repair_prompt()
         )
-        cfg_hash = _repair_config_hash(self._triage.config, prompt_text)
-        fingerprint = record["fingerprint"]
-
-        evidence = evidence_hash(record)
-
-        cached = self._triage.cache.get(
-            fingerprint,
-            cfg_hash,
-            self.backend.spec,
-            sample,
-            _patch_schema_hash(),
-            evidence,
-        )
-        if cached is not None:
-            patch = Patch.model_validate(cached)
-            if run_dir is not None:
-                _write_repair_artifacts(run_dir, record["id"], patch)
-            return patch
-
         self.spend.candidates += 1
         system = f"{self._triage.config.system_prompt()}\n\n---\n\n{prompt_text}"
         user_msg = f"{REPAIR_TASK}\n\n{render_record(record)}"
 
-        convo = Conversation(candidate_id=record["id"])
+        convo = Conversation(
+            candidate_id=record["id"],
+            live_path=run_dir / "llm" / record["id"] / "repair-turns.jsonl" if run_dir is not None else None,
+        )
         convo.add("user", user_msg, stage="repair", turn=0)
 
         response = self._triage._call(
@@ -242,16 +218,6 @@ class RepairClient:
 
         if run_dir is not None:
             _write_repair_artifacts(run_dir, record["id"], patch, convo=convo)
-
-        self._triage.cache.put(
-            fingerprint,
-            cfg_hash,
-            self.backend.spec,
-            patch.model_dump(mode="json"),
-            sample,
-            _patch_schema_hash(),
-            evidence,
-        )
         return patch
 
 
@@ -297,11 +263,54 @@ def is_wellformed_diff(diff: str) -> bool:
     )
 
 
+def _locate_hunk(src: list[str], old: list[str], wanted: int, floor: int) -> int | None:
+    """Where the lines of a hunk are, at or after *floor*, nearest *wanted*.
+
+    Whitespace does not count, as with ``patch -l``: models rewrite tabs as
+    spaces (37 of Haiku's 194 patches on 2026-10-29), and that is the same code.
+    """
+    if not old:
+        return min(max(wanted, floor), len(src))
+    code = ["".join(line.split()) for line in src]
+    wanted_code = ["".join(line.split()) for line in old]
+    fits = (
+        i for i in sorted(range(floor, len(src) - len(old) + 1), key=lambda i: abs(i - wanted))
+        if code[i:i + len(old)] == wanted_code
+    )
+    return next(fits, None)
+
+
+def diff_file(diff_text: str) -> str | None:
+    """The file a diff's ``+++`` header names, without its ``a/`` or ``b/`` prefix."""
+    for line in diff_text.splitlines():
+        if line.startswith("+++ "):
+            name = line[4:].split("\t")[0].strip()
+            if name != "/dev/null":
+                return name[2:] if name.startswith(("a/", "b/")) else name
+    return None
+
+
+def patch_file(patch: dict[str, Any], record: dict[str, Any] | None = None) -> str | None:
+    """The file a patch is for: as it says, else as its diff says, else A1's.
+
+    The last two are for patches from before ``Patch.file`` existed.
+    """
+    accesses = (record or {}).get("accesses") or [{}]
+    return (
+        patch.get("file")
+        or diff_file(patch.get("diff", ""))
+        or accesses[0].get("source", {}).get("file")
+    )
+
+
 def apply_unified_diff(source_text: str, diff_text: str) -> str | None:
     """Apply a unified diff to ``source_text`` in memory.
 
-    Returns the patched source text, or ``None`` if the diff is malformed or
-    its hunks do not apply cleanly within the file bounds.
+    Returns the patched source text, or ``None`` if the diff is malformed or a
+    hunk's lines are not in this file. The lines decide, not the numbers: a hunk
+    goes where its context and removed lines are, nearest the line it names, as
+    ``patch`` does. Taking the numbers on trust applied a diff written for
+    ``isr.c`` to ``task.c`` and overwrote whatever sat at those lines.
     """
     if not is_wellformed_diff(diff_text):
         return None
@@ -332,33 +341,25 @@ def apply_unified_diff(source_text: str, diff_text: str) -> str | None:
     out: list[str] = []
     cursor = 0  # 0-based index into src_lines
     for start_1based, body in hunks:
-        idx = max(0, start_1based - 1)
-        if idx < cursor or idx > len(src_lines):
+        while body and not body[-1]:
+            body.pop()  # a trailing newline of the diff text, not a context line
+        if any(raw[:1] not in ("", " ", "-", "+", "\\") for raw in body):
+            return None
+        old = [raw[1:] for raw in body if raw[:1] in ("", " ", "-")]
+        # An insertion-only hunk names the line it goes after, not one it replaces.
+        idx = _locate_hunk(src_lines, old, start_1based - 1 if old else start_1based, cursor)
+        if idx is None:
             return None
         out.extend(src_lines[cursor:idx])
         cursor = idx
         for raw in body:
-            if not raw:
-                if cursor < len(src_lines) and src_lines[cursor] == "":
-                    out.append(src_lines[cursor])
-                    cursor += 1
-                continue
-            prefix, content = raw[0], raw[1:]
-            if prefix == " ":
-                if cursor >= len(src_lines):
-                    return None
+            if raw[:1] in ("", " "):
                 out.append(src_lines[cursor])
                 cursor += 1
-            elif prefix == "-":
-                if cursor >= len(src_lines):
-                    return None
+            elif raw[0] == "-":
                 cursor += 1
-            elif prefix == "+":
-                out.append(content)
-            elif prefix == "\\":
-                continue
-            else:
-                return None
+            elif raw[0] == "+":
+                out.append(raw[1:])
 
     out.extend(src_lines[cursor:])
     return "\n".join(out) + ("\n" if source_text.endswith("\n") else "")
@@ -392,39 +393,35 @@ def make_compile_checker(
         rec = record or patch_to_record.get(id(patch))
         if rec is None:
             return None
-        rel = rec["accesses"][0]["source"]["file"]
-        src_path = suite_dir / rel
-        if not src_path.is_file():
+        rel = patch_file(patch.model_dump(), rec)
+        sources = {name: "\n".join(lines) + "\n" for name, lines in _load_subject_sources(rec, suite_dir)}
+        if rel is None or Path(rel).as_posix() not in sources:
             return None
-        patched = apply_unified_diff(
-            src_path.read_text(encoding="utf-8", errors="replace"), patch.diff
-        )
+        rel = Path(rel).as_posix()
+        patched = apply_unified_diff(sources[rel], patch.diff)
         if patched is None:
             return False
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".c", encoding="utf-8", delete=False
-        ) as tmp:
-            tmp.write(patched)
-            tmp_path = Path(tmp.name)
-        try:
-            proc = subprocess.run(
-                [
-                    compiler,
-                    "-fsyntax-only",
-                    f"-I{suite_dir}",
-                    f"-I{src_path.parent}",
-                    str(tmp_path),
-                ],
-                stdin=subprocess.DEVNULL,
-                capture_output=True,
-                text=True,
-                timeout=30,
-            )
-            return proc.returncode == 0
-        except (OSError, subprocess.SubprocessError):
-            return None
-        finally:
-            tmp_path.unlink(missing_ok=True)
+        # The subject as it would be, so the patched file sees its real neighbours.
+        # A .c file changes only its own translation unit; a header, all of them.
+        with tempfile.TemporaryDirectory(prefix="irqrace-patch-") as tmp:
+            base = Path(tmp)
+            for name, text in {**sources, rel: patched}.items():
+                (base / name).parent.mkdir(parents=True, exist_ok=True)
+                (base / name).write_text(text, encoding="utf-8")
+            units = [rel] if rel.endswith(".c") else [n for n in sources if n.endswith(".c")]
+            try:
+                return all(
+                    subprocess.run(
+                        [compiler, "-fsyntax-only", f"-I{base}", f"-I{(base / unit).parent}", str(base / unit)],
+                        stdin=subprocess.DEVNULL,
+                        capture_output=True,
+                        text=True,
+                        timeout=30,
+                    ).returncode == 0
+                    for unit in units
+                )
+            except (OSError, subprocess.SubprocessError):
+                return None
 
     _check.bind = lambda patches: patch_to_record.update(  # type: ignore[attr-defined]
         {id(p): records_by_id[cid] for cid, p in patches.items() if cid in records_by_id}
