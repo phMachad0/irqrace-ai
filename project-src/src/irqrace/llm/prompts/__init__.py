@@ -219,6 +219,12 @@ EXPERIMENTAL: dict[str, PromptConfig] = {
         _RACEBENCH, name="+racebench+effectfree",
         stage_extra=(("harmfulness", "racebench_effectfree.md"),),
     ),
+    # Both questions: both answers carry a confidence, and the report's rank key
+    # takes the lower of the two.
+    "+racebench+rubric": dataclasses.replace(
+        _RACEBENCH, name="+racebench+rubric",
+        extra=(*_RACEBENCH.extra, "racebench_rubric.md"),
+    ),
 }
 
 #: What each row is for, as the interface shows it.
@@ -235,4 +241,5 @@ ROW_HELP: dict[str, str] = {
     "+racebench+witness": "+racebench, e 'feasible' exige uma testemunha concreta da intercalação; sem ela, 'uncertain'. Variante experimental (T3).",
     "+racebench+location": "+racebench, e o endereço que A1, B e A2 tocam (índice, ponteiro) é resolvido antes da viabilidade. Variante experimental (T3).",
     "+racebench+effectfree": "+racebench, e escrita remota do valor já presente, reescrito antes de A2, vira 'benign'. Só para medir, não usar.",
+    "+racebench+rubric": "+racebench, com a confiança lida de uma rubrica fixa (o que o registro mostra vs. o que foi suposto). Variante experimental (T3).",
 }
