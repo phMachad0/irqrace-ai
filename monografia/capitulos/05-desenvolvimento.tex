@@ -455,13 +455,57 @@ um analisador sintático aceita a correção, e a lógica, em que a correção
 equivale a uma escrita à mão, como em \citeonline{skipanalyzer}, seguidas da
 reverificação.
 
-No Racebench apenas a viabilidade entra nessas métricas. O gabarito anota fatos
-do programa, e muitos de seus defeitos leem a variável compartilhada para uma
-variável local que nunca é usada. Um modelo que classifica esses casos como
-benignos está raciocinando corretamente sobre o código, e pontuar essa resposta
-contra o gabarito puniria o acerto. A pergunta de nocividade continua sendo
-feita e registrada, e é avaliada na suíte de programas reais, na qual o código tem
-efeito observável.
+O gabarito do Racebench anota fatos do programa, e muitos de seus defeitos leem
+a variável compartilhada para uma variável local que nunca é usada. Um modelo
+que classifica esses casos como benignos está raciocinando corretamente sobre o
+código, e pontuar essa resposta contra o gabarito puniria o acerto. Os números
+do Racebench seguem por isso uma de duas leituras, e cada tabela e figura
+declara qual delas usa. Nas linhas de \textit{prompt} de produção, as da
+ablação, a pergunta de nocividade continua sendo feita e registrada, mas no
+Racebench apenas a viabilidade entra nas métricas, e a nocividade é avaliada na
+suíte de programas reais, na qual o código tem efeito observável. Nas linhas
+de avaliação \texttt{+racebench} e \texttt{+racebench+c4}, e nas variantes
+construídas sobre elas, o \textit{prompt} recebe a semântica do próprio
+\textit{benchmark}, segundo a qual a intercalação é o defeito mesmo quando o
+valor lido nunca é usado, e esse critério substitui o de nocividade. Nessas
+linhas o grupo produzido pela triagem é pontuado como está. Como a semântica foi
+escrita a partir do mesmo \textit{benchmark} em que é medida, essas linhas são
+de avaliação, e não de produção, e seus números não se transferem para código
+real (Seção~\ref{sec:ameacas}).
+
+A comparação com as ferramentas publicadas acrescenta métricas que a
+literatura usa e que só fazem sentido lado a lado com o recall. O recall por
+padrão divide os defeitos detectados pelos anotados em cada um dos quatro
+padrões do Quadro~\ref{quadro:padroes}, e mostra onde cada sistema perde
+defeitos. As armadilhas reportadas são a fração das armadilhas que chegam ao
+relatório, e a precisão é calculada como $TP / (TP + A)$, em que $A$ é o número
+de armadilhas reportadas, porque um candidato que o gabarito não anota nem como
+defeito nem como armadilha não é contado como falso positivo, já que as
+anotações não se declaram exaustivas. A pontuação da competição soma 2 pontos
+por defeito detectado e subtrai 3 por armadilha reportada, sobre o máximo de
+duas vezes o número de defeitos. O número total de alertas, incluídos os
+candidatos não anotados, mede o que um revisor tem diante de si. A disposição
+de cada armadilha registra o estágio que a eliminou, entre não gerada pelo
+estágio 1, descartada pelo estágio 2, refutada pelo solucionador, julgada
+inviável pelo modelo ou reportada, e mostra que as etapas estáticas só
+descartam com prova. O custo da triagem é medido em chamadas ao modelo e em
+\textit{tokens}, e o tempo é separado em tempo da etapa estática, tempo do
+modelo e tempo total, sempre com o equipamento em que foi medido.
+
+A consistência entre execuções é medida pela concordância observada $p_o$, a
+fração dos candidatos comuns que recebem o mesmo veredicto em duas execuções, e
+pelo $\kappa$ de Cohen, $\kappa = (p_o - p_e)/(1 - p_e)$, em que $p_e$ é a
+concordância esperada por acaso dadas as proporções de cada veredicto em cada
+execução. O $\kappa$ vale 1 para concordância total e 0 para concordância no
+nível do acaso, e é calculado para a viabilidade e para o grupo.
+
+Como a triagem ordena e nunca descarta, ``reportado'' admite três leituras, e
+os resultados da etapa com \llm\ são dados nas três. Na principal, reportado é
+o que fica no grupo provavelmente real. Na conservadora, é tudo o que o modelo
+não julgou inviável. Na terceira, é tudo o que chega ao modelo, o que coincide
+com o resultado da etapa estática sozinha. Um defeito anotado que a triagem
+julgue inviável é reportado pelo nome como perda de recall da triagem, mesmo
+que a pontuação suba.
 
 \subsection{Protocolo experimental}
 \label{sec:protocolo}
