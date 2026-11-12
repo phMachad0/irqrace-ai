@@ -212,6 +212,13 @@ EXPERIMENTAL: dict[str, PromptConfig] = {
         _RACEBENCH, name="+racebench+location",
         stage_extra=(("feasibility", "racebench_location.md"),),
     ),
+    # Measures the recall cost of an effect-based exclusion -- the family of the
+    # adjacency rule removed on 2026-10-28. Not a candidate for any default.
+    # It is asked as harmfulness, not feasibility: the interleaving does occur.
+    "+racebench+effectfree": dataclasses.replace(
+        _RACEBENCH, name="+racebench+effectfree",
+        stage_extra=(("harmfulness", "racebench_effectfree.md"),),
+    ),
 }
 
 #: What each row is for, as the interface shows it.
@@ -227,4 +234,5 @@ ROW_HELP: dict[str, str] = {
     "+racebench-selfval": "+racebench sem as listas de autovalidação (viabilidade e dano). Variante experimental (T3).",
     "+racebench+witness": "+racebench, e 'feasible' exige uma testemunha concreta da intercalação; sem ela, 'uncertain'. Variante experimental (T3).",
     "+racebench+location": "+racebench, e o endereço que A1, B e A2 tocam (índice, ponteiro) é resolvido antes da viabilidade. Variante experimental (T3).",
+    "+racebench+effectfree": "+racebench, e escrita remota do valor já presente, reescrito antes de A2, vira 'benign'. Só para medir, não usar.",
 }
