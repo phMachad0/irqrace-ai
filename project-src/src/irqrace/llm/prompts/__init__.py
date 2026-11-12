@@ -80,6 +80,16 @@ class PromptConfig:
     #: Extra assets appended to every question's prompt -- an experimental
     #: benchmark-semantics add-on, say. Part of the hash like any asset.
     extra: tuple[str, ...] = ()
+    #: Extra assets for one question only, as ``(stage, asset)`` pairs, rendered
+    #: after :attr:`extra`. An add-on that changes how feasibility is argued has
+    #: no business in the harmfulness prompt: there it is one more cause in a
+    #: comparison that is meant to have one. The combined turn gets them all.
+    stage_extra: tuple[tuple[str, str], ...] = ()
+
+    def __post_init__(self) -> None:
+        for stage, _ in self.stage_extra:
+            if stage not in STAGES:
+                raise ValueError(f"{self.name}: unknown stage {stage!r} in stage_extra")
 
     def assets(self, stage: str | None = None) -> tuple[str, ...]:
         """Asset filenames in render order. Order is part of the hash.
@@ -109,6 +119,7 @@ class PromptConfig:
         # Last: an add-on states which earlier rules it overrides, and a rule
         # that comes after it would read as the final word.
         names.extend(self.extra)
+        names.extend(n for st, n in self.stage_extra if stage is None or st == stage)
         return tuple(names)
 
     def system_prompt(self, stage: str | None = None) -> str:
