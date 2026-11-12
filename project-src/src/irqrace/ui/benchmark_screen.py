@@ -53,6 +53,13 @@ LLM_QUEUED = "🤖 fila LLM"
 #: dead locals: without the benchmark semantics they are judged ``benign``.
 DEFAULT_PROMPT = "+racebench+c4"
 
+#: The rows this screen offers (2026-11-12, Lucas): the two Racebench rows, the
+#: best so far on this suite. The other rows stay defined in
+#: :mod:`irqrace.llm.prompts` -- the ablation and the real-code prompt need them --
+#: and remain selectable from the CLI and the Pipeline screen. A new row under
+#: test joins this tuple.
+BENCH_PROMPTS: tuple[str, ...] = ("+racebench", "+racebench+c4")
+
 #: Totals of :func:`irqrace.run_evaluation.triage_outcome` kept in the batch summary.
 LLM_TOTALS = ("bugs", "bugs_likely_real", "bugs_uncertain", "bugs_likely_benign", "bugs_likely_infeasible",
               "traps", "traps_likely_real", "c4_requests")
@@ -307,10 +314,10 @@ class BenchmarkScreen(ttk.Frame):
         prompt_row = ttk.Frame(opts)
         prompt_row.pack(fill=tk.X, pady=(4, 0))
         ttk.Label(prompt_row, text="Prompt:").pack(side=tk.LEFT, padx=(0, 4))
-        prompt_cb = ttk.Combobox(prompt_row, textvariable=self.prompt_var, state="readonly", width=18,
-                                 values=[*BY_NAME, *EXPERIMENTAL])
-        prompt_cb.pack(side=tk.LEFT, padx=(0, 8))
-        prompt_cb.bind("<<ComboboxSelected>>", lambda _e: self._prompt_changed())
+        self.prompt_cb = ttk.Combobox(prompt_row, textvariable=self.prompt_var, state="readonly", width=18,
+                                      values=list(BENCH_PROMPTS))
+        self.prompt_cb.pack(side=tk.LEFT, padx=(0, 8))
+        self.prompt_cb.bind("<<ComboboxSelected>>", lambda _e: self._prompt_changed())
         ttk.Label(prompt_row, textvariable=self.prompt_help_var, foreground="gray").pack(side=tk.LEFT)
         self._prompt_changed()
 
