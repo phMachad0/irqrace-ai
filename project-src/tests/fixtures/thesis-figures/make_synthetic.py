@@ -27,7 +27,7 @@ SAMPLES = 3
 BUCKETS = ["likely_real", "uncertain", "likely_benign", "likely_infeasible"]
 VIEWS = {"likely_real": {"likely_real"},
          "not_infeasible": {"likely_real", "uncertain", "likely_benign"},
-         "reaching_llm": set(BUCKETS)}
+         "static_only": set(BUCKETS)}
 
 # --- the frozen "static run": the same fates in every run --------------------
 static = []  # (case, kind, item_id, pattern, fate)
@@ -88,7 +88,7 @@ for pi, prompt in enumerate(PROMPTS):
                 return it["item_kind"]
             extra_bugs = 5 if labels == "2.2" else 0
             for view, reported in VIEWS.items():
-                system = "S1" if view == "reaching_llm" else "S2"
+                system = "S1" if view == "static_only" else "S2"
                 def rep(it):
                     return it["fate"] == "llm" and it["bucket"] in reported
                 bt = sum(1 for it in its if kind_of(it) == "bug") + extra_bugs

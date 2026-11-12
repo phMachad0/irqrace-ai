@@ -53,7 +53,7 @@ Value conventions this script relies on:
   distributed), ``2.2`` (the extended ground truth). Other strings are shown
   verbatim.
 - ``view`` (the reading of "reported"): ``likely_real`` (headline),
-  ``not_infeasible``, ``reaching_llm`` (= S1). S1 rows may carry any view.
+  ``not_infeasible``, ``static_only`` (= S1). S1 rows may carry any view.
 - ``recall``, ``precision``, ``inspection_ratio_mean``: fractions in [0, 1].
 - ``bucket``: ``likely_real``, ``uncertain``, ``likely_benign``,
   ``likely_infeasible`` (empty when ``fate`` is not ``llm``).
@@ -184,12 +184,12 @@ FATE_HATCH = {"reported": "xx"}
 VIEW_BUCKETS = {
     "likely_real": {"likely_real"},
     "not_infeasible": {"likely_real", "uncertain", "likely_benign"},
-    "reaching_llm": set(BUCKETS),
+    "static_only": set(BUCKETS),
 }
 VIEW_NAMES = {
     "likely_real": "reportado = grupo provavelmente real",
     "not_infeasible": "reportado = não julgado inviável",
-    "reaching_llm": "reportado = tudo o que chega à triagem",
+    "static_only": "reportado = tudo o que chega à triagem",
 }
 
 V22 = ["bug", "trap", "not_defect", "undecided"]
@@ -672,7 +672,7 @@ def fig_f4(plt, ctx: Ctx):
             continue
         # S1 and S2 may share a run id (S1 is S2's "reaching the LLM" reading):
         # the view tells them apart.
-        if p["view"] == "reaching_llm" or "S2" not in systems_of[rid]:
+        if p["view"] == "static_only" or "S2" not in systems_of[rid]:
             s = "S1"
         elif p["view"] == ctx.view:
             s = "S2"
