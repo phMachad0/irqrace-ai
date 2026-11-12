@@ -276,6 +276,15 @@ def test_results_directory_has_exactly_the_agreed_schema(tmp_path):
     assert _header(res / "agreement.csv") == ("prompt_row", "run_a", "run_b", "field", "n_shared",
                                               "agreement", "kappa")
     assert _header(res / "published.csv") == bm.PUBLISHED_FIELDS
+    assert _header(res / "cases.csv") == ("run_id", "case", "ir_static", "ir_triage")
+    with (res / "cases.csv").open(encoding="utf-8", newline="") as fh:
+        cases = {(r["run_id"], r["case"]): r for r in csv.DictReader(fh)}
+    assert len(cases) == 4
+    one = cases[("+racebench/1", "svp_simple_001_001")]
+    ev = {e.stage: e for e in evaluate_run(roots[0].cases[0].store)}
+    assert float(one["ir_static"]) == pytest.approx(ev["context"].inspection_ratio)
+    assert float(one["ir_triage"]) == pytest.approx(ev["triage"].inspection_ratio)
+    assert cases[("+racebench/1", "svp_simple_017_001")]["ir_static"] == ""  # bug 2 missed: undefined
     man = json.loads((res / "manifest.json").read_text(encoding="utf-8"))
     assert {"tool_git_commit", "date", "backend", "prompt_rows", "label_set", "case_subset",
             "input_run_roots", "scorer_version"} <= set(man)
@@ -283,8 +292,14 @@ def test_results_directory_has_exactly_the_agreed_schema(tmp_path):
     with (res / "runs.csv").open(encoding="utf-8", newline="") as fh:
         rows = list(csv.DictReader(fh))
     assert len(rows) == 6
-    s1 = next(r for r in rows if r["view"] == "static only")
-    assert s1["system"] == "S1" and s1["llm_calls"] == "" and s1["sample"] == "1"
+    assert {r["view"] for r in rows} == {"likely_real", "not_infeasible", "static_only"}
+    assert {(r["view"], r["system"]) for r in rows} == {
+        ("likely_real", "S2"), ("not_infeasible", "S2"), ("static_only", "S1")}
+    assert {r["labels"] for r in rows} == {"53/33"}
+    s1 = next(r for r in rows if r["view"] == "static_only")
+    assert s1["llm_calls"] == "" and s1["sample"] == "1"
+    with (res / "patterns.csv").open(encoding="utf-8", newline="") as fh:
+        assert {r["view"] for r in csv.DictReader(fh)} == {"likely_real", "not_infeasible", "static_only"}
     with (res / "items.csv").open(encoding="utf-8", newline="") as fh:
         assert {r["fate"] for r in csv.DictReader(fh)} == {"stage1_absent", "stage2", "solver", "llm"}
 
@@ -324,6 +339,7 @@ def test_the_command_refuses_failed_runs_and_never_writes_into_roots(tmp_path, c
 
 def test_a_static_root_scores_s1_only(tmp_path):
     rd = bm.load_root(make_root(tmp_path / "root", triaged=False))
+    assert all(r["ir_triage"] is None for r in bm.cases_rows(rd, bm.Subset()))
     ms = bm.run_metrics(rd)
     assert [m.view for m in ms] == ["static only"]
     assert bm.agreement([rd, rd]) == [] and bm.flips([rd, rd]) == []
@@ -339,6 +355,11 @@ def test_published_results_load_and_every_row_has_a_source():
     rows = bm.load_published()
     assert rows and all(r["source"].strip() for r in rows)
     assert {r["tool"] for r in rows} >= {"NIChecker", "BMC4AV", "IntRace"}
+    # The figure script's names, where they apply.
+    assert {"recall", "precision", "false_positives", "warnings", "time_s"} <= {r["metric"] for r in rows}
+    assert not [r for r in rows if r["metric"].startswith("time") and r["metric"] != "time_s"]
+    per_pattern = {r["metric"]: r["value"] for r in rows if r["metric"].startswith("recall_")}
+    assert per_pattern == {"recall_RWR": 1.0, "recall_WWR": 1.0, "recall_WRW": 1.0}
     rebased = [r for r in rows if r["rerun_or_copied"] == "rebased"]
     assert any(r["tool"] == "BMC4AV" and r["ground_truth"] == 48 and r["value"] == pytest.approx(38 / 48, abs=1e-3)
                for r in rebased)

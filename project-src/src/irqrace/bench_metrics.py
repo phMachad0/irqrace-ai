@@ -88,6 +88,10 @@ PATTERNS_FIELDS = ("run_id", "labels", "case_subset", "view", "pattern", "bug_po
 ITEMS_FIELDS = ("run_id", "prompt_row", "sample", "case", "item_kind", "item_id", "triple",
                 "pattern", "fate", "feasibility", "bucket", "confidence")
 AGREEMENT_FIELDS = ("prompt_row", "run_a", "run_b", "field", "n_shared", "agreement", "kappa")
+CASES_FIELDS = ("run_id", "case", "ir_static", "ir_triage")
+#: How a view is spelled in the CSVs (the figure script's vocabulary); the
+#: Markdown and the legacy report keep the readable names.
+VIEW_ID = {"likely_real": "likely_real", "not infeasible": "not_infeasible", "static only": "static_only"}
 
 #: Metrics aggregated over the independent runs of one prompt row.
 AGGREGATED = ("bug_points_detected", "traps_reported", "score", "recall", "precision",
@@ -519,7 +523,7 @@ class RunMetrics:
     patterns: dict[str, tuple[int, int]] = field(default_factory=dict)
 
     def csv_row(self) -> dict[str, Any]:
-        return {k: getattr(self, k) for k in RUNS_FIELDS}
+        return {**{k: getattr(self, k) for k in RUNS_FIELDS}, "view": VIEW_ID[self.view]}
 
 
 def _sum_or_none(values: Iterable[float | int | None]) -> float | None:
@@ -836,16 +840,38 @@ def items_rows(rd: RootData, subset: Subset) -> list[dict[str, Any]]:
             for i in root_items(rd, subset)]
 
 
+def cases_rows(rd: RootData, subset: Subset) -> list[dict[str, Any]]:
+    """Per-case Inspection Ratio in the records' own order and in triage order.
+
+    Undefined (empty) where a bug point was missed or the case has none; the
+    triage column is empty for a case that was not triaged.
+    """
+    out = []
+    for cd in rd.cases:
+        if not subset.has_case(cd.subject):
+            continue
+        if subset.exclude_patterns or not rd.labels.native:
+            ev = stage_evals(cd.store, cd.gt, subset.exclude_patterns)
+        else:
+            ev = cd.evals
+        out.append({"run_id": rd.run_id, "case": cd.subject,
+                    "ir_static": ev["context"].inspection_ratio if "context" in ev else None,
+                    "ir_triage": ev["triage"].inspection_ratio if "triage" in ev else None})
+    return out
+
+
 def write_results(results_dir: Path, roots: Sequence[RootData], subset: Subset, labels: str,
                   *, published: Sequence[dict[str, Any]] | None = None) -> dict[str, list]:
     """The results directory: ``runs.csv``, ``patterns.csv``, ``items.csv``,
-    ``agreement.csv``, ``manifest.json`` and, with S0 rows, ``published.csv``."""
+    ``agreement.csv``, ``cases.csv``, ``manifest.json`` and, with S0 rows,
+    ``published.csv``."""
     results_dir.mkdir(parents=True, exist_ok=True)
     metrics = [m for rd in roots for m in run_metrics(rd, subset)]
     agree = agreement(roots, subset)
     _write_csv(results_dir / "runs.csv", RUNS_FIELDS, (m.csv_row() for m in metrics))
+    _write_csv(results_dir / "cases.csv", CASES_FIELDS, (r for rd in roots for r in cases_rows(rd, subset)))
     _write_csv(results_dir / "patterns.csv", PATTERNS_FIELDS, (
-        {"run_id": m.run_id, "labels": m.labels, "case_subset": m.case_subset, "view": m.view,
+        {"run_id": m.run_id, "labels": m.labels, "case_subset": m.case_subset, "view": VIEW_ID[m.view],
          "pattern": p, "bug_points_total": t, "bug_points_detected": d}
         for m in metrics for p, (t, d) in m.patterns.items()))
     _write_csv(results_dir / "items.csv", ITEMS_FIELDS, (r for rd in roots for r in items_rows(rd, subset)))
