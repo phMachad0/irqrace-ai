@@ -517,7 +517,9 @@ def test_screen_navigation(tk_root) -> None:
         assert len(app.bench_screen.tree.get_children()) == len(list(app.BENCH_CONFIGS.glob("*.yaml")))
         screen = app.bench_screen
         assert screen.prompt_var.get() == "+racebench+c4" and "⚠" not in screen.prompt_help_var.get()
-        assert tuple(screen.prompt_cb.cget("values")) == ("+racebench", "+racebench+c4")
+        assert tuple(screen.prompt_cb.cget("values")) == (
+            "+racebench", "+racebench+c4", "+racebench-selfval", "+racebench+witness",
+            "+racebench+location", "+racebench+effectfree", "+racebench+rubric")
         screen.prompt_var.set("+self-validation")
         screen._prompt_changed()
         assert "leitores mortos" in screen.prompt_help_var.get()
