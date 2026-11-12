@@ -310,24 +310,29 @@ Toda taxa de recall divide por um número de defeitos, e a
 Seção~\ref{sec:benchmarks-conceito} mostrou que a literatura usa números
 diferentes para os mesmos programas sem justificar a escolha. Este trabalho
 adota uma tripla anotada como um defeito. A Tabela~\ref{tab:unidades} mostra
-quanto a escolha muda o denominador.
+quanto a escolha muda o denominador, tanto nas anotações conforme distribuídas
+quanto depois da reetiquetagem descrita na Seção~\ref{sec:reetiquetagem}.
 
 \begin{table}[htb]
   \centering
-  \caption{Contagem do gabarito do Racebench conforme a unidade}
+  \caption{Contagem do gabarito dos 31 casos simples do Racebench conforme a unidade}
   \label{tab:unidades}
-  \begin{tabular}{|l|c|c|}
+  \begin{tabular}{|l|c|c|c|c|}
     \hline
-    Unidade & Defeitos & Armadilhas \\
+    & \multicolumn{2}{c|}{Conforme distribuído} & \multicolumn{2}{c|}{Após a reetiquetagem} \\
+    \cline{2-5}
+    Unidade & Defeitos & Armadilhas & Defeitos & Armadilhas \\
     \hline
-    por instância de tripla & 48 & 38 \\
+    por instância de tripla & 48 & 38 & 53 & 33 \\
     \hline
-    por variável em cada caso & 33 & 29 \\
+    por variável em cada caso & 33 & 29 & 35 & \pendente{armadilhas por variável após a reetiquetagem} \\
     \hline
-    por caso & 31 & 31 \\
+    por caso & 31 & 31 & 31 & \pendente{casos com armadilha após a reetiquetagem} \\
     \hline
   \end{tabular}
-  \fonte{Elaborada pelos autores a partir das anotações de \citeonline{racebench}.}
+  \fonte{Elaborada pelos autores a partir das anotações de \citeonline{racebench}.
+  A reetiquetagem só acrescenta defeitos, de modo que todo caso continua com ao
+  menos um.}
 \end{table}
 
 A unidade por instância é a mais fina e, por isso, a mais difícil de inflar. É
@@ -339,12 +344,72 @@ As anotações usam ao menos quatro gramáticas incompatíveis e contêm erros, 
 modo que um leitor estrito encontra apenas 28 defeitos sem acusar nenhuma
 falha. O leitor de gabarito precisa portanto tolerar as variações, e sua
 contagem é validada contra uma contagem manual dos casos mais difíceis antes de
-qualquer medição. Doze anotações são corrigidas por uma errata em que cada
+qualquer medição. Doze anotações foram corrigidas por uma errata em que cada
 correção traz sua evidência, sendo seis números de linha, cinco deles num único
 caso cujas anotações apontam para linhas sem nenhum acesso, e seis tipos de
-acesso trocados. Nenhuma correção altera as contagens. Sem elas, uma comparação
-exata com o texto distribuído daria recall zero para um defeito que a
-ferramenta encontra na linha certa.
+acesso trocados. Nenhuma dessas correções altera as contagens. Sem elas, uma
+comparação exata com o texto distribuído daria recall zero para um defeito que
+a ferramenta encontra na linha certa. Os seis números de linha foram depois
+corrigidos no próprio código-fonte do \textit{benchmark}, junto com a
+reetiquetagem descrita a seguir, e a errata vigente, no arquivo
+\texttt{bench/racebench-errata.yaml} do repositório da ferramenta, guarda as
+seis correções de tipo de acesso.
+
+\subsection{Reetiquetagem de cinco armadilhas}
+\label{sec:reetiquetagem}
+
+A revisão dos resultados das primeiras execuções completas sobre os 31 casos
+simples levou a uma segunda alteração do gabarito, desta vez nos rótulos, e não
+apenas nas linhas. Cinco armadilhas, uma no caso \texttt{svp\_simple\_001},
+três no \texttt{svp\_simple\_019} e uma no \texttt{svp\_simple\_020}, foram
+relidas contra o código e contra o modelo de chegada que o próprio
+\textit{benchmark} declara, segundo o qual uma interrupção pode preemptar o
+programa principal ou uma interrupção de nível inferior sempre que estiver
+habilitada, em momento, posição e número de vezes indeterminados
+\cite{racebench}. Para cada uma foi construída uma intercalação concreta que a
+torna alcançável.
+
+No caso 001, a rotina \texttt{isr\_1} pode disparar entre a chamada que
+habilita todas as interrupções e o mascaramento da interrupção 2, ou iniciar
+uma segunda ativação com a interrupção 2 já desmascarada pela primeira, e a
+rotina \texttt{isr\_2} lê então o valor intermediário entre as duas escritas.
+No caso 019, a
+primeira das três armadilhas vale para a cópia \texttt{2.1} do programa, em que
+a leitura está dentro da seção crítica, mas não para a cópia anotada
+\texttt{2.1\_remarks}, em que a reabilitação da interrupção foi movida para
+antes da leitura sem que o rótulo acompanhasse a mudança, e as outras duas são
+alcançáveis nas duas cópias pela lacuna desmascarada entre duas seções
+críticas. No caso 020, a intercalação exige duas ativações de
+\texttt{isr\_1}. A primeira desmascara a interrupção 2 e permite que
+\texttt{isr\_2} altere a variável testada pelas guardas, de modo que as duas
+guardas podem passar, e a segunda escreve a variável compartilhada entre os
+dois acessos locais. O rótulo original supunha uma única ativação, o que o
+modelo de chegada do \textit{benchmark} não garante.
+
+As cinco anotações foram convertidas em defeitos no próprio código-fonte da
+cópia do Racebench mantida no repositório da ferramenta
+(\texttt{bench/racebench}, importada do \textit{commit} \texttt{ec1d828} do
+repositório original), num \textit{commit} separado sobre a importação
+intacta. A alteração e sua justificativa, caso a caso, estão registradas no
+arquivo \texttt{VENDORED.md} dessa cópia e na nota
+\texttt{relabel\_2026\_10\_28} da errata. Ficaram de fora os dois itens do caso
+\texttt{svp\_simple\_022} que o próprio anotador marcou como ``possível falso
+positivo'', que são alcançáveis mas não têm efeito observável, pois a \isr\
+escreve o valor já armazenado e o fluxo local reescreve a variável entre $A_1$
+e $A_2$, e as armadilhas cuja anotação a revisão confirmou, como as dos casos
+007 e 009.
+
+Com a reetiquetagem, os casos simples passam de 48 defeitos e 38 armadilhas
+para 53 defeitos e 33 armadilhas, e a contagem por variável em cada caso passa
+de 33 para 35 defeitos. As regras da competição citam 50 defeitos e 33
+armadilhas para os casos simples, e a coincidência do segundo número com o
+deste trabalho resulta de correções diferentes, não de uma reconciliação.
+Como nenhum artigo foi avaliado contra a versão reetiquetada, os números deste
+trabalho usam as duas versões. A reetiquetada (53/33) é a referência para os
+resultados próprios, e a distribuída (48/38), restrita ao subconjunto de casos
+e às exclusões de cada artigo, é a usada nas comparações com a literatura
+(Seção~\ref{sec:protocolo}). Toda tabela e toda figura declaram qual das duas
+usam.
 
 \subsection{Regra de casamento}
 
@@ -399,6 +464,7 @@ feita e registrada, e é avaliada na suíte de programas reais, na qual o códig
 efeito observável.
 
 \subsection{Protocolo experimental}
+\label{sec:protocolo}
 
 A ablação acrescenta um componente de \textit{prompt} por linha, sempre sobre
 os mesmos candidatos, partindo do \textit{prompt} simples e somando as regras

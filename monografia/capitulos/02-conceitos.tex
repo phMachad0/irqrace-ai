@@ -137,7 +137,10 @@ serializáveis. O padrão $(R,W,W)$ é disputado, e a divergência importa para
 qualquer contagem. \citeonline{bmc4av} o classificam como benigno e excluem do
 Racebench os casos que só o contêm, enquanto \citeonline{nichecker} o contam
 como defeito. Este trabalho o mantém, porque o gabarito do Racebench o anota em
-10 dos 48 defeitos que contamos nos casos simples.
+10 dos 48 defeitos que contamos nos casos simples da versão distribuída. A
+reetiquetagem descrita na Seção~\ref{sec:reetiquetagem} não altera essa
+contagem, já que nenhum dos cinco defeitos que ela acrescenta tem a forma
+$(R,W,W)$.
 
 Nem todo defeito tem consequência, e a literatura separa as duas perguntas.
 \citeonline{intrace} adotam o critério de que um defeito é nocivo quando a
@@ -362,10 +365,15 @@ que são falsos positivos inseridos intencionalmente, vários deles trechos
 corretamente protegidos por mascaramento. A regra de pontuação da competição
 premiava cada detecção com 2 pontos e punia cada falso positivo com 3.
 
-Contando diretamente as anotações dos 31 casos simples, obtivemos 48 defeitos e
-38 armadilhas. Os artigos usam outras contagens para os mesmos casos, sendo 50
-em \citeonline{intrace}, 54 em \citeonline{nichecker} e 38 sobre um subconjunto
-de 25 casos em \citeonline{bmc4av}. Parte da divergência tem explicação
+Contando diretamente as anotações dos 31 casos simples, conforme distribuídas,
+obtivemos 48 defeitos e 38 armadilhas. Cinco dessas armadilhas descrevem
+intercalações que o próprio modelo de chegada de interrupções declarado pelo
+\textit{benchmark} torna alcançáveis, e foram reetiquetadas como defeitos neste
+trabalho, o que leva a contagem a 53 defeitos e 33 armadilhas
+(Seção~\ref{sec:reetiquetagem}). Os artigos usam outras contagens para os mesmos
+casos, todas anteriores a essa reetiquetagem, sendo 50 em \citeonline{intrace},
+54 em \citeonline{nichecker} e 38 sobre um subconjunto de 25 casos em
+\citeonline{bmc4av}. Parte da divergência tem explicação
 mecânica. As anotações usam ao menos quatro gramáticas incompatíveis e contêm
 erros de digitação, de modo que um leitor estrito encontra apenas 28 defeitos
 sem acusar nenhum erro. A divergência tem consequência direta sobre qualquer
