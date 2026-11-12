@@ -198,6 +198,12 @@ EXPERIMENTAL: dict[str, PromptConfig] = {
     "+c4": dataclasses.replace(FULL, name="+c4", progressive=True),
     "+racebench": _RACEBENCH,
     "+racebench+c4": dataclasses.replace(_RACEBENCH, name="+racebench+c4", progressive=True),
+    # T3 variants (wiki: Lucas Tasks, T3): each is +racebench with exactly one
+    # change, so a measured difference has one cause. Rationale per variant:
+    # project-src/docs/racebench-prompt-rationale.md, section 5.
+    "+racebench-selfval": dataclasses.replace(
+        _RACEBENCH, name="+racebench-selfval", self_validation=False
+    ),
 }
 
 #: What each row is for, as the interface shows it.
@@ -210,4 +216,5 @@ ROW_HELP: dict[str, str] = {
     "+c4": "Prompt completo para código real, e a LLM pode pedir código (C4). Mais chamadas por candidato.",
     "+racebench": "Critérios do Racebench: a intercalação é o defeito, mesmo com leitor morto. Sem C4.",
     "+racebench+c4": "Critérios do Racebench, e a LLM pode pedir código (C4). Recomendado para esta suíte.",
+    "+racebench-selfval": "+racebench sem as listas de autovalidação (viabilidade e dano). Variante experimental (T3).",
 }
