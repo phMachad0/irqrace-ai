@@ -296,13 +296,35 @@ não mero detalhe de desempenho.
 
 \subsection{Perguntas de pesquisa}
 
-A avaliação responde a quatro perguntas. A primeira é se a etapa estática
-encontra todos os defeitos anotados no Racebench, ou seja, se atinge recall de
-100\%. A segunda é se a triagem reduz o esforço de revisão sem que nenhum
-defeito real seja classificado como inviável. A terceira é qual a contribuição
-de cada técnica de \textit{prompt}, respondida por uma ablação no formato de
-\citeonline{llift}. A quarta é se o modelo propõe correções corretas para os
-defeitos encontrados.
+A avaliação responde a seis perguntas de pesquisa (QP). A proposta do trabalho
+previa quatro, sobre o recall estático, a triagem, a ablação das técnicas de
+\textit{prompt} e o reparo. A integração das duas etapas acrescentou três
+frentes, a comparação com as ferramentas publicadas (QP3), a extensão do
+gabarito com os defeitos não anotados (QP5) e a comparação de variantes de
+\textit{prompt}, que estende a ablação dentro da QP4.
+
+\begin{description}
+  \item[QP1, recall estático.] A etapa estática encontra todos os defeitos
+  anotados no Racebench, ou seja, atinge recall de 100\%? E em que estágio cada
+  armadilha é eliminada?
+  \item[QP2, triagem.] A triagem reduz o esforço de revisão, medido pelas
+  armadilhas reportadas e pelo \textit{Inspection Ratio}, sem que nenhum defeito
+  real seja classificado como inviável? E quão estável é o resultado entre
+  execuções independentes?
+  \item[QP3, comparação com a literatura.] Como a etapa estática sozinha e a
+  etapa estática seguida da triagem se comparam com o que NIChecker, BMC4AV e
+  IntRace relatam, quando cada comparação é feita nos termos do artigo
+  correspondente?
+  \item[QP4, \textit{prompts}.] Qual a contribuição de cada técnica de
+  \textit{prompt}, respondida por uma ablação no formato de
+  \citeonline{llift}, e alguma variante das linhas de avaliação supera o ruído
+  entre execuções sem perder um defeito?
+  \item[QP5, gabarito estendido.] Quantos dos candidatos que o gabarito não anota
+  são defeitos reais, confirmados por uma testemunha concreta, e onde a triagem
+  coloca esses defeitos que ninguém havia rotulado?
+  \item[QP6, reparo.] O modelo propõe correções corretas para os defeitos
+  encontrados, e os resultados se mantêm na suíte de programas reais?
+\end{description}
 
 \subsection{Unidade de contagem e leitura do gabarito}
 
