@@ -744,7 +744,45 @@ corrigido depois de observar erros nos mesmos 20 casos, o número seguinte é
 otimista, e por isso as versões anteriores e posteriores são reportadas lado a
 lado. A errata corrige o que pode ser verificado no código, mas o rótulo de um
 caso cujas anotações descrevem outra versão do programa não pode ser corrigido
-sem decidir de novo o gabarito.
+sem decidir de novo o gabarito, e é essa a natureza da reetiquetagem tratada
+abaixo.
+
+Nos experimentos sobre os 31 casos, três execuções por configuração permitem
+afirmar uma diferença maior que a variação observada, mas não estimar essa
+variação com precisão, e por isso o resultado é dado com mínimo e máximo, e não
+com um intervalo de confiança. Uma diferença dentro dessa faixa não é tratada
+como efeito.
+
+As linhas \texttt{+racebench} foram escritas a partir do mesmo
+\textit{benchmark} em que são medidas, e cada ajuste feito depois de observar
+um erro torna o número seguinte otimista. A semântica que elas acrescentam não
+nomeia casos nem identificadores, mas descreve as convenções da suíte, e seus
+resultados medem a triagem sob essas convenções, e não em código de produção.
+As linhas de produção, avaliadas pela ablação e na suíte de programas reais,
+são as que respondem por esse uso.
+
+A reetiquetagem das cinco armadilhas foi decidida depois de observar as
+primeiras execuções, e move o gabarito na direção do que a ferramenta reporta.
+Ela se apoia numa intercalação concreta para cada item, lida contra o modelo de
+chegada declarado pelo próprio \textit{benchmark}, e todo resultado é dado
+também sob o gabarito conforme distribuído, para que o efeito da decisão seja
+visível. O gabarito estendido tem a mesma ameaça em escala maior, a de
+circularidade, já que a ferramenta propõe os defeitos sobre os quais depois é
+medida. As salvaguardas são as do protocolo, ou seja, testemunha concreta,
+adjudicação cega, regra de equivalência fixada antes da contagem, registro das
+rejeições e resultados sempre ao lado dos do gabarito 2.1. Ainda assim, o
+adjudicador principal é um dos autores, e a concordância com um segundo
+adjudicador só cobre uma amostra.
+
+Os números de S0 são relatados por seus autores, em equipamentos diferentes do
+usado aqui e, em parte, copiados de outros artigos, e até aqui apenas o do BMC4AV pôde ser
+recalculado contra as anotações. Os tempos de execução, em particular, não são
+comparáveis entre sistemas, e os de S2 dependem de um modelo acessado por
+assinatura, cuja versão e cuja latência o experimento não controla além de
+registrar a data e o nome do modelo. Por fim, os dois casos complexos do
+Racebench ficam fora dos experimentos enquanto não forem executados, e com eles
+a parte da competição sujeita ao limite de tempo e à pontuação mais pesada.
+\pendente{Confirmar se os casos complexos entram nos experimentos.}
 
 Duas ameaças são estruturais. Depois da integração a população muda, pois o
 modelo passa a receber apenas o que o solucionador não decidiu, que são os
