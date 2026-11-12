@@ -17,6 +17,8 @@ from irqrace.ui.benchmark_screen import STATIC_LAST_STEP, headline, run_batch, r
 from irqrace.ui.c1_wizard import (
     WizardError,
     WizardState,
+    flow_id_for,
+    flow_upsert,
     save_c1,
     scan_functions,
     suggest_flows,
@@ -64,6 +66,22 @@ def test_scan_and_suggestions_come_from_the_code(tmp_path: Path) -> None:
     assert prims["disable_isr"]["effect"] == "disable"
     assert prims["enable_isr"]["effect"] == "enable"
     assert suggest_primitives(["cli"])[0]["irq_arg"] is None  # bare cli(): affects all
+
+
+def test_flow_ids_come_from_the_entry_function() -> None:
+    assert flow_id_for("TIMER_ISR") == "TIMER_ISR"
+    assert flow_id_for("timer_isr", {"timer_isr"}) == "timer_isr_2"
+
+    # A loaded config keeps its ids. The entry is the key: the same entry
+    # updates in place, and a new one gets an id derived from it.
+    flows = [{"id": "isr_1", "kind": "isr", "entry": "uart_irq_handler", "irq": 1, "priority": 1}]
+    flow_upsert(flows, kind="isr", entry="uart_irq_handler", irq=4, priority=3)
+    assert flows == [{"id": "isr_1", "kind": "isr", "entry": "uart_irq_handler", "irq": 4, "priority": 3}]
+    flow_upsert(flows, kind="task", entry="main", irq=7, priority=0)
+    assert flows[1] == {"id": "main", "kind": "task", "entry": "main", "irq": None, "priority": 0}
+    # An entry that spells a taken id still gets a unique one.
+    flows.append({"id": "timer_isr", "kind": "isr", "entry": "other", "irq": 2, "priority": 2})
+    assert flow_upsert(flows, kind="isr", entry="timer_isr", irq=3, priority=3)["id"] == "timer_isr_2"
 
 
 def test_wizard_writes_a_file_the_pipeline_accepts(tmp_path: Path) -> None:

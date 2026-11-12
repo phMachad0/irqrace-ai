@@ -93,17 +93,56 @@ def scan_functions(paths: list[Path]) -> tuple[list[str], list[str]]:
     return sorted(defined), sorted(called - defined)
 
 
+def flow_id_for(entry: str, taken: set[str] | frozenset[str] = frozenset()) -> str:
+    """The id of a new flow, derived from its entry function (2026-11-12).
+
+    The id is only a key: stage 1 and the context records name flows by it, and
+    it enters the candidate fingerprint, so it must be unique, stable and a C1
+    ``FlowId``. Nothing reads meaning into its spelling. The entry is already
+    unique per flow and is a C identifier, so it serves as the id. The user no
+    longer types one, and a hand-typed ``isr_1`` can no longer contradict the
+    flow's actual IRQ number. *taken* holds ids already in use, e.g. by a
+    loaded config whose ids came from elsewhere. A clash gets a numeric suffix.
+    """
+    base = re.sub(r"\W", "_", entry.strip()) or "flow"
+    if not re.match(r"[A-Za-z_]", base):
+        base = "_" + base
+    fid, n = base, 1
+    while fid in taken:
+        n += 1
+        fid = f"{base}_{n}"
+    return fid
+
+
 def suggest_flows(defined: list[str]) -> list[dict[str, Any]]:
     """One task for the main-like entry and one ISR per handler-like name."""
     flows: list[dict[str, Any]] = []
     tasks = [f for f in defined if _TASK_NAME_RE.search(f) and not _ISR_NAME_RE.search(f)]
     main = next((f for f in tasks if f == "main"), tasks[0] if tasks else None)
     if main:
-        flows.append({"id": "main", "kind": "task", "entry": main, "irq": None, "priority": 0})
+        flows.append({"id": flow_id_for(main), "kind": "task", "entry": main, "irq": None, "priority": 0})
     isrs = [f for f in defined if _ISR_NAME_RE.search(f) and not _MASK_NAME_RE.search(f)]
     for n, fn in enumerate(isrs, start=1):
-        flows.append({"id": f"isr_{n}", "kind": "isr", "entry": fn, "irq": n, "priority": n})
+        flows.append({"id": flow_id_for(fn), "kind": "isr", "entry": fn, "irq": n, "priority": n})
     return flows
+
+
+def flow_upsert(flows: list[dict[str, Any]], *, kind: str, entry: str, irq: int | None,
+                priority: int) -> dict[str, Any]:
+    """Add a flow, or update the one with the same entry function, in place.
+
+    The entry is the key. An existing flow keeps its id, which may come from a
+    loaded config, so candidate fingerprints stay stable across edits. A new
+    flow gets :func:`flow_id_for`.
+    """
+    row = {"kind": kind, "entry": entry, "irq": irq if kind == "isr" else None, "priority": priority}
+    old = next((fl for fl in flows if fl["entry"] == entry), None)
+    if old is not None:
+        old.update(row)
+        return old
+    row = {"id": flow_id_for(entry, {fl["id"] for fl in flows}), **row}
+    flows.append(row)
+    return row
 
 
 def suggest_primitives(names: list[str]) -> list[dict[str, Any]]:
@@ -566,7 +605,8 @@ class ConfigWizard:
             f, wraplength=640, justify=tk.LEFT, foreground="#a33",
             text="Declare TODAS as rotinas de interrupção. Uma ISR que fica de fora não contribui "
                  "nenhum acesso, e os defeitos que só ela alcança desaparecem sem nenhum erro. "
-                 "Prioridade: número maior = prioridade maior.",
+                 "Prioridade: número maior = prioridade maior. O ID de cada fluxo é gerado a partir "
+                 "da função de entrada.",
         ).pack(anchor=tk.W, pady=(0, 6))
 
         cols = ("id", "kind", "entry", "irq", "priority")
@@ -579,13 +619,12 @@ class ConfigWizard:
 
         form = ttk.LabelFrame(f, text=" Fluxo ", padding=6)
         form.pack(fill=tk.X, pady=6)
-        self.flow_id = tk.StringVar()
         self.flow_kind = tk.StringVar(value="isr")
         self.flow_entry = tk.StringVar()
         self.flow_irq = tk.StringVar()
         self.flow_prio = tk.StringVar(value="1")
-        ttk.Label(form, text="ID").grid(row=0, column=0, sticky=tk.W)
-        ttk.Entry(form, textvariable=self.flow_id, width=12).grid(row=1, column=0, padx=(0, 6))
+        # No id field: the id comes from the entry function (flow_id_for), and
+        # the entry is the key, so the same entry updates and a new one adds.
         ttk.Label(form, text="Tipo").grid(row=0, column=1, sticky=tk.W)
         ttk.Combobox(form, textvariable=self.flow_kind, values=FLOW_KINDS, state="readonly",
                      width=7).grid(row=1, column=1, padx=(0, 6))
@@ -617,36 +656,26 @@ class ConfigWizard:
         if not sel:
             return
         fl = self.state.flows[int(sel[0])]
-        self.flow_id.set(fl["id"])
         self.flow_kind.set(fl["kind"])
         self.flow_entry.set(fl["entry"])
         self.flow_irq.set("" if fl.get("irq") is None else str(fl["irq"]))
         self.flow_prio.set(str(fl["priority"]))
 
     def _flow_upsert(self) -> None:
-        fid, kind, entry = self.flow_id.get().strip(), self.flow_kind.get(), self.flow_entry.get().strip()
+        kind, entry = self.flow_kind.get(), self.flow_entry.get().strip()
         try:
             prio = int(self.flow_prio.get())
             irq = _int_or_none(self.flow_irq.get())
         except ValueError:
             messagebox.showerror("Valor inválido", "IRQ e prioridade devem ser inteiros.", parent=self.win)
             return
-        if not fid or not entry:
-            messagebox.showerror("Campos obrigatórios", "Informe o ID e a função de entrada.", parent=self.win)
+        if not entry:
+            messagebox.showerror("Campo obrigatório", "Informe a função de entrada.", parent=self.win)
             return
         if kind == "isr" and irq is None:
             messagebox.showerror("IRQ obrigatória", "Uma ISR precisa do número da interrupção.", parent=self.win)
             return
-        row = {"id": fid, "kind": kind, "entry": entry, "irq": irq if kind == "isr" else None, "priority": prio}
-        idx = next((i for i, fl in enumerate(self.state.flows) if fl["id"] == fid), None)
-        clash = next((fl for fl in self.state.flows if fl["entry"] == entry and fl["id"] != fid), None)
-        if clash:
-            messagebox.showerror("Entrada repetida", f"O fluxo {clash['id']!r} já usa {entry!r}.", parent=self.win)
-            return
-        if idx is None:
-            self.state.flows.append(row)
-        else:
-            self.state.flows[idx] = row
+        flow_upsert(self.state.flows, kind=kind, entry=entry, irq=irq, priority=prio)
         self._refresh_flows()
 
     def _flow_remove(self) -> None:
