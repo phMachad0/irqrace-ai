@@ -204,6 +204,10 @@ EXPERIMENTAL: dict[str, PromptConfig] = {
     "+racebench-selfval": dataclasses.replace(
         _RACEBENCH, name="+racebench-selfval", self_validation=False
     ),
+    "+racebench+witness": dataclasses.replace(
+        _RACEBENCH, name="+racebench+witness",
+        stage_extra=(("feasibility", "racebench_witness.md"),),
+    ),
 }
 
 #: What each row is for, as the interface shows it.
@@ -217,4 +221,5 @@ ROW_HELP: dict[str, str] = {
     "+racebench": "Critérios do Racebench: a intercalação é o defeito, mesmo com leitor morto. Sem C4.",
     "+racebench+c4": "Critérios do Racebench, e a LLM pode pedir código (C4). Recomendado para esta suíte.",
     "+racebench-selfval": "+racebench sem as listas de autovalidação (viabilidade e dano). Variante experimental (T3).",
+    "+racebench+witness": "+racebench, e 'feasible' exige uma testemunha concreta da intercalação; sem ela, 'uncertain'. Variante experimental (T3).",
 }
