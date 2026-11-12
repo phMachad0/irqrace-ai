@@ -1,0 +1,31 @@
+# BMC4AV's Racebench subset: the 31 simple cases minus the six whose only
+# annotated pattern is (R,W,W) -- 025 to 030 -- which the BMC4AV paper drops as
+# benign (wiki: benchmarks/Racebench.md, "BMC4AV's 38 is fully traceable").
+# Derived from the annotations: these six are exactly the cases whose bug points
+# are all RWW (53/33 labels; the 2026-10-28 relabel touched none of them). Use with
+# `--exclude-pattern RWW` to score on BMC4AV's terms.
+svp_simple_001_001
+svp_simple_002_001
+svp_simple_003_001
+svp_simple_004_001
+svp_simple_005_001
+svp_simple_006_001
+svp_simple_007_001
+svp_simple_008_001
+svp_simple_009_001
+svp_simple_010_001
+svp_simple_011_001
+svp_simple_012_001
+svp_simple_013_001
+svp_simple_014_001
+svp_simple_015_001
+svp_simple_016_001
+svp_simple_017_001
+svp_simple_018_001
+svp_simple_019_001
+svp_simple_020_001
+svp_simple_021_001
+svp_simple_022_001
+svp_simple_023_001
+svp_simple_024_001
+svp_simple_031_001
