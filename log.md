@@ -1736,3 +1736,57 @@ file outside the repo now skips. Windows suite: 494 passed, 1 failed. The failur
 
 #10 had no diary entry, so it now has one. Diary:
 [[Semana 8 — Integração das Trilhas A e B]] §3.22, §3.26 and §6.
+
+## [2026-11-12] direction | Lucas Tasks page; T1 three-way Racebench comparison
+New page [[Lucas Tasks]], a backlog of Lucas's TCC tasks after the Roadmap. T1 compares three
+systems on Racebench: S0 is the published results by the tools' authors, S1 is our static stages
+alone, S2 is static + LLM triage. Two things are recorded there. First, S0 is not one number:
+NIChecker counts 54, BMC4AV 38 on 25 cases, IntRace 50 on 30, and the annotations now hold 53/33
+(48/38 before the relabel). So each baseline is compared on its own subset and ground truth. Second,
+the page lists the metrics (recall and per-pattern recall first; traps, precision, NASAC score,
+Inspection Ratio, cost, variance) and the 2026-10-28 numbers as the table's shape only, since the
+code has changed since. `../BMC4AV` and `../NIChecker` were not found next to the vault today.
+
+## [2026-11-12] direction | T2: Racebench 2.2, the ground truth extended with unannotated bugs
+Added to [[Lucas Tasks]]. The tool reports candidates the authors left unannotated, and the ones
+looked at so far appear correct. T2 builds an extended ground truth, using the same witness
+standard as the 2026-10-28 relabel. Three things guard against circularity: the tool proposes and a
+human adjudicates blind, rejections are recorded as well as acceptances, and 2.1 stays the headline
+for comparisons with the published tools. An equivalence rule for sibling triples is fixed before
+counting. Whether to name it "2.2" and whether to send it upstream are left open.
+
+## [2026-11-12] direction | T3: prompt comparison; Racebench selector narrowed to two rows
+The Racebench screen now offers only `+racebench` and `+racebench+c4` (`BENCH_PROMPTS`, with a test
+on it; 25/25 pass). No row was deleted from `irqrace.llm.prompts`: both Racebench rows derive from
+`+self-validation`, the ablation needs its four rows, and real code needs the production prompt.
+Five variants are designed in [[Lucas Tasks]] T3, each one change relative to `+racebench`:
+−selfval, +witness, +location, +effectfree (measured for its recall cost only), and +rubric. None
+is built yet. `+racebench+c4` has never been run on all 31 cases, so the first comparison is
+between the two baselines.
+
+## [2026-11-12] direction | T4: consolidate T1–T3 into the monograph, with comparative figures
+Added to [[Lucas Tasks]]. The results go into `05-desenvolvimento.tex` §"Testes e Avaliação" (its
+`\pendente` results subsection), one subsection per research question, with three questions added
+for T1–T3. The chapter is outdated in three places: it still says 48/38, it says only feasibility
+is scored on Racebench, and it lists four research questions. Eleven figures are planned (F1–F11),
+generated from versioned CSVs by one script. `matplotlib` is not installed in `venv/`, and
+`pgfplots` is not loaded.
+
+## [2026-11-12] direction | C1 wizard: flow id derived from the entry function; manual field removed
+The flow `id` is only a key. Stage 1 and the records name flows by it and it enters the candidate
+fingerprint, so it must be unique and stable, but nothing reads its spelling. The entry function is
+already unique per flow, so `flow_id_for` derives the id from it (with a numeric suffix on a clash),
+and the form no longer has the field. The entry is the edit key, and existing flows keep their id,
+including `isr_1` from a loaded C1. Test added. Full suite with `PYTHONUTF8=1`: 494 passed, 2 failed.
+Both failures happen without the change too (`test_generated_configs_on_disk_are_current` and the
+Streamlit walkthrough). Diary: [[Semana 8 — Integração das Trilhas A e B]] §3.27.
+
+## [2026-11-12] direction | Execution plan for T1–T4: milestones M0–M5 with alignment gates
+Approved and recorded in [[Lucas Tasks]] §"Execution plan". The plan:
+- PR #18 merges first, and branches start from `main`.
+- Agents push and open PRs, Lucas merges, and no Claude attribution goes in commits.
+- Measurements use `claude-cli:sonnet` with n = 3 independent runs.
+- T2 is adjudicated by humans, from blind dossiers.
+
+Found while planning: `--samples` is majority voting, and triage writes into the run, so each
+(prompt, run) pair triages its own copy of one frozen static run. T1 and T3 share the baseline runs.

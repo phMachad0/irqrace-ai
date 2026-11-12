@@ -1423,6 +1423,56 @@ parou.
 em cada contagem de passos, e nenhuma foi parada pelo relógio. O critério de pronto da *issue*, a bateria
 de 18 programas com `-j 1` e `-j 3`, depende de `realworld.py`, que só existe na `semana-9`.
 
+### 3.27. O ID do fluxo deixou de ser digitado, e a tela Racebench ficou com dois prompts (12 nov)
+
+Duas mudanças pequenas na interface, feitas depois do fim do [[Roadmap]] e registradas aqui porque mexem
+no código desta semana.
+
+**O ID do fluxo.** Um *fluxo* é cada linha de execução que o C1 (o arquivo de configuração do projeto
+analisado) declara: a tarefa principal e cada rotina de interrupção (ISR), com o tipo (`task` ou `isr`), a
+função de entrada, o número da IRQ e a prioridade. Cada fluxo tem também um `id`. O Stage 1 nomeia os
+acessos pelo `id`, os registros de contexto também, e o `id` entra no *fingerprint* do candidato, o *hash*
+que dá a cada candidato uma identidade estável e serve de chave ao cache da LLM. Por isso o `id` precisa
+ser único, estável e um identificador válido (o tipo `FlowId` do contrato: `^[A-Za-z_][A-Za-z0-9_]*$`).
+Nenhum código lê significado na grafia dele.
+
+No assistente do modo genérico, o `id` era um campo digitado à mão. Isso não servia para nada e podia
+errar: um `isr_1` digitado podia contradizer a IRQ real do fluxo, e um campo vazio impedia salvar. Como a
+função de entrada já é única por fluxo (o assistente recusava duas iguais) e já é um identificador C, ela
+passou a ser o `id`:
+
+```python
+# project-src/src/irqrace/ui/c1_wizard.py
+    base = re.sub(r"\W", "_", entry.strip()) or "flow"
+    if not re.match(r"[A-Za-z_]", base):
+        base = "_" + base
+    fid, n = base, 1
+    while fid in taken:
+        n += 1
+        fid = f"{base}_{n}"
+    return fid
+```
+
+O campo saiu do formulário. A chave da edição agora é a função de entrada: "Adicionar / Atualizar" com uma
+função que já está na lista atualiza esse fluxo, e com uma função nova acrescenta um. **Um fluxo que já
+existia mantém o `id`**, inclusive o de um C1 carregado de disco com `isr_1`, para não mudar os
+*fingerprints* dos candidatos de quem edita uma configuração antiga. A tabela continua mostrando a coluna
+ID, só para leitura. As sugestões a partir do código (`suggest_flows`) usam a mesma regra. Os C1 do
+Racebench, gerados por outro caminho, não mudaram, e a descrição de `FlowId` no contrato (que cita `main`,
+`isr_1`, …) continua valendo como convenção desses arquivos.
+
+**A tela Racebench.** O seletor de prompt dessa tela passou a oferecer só `+racebench` e `+racebench+c4`
+(`BENCH_PROMPTS` em `benchmark_screen.py`), os melhores nesta suíte até agora. As outras linhas continuam
+definidas em `irqrace.llm.prompts`, porque as duas de Racebench são construídas sobre `+self-validation`, a
+ablação precisa das quatro e o código real usa o prompt de produção. A comparação dos prompts é a tarefa T3
+de [[Lucas Tasks]].
+
+**Testes.** `test_flow_ids_come_from_the_entry_function` cobre a geração, a colisão de nomes e a
+preservação do `id` antigo. O teste da tela Racebench confere a lista do seletor. Suíte inteira, com
+`PYTHONUTF8=1`: 494 passaram e 2 falharam, `test_generated_configs_on_disk_are_current` e
+`test_full_streamlit_interactive_walkthrough`. As duas falhas são anteriores a esta mudança: falham também
+com ela desfeita (`git stash`). Sem `PYTHONUTF8=1`, `test_groundtruth` falha ao ler o gabarito em cp1252.
+
 ## 4. Achados e decisões
 
 1. **O mesmo defeito, em seis lugares.** Stage 2 e Z3 simulados, reverificação `ok` sem execução,

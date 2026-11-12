@@ -25,6 +25,7 @@ the LLM per `CLAUDE.md` — update on every ingest.
 | [[Dashboard Design]] | the UI: Streamlit over a headless core, 45 numbered requirements, run store layout |
 | [[Soundness Assumptions]] | **the list the no-false-negatives claim is relative to** — 56 entries, each with how it could hide a defect; W5 added F6–F9, H1d, I4; W6–W7 the solver's group J and A4; H1e states the defect class |
 | [[Roadmap]] | 10-week plan to 6 Nov: static / LLM / UI tracks, four contracts, five milestones, de-scoping ladder; status callout as of 22 Oct |
+| [[Lucas Tasks]] | post-Roadmap TCC backlog. T1: three-way Racebench comparison (published results vs our static stages vs static + LLM): metrics, the comparability protocol, steps. T2: "Racebench 2.2", the ground truth extended with adjudicated unannotated bugs, with the guards against circularity. T3: comparative analysis of the prompts, starting from `+racebench` vs `+racebench+c4`, with five one-change variants and a paired protocol. T4: consolidation into the monograph, with a results structure per research question and 11 planned comparative figures |
 | [[Synthesis]] | what the four sources collectively say; working thesis statement |
 | [[Open Questions]] | sources to acquire, empirical questions a TCC could answer |
 
