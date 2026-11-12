@@ -1,0 +1,57 @@
+# Racebench 2.2 -- the 2.1 ground truth extended with adjudicated, unannotated triples.
+#
+# STATUS: DRAFT, gate M4a (2026-11-12). Zero entries until the human adjudication
+# starts. The name "2.2" is provisional: it reads like an upstream release, and
+# "2.2-irqrace" is the alternative on the table (wiki: Lucas Tasks, T2).
+#
+# What this file is. The 2.1 labels -- 53 bug points and 33 traps on the 31 simple
+# cases (bench/racebench + racebench-errata.yaml, relabel 2026-10-28) -- are never
+# edited by it. Each entry here labels ONE triple that 2.1 left unannotated, after a
+# human checked it from the source and the README's arrival model alone, blind to the
+# tool's LLM stage. Protocol: docs/evaluation-protocol.md, "DRAFT -- Racebench 2.2".
+# Loader and validator: src/irqrace/labels_ext.py (`ground_truth("2.1" | "2.2")`).
+#
+# Rejections are recorded too. A triple judged unreachable is a `trap` entry, one
+# judged reachable but without observable effect is `not-a-defect`; otherwise 2.2
+# could only ever grow in the tool's favour.
+#
+# Entry schema (every field is checked by labels_ext.parse_labels; the loader fails
+# on the first malformed file, as the errata loader does):
+#
+#   - id: R22-0001                      # stable, unique; numbering only
+#     case: svp_simple_001_001
+#     variable: svp_simple_001_001_global_var      # source-level name, as annotations name it
+#     triple:                           # A1, B, A2 -- in that order
+#       - {role: A1, kind: write, line: 43, flow: isr_1}
+#       - {role: B,  kind: read,  line: 64, flow: isr_2}
+#       - {role: A2, kind: write, line: 44, flow: isr_1}
+#       # optional per access: `file: common.c` (default: the case file)
+#     candidate_ids: [c0123456789abcdef]  # the tool's records with these lines (informational)
+#     verdict: bug                      # bug | trap | not-a-defect | undecided
+#     witness:                          # all four required when verdict is bug
+#       arrival_point: "..."            # where B's flow arrives: function, between which lines
+#       masking_at_arrival: "..."       # state of B's irq there, and why it is unmasked
+#       guard_values: "..."             # values that make every guard on A1, B and A2 pass
+#       effect: "..."                   # the observable change in A1/A2 (shape RWR/WWR/RWW/WRW)
+#     blocking_reason: null             # required unless verdict is bug
+#     adjudicator: Lucas
+#     date: 2026-11-20
+#     second_check:                     # independent, blind to the first verdict too
+#       done: false                     # true -> adjudicator (another person) and verdict required
+#       adjudicator: null
+#       verdict: null
+#       date: null
+#     notes: null
+#
+# Denominators: `bug` entries join the bug points, `trap` entries the traps.
+# `not-a-defect` and `undecided` join neither and are reported as counts (whether
+# not-a-defect should count as a trap, as 022's "可能误报" do in 2.1, is open at M4a).
+# Every count is reported as triples and as distinct defects (the equivalence rule).
+
+schema_version: labels-ext/1.0.0
+label_set: "2.2"
+base: "2.1"
+suite: racebench 2.1_remarks (vendored at bench/racebench, upstream ec1d828) + racebench-errata.yaml
+equivalence_rule: docs/evaluation-protocol.md, "Rule E"
+
+entries: []
