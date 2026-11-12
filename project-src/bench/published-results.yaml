@@ -1,0 +1,152 @@
+# S0 -- what the published tools report on Racebench (the 31 simple cases), as data.
+#
+# One row per (tool, reported_by, cases, ground_truth, metric). Transcribed from
+# the wiki, which carries the citation into each paper:
+#   wiki/comparisons/Reported Results Across Papers.md, "On Racebench"
+#   wiki/benchmarks/Racebench.md, "Reconciling the papers' counts"
+#   wiki/sources/{IntRace,NIChecker,BMC4AV} (paper).md, "Evaluation"
+# Loaded and checked by irqrace.bench_metrics.load_published, which writes it to
+# published.csv in every results directory.
+#
+# Read these numbers on their own terms. The papers disagree about what Racebench
+# contains (ground_truth: 50, 54, 38 -- and the annotations held 48 before the
+# 2026-10-28 relabel, 53 since); none was scored against 53/33. Different cases,
+# different defect classes, different hardware.
+#
+# Fields:
+#   cases           number of simple cases the reporting paper evaluated
+#   ground_truth    the defect count that paper assumes for those cases
+#   defect_class    data race | atomicity violation
+#   rerun_or_copied run     -- run by the reporting paper, on its own hardware
+#                   copied  -- taken from another paper (or compares against such a number)
+#                   rebased -- this project re-expressed a reported number against the annotations
+#                   unknown -- the wiki does not establish which
+#   hardware        of the run, as the reporting paper states it
+#   source          wiki page and section the number comes from
+#   note            optional; not exported to published.csv
+# Not included: Rchecker, whose Racebench numbers appear in the wiki only as
+# IntRace's relative claim (-73.2% false positives), never as a value.
+
+schema_version: published-results/1.0.0
+suite: racebench 2.1 simple cases
+transcribed: 2026-11-12
+
+rows:
+  # -- IntRace (data races; one case dropped because Rchecker errored on it) --------
+  - {tool: IntRace, reported_by: IntRace, cases: 30, ground_truth: 50, defect_class: data race,
+     metric: false_positives, value: 5, rerun_or_copied: run,
+     hardware: "Intel Xeon E5-2630, 32 GB, Ubuntu 16",
+     source: "wiki/sources/IntRace (paper).md, Evaluation; wiki/comparisons/Reported Results Across Papers.md, On Racebench"}
+  - {tool: IntRace, reported_by: IntRace, cases: 30, ground_truth: 50, defect_class: data race,
+     metric: detection_rate, value: 0.907, rerun_or_copied: run,
+     hardware: "Intel Xeon E5-2630, 32 GB, Ubuntu 16",
+     source: "wiki/sources/IntRace (paper).md, Evaluation; wiki/comparisons/Reported Results Across Papers.md, On Racebench"}
+  - {tool: IntRace, reported_by: IntRace, cases: 30, ground_truth: 50, defect_class: data race,
+     metric: fp_reduction_vs_rchecker, value: 0.732, rerun_or_copied: copied,
+     hardware: "Intel Xeon E5-2630, 32 GB, Ubuntu 16 (Rchecker's side: its own paper's machine)",
+     source: "wiki/sources/IntRace (paper).md, Evaluation and Claims to check",
+     note: "IntRace's own run against Rchecker numbers copied from Rchecker's paper; Rchecker unobtainable"}
+
+  # -- NIChecker (atomicity violations; 54 assumed, six more than the 48 annotations) -
+  - {tool: NIChecker, reported_by: NIChecker, cases: 31, ground_truth: 54, defect_class: atomicity violation,
+     metric: violations_detected, value: 54, rerun_or_copied: run,
+     hardware: "Intel Xeon Silver 4215 (8 cores), 128 GB, Ubuntu 20",
+     source: "wiki/sources/NIChecker (paper).md, Evaluation; wiki/benchmarks/Racebench.md, Reconciling the papers' counts"}
+  - {tool: NIChecker, reported_by: NIChecker, cases: 31, ground_truth: 54, defect_class: atomicity violation,
+     metric: false_positives, value: 2, rerun_or_copied: run,
+     hardware: "Intel Xeon Silver 4215 (8 cores), 128 GB, Ubuntu 20",
+     source: "wiki/sources/NIChecker (paper).md, Evaluation; wiki/comparisons/Reported Results Across Papers.md, On Racebench"}
+  - {tool: NIChecker, reported_by: NIChecker, cases: 31, ground_truth: 54, defect_class: atomicity violation,
+     metric: precision, value: 0.964, rerun_or_copied: run,
+     hardware: "Intel Xeon Silver 4215 (8 cores), 128 GB, Ubuntu 20",
+     source: "wiki/sources/NIChecker (paper).md, Evaluation; wiki/comparisons/Reported Results Across Papers.md, On Racebench"}
+  - {tool: intAtom, reported_by: NIChecker, cases: 31, ground_truth: 54, defect_class: atomicity violation,
+     metric: recall, value: 1.0, rerun_or_copied: copied,
+     hardware: "not stated (intAtom's own paper)",
+     source: "wiki/sources/NIChecker (paper).md, Evaluation; wiki/tools/intAtom.md",
+     note: "'finds every violation, with a higher false-positive rate than NIChecker'; intAtom unobtainable"}
+  - {tool: CPA4AV, reported_by: NIChecker, cases: 14, ground_truth: 54, defect_class: atomicity violation,
+     metric: cases_failed_timeout_or_oom, value: 3, rerun_or_copied: unknown,
+     hardware: "not stated",
+     source: "wiki/sources/NIChecker (paper).md, Evaluation; wiki/tools/CPA4AV.md",
+     note: "supports 14 of 31 cases; fails on the three needing a 10,000 unwind bound"}
+
+  # -- BMC4AV (preprint; 25 cases, the six RWW-only ones dropped; 38 assumed) --------
+  - {tool: BMC4AV, reported_by: BMC4AV, cases: 25, ground_truth: 38, defect_class: atomicity violation,
+     metric: violations_detected, value: 38, rerun_or_copied: run,
+     hardware: "Intel Xeon E5-2620, 32 GB, Ubuntu 20.04",
+     source: "wiki/sources/BMC4AV (paper).md, Evaluation; wiki/comparisons/Reported Results Across Papers.md, On Racebench"}
+  - {tool: BMC4AV, reported_by: BMC4AV, cases: 25, ground_truth: 38, defect_class: atomicity violation,
+     metric: false_positives, value: 0, rerun_or_copied: run,
+     hardware: "Intel Xeon E5-2620, 32 GB, Ubuntu 20.04",
+     source: "wiki/sources/BMC4AV (paper).md, Evaluation"}
+  - {tool: BMC4AV, reported_by: BMC4AV, cases: 25, ground_truth: 38, defect_class: atomicity violation,
+     metric: recall, value: 1.0, rerun_or_copied: run,
+     hardware: "Intel Xeon E5-2620, 32 GB, Ubuntu 20.04",
+     source: "wiki/sources/BMC4AV (paper).md, Evaluation (38/38)"}
+  - {tool: BMC4AV, reported_by: BMC4AV, cases: 25, ground_truth: 38, defect_class: atomicity violation,
+     metric: precision, value: 1.0, rerun_or_copied: run,
+     hardware: "Intel Xeon E5-2620, 32 GB, Ubuntu 20.04",
+     source: "wiki/sources/BMC4AV (paper).md, Evaluation (zero false positives)"}
+  - {tool: BMC4AV, reported_by: BMC4AV, cases: 25, ground_truth: 38, defect_class: atomicity violation,
+     metric: time_total_s, value: 6.35, rerun_or_copied: run,
+     hardware: "Intel Xeon E5-2620, 32 GB, Ubuntu 20.04",
+     source: "wiki/sources/BMC4AV (paper).md, Evaluation"}
+  - {tool: BMC4AV, reported_by: BMC4AV, cases: 25, ground_truth: 25, defect_class: atomicity violation,
+     metric: bug_points_detected_RWR, value: 25, rerun_or_copied: run,
+     hardware: "Intel Xeon E5-2620, 32 GB, Ubuntu 20.04",
+     source: "wiki/benchmarks/Racebench.md, BMC4AV's 38 is fully traceable (the artifact's results file)"}
+  - {tool: BMC4AV, reported_by: BMC4AV, cases: 25, ground_truth: 7, defect_class: atomicity violation,
+     metric: bug_points_detected_WWR, value: 7, rerun_or_copied: run,
+     hardware: "Intel Xeon E5-2620, 32 GB, Ubuntu 20.04",
+     source: "wiki/benchmarks/Racebench.md, BMC4AV's 38 is fully traceable (the artifact's results file)"}
+  - {tool: BMC4AV, reported_by: BMC4AV, cases: 25, ground_truth: 6, defect_class: atomicity violation,
+     metric: bug_points_detected_WRW, value: 6, rerun_or_copied: run,
+     hardware: "Intel Xeon E5-2620, 32 GB, Ubuntu 20.04",
+     source: "wiki/benchmarks/Racebench.md, BMC4AV's 38 is fully traceable (the artifact's results file)"}
+  - {tool: BMC4AV, reported_by: irqrace (re-based), cases: 31, ground_truth: 48, defect_class: atomicity violation,
+     metric: bug_points_detected, value: 38, rerun_or_copied: rebased,
+     hardware: "Intel Xeon E5-2620, 32 GB, Ubuntu 20.04 (BMC4AV's run)",
+     source: "wiki/benchmarks/Racebench.md, BMC4AV's 38 is fully traceable; wiki/comparisons/Contradictions.md #2",
+     note: "the 48/38 annotations: 3 RWW bug points missed inside the 25-case subset (017, 021, 023), 7 in the dropped cases"}
+  - {tool: BMC4AV, reported_by: irqrace (re-based), cases: 31, ground_truth: 48, defect_class: atomicity violation,
+     metric: recall, value: 0.792, rerun_or_copied: rebased,
+     hardware: "Intel Xeon E5-2620, 32 GB, Ubuntu 20.04 (BMC4AV's run)",
+     source: "wiki/benchmarks/Racebench.md, BMC4AV's 38 is fully traceable; wiki/comparisons/Contradictions.md #2",
+     note: "38 of 48 = 79.2%: its 38/38 is relative to a ground truth that drops (R,W,W)"}
+  - {tool: iCBMC+, reported_by: BMC4AV, cases: 25, ground_truth: 38, defect_class: atomicity violation,
+     metric: warnings, value: 58, rerun_or_copied: unknown,
+     hardware: "Intel Xeon E5-2620, 32 GB, Ubuntu 20.04 (if re-run)",
+     source: "wiki/sources/BMC4AV (paper).md, Evaluation; wiki/comparisons/Reported Results Across Papers.md, On Racebench"}
+  - {tool: iCBMC+, reported_by: BMC4AV, cases: 25, ground_truth: 38, defect_class: atomicity violation,
+     metric: false_positives, value: 20, rerun_or_copied: unknown,
+     hardware: "Intel Xeon E5-2620, 32 GB, Ubuntu 20.04 (if re-run)",
+     source: "wiki/sources/BMC4AV (paper).md, Evaluation"}
+  - {tool: iCBMC+, reported_by: BMC4AV, cases: 25, ground_truth: 38, defect_class: atomicity violation,
+     metric: precision, value: 0.679, rerun_or_copied: unknown,
+     hardware: "Intel Xeon E5-2620, 32 GB, Ubuntu 20.04 (if re-run)",
+     source: "wiki/sources/BMC4AV (paper).md, Evaluation"}
+  - {tool: iCBMC+, reported_by: BMC4AV, cases: 25, ground_truth: 38, defect_class: atomicity violation,
+     metric: time_total_s, value: 130.36, rerun_or_copied: unknown,
+     hardware: "Intel Xeon E5-2620, 32 GB, Ubuntu 20.04 (if re-run)",
+     source: "wiki/comparisons/Reported Results Across Papers.md, On Racebench"}
+  - {tool: intAtom, reported_by: BMC4AV, cases: 25, ground_truth: 38, defect_class: atomicity violation,
+     metric: warnings, value: 44, rerun_or_copied: copied,
+     hardware: "not stated (intAtom's own paper)",
+     source: "wiki/sources/BMC4AV (paper).md, Evaluation; wiki/comparisons/Reported Results Across Papers.md, On Racebench (marked copied)"}
+  - {tool: intAtom, reported_by: BMC4AV, cases: 25, ground_truth: 38, defect_class: atomicity violation,
+     metric: false_positives, value: 6, rerun_or_copied: copied,
+     hardware: "not stated (intAtom's own paper)",
+     source: "wiki/sources/BMC4AV (paper).md, Evaluation; wiki/tools/intAtom.md"}
+  - {tool: intAtom, reported_by: BMC4AV, cases: 25, ground_truth: 38, defect_class: atomicity violation,
+     metric: precision, value: 0.864, rerun_or_copied: copied,
+     hardware: "not stated (intAtom's own paper)",
+     source: "wiki/sources/BMC4AV (paper).md, Evaluation; wiki/tools/intAtom.md"}
+  - {tool: NIChecker, reported_by: BMC4AV, cases: 25, ground_truth: 38, defect_class: atomicity violation,
+     metric: warnings, value: 40, rerun_or_copied: unknown,
+     hardware: "Intel Xeon E5-2620, 32 GB, Ubuntu 20.04 (if re-run)",
+     source: "wiki/sources/BMC4AV (paper).md, Evaluation; wiki/comparisons/Reported Results Across Papers.md, On Racebench"}
+  - {tool: NIChecker, reported_by: BMC4AV, cases: 25, ground_truth: 38, defect_class: atomicity violation,
+     metric: false_positives, value: 2, rerun_or_copied: unknown,
+     hardware: "Intel Xeon E5-2620, 32 GB, Ubuntu 20.04 (if re-run)",
+     source: "wiki/sources/BMC4AV (paper).md, Evaluation"}
