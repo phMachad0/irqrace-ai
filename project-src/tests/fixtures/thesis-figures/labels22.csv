@@ -1,0 +1,11 @@
+case,item_id,verdict,group
+synthetic_case_001_001,cand 02,bug,synthetic_case_001_001:G1
+synthetic_case_001_001,cand 03,bug,synthetic_case_001_001:G1
+synthetic_case_002_001,cand 01,bug,synthetic_case_002_001:G2
+synthetic_case_002_001,cand 02,bug,synthetic_case_002_001:G3
+synthetic_case_002_001,cand 04,bug,synthetic_case_002_001:G4
+synthetic_case_003_001,cand 04,bug,synthetic_case_003_001:G5
+synthetic_case_004_001,cand 03,trap,
+synthetic_case_005_001,cand 01,not_defect,
+synthetic_case_005_001,cand 04,undecided,
+synthetic_case_006_001,cand 01,bug,synthetic_case_006_001:G9

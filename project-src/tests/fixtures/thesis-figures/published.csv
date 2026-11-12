@@ -1,0 +1,11 @@
+tool,reported_by,cases,ground_truth,defect_class,metric,value,rerun_or_copied,hardware,source
+ToolA-sintetico,ToolA-sintetico,25,38,synthetic,recall,1.0,rerun,SYNTHETIC,SYNTHETIC
+ToolA-sintetico,ToolA-sintetico,25,38,synthetic,traps_reported,0,rerun,SYNTHETIC,SYNTHETIC
+ToolB-sintetico,ToolA-sintetico,25,38,synthetic,recall,0.6,copied,SYNTHETIC,SYNTHETIC
+ToolB-sintetico,ToolA-sintetico,25,38,synthetic,traps_reported,4,copied,SYNTHETIC,SYNTHETIC
+ToolC-sintetico,ToolC-sintetico,30,50,synthetic,recall,0.9,rerun,SYNTHETIC,SYNTHETIC
+ToolC-sintetico,ToolC-sintetico,30,50,synthetic,traps_reported,2,rerun,SYNTHETIC,SYNTHETIC
+ToolA-sintetico,ToolA-sintetico,25,38,synthetic,recall_RWR,1.0,rerun,SYNTHETIC,SYNTHETIC
+ToolA-sintetico,ToolA-sintetico,25,38,synthetic,recall_WWR,1.0,rerun,SYNTHETIC,SYNTHETIC
+ToolA-sintetico,ToolA-sintetico,25,38,synthetic,recall_WRW,1.0,rerun,SYNTHETIC,SYNTHETIC
+ToolA-sintetico,ToolA-sintetico,25,38,synthetic,recall_RWW,0.0,rerun,SYNTHETIC,SYNTHETIC
