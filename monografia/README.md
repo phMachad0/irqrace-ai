@@ -41,6 +41,22 @@ são baixados na primeira compilação.
 | `figuras/` | imagens |
 | `referencias.bib` | bibliografia |
 
+## Figuras dos resultados
+
+As figuras F1 a F11 da avaliação são geradas, nunca desenhadas à mão, por
+`project-src/scripts/thesis-figures.py`, a partir dos CSVs versionados das
+execuções (formato no docstring do script). Com o extra `figures` instalado
+(`pip install -e ".[figures]"`, dentro de `project-src`):
+
+```bash
+python scripts/thesis-figures.py --data results/thesis
+```
+
+Os PDFs saem em `monografia/figuras/`, com `thesis-figures.json` registrando de
+que execuções saiu cada figura, o que o `\fonte{}` correspondente deve citar.
+Os dados de `project-src/tests/fixtures/thesis-figures/` são sintéticos e
+servem só ao teste: nada gerado a partir deles entra nesta pasta.
+
 ## Ficha catalográfica
 
 A folha de rosto sai sem ficha nesta versão. Para a entrega final, gere a ficha
