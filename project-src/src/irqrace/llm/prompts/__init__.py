@@ -208,6 +208,10 @@ EXPERIMENTAL: dict[str, PromptConfig] = {
         _RACEBENCH, name="+racebench+witness",
         stage_extra=(("feasibility", "racebench_witness.md"),),
     ),
+    "+racebench+location": dataclasses.replace(
+        _RACEBENCH, name="+racebench+location",
+        stage_extra=(("feasibility", "racebench_location.md"),),
+    ),
 }
 
 #: What each row is for, as the interface shows it.
@@ -222,4 +226,5 @@ ROW_HELP: dict[str, str] = {
     "+racebench+c4": "Critérios do Racebench, e a LLM pode pedir código (C4). Recomendado para esta suíte.",
     "+racebench-selfval": "+racebench sem as listas de autovalidação (viabilidade e dano). Variante experimental (T3).",
     "+racebench+witness": "+racebench, e 'feasible' exige uma testemunha concreta da intercalação; sem ela, 'uncertain'. Variante experimental (T3).",
+    "+racebench+location": "+racebench, e o endereço que A1, B e A2 tocam (índice, ponteiro) é resolvido antes da viabilidade. Variante experimental (T3).",
 }
