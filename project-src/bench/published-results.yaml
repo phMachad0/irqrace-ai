@@ -89,7 +89,7 @@ rows:
      hardware: "Intel Xeon E5-2620, 32 GB, Ubuntu 20.04",
      source: "wiki/sources/BMC4AV (paper).md, Evaluation (zero false positives)"}
   - {tool: BMC4AV, reported_by: BMC4AV, cases: 25, ground_truth: 38, defect_class: atomicity violation,
-     metric: time_total_s, value: 6.35, rerun_or_copied: run,
+     metric: time_s, value: 6.35, rerun_or_copied: run,
      hardware: "Intel Xeon E5-2620, 32 GB, Ubuntu 20.04",
      source: "wiki/sources/BMC4AV (paper).md, Evaluation"}
   - {tool: BMC4AV, reported_by: BMC4AV, cases: 25, ground_truth: 25, defect_class: atomicity violation,
@@ -104,6 +104,20 @@ rows:
      metric: bug_points_detected_WRW, value: 6, rerun_or_copied: run,
      hardware: "Intel Xeon E5-2620, 32 GB, Ubuntu 20.04",
      source: "wiki/benchmarks/Racebench.md, BMC4AV's 38 is fully traceable (the artifact's results file)"}
+  # The same three counts as recall on BMC4AV's own terms (each pattern found in full;
+  # RWW is outside its ground truth, so it has no row here). For the per-pattern figure.
+  - {tool: BMC4AV, reported_by: BMC4AV, cases: 25, ground_truth: 25, defect_class: atomicity violation,
+     metric: recall_RWR, value: 1.0, rerun_or_copied: run,
+     hardware: "Intel Xeon E5-2620, 32 GB, Ubuntu 20.04",
+     source: "wiki/benchmarks/Racebench.md, BMC4AV's 38 is fully traceable (25 of 25)"}
+  - {tool: BMC4AV, reported_by: BMC4AV, cases: 25, ground_truth: 7, defect_class: atomicity violation,
+     metric: recall_WWR, value: 1.0, rerun_or_copied: run,
+     hardware: "Intel Xeon E5-2620, 32 GB, Ubuntu 20.04",
+     source: "wiki/benchmarks/Racebench.md, BMC4AV's 38 is fully traceable (7 of 7)"}
+  - {tool: BMC4AV, reported_by: BMC4AV, cases: 25, ground_truth: 6, defect_class: atomicity violation,
+     metric: recall_WRW, value: 1.0, rerun_or_copied: run,
+     hardware: "Intel Xeon E5-2620, 32 GB, Ubuntu 20.04",
+     source: "wiki/benchmarks/Racebench.md, BMC4AV's 38 is fully traceable (6 of 6)"}
   - {tool: BMC4AV, reported_by: irqrace (re-based), cases: 31, ground_truth: 48, defect_class: atomicity violation,
      metric: bug_points_detected, value: 38, rerun_or_copied: rebased,
      hardware: "Intel Xeon E5-2620, 32 GB, Ubuntu 20.04 (BMC4AV's run)",
@@ -127,7 +141,7 @@ rows:
      hardware: "Intel Xeon E5-2620, 32 GB, Ubuntu 20.04 (if re-run)",
      source: "wiki/sources/BMC4AV (paper).md, Evaluation"}
   - {tool: iCBMC+, reported_by: BMC4AV, cases: 25, ground_truth: 38, defect_class: atomicity violation,
-     metric: time_total_s, value: 130.36, rerun_or_copied: unknown,
+     metric: time_s, value: 130.36, rerun_or_copied: unknown,
      hardware: "Intel Xeon E5-2620, 32 GB, Ubuntu 20.04 (if re-run)",
      source: "wiki/comparisons/Reported Results Across Papers.md, On Racebench"}
   - {tool: intAtom, reported_by: BMC4AV, cases: 25, ground_truth: 38, defect_class: atomicity violation,
