@@ -815,6 +815,10 @@ def cmd_llm_triage(args: argparse.Namespace) -> int:
                 print(f"  [{t.bucket.value:<17}] {t.candidate_id}  NOT TRIAGED: {t.not_triaged}")
             else:
                 print(f"  [{t.bucket.value:<17}] {t.candidate_id}  conf={t.feasibility.confidence:.2f}")
+        spend = summary.get("spend")
+        if spend is not None:
+            print(spend.report())
+            print(spend.machine_line())
         return 0
 
     if not target.is_file():

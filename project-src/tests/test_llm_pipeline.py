@@ -209,6 +209,20 @@ def test_cli_llm_triage_and_repair_commands(monkeypatch, tmp_path):
     assert store2.check() == []
 
 
+def test_cli_llm_triage_prints_its_token_spend(monkeypatch, tmp_path, capsys):
+    """The run directory records no tokens; a batch log keeps them through this line."""
+    from irqrace.llm import backends
+
+    monkeypatch.setitem(backends.REGISTRY, "fake", lambda model: FakeBackend(
+        [_feas(Feasibility.feasible), _harm(Harmfulness.harmful), _feas(Feasibility.infeasible)]))
+    store = _seed_store(tmp_path, run_id="r-spend")
+    assert cli.main(["llm", "triage", str(store.root), "--backend", "fake:v1", "--resolver", "mock"]) == 0
+    line = next(ln for ln in capsys.readouterr().out.splitlines() if ln.startswith("spend: "))
+    fields = dict(kv.split("=") for kv in line.removeprefix("spend: ").split())
+    assert (fields["requests"], fields["tokens_in"], fields["tokens_out"], fields["cache_read"]) == (
+        "3", "2400", "600", "1800")
+
+
 class FlakyBackend(FakeBackend):
     """Fails every request that carries one candidate's id, as a rate limit would."""
 
