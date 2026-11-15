@@ -11,6 +11,7 @@ import pandas as pd
 import streamlit as st
 import yaml
 
+from irqrace.candidate import access_locations
 from irqrace.llm.annotations import locate_suite
 from irqrace.llm.client import FEASIBILITY_TASK, render_record
 from irqrace.llm.fixtures import load_all as load_all_fixtures
@@ -19,6 +20,7 @@ from irqrace.llm.repair import (
     REPAIR_TASK,
     Patch,
     apply_unified_diff,
+    patch_file,
     default_repair_prompt,
     witness_problems,
 )
@@ -713,22 +715,30 @@ def render_pipeline_demo_page(store: RunStore) -> None:
         with col_in:
             st.markdown("#### 📥 Entrada: Código C (`.c`)")
             subj = manifest.get("subject", {})
-            sources = subj.get("sources", [])
-            resolved = _resolve_source_file(subj.get("source_root", ""), sources[0]) if sources else None
-            highlights = {
-                a["source"]["line"]: (
-                    f"{a['role']} ({a['flow']} {a['kind']})",
-                    "#f59e0b" if a["role"] == "B" else "#ef4444",
-                )
-                for a in cand.get("accesses", [])
-                if a.get("source", {}).get("line")
-            }
-            if resolved:
+            accesses = [a for a in cand.get("accesses", []) if a.get("source", {}).get("line")]
+            files = list(dict.fromkeys(a["source"]["file"] for a in accesses)) or subj.get("sources", [])[:1]
+            shown = False
+            # One panel per file: an access marks a line only in its own file.
+            for rel in files:
+                resolved = _resolve_source_file(subj.get("source_root", ""), rel)
+                if not resolved:
+                    continue
+                shown = True
+                if len(files) > 1:
+                    st.markdown(f"**`{rel}`**")
+                highlights = {
+                    a["source"]["line"]: (
+                        f"{a['role']} ({a['flow']} {a['kind']})",
+                        "#f59e0b" if a["role"] == "B" else "#ef4444",
+                    )
+                    for a in accesses
+                    if a["source"]["file"] == rel
+                }
                 st.markdown(
                     _highlight_c_source(resolved.read_text(encoding="utf-8", errors="replace"), 1, highlights),
                     unsafe_allow_html=True,
                 )
-            else:
+            if not shown:
                 for enc in cand.get("enclosing_source", []):
                     st.code(enc["code"], language="c")
 
@@ -806,7 +816,7 @@ def render_pipeline_demo_page(store: RunStore) -> None:
                     "Padrão": c.get("pattern"),
                     "Variável": c.get("variable", {}).get("name"),
                     "Fluxos": " ⚡ ".join(a["flow"] for a in c.get("accesses", [])),
-                    "Linhas": " / ".join(str(a["source"]["line"]) for a in c.get("accesses", [])),
+                    "Acessos": access_locations(c.get("accesses", [])),
                     "Gabarito": gt_map.get(c["id"], "FP"),
                 }
                 for c in s1_cands
@@ -1028,7 +1038,7 @@ def render_pipeline_demo_page(store: RunStore) -> None:
             st.info(f"**Nota de Latência:** {patch_doc.get('latency_note')}")
 
             try:
-                probs = witness_problems(Patch.model_validate(patch_doc), record)
+                probs = witness_problems(Patch.model_validate({"file": "", **patch_doc}), record)
                 if not probs:
                     st.success("✅ Witness validada contra o registro C2 (`0 problemas`).")
             except Exception:
@@ -1038,15 +1048,17 @@ def render_pipeline_demo_page(store: RunStore) -> None:
             st.markdown("#### 📤 Saída: `patch.diff` & Re-verificação")
             st.code(diff_text, language="diff")
             subj = manifest.get("subject", {})
-            sources = subj.get("sources", [])
-            resolved = _resolve_source_file(subj.get("source_root", ""), sources[0]) if sources else None
-            if resolved and diff_text:
-                try:
-                    patched_c = apply_unified_diff(resolved.read_text(encoding="utf-8", errors="replace"), diff_text)
-                    with st.expander("Ver arquivo .c com patch aplicado"):
-                        st.code(patched_c, language="c")
-                except Exception:
-                    pass
+            rel = patch_file(patch_doc, record)
+            resolved = _resolve_source_file(subj.get("source_root", ""), rel) if rel else None
+            patched_c = (
+                apply_unified_diff(resolved.read_text(encoding="utf-8", errors="replace"), diff_text)
+                if resolved and diff_text else None
+            )
+            if patched_c:
+                with st.expander(f"Ver {rel} com patch aplicado"):
+                    st.code(patched_c, language="c")
+            elif diff_text:
+                st.warning(f"O diff não bate com o arquivo `{rel}`: não foi possível mostrar o resultado.")
             rv = next((x for x in manifest.get("stages", []) if x["name"] == "reverify"), {})
             if rv.get("status") == "ok":
                 st.success(

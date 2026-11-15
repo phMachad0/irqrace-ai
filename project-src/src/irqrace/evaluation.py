@@ -38,7 +38,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Sequence
 
-from .candidate import ROLE_ORDER
+from .candidate import ROLE_ORDER, same_source
 from .groundtruth import Annotation, SuiteGroundTruth
 
 #: Recorded in every run manifest. Changing either invalidates comparison with
@@ -71,6 +71,15 @@ def normalise_variable(name: str) -> str:
 def candidate_lines(record: dict[str, Any]) -> tuple[int, ...]:
     accesses = sorted(record["accesses"], key=lambda a: ROLE_ORDER.get(a["role"], 99))
     return tuple(a["source"]["line"] for a in accesses)
+
+
+def _files_agree(annotation: Annotation, record: dict[str, Any]) -> bool:
+    """Whether the files agree, where the annotation names them."""
+    accesses = sorted(record["accesses"], key=lambda a: ROLE_ORDER.get(a["role"], 99))
+    return all(
+        ann.file is None or same_source(acc["source"]["file"], ann.file) or same_source(ann.file, acc["source"]["file"])
+        for ann, acc in zip(annotation.accesses, accesses)
+    )
 
 
 def candidate_pattern(record: dict[str, Any]) -> str:
@@ -158,7 +167,7 @@ def match_subject(
         # others are siblings. Taking the first by rank instead credited a bug
         # point to (or charged it against) a sibling's verdict.
         siblings = sorted(
-            by_lines.get(ann.lines, []),
+            (rc for rc in by_lines.get(ann.lines, []) if _files_agree(ann, rc[1])),
             key=lambda rc: (candidate_pattern(rc[1]) != ann.pattern, rc[0]),
         )
         for rank, cand in siblings:

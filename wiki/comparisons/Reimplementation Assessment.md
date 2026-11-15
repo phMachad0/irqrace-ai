@@ -2,7 +2,7 @@
 type: comparison
 tags: [wiki, comparison]
 sources: ["[[SDRacer (paper)]]", "[[IntRace (paper)]]", "[[NIChecker (paper)]]", "[[BMC4AV (paper)]]"]
-updated: 2026-10-24
+updated: 2026-10-29
 status: draft
 ---
 
@@ -143,6 +143,27 @@ an open question ([[Open Questions]]).
 - **Language for the tool itself — C++** for anything touching LLVM/SVF/dg (they are C++
   libraries and bindings will fight you), with Python for orchestration, the LLM loop, and
   result handling.
+- **Platforms — native Ubuntu and Windows + WSL2, both first-class** (human direction,
+  2026-10-29). The reference is Ubuntu 22.04 with the system LLVM 14, `gcc-11` and Z3. On Windows
+  the C++ toolchain still runs on Linux, inside a WSL2 Ubuntu-22.04 distribution. The Python side
+  (CLI, desktop app, LLM stage) runs natively under Windows. Rules that follow from this:
+  - **Every call to a toolchain binary goes through `irqrace.toolchain.run_toolchain_cmd`.** That
+    covers `clang-14`, `llvm-link-14` and `irqrace-probe`/`-stage1`/`-stage3`. On Linux the
+    function runs the command directly. On Windows it prefixes `wsl -e` and rewrites `C:\…`
+    arguments to `/mnt/c/…`. A bare `subprocess.run` on one of these binaries works on Ubuntu and
+    fails on Windows with `WinError 193` (an ELF is not a Win32 executable). Stage 3 had exactly
+    this defect until 2026-10-29.
+  - **Paths handed to the toolchain must be absolute.** Only drive-letter paths are rewritten, so
+    a relative path reaches WSL unchanged and resolves against the wrong directory.
+  - **Files the binaries read are written with LF.** For example, the stage-3 query is written
+    with `newline="\n"`. With `core.autocrlf=true`, the Windows checkout turns `scripts/*.sh` into
+    CRLF and bash aborts on `set -o pipefail`. Until the repository pins `*.sh` to LF in
+    `.gitattributes`, build the analysis binaries from an LF copy of the script.
+  - The analysis binaries are built inside Linux (`scripts/build-analysis.sh`, under WSL on
+    Windows) into `project-src/analysis/build/bin/`. One build serves both sides, because the
+    Windows side reads the same directory through `/mnt/c`.
+  - A change is not done until it runs on both platforms. The minimum check is a run of the
+    pipeline through stage 3 on one Racebench subject on each.
 
 ## Artifact availability (obtained 2026-08-20)
 

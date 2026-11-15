@@ -585,6 +585,7 @@ class Stage2:
             "pattern": rec.get("pattern", ""),
             "variable": rec["variable"]["name"],
             "lines": [a["source"]["line"] for a in by_role],
+            "accesses": [{"file": a["source"]["file"], "line": a["source"]["line"]} for a in by_role],
             "local_flow": by_role[0]["flow"],
             "remote_flow": by_role[1]["flow"],
             "reason": v.reason,
