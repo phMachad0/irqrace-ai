@@ -33,6 +33,7 @@ for the Racebench 2.2 labels (T2), which another loader provides.
 from __future__ import annotations
 
 import csv
+import dataclasses
 import datetime as _dt
 import json
 import math
@@ -132,8 +133,6 @@ DEFAULT_LABELS = "53/33"
 PLANNED_LABEL_SETS = {
     "2.2": "Racebench 2.2 (T2: the 2.1 labels plus adjudicated unannotated candidates) is built by "
            "its own loader; it plugs in with bench_metrics.register_label_set(LabelSet('2.2', ...)).",
-    "48/38": "the labels before the 2026-10-28 relabel need the pristine annotations (vendored commit "
-             "3d77421) and the errata as they stood before that date; not built.",
 }
 
 
@@ -148,6 +147,44 @@ register_label_set(LabelSet(
     f"{RACEBENCH_SIMPLE_BUG_POINTS} bug points, {RACEBENCH_SIMPLE_TRAPS} traps",
     case_ground_truth,
     native=True,
+))
+
+
+#: The traps of the three cases the 2026-10-28 relabel touched, as they stood
+#: before it, in the pristine numbering. Five of these (all but 001's second and
+#: 019's first) became bug points; nothing else in the suite changed. Checked
+#: against a reconstruction of the pre-relabel ground truth -- the vendored suite
+#: at its pristine import (3d77421) plus the 006 source patch, parsed with the
+#: errata as of 87437bc -- which yields 48 bug points and 38 traps and differs
+#: from 53/33 in exactly these five triples, at the same lines.
+PRE_RELABEL_TRAPS: dict[str, tuple[tuple[int, int, int], ...]] = {
+    "svp_simple_001_001": ((43, 64, 44), (32, 60, 35)),
+    "svp_simple_019_001": ((40, 67, 42), (45, 71, 51), (51, 71, 59), (48, 69, 56)),
+    "svp_simple_020_001": ((37, 44, 40),),
+}
+
+
+def pre_relabel_ground_truth(subject: str) -> CaseGroundTruth | None:
+    """``subject``'s annotations as they were before the 2026-10-28 relabel (48/38)."""
+    gt = case_ground_truth(subject)
+    if gt is None or subject not in PRE_RELABEL_TRAPS:
+        return gt
+    table = PRE_RELABEL_TRAPS[subject]
+    pool = {a.lines: a for a in gt.bugs + gt.traps}
+    missing = [lines for lines in table if lines not in pool]
+    if missing:
+        raise LabelSetUnavailable(f"48/38: {subject} has no annotation at {missing}; "
+                                  "the vendored suite no longer matches PRE_RELABEL_TRAPS")
+    traps = [dataclasses.replace(pool[lines], kind="trap", index=i) for i, lines in enumerate(table, 1)]
+    bugs = [a for a in gt.bugs if a.lines not in table]
+    return dataclasses.replace(gt, bugs=bugs, traps=traps)
+
+
+register_label_set(LabelSet(
+    "48/38",
+    "racebench 2.1_remarks before the 2026-10-28 relabel (five bug points back to traps; "
+    "the labels every pre-relabel number and BMC4AV's re-basing use): 48 bug points, 38 traps",
+    pre_relabel_ground_truth,
 ))
 
 
