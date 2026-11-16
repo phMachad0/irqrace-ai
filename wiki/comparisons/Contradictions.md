@@ -2,7 +2,7 @@
 type: comparison
 tags: [wiki, comparison]
 sources: ["[[SDRacer (paper)]]", "[[IntRace (paper)]]", "[[NIChecker (paper)]]", "[[BMC4AV (paper)]]", "[[Racebench (documentation)]]"]
-updated: 2026-10-28
+updated: 2026-11-16
 status: solid
 ---
 
@@ -234,3 +234,25 @@ source, `2.1` and the annotated `2.1_remarks`:
 
 Together with #7 that is five of the 38 traps reachable under the README. The model calls all five
 feasible; the scored false-positive count includes them.
+
+## 9. BMC4AV's 38 is 37 once the errata's access kinds are applied
+
+Found 2026-11-16, while scoring S1/S2 on BMC4AV's terms ([[Racebench Comparison 2026-11-16]] §2).
+
+- **[[BMC4AV (paper)]]**: 25 cases, `(R,W,W)` excluded, **38** violations (its results file:
+  25 `(R,W,R)`, 7 `(W,W,R)`, 6 `(W,R,W)`, which matches the annotations as written; [[Racebench]]
+  §"BMC4AV's 38 is fully traceable").
+- **This project's errata** (`project-src/bench/racebench-errata.yaml`, access-kind corrections)
+  change the access kinds of three bug points: `svp_simple_016_001` bug 1 (as written `WRR`,
+  corrected `(W,W,R)`), and `svp_simple_022_001` bugs 2 and 3. Bug 2 (lines 55/66/58) becomes
+  **`(R,W,W)`**, and bug 3 becomes `(W,W,R)`.
+
+So excluding `(R,W,W)` by the corrected kind leaves **37** bug points in BMC4AV's subset, not 38.
+The difference is exactly 022 bug 2, which BMC4AV counts, as written, as `(R,W,R)`. Neither count
+is a detection error. They classify one triple differently, which moves it across BMC4AV's
+"benign" line. This also shifts the `(R,W,W)` count in the suite: **10** as written
+(conflict #2), **11** with the errata.
+
+**Status: unresolved, recorded.** Any comparison "on BMC4AV's terms" must say which classification
+it excludes by. The T1 table reports both. irqrace detects all 41 bug points of the subset, so its
+recall is 100% under either classification.

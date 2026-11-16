@@ -1,0 +1,7 @@
+prompt_row,run_a,run_b,field,n_shared,agreement,kappa
++racebench,+racebench/1,+racebench/2,feasibility,166,0.993976,0.978597
++racebench,+racebench/1,+racebench/2,bucket,166,0.993976,0.978597
++racebench,+racebench/1,+racebench/3,feasibility,165,0.993939,0.978183
++racebench,+racebench/1,+racebench/3,bucket,165,0.993939,0.978183
++racebench,+racebench/2,+racebench/3,feasibility,165,0.987879,0.956527
++racebench,+racebench/2,+racebench/3,bucket,165,0.987879,0.956527
