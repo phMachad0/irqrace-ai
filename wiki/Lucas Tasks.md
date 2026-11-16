@@ -2,7 +2,7 @@
 type: project
 tags: [wiki, project, tasks]
 sources: ["[[Reported Results Across Papers]]", "[[Racebench]]", "[[Racebench Full Run 2026-10-28]]", "[[Precision Metrics]]", "[[NASAC 2019 Prototype Competition]]", "[[Contradictions]]"]
-updated: 2026-11-12
+updated: 2026-11-16
 status: draft
 ---
 
@@ -15,10 +15,10 @@ number cites its source. Earlier context: [[Thesis Goal]], [[LLM Stage Design]],
 
 | # | Task | Set | State |
 | --- | --- | --- | --- |
-| T1 | [[#T1 — Three-way comparison on Racebench]] | 2026-11-12 | planned |
-| T2 | [[#T2 — Racebench 2.2, a ground truth extended with the unannotated bugs]] | 2026-11-12 | planned |
-| T3 | [[#T3 — Comparative analysis of the prompts]] | 2026-11-12 | selector narrowed; variants designed, not built |
-| T4 | [[#T4 — Consolidate the results into the monograph]] | 2026-11-12 | planned; depends on T1–T3 |
+| T1 | [[#T1 — Three-way comparison on Racebench]] | 2026-11-12 | M1 measured and gate closed (S2 = `+racebench`); tables (M2) next |
+| T2 | [[#T2 — Racebench 2.2, a ground truth extended with the unannotated bugs]] | 2026-11-12 | label file, rule and blind dossiers built (PR #21); waits on gate M4a |
+| T3 | [[#T3 — Comparative analysis of the prompts]] | 2026-11-12 | five variants built (PR #20); waits on gate M3a; baseline runs exist (M1) |
+| T4 | [[#T4 — Consolidate the results into the monograph]] | 2026-11-12 | counts, questions, protocol, threats and figure script written (PR #22); results pending |
 
 ## Execution plan (approved 2026-11-12)
 
@@ -56,6 +56,39 @@ subscription rate limit. Code agents work in their own worktrees:
 
 Order: M0 → M1. After M1, M2, M3 and M4 depend on its runs. Agents B, C and D start their code
 while M1 runs, and the results in M5 come after M2–M4.
+
+### M0 and M1 — done (2026-11-15/16)
+
+PRs #18 and #19 merged. The four agent branches went up as PRs #19–#22. The static stages were
+frozen once from `main` at `a639158` (clean tree, WSL), in `runs/frozen-20261115`. That run
+reproduces the M0 check: 53/53 bug points, 11/33 traps and 166 records reaching the LLM
+(S1 = 73/106). Each of `+racebench` and `+racebench+c4` was then triaged × 3, on copies of that
+root. Scored output, and how every incident was handled, are in `project-src/results/m1/`
+(`report.md`, CSVs, `NOTES.md`).
+
+| | `+racebench` (n = 3) | `+racebench+c4` (n = 3) | S1 |
+| --- | --- | --- | --- |
+| Bug points kept | 53/53 in every run | 53/53 in every run | 53/53 |
+| Traps reported (`likely_real`) | 2, 2, 2 | 2, 3, 2 | 11 |
+| NASAC score /106 | 100, 100, 100 | 100, 97, 100 | 73 |
+| κ between runs | 0.96–0.98 | 0.89–0.91 | — |
+| Calls / input tokens per run | ≈304 / ≈3.5 M | ≈619 / ≈7.3 M | — |
+| Wall time per run | ≈16 min | ≈33 min | — |
+
+The same two traps survive in all six runs, both in case 022: `trap#1` `W32 W66 R39` and `trap#3`
+`R55 W66 R63`. They are systematic, so they are the T3 target. No bug point was ever called
+infeasible.
+
+**Gate M1 closed (Lucas, 2026-11-16):**
+1. **S2 = `+racebench`.** It ties on recall and wins or ties on everything else, at half the cost.
+2. **`likely_real` is the headline.**
+3. **The ±3-point noise holds, as a ceiling.** `+racebench` has sd 0, and `+c4` ranges over 97–100.
+
+**Incidents.** The subscription's 5-hour limit was hit five times. Each time the pair was moved
+aside and re-run whole. One safeguard refusal, on an unannotated candidate, was kept as `uncertain`
+and the run accepted as is (Lucas). The freeze needed `python3-tk` and `pymupdf` in WSL, because
+`irqrace pipeline` imports the desktop UI. A small fix worth making later is to import the UI
+lazily. WSL git needed `core.autocrlf` for the dirty flag to be honest.
 
 ---
 

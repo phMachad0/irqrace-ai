@@ -1,0 +1,13 @@
+prompt_row,run_a,run_b,field,n_shared,agreement,kappa
++racebench+c4,+racebench+c4/1,+racebench+c4/2,feasibility,166,0.975904,0.910849
++racebench+c4,+racebench+c4/1,+racebench+c4/2,bucket,166,0.975904,0.910849
++racebench+c4,+racebench+c4/1,+racebench+c4/3,feasibility,166,0.96988,0.888963
++racebench+c4,+racebench+c4/1,+racebench+c4/3,bucket,166,0.96988,0.888963
++racebench+c4,+racebench+c4/2,+racebench+c4/3,feasibility,166,0.975904,0.910246
++racebench+c4,+racebench+c4/2,+racebench+c4/3,bucket,166,0.975904,0.910246
++racebench,+racebench/1,+racebench/2,feasibility,166,0.993976,0.978597
++racebench,+racebench/1,+racebench/2,bucket,166,0.993976,0.978597
++racebench,+racebench/1,+racebench/3,feasibility,165,0.993939,0.978183
++racebench,+racebench/1,+racebench/3,bucket,165,0.993939,0.978183
++racebench,+racebench/2,+racebench/3,feasibility,165,0.987879,0.956527
++racebench,+racebench/2,+racebench/3,bucket,165,0.987879,0.956527

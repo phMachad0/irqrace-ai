@@ -1,0 +1,60 @@
+{
+  "scorer_version": "bench_metrics/1.0.0",
+  "date": "2026-11-16T22:28:16Z",
+  "tool_git_commit": "a639158640aa1bb3e0eab9d7c0e66b66304bbcc1",
+  "scorer_git_commit": {
+    "commit": "a639158640aa1bb3e0eab9d7c0e66b66304bbcc1",
+    "dirty": false
+  },
+  "backend": [
+    "claude-cli:sonnet"
+  ],
+  "prompt_rows": [
+    "+racebench",
+    "+racebench+c4"
+  ],
+  "label_set": "53/33",
+  "case_subset": {
+    "name": "all",
+    "cases": null,
+    "exclude_patterns": []
+  },
+  "input_run_roots": [
+    {
+      "path": "runs\\m1-20261115\\+racebench+c4\\1",
+      "run_id": "+racebench+c4/1",
+      "status": "ok",
+      "cases": 31
+    },
+    {
+      "path": "runs\\m1-20261115\\+racebench+c4\\2",
+      "run_id": "+racebench+c4/2",
+      "status": "ok",
+      "cases": 31
+    },
+    {
+      "path": "runs\\m1-20261115\\+racebench+c4\\3",
+      "run_id": "+racebench+c4/3",
+      "status": "ok",
+      "cases": 31
+    },
+    {
+      "path": "runs\\m1-20261115\\+racebench\\1",
+      "run_id": "+racebench/1",
+      "status": "ok",
+      "cases": 31
+    },
+    {
+      "path": "runs\\m1-20261115\\+racebench\\2",
+      "run_id": "+racebench/2",
+      "status": "ok",
+      "cases": 31
+    },
+    {
+      "path": "runs\\m1-20261115\\+racebench\\3",
+      "run_id": "+racebench/3",
+      "status": "failed",
+      "cases": 31
+    }
+  ]
+}
