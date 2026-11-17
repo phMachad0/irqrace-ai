@@ -135,11 +135,20 @@ that were found, which is not the quantity anyone wants.
 
 ---
 
-## DRAFT — Racebench 2.2: equivalence rule, witness, adjudication
+## Racebench 2.2: equivalence rule, witness, adjudication
 
-> **Status: DRAFT for gate M4a (prepared 2026-11-12). Not in force.** Nothing below is
-> applied until Lucas approves it, and no triple is adjudicated before that. The name
-> "2.2" is provisional ("2.2-irqrace" is the alternative: wiki `Lucas Tasks`, T2).
+> **Status: in force since gate M4a (Lucas, 2026-11-17).** Prepared as a draft on 2026-11-12.
+> At the gate, Lucas approved:
+> 1. rule E and the witness template exactly as written below;
+> 2. `not-a-defect` stays **out of both denominators** and is reported as a count
+>    (`not_a_defect_as_trap` = no);
+> 3. the selection is `--all`: every unannotated triple is adjudicated, with no sample;
+> 4. the candidate set is frozen from the T1 run, `runs/frozen-20261115` (static stages from
+>    `main` at `a639158`).
+>
+> The name is still provisional: "2.2", with "2.2-irqrace" as the alternative (wiki
+> `Lucas Tasks`, T2). The size of Pedro's second-check sample and whether the complex cases are
+> included are also still open. Neither one blocks the adjudication.
 
 **What 2.2 is.** *2.1* is the ground truth above: the suite's annotations, the errata, the
 relabel of 2026-10-28 — 53 bug points and 33 traps. *2.2* is 2.1 plus every entry of
@@ -240,8 +249,13 @@ The four verdicts:
    narrower than the scorer's "candidates matching no annotation", which also counts records on
    an annotated line triple with other access kinds (E1 siblings of an annotation, which 2.2
    cannot label). On the static run `runs/m0-check-20261112` (31 cases, 166 records reaching the
-   LLM): the scorer's count is 102; the frozen set is **96 records on 91 triples, in 31 groups**;
-   20 of the groups hold a 2.1 bug point, 11 do not.
+   LLM), the scorer's count is 102 and the frozen set is **96 records on 91 triples, in 31
+   groups**. 20 of those groups hold a 2.1 bug point and 11 do not. **The set in force** was
+   frozen at M4a from the T1 run `runs/frozen-20261115` and gives the same figures: 166 records,
+   96 unannotated records, 91 triples, 31 dossiers, 21 of them with an annotated member. The
+   dossiers are in `results/t2/dossiers/`. They must be built against the vendored suite: with
+   `IRQRACE_RACEBENCH` pointing at an upstream checkout, the loader reads 48/38, and the
+   relabelled triples come back as unannotated (96 triples, 34 dossiers).
 2. **Fix rule E and this template** at gate M4a, before step 4. A change afterwards means
    re-counting everything and saying so.
 3. **Select**: either `--all`, or every `likely_real` triple plus a seeded random sample of the

@@ -16,7 +16,7 @@ number cites its source. Earlier context: [[Thesis Goal]], [[LLM Stage Design]],
 | # | Task | Set | State |
 | --- | --- | --- | --- |
 | T1 | [[#T1 — Three-way comparison on Racebench]] | 2026-11-12 | **done**: gates M1 and M2 closed; tables in [[Racebench Comparison 2026-11-16]]; into the monograph in M5 |
-| T2 | [[#T2 — Racebench 2.2, a ground truth extended with the unannotated bugs]] | 2026-11-12 | label file, rule and blind dossiers built (PR #21); waits on gate M4a |
+| T2 | [[#T2 — Racebench 2.2, a ground truth extended with the unannotated bugs]] | 2026-11-12 | **gate M4a closed (2026-11-17)**: `--all` over the frozen T1 run, 91 triples in 31 blind dossiers (`project-src/results/t2/dossiers/`); waits on the human adjudication |
 | T3 | [[#T3 — Comparative analysis of the prompts]] | 2026-11-12 | five variants built (PR #20); waits on gate M3a; baseline runs exist (M1) |
 | T4 | [[#T4 — Consolidate the results into the monograph]] | 2026-11-12 | QP1–QP3 results written with figures F1–F5, F9 (T1); QP4–QP6 wait on T3, T2 and repair |
 
@@ -288,11 +288,23 @@ split.
 
 ### Decisions still open
 
+**Gate M4a closed (Lucas, 2026-11-17).** Lucas approved:
+- rule E and the witness template as drafted;
+- `not-a-defect` stays out of both denominators;
+- every unannotated triple is adjudicated (`--all`), with no sample;
+- the candidate set is frozen from `runs/frozen-20261115`.
+
+That set is 96 records on 91 triples, in 31 dossiers. The protocol is in force in
+`project-src/docs/evaluation-protocol.md`. One pitfall turned up: in WSL, `IRQRACE_RACEBENCH`
+points at the upstream `../racebench`, which predates the relabel. With it set, the loader reads
+48/38, 8 of the T2 tests fail, and the relabelled triples come back as unannotated. The dossiers
+and the tests have to run with it unset. Still open:
+
 - **The name.** "2.2" reads like an upstream release by the suite's maintainer. Something like
   `2.2-irqrace` or "Racebench 2.1 + extended labels" avoids implying that the authors endorsed it.
 - **Whether to send it upstream** (an issue or PR to `chenruibuaa/racebench`). That is
   outward-facing, so it is a separate decision, made after adjudication.
-- **Who adjudicates, and how many candidates** (all of them, or `likely_real` plus a sample).
+- **The second check.** How many triples Pedro checks blind, and confirming that he will.
 - **Whether the two complex cases are included**, as in T1.
 
 ---

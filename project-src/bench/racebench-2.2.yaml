@@ -1,6 +1,7 @@
 # Racebench 2.2 -- the 2.1 ground truth extended with adjudicated, unannotated triples.
 #
-# STATUS: DRAFT, gate M4a (2026-11-12). Zero entries until the human adjudication
+# STATUS: protocol in force since gate M4a (Lucas, 2026-11-17). The selection is --all, over
+# 91 triples in 31 dossiers (results/t2/dossiers). Zero entries until the human adjudication
 # starts. The name "2.2" is provisional: it reads like an upstream release, and
 # "2.2-irqrace" is the alternative on the table (wiki: Lucas Tasks, T2).
 #
@@ -8,7 +9,7 @@
 # cases (bench/racebench + racebench-errata.yaml, relabel 2026-10-28) -- are never
 # edited by it. Each entry here labels ONE triple that 2.1 left unannotated, after a
 # human checked it from the source and the README's arrival model alone, blind to the
-# tool's LLM stage. Protocol: docs/evaluation-protocol.md, "DRAFT -- Racebench 2.2".
+# tool's LLM stage. Protocol: docs/evaluation-protocol.md, "Racebench 2.2".
 # Loader and validator: src/irqrace/labels_ext.py (`ground_truth("2.1" | "2.2")`).
 #
 # Rejections are recorded too. A triple judged unreachable is a `trap` entry, one

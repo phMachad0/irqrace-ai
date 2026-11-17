@@ -1843,3 +1843,16 @@ Quotations are in [[Racebench Comparison 2026-11-16]] §"Why one table per basel
 
 NIChecker stays in its table, marked unaligned. The BMC4AV artifact is not fetched, so the
 37/42 inference goes into the thesis as declared. T1 is done; it goes into the monograph in M5.
+
+## [2026-11-17] direction | Gate M4a closed: Racebench 2.2 protocol in force; blind dossiers frozen
+Lucas approved the 2.2 protocol as drafted. Rule E and the witness template stand. `not-a-defect`
+stays out of both denominators. Every unannotated triple is adjudicated (`--all`, no sample).
+The candidate set is frozen from the T1 run `runs/frozen-20261115`: 166 records reach the LLM,
+96 of them unannotated, on 91 triples in 31 dossiers (`project-src/results/t2/dossiers/`).
+These are the same figures the draft measured on `m0-check`.
+
+Pitfall: WSL exports `IRQRACE_RACEBENCH` pointing at the upstream `../racebench`, which predates
+the relabel. With it set, `ground_truth("2.1")` reads 48/38, 8 of the T2 tests fail, and the
+dossier script returns the relabelled triples as unannotated (96 triples, 34 dossiers). With it
+unset, all 28 T2 tests pass. Still open: the name, the size of Pedro's second check, and whether
+the complex cases are included. Next: the human adjudication.
