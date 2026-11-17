@@ -1815,3 +1815,20 @@ Incidents:
 - WSL git needed `core.autocrlf` for an honest dirty flag.
 
 Results in `project-src/results/m1/`. Summary in [[Lucas Tasks]] §"M0 and M1 — done".
+
+## [2026-11-16] query | T1 comparison on each baseline's terms; the 48/38 label set; contradiction #9
+The scorer gains the **48/38** label set. It is the current annotations with the relabel's five
+triples back as traps, checked against a reconstruction of the pre-relabel suite (3d77421 + the 006
+patch + errata at 87437bc: 48/38, differing in exactly those five). S2 (`+racebench`, n = 3, zero
+spread) was then scored on five views (`project-src/results/m2/`). Filed as
+[[Racebench Comparison 2026-11-16]]:
+- On 53/33, S2 detects 53/53 bug points and reports 2/33 traps (100/106).
+- On BMC4AV's 25 cases with `(R,W,W)` excluded, S2 gets 37/37 on 48/38 (7 traps, five of them the
+  relabelled triples) and 42/42 with 2 traps on 53/33.
+- On 48/38, S2 gets 48/48 with 7 traps.
+
+New contradiction #9: the errata reclassify `022` bug 2 from `(R,W,R)` to `(R,W,W)`, so BMC4AV's 38
+is 37 by the corrected kinds. irqrace finds all 41 bug points of the subset under either
+classification. It is an inference, unconfirmed because `../BMC4AV` is not on this machine, that
+BMC4AV, with zero false positives on 48/38, did not report the five relabelled triples, which would
+put it at 37 of 42 under 53/33. Gate M2 is open on the page.

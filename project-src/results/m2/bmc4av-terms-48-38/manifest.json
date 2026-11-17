@@ -1,0 +1,69 @@
+{
+  "scorer_version": "bench_metrics/1.0.0",
+  "date": "2026-11-16T22:39:01Z",
+  "tool_git_commit": "a639158640aa1bb3e0eab9d7c0e66b66304bbcc1",
+  "scorer_git_commit": {
+    "commit": "44eca057a22ac391883560bf88fd67e064311486",
+    "dirty": false
+  },
+  "backend": [
+    "claude-cli:sonnet"
+  ],
+  "prompt_rows": [
+    "+racebench"
+  ],
+  "label_set": "48/38",
+  "case_subset": {
+    "name": "bmc4av-25-noRWW",
+    "cases": [
+      "svp_simple_001_001",
+      "svp_simple_002_001",
+      "svp_simple_003_001",
+      "svp_simple_004_001",
+      "svp_simple_005_001",
+      "svp_simple_006_001",
+      "svp_simple_007_001",
+      "svp_simple_008_001",
+      "svp_simple_009_001",
+      "svp_simple_010_001",
+      "svp_simple_011_001",
+      "svp_simple_012_001",
+      "svp_simple_013_001",
+      "svp_simple_014_001",
+      "svp_simple_015_001",
+      "svp_simple_016_001",
+      "svp_simple_017_001",
+      "svp_simple_018_001",
+      "svp_simple_019_001",
+      "svp_simple_020_001",
+      "svp_simple_021_001",
+      "svp_simple_022_001",
+      "svp_simple_023_001",
+      "svp_simple_024_001",
+      "svp_simple_031_001"
+    ],
+    "exclude_patterns": [
+      "RWW"
+    ]
+  },
+  "input_run_roots": [
+    {
+      "path": "runs\\m1-20261115\\+racebench\\1",
+      "run_id": "+racebench/1",
+      "status": "ok",
+      "cases": 31
+    },
+    {
+      "path": "runs\\m1-20261115\\+racebench\\2",
+      "run_id": "+racebench/2",
+      "status": "ok",
+      "cases": 31
+    },
+    {
+      "path": "runs\\m1-20261115\\+racebench\\3",
+      "run_id": "+racebench/3",
+      "status": "failed",
+      "cases": 31
+    }
+  ]
+}

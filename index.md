@@ -157,3 +157,4 @@ Raw clippings live in `Clippings/`, PDFs in `raw/`. Both are immutable.
 | [[LLM Integration Patterns]] | seven LLM sources by attach point; what each buys and costs |
 | [[Triage Study 2026-10-26]] | why triage underperforms on real records: missing deciding code (12/16 uncertain vs 78/85 feasible), unexplained fields, a ground-truth leak; fixes 1–6 and a Racebench-semantics row (IR 0.67 → 0.42) |
 | [[Racebench Full Run 2026-10-28]] | the whole pipeline on all 31 cases, sonnet, `+racebench`; after the relabel (53 bugs / 33 traps): 53/53 bugs, 97 and 100 of 106 in two runs, 98.2% agreement (κ 0.93); verdict on every disputed item |
+| [[Racebench Comparison 2026-11-16]] | T1: S0 (published) vs S1 (static) vs S2 (`+racebench`, n = 3) on each baseline's own terms; 53/53 everywhere, 2/33 traps, 100/106; BMC4AV's 38 is 37 under the errata (#9); NIChecker's 54 unaligned |

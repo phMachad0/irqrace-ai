@@ -181,6 +181,33 @@ def test_planned_and_unknown_label_sets_are_refused():
     assert bm.label_set("53/33").native
 
 
+def test_the_48_38_labels_undo_exactly_the_five_relabelled_triples():
+    subjects = [f"svp_simple_{i:03d}_001" for i in range(1, 32)]
+    old = {s: bm.label_set("48/38").ground_truth(s) for s in subjects}
+    new = {s: case_ground_truth(s) for s in subjects}
+    assert sum(len(g.bugs) for g in old.values()) == 48
+    assert sum(len(g.traps) for g in old.values()) == 38
+    assert not bm.label_set("48/38").native
+
+    def keys(gts, kind):
+        return {(s, a.lines) for s, g in gts.items() for a in getattr(g, kind)}
+
+    flipped = keys(new, "bugs") - keys(old, "bugs")
+    assert flipped == keys(old, "traps") - keys(new, "traps") == {
+        ("svp_simple_001_001", (43, 64, 44)),
+        ("svp_simple_019_001", (45, 71, 51)),
+        ("svp_simple_019_001", (51, 71, 59)),
+        ("svp_simple_019_001", (48, 69, 56)),
+        ("svp_simple_020_001", (37, 44, 40)),
+    }
+    # untouched cases are the native annotations, object for object
+    assert all(old[s] is new[s] for s in subjects if s not in bm.PRE_RELABEL_TRAPS)
+    # the pristine numbering: 001's relabelled trap was trap 1, 019's were traps 2-4
+    assert [(a.index, a.lines) for a in old["svp_simple_001_001"].traps] == [(1, (43, 64, 44)), (2, (32, 60, 35))]
+    assert [a.index for a in old["svp_simple_019_001"].traps] == [1, 2, 3, 4]
+    assert all(a.kind == "trap" for g in old.values() for a in g.traps)
+
+
 def test_a_registered_label_set_relabels_by_the_same_match_rule(tmp_path, monkeypatch):
     def no_traps(subject: str) -> CaseGroundTruth | None:
         gt = case_ground_truth(subject)
