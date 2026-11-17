@@ -1790,3 +1790,28 @@ Approved and recorded in [[Lucas Tasks]] §"Execution plan". The plan:
 
 Found while planning: `--samples` is majority voting, and triage writes into the run, so each
 (prompt, run) pair triages its own copy of one frozen static run. T1 and T3 share the baseline runs.
+
+## [2026-11-16] direction | M0 and M1 done; gate M1 closed: S2 = +racebench, likely_real headline
+PRs #18 and #19 merged, and #19–#22 opened from the agent branches. The static stages were frozen
+from `main` at `a639158` (`runs/frozen-20261115`, clean tree). The frozen run reproduces the M0
+check: 53/53 bug points, 11/33 traps and 166 records reaching the LLM (S1 = 73/106). Then
+`+racebench` and `+racebench+c4` were each triaged × 3 with `claude-cli:sonnet`, on independent
+copies of the frozen root.
+
+Results:
+- Both rows keep 53/53 in every run.
+- `+racebench` scores 100/100/100, with 2/33 traps each time, κ 0.96–0.98, about 304 calls and
+  3.5 M input tokens per run.
+- `+c4` scores 100/97/100, with κ 0.89–0.91, at twice the calls and tokens.
+- The same two case-022 traps survive in all six runs.
+
+Lucas closed the gate: S2 = `+racebench`, `likely_real` is the headline, and the ±3-point noise
+holds as a ceiling.
+
+Incidents:
+- The 5-hour subscription limit was hit five times. Each pair was moved aside and re-run whole.
+- One safeguard refusal (unannotated candidate, kept as `uncertain`) was accepted as is.
+- The WSL freeze needed `python3-tk` and `pymupdf`, because `irqrace pipeline` imports the desktop UI.
+- WSL git needed `core.autocrlf` for an honest dirty flag.
+
+Results in `project-src/results/m1/`. Summary in [[Lucas Tasks]] §"M0 and M1 — done".
