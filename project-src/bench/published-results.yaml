@@ -60,6 +60,11 @@ rows:
      metric: precision, value: 0.964, rerun_or_copied: run,
      hardware: "Intel Xeon Silver 4215 (8 cores), 128 GB, Ubuntu 20",
      source: "wiki/sources/NIChecker (paper).md, Evaluation; wiki/comparisons/Reported Results Across Papers.md, On Racebench"}
+  - {tool: NIChecker, reported_by: NIChecker, cases: 31, ground_truth: 54, defect_class: atomicity violation,
+     metric: recall, value: 1.0, rerun_or_copied: run,
+     hardware: "Intel Xeon Silver 4215 (8 cores), 128 GB, Ubuntu 20",
+     source: "wiki/sources/NIChecker (paper).md, Evaluation",
+     note: "derived, not a separate claim: 54 violations detected of its own ground truth of 54 (the violations_detected row); the 54 does not align with either annotation set"}
   - {tool: intAtom, reported_by: NIChecker, cases: 31, ground_truth: 54, defect_class: atomicity violation,
      metric: recall, value: 1.0, rerun_or_copied: copied,
      hardware: "not stated (intAtom's own paper)",
@@ -118,6 +123,11 @@ rows:
      metric: recall_WRW, value: 1.0, rerun_or_copied: run,
      hardware: "Intel Xeon E5-2620, 32 GB, Ubuntu 20.04",
      source: "wiki/benchmarks/Racebench.md, BMC4AV's 38 is fully traceable (6 of 6)"}
+  - {tool: BMC4AV, reported_by: BMC4AV, cases: 25, ground_truth: 38, defect_class: atomicity violation,
+     metric: excluded_pattern_RWW, value: 1, rerun_or_copied: run,
+     hardware: "Intel Xeon E5-2620, 32 GB, Ubuntu 20.04",
+     source: "wiki/sources/BMC4AV (paper).md, Evaluation; wiki/comparisons/Contradictions.md #2",
+     note: "the paper declares (R,W,W) benign and excludes it from its ground truth; not a recall of 0"}
   - {tool: BMC4AV, reported_by: irqrace (re-based), cases: 31, ground_truth: 48, defect_class: atomicity violation,
      metric: bug_points_detected, value: 38, rerun_or_copied: rebased,
      hardware: "Intel Xeon E5-2620, 32 GB, Ubuntu 20.04 (BMC4AV's run)",
