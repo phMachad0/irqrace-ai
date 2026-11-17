@@ -681,19 +681,28 @@ def cmd_llm_fixtures(args: argparse.Namespace) -> int:
 def cmd_llm_prompts(args: argparse.Namespace) -> int:
     from .llm.prompts import ABLATION, BY_NAME, DEFERRED, EXPERIMENTAL
 
+    def flags(c) -> list[str]:
+        return [
+            n
+            for n, v in (
+                ("domain", c.domain_rules),
+                ("progressive", c.progressive),
+                ("decomposition", c.decomposition),
+                ("self-validation", c.self_validation),
+            )
+            if v
+        ]
+
     if args.row is None:
         for c in ABLATION:
-            on = [
-                n
-                for n, v in (
-                    ("domain", c.domain_rules),
-                    ("progressive", c.progressive),
-                    ("decomposition", c.decomposition),
-                    ("self-validation", c.self_validation),
-                )
-                if v
-            ]
-            print(f"{c.name:18} {c.hash()}  {', '.join(on) or 'baseline'}")
+            print(f"{c.name:18} {c.hash()}  {', '.join(flags(c)) or 'baseline'}")
+        # Experimental rows are selectable wherever a row is, so they are listed
+        # too -- under their own heading, never as ablation rows.
+        print("\nexperimental (outside the ablation):")
+        for c in EXPERIMENTAL.values():
+            addons = [*c.extra, *(f"{st}: {n}" for st, n in c.stage_extra)]
+            print(f"{c.name:22} {c.hash()}  {', '.join(flags(c))}"
+                  + (f"; add-ons: {', '.join(addons)}" if addons else ""))
         return 0
 
     if args.row in DEFERRED:
