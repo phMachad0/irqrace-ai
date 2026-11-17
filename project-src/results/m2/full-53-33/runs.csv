@@ -1,0 +1,10 @@
+run_id,system,prompt_row,sample,labels,case_subset,view,bug_points_total,bug_points_detected,traps_total,traps_reported,unannotated_reported,uncertain,score,score_max,recall,precision,inspection_ratio_mean,llm_calls,tokens_in,tokens_out,backend_failures,wall_s,static_s,llm_s
++racebench/1,S2,+racebench,1,53/33,all,likely_real,53,53,33,2,83,0,100,106,1.0,0.963636,0.677794,304,3519824,296296,0,977.894,169.7,961.543
++racebench/1,S2,+racebench,1,53/33,all,not_infeasible,53,53,33,2,83,0,100,106,1.0,0.963636,0.677794,304,3519824,296296,0,977.894,169.7,961.543
++racebench/1,S1,+racebench,1,53/33,all,static_only,53,53,33,11,102,,73,106,1.0,0.828125,0.714752,,,,,,169.7,
++racebench/2,S2,+racebench,2,53/33,all,likely_real,53,53,33,2,83,1,100,106,1.0,0.963636,0.703894,305,3546360,294941,0,1016.457,169.7,999.936
++racebench/2,S2,+racebench,2,53/33,all,not_infeasible,53,53,33,2,84,1,100,106,1.0,0.963636,0.703894,305,3546360,294941,0,1016.457,169.7,999.936
++racebench/2,S1,+racebench,2,53/33,all,static_only,53,53,33,11,102,,73,106,1.0,0.828125,0.714752,,,,,,169.7,
++racebench/3,S2,+racebench,3,53/33,all,likely_real,53,53,33,2,82,1,100,106,1.0,0.963636,0.674617,302,3486600,295829,1,977.66,169.7,961.757
++racebench/3,S2,+racebench,3,53/33,all,not_infeasible,53,53,33,2,83,1,100,106,1.0,0.963636,0.674617,302,3486600,295829,1,977.66,169.7,961.757
++racebench/3,S1,+racebench,3,53/33,all,static_only,53,53,33,11,102,,73,106,1.0,0.828125,0.714752,,,,,,169.7,

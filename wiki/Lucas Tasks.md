@@ -15,7 +15,7 @@ number cites its source. Earlier context: [[Thesis Goal]], [[LLM Stage Design]],
 
 | # | Task | Set | State |
 | --- | --- | --- | --- |
-| T1 | [[#T1 — Three-way comparison on Racebench]] | 2026-11-12 | M1 measured and gate closed (S2 = `+racebench`); tables (M2) next |
+| T1 | [[#T1 — Three-way comparison on Racebench]] | 2026-11-12 | M1 gate closed (S2 = `+racebench`); M2 tables in [[Racebench Comparison 2026-11-16]]; waits on gate M2 |
 | T2 | [[#T2 — Racebench 2.2, a ground truth extended with the unannotated bugs]] | 2026-11-12 | label file, rule and blind dossiers built (PR #21); waits on gate M4a |
 | T3 | [[#T3 — Comparative analysis of the prompts]] | 2026-11-12 | five variants built (PR #20); waits on gate M3a; baseline runs exist (M1) |
 | T4 | [[#T4 — Consolidate the results into the monograph]] | 2026-11-12 | counts, questions, protocol, threats and figure script written (PR #22); results pending |
