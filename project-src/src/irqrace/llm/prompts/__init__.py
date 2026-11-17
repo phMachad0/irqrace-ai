@@ -80,6 +80,16 @@ class PromptConfig:
     #: Extra assets appended to every question's prompt -- an experimental
     #: benchmark-semantics add-on, say. Part of the hash like any asset.
     extra: tuple[str, ...] = ()
+    #: Extra assets for one question only, as ``(stage, asset)`` pairs, rendered
+    #: after :attr:`extra`. An add-on that changes how feasibility is argued has
+    #: no business in the harmfulness prompt: there it is one more cause in a
+    #: comparison that is meant to have one. The combined turn gets them all.
+    stage_extra: tuple[tuple[str, str], ...] = ()
+
+    def __post_init__(self) -> None:
+        for stage, _ in self.stage_extra:
+            if stage not in STAGES:
+                raise ValueError(f"{self.name}: unknown stage {stage!r} in stage_extra")
 
     def assets(self, stage: str | None = None) -> tuple[str, ...]:
         """Asset filenames in render order. Order is part of the hash.
@@ -109,6 +119,7 @@ class PromptConfig:
         # Last: an add-on states which earlier rules it overrides, and a rule
         # that comes after it would read as the final word.
         names.extend(self.extra)
+        names.extend(n for st, n in self.stage_extra if stage is None or st == stage)
         return tuple(names)
 
     def system_prompt(self, stage: str | None = None) -> str:
@@ -187,6 +198,33 @@ EXPERIMENTAL: dict[str, PromptConfig] = {
     "+c4": dataclasses.replace(FULL, name="+c4", progressive=True),
     "+racebench": _RACEBENCH,
     "+racebench+c4": dataclasses.replace(_RACEBENCH, name="+racebench+c4", progressive=True),
+    # T3 variants (wiki: Lucas Tasks, T3): each is +racebench with exactly one
+    # change, so a measured difference has one cause. Rationale per variant:
+    # project-src/docs/racebench-prompt-rationale.md, section 5.
+    "+racebench-selfval": dataclasses.replace(
+        _RACEBENCH, name="+racebench-selfval", self_validation=False
+    ),
+    "+racebench+witness": dataclasses.replace(
+        _RACEBENCH, name="+racebench+witness",
+        stage_extra=(("feasibility", "racebench_witness.md"),),
+    ),
+    "+racebench+location": dataclasses.replace(
+        _RACEBENCH, name="+racebench+location",
+        stage_extra=(("feasibility", "racebench_location.md"),),
+    ),
+    # Measures the recall cost of an effect-based exclusion -- the family of the
+    # adjacency rule removed on 2026-10-28. Not a candidate for any default.
+    # It is asked as harmfulness, not feasibility: the interleaving does occur.
+    "+racebench+effectfree": dataclasses.replace(
+        _RACEBENCH, name="+racebench+effectfree",
+        stage_extra=(("harmfulness", "racebench_effectfree.md"),),
+    ),
+    # Both questions: both answers carry a confidence, and the report's rank key
+    # takes the lower of the two.
+    "+racebench+rubric": dataclasses.replace(
+        _RACEBENCH, name="+racebench+rubric",
+        extra=(*_RACEBENCH.extra, "racebench_rubric.md"),
+    ),
 }
 
 #: What each row is for, as the interface shows it.
@@ -199,4 +237,9 @@ ROW_HELP: dict[str, str] = {
     "+c4": "Prompt completo para código real, e a LLM pode pedir código (C4). Mais chamadas por candidato.",
     "+racebench": "Critérios do Racebench: a intercalação é o defeito, mesmo com leitor morto. Sem C4.",
     "+racebench+c4": "Critérios do Racebench, e a LLM pode pedir código (C4). Recomendado para esta suíte.",
+    "+racebench-selfval": "+racebench sem as listas de autovalidação (viabilidade e dano). Variante experimental (T3).",
+    "+racebench+witness": "+racebench, e 'feasible' exige uma testemunha concreta da intercalação; sem ela, 'uncertain'. Variante experimental (T3).",
+    "+racebench+location": "+racebench, e o endereço que A1, B e A2 tocam (índice, ponteiro) é resolvido antes da viabilidade. Variante experimental (T3).",
+    "+racebench+effectfree": "+racebench, e escrita remota do valor já presente, reescrito antes de A2, vira 'benign'. Só para medir, não usar.",
+    "+racebench+rubric": "+racebench, com a confiança lida de uma rubrica fixa (o que o registro mostra vs. o que foi suposto). Variante experimental (T3).",
 }
