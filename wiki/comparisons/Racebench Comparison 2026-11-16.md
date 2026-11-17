@@ -2,8 +2,8 @@
 type: comparison
 tags: [wiki, comparison, t1]
 sources: ["[[BMC4AV (paper)]]", "[[NIChecker (paper)]]", "[[IntRace (paper)]]", "[[Racebench]]", "[[Reported Results Across Papers]]", "[[Contradictions]]"]
-updated: 2026-11-16
-status: draft
+updated: 2026-11-17
+status: solid
 ---
 
 # Racebench comparison, 2026-11-16 (T1)
@@ -135,10 +135,38 @@ precision 0.964** (`run`, Xeon Silver 4215).
   - Any runtime ranking.
   - Any claim about BMC4AV under 53/33 until its per-case output is checked.
 
-## Open for gate M2
+## Why one table per baseline: the papers' own practice
 
-1. Is the per-baseline framing convincing as the thesis's T1 presentation?
-2. How is NIChecker's 54 presented: side by side and explicitly unaligned, as above, or left out
-   of the table?
-3. Should the BMC4AV artifact be fetched to confirm the inference in §2 (that it did not report
-   the five relabelled triples)? Re-running it needs its toolchain (a CBMC fork).
+Lucas accepted the per-baseline framing provided the papers justify it. They do, in three ways.
+
+1. **Each paper declares its own ground truth for the same suite.**
+   - [[NIChecker (paper)]]: *"It contains 54 manual atomicity violations covering … four harmful
+     access interleaving patterns"* (`Clippings/NIChecker.md`, Benchmark 1).
+   - [[BMC4AV (paper)]]: *"A total of 25 test cases are selected … with 6 cases excluded because
+     they only contain the access interleaving pattern (R,W,W), which is considered as a kind of
+     benign atomicity violations"* (`Clippings/BMC4AV.md`, §6.1). It also says it focuses
+     *"exclusively on three types"* of pattern (§2).
+   - [[IntRace (paper)]] counts data races over 30 cases (`Clippings/IntRace.md`, Table 3).
+2. **The papers themselves restrict a comparison to the competitor's conditions.**
+   - IntRace, on Rchecker: *"One case in Racebench could not be analyzed by Rchecker … To ensure
+     comparison, we also excluded this case in our experiments."*
+   - BMC4AV: *"Although the experimental configurations differ across tools, the comparison remains
+     valid, since BMC4AV is evaluated on the same configuration as intAtom"* (§6.2.1).
+
+   Scoring S1/S2 on each baseline's own subset and ground truth applies that same criterion.
+3. **The papers admit that some of their numbers are copied, not re-run.**
+   - NIChecker: *"We can use their results reported in previously published papers … Despite
+     certain limitations (such as runtime)"*.
+   - BMC4AV: *"the experimental data reported in their published papers are used"* (§6.2.1).
+
+   Hence the `run` / `copied` / `rebased` tag on every S0 number, and no runtime ranking.
+
+## Gate M2 — closed (Lucas, 2026-11-17)
+
+1. **Framing: one table per baseline**, on each paper's own terms, justified by the quotations
+   above. A single grand table is not used.
+2. **NIChecker stays in its table, marked "unaligned".** Its 54 maps to neither label set, but it
+   is the closest competitor, and dropping it would hide that.
+3. **The BMC4AV artifact is not fetched now.** The §2 inference (that it did not report the five
+   relabelled triples, so it would score 37/42 under 53/33) goes into the thesis as a declared
+   inference. The headline (100% recall under every ground truth) does not depend on it.

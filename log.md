@@ -1832,3 +1832,14 @@ is 37 by the corrected kinds. irqrace finds all 41 bug points of the subset unde
 classification. It is an inference, unconfirmed because `../BMC4AV` is not on this machine, that
 BMC4AV, with zero false positives on 48/38, did not report the five relabelled triples, which would
 put it at 37 of 42 under 53/33. Gate M2 is open on the page.
+
+## [2026-11-17] direction | Gate M2 closed: one table per baseline, justified from the papers
+Lucas accepted the per-baseline framing for T1, provided the papers support it. They do. Each
+paper declares its own ground truth for Racebench: NIChecker 54, BMC4AV 25 cases with
+`(R,W,W)` excluded as benign, IntRace 30 cases of data races. Two of them also restrict a
+comparison to the competitor's conditions: IntRace drops the case Rchecker failed on "to ensure
+comparison", and BMC4AV argues validity from running "on the same configuration as intAtom".
+Quotations are in [[Racebench Comparison 2026-11-16]] §"Why one table per baseline".
+
+NIChecker stays in its table, marked unaligned. The BMC4AV artifact is not fetched, so the
+37/42 inference goes into the thesis as declared. T1 is done; it goes into the monograph in M5.
