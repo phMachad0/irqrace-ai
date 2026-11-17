@@ -30,3 +30,6 @@ runs/
 # Monografia: saída do LaTeX
 monografia/build/
 TCC_PCS_EPUSP_2023/
+
+# Windows shortcuts
+*.lnk
