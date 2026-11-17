@@ -495,13 +495,18 @@ def fig_f1(plt, ctx: Ctx):
             marker_of[g] = markers[len(marker_of) % len(markers)]
 
     fig, ax = plt.subplots(figsize=(WIDTH, 3.6))
+    ours_at = [(sx[0], sy[0]) for _, _, sx, sy, _ in ours]
     for p in pts:
-        ax.scatter(p["fp"], p["recall"], s=52, marker=marker_of[p["ground_truth"]],
+        # A published point that coincides with one of ours is drawn larger and
+        # underneath, as a hatched ring around our marker: both stay at their true
+        # value, and neither hides the other.
+        under = any(abs(p["fp"] - x) < 0.25 and abs(p["recall"] - y) < 0.01 for x, y in ours_at)
+        ax.scatter(p["fp"], p["recall"], s=170 if under else 52, marker=marker_of[p["ground_truth"]],
                    facecolor=COLOR["S0"], edgecolor=EDGE["S0"], hatch=HATCH["S0"],
-                   linewidth=0.8, zorder=3)
+                   linewidth=0.8, zorder=2 if under else 3)
         who = p["tool"] if p["reported_by"] in ("", p["tool"]) else f"{p['tool']} (seg. {p['reported_by']})"
         tag = f"{who}\n{p['cases']} casos" + (", copiado" if "cop" in p["copied"].lower() else "")
-        ax.annotate(tag, (p["fp"], p["recall"]), xytext=(6, -2), textcoords="offset points",
+        ax.annotate(tag, (p["fp"], p["recall"]), xytext=(9 if under else 6, -2), textcoords="offset points",
                     fontsize=7, color=MUTED, va="top")
     for sysname, lab, sx, sy, n in ours:
         ax.errorbar(sx[0], sy[0], xerr=errbar(sx) if n > 1 else None,
@@ -686,12 +691,20 @@ def fig_f4(plt, ctx: Ctx):
     for s in vals:
         for pat in vals[s]:
             vals[s][pat] = list(dict(vals[s][pat]).values())
-    pub = defaultdict(dict)
+    # One series per (tool, cases): each per-pattern row carries that pattern's own
+    # ground truth, so keying on it would split one tool into a series per pattern.
+    pub, excluded = defaultdict(dict), defaultdict(set)
     for r in ctx.d.published or []:
-        m = re.match(r"recall[_:]?\(?([RW,]+)\)?$", r["metric"].strip(), re.I)
+        metric = r["metric"].strip()
+        ex = re.match(r"excluded_pattern[_:]?\(?([RW,]+)\)?$", metric, re.I)
+        if ex:  # the paper leaves this pattern out of its ground truth (value 1)
+            if num(r["value"]):
+                excluded[(r["tool"], r["cases"])].add(norm_pattern(ex.group(1)))
+            continue
+        m = re.match(r"recall[_:]?\(?([RW,]+)\)?$", metric, re.I)
         if m and num(r["value"]) is not None:
             v = num(r["value"])
-            pub[(r["tool"], r["cases"], r["ground_truth"])][norm_pattern(m.group(1))] = v / 100 if v > 1 else v
+            pub[(r["tool"], r["cases"])][norm_pattern(m.group(1))] = v / 100 if v > 1 else v
     if not any(vals[s] for s in vals) and not pub:
         raise Skip("patterns.csv sem linhas para esses rótulos e subconjunto")
     groups = [("S0", k) for k in pub] + [("S1", None), ("S2", None)]
@@ -705,7 +718,8 @@ def fig_f4(plt, ctx: Ctx):
             ys = [pub[key].get(p) for p in PATTERNS]
             for x, y, p in zip(xs, ys, PATTERNS):
                 if y is None:
-                    ax.text(x, 0.01, "n/d", ha="center", va="bottom", fontsize=6.5, color=MUTED, rotation=90)
+                    ax.text(x, 0.01, "excluído" if p in excluded[key] else "n/d", ha="center",
+                            va="bottom", fontsize=6.5, color=MUTED, rotation=90)
                     continue
                 ax.bar(x, y, width=width * 0.92, color=COLOR["S0"], edgecolor=EDGE["S0"],
                        hatch=hatches[(gi) % len(hatches)], linewidth=0.6)
@@ -732,7 +746,7 @@ def fig_f4(plt, ctx: Ctx):
     for gi, (s, key) in enumerate(groups):
         if s == "S0":
             handles.append(Patch(facecolor=COLOR["S0"], edgecolor=EDGE["S0"], hatch=hatches[gi % len(hatches)],
-                                 label=f"{key[0]} ({key[1]} casos, gabarito {key[2]}, conforme o artigo)"))
+                                 label=f"{key[0]} ({key[1]} casos, gabarito do artigo)"))
         else:
             handles.append(Patch(facecolor=COLOR[s], label=SYSTEM_NAMES[s]))
     ax.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=2, fontsize=7.5)
