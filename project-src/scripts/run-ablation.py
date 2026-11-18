@@ -23,9 +23,6 @@ Scoring a refusal as any bucket would corrupt the row.
 **Harmfulness is not scored by default.** The fixtures are Racebench, which
 annotates program facts; see ``scoring_bucket`` in ``irqrace.llm.scoring``.
 ``--score-harm`` restores the old view, for comparison only.
-
-**``--cache-only`` sends no request.** A cache miss becomes an exclusion, so
-re-scoring measured rows can never spend tokens by accident.
 """
 
 from __future__ import annotations
@@ -68,7 +65,6 @@ def load_env(path: Path = REPO / ".env") -> list[str]:
 
 
 from irqrace.llm.backends import BackendError, RefusalError, from_spec  # noqa: E402
-from irqrace.llm.cache import Cache  # noqa: E402
 from irqrace.llm.client import TriageClient  # noqa: E402
 from irqrace.llm.fixtures import load_all  # noqa: E402
 from irqrace.llm.prompts import ABLATION, BY_NAME, DEFERRED  # noqa: E402
@@ -89,7 +85,6 @@ def run_row(
     config,
     fixtures,
     backend,
-    cache,
     samples,
     run_dir,
     *,
@@ -97,9 +92,9 @@ def run_row(
     source_root=None,
 ):
     """Returns (runs, excluded, client). One entry in ``runs`` per sample."""
-    client = TriageClient(config, backend=backend, cache=cache)
+    client = TriageClient(config, backend=backend)
     runs, excluded = [], []
-    for sample in range(samples):
+    for _ in range(samples):
         triaged = []
         for fixture in fixtures:
             resolver = resolver_for(
@@ -110,7 +105,6 @@ def run_row(
                     client.triage(
                         fixture.record,
                         resolver=resolver,
-                        sample=sample,
                         run_dir=run_dir,
                     )
                 )
@@ -144,12 +138,6 @@ def main() -> int:
         action="store_true",
         help="allow deferred rows such as +progressive when backed by a source resolver",
     )
-    ap.add_argument("--no-cache", action="store_true")
-    ap.add_argument(
-        "--cache-only",
-        action="store_true",
-        help="never call the backend; a cache miss is reported as excluded",
-    )
     ap.add_argument(
         "--score-harm",
         action="store_true",
@@ -182,21 +170,10 @@ def main() -> int:
             print(f"unknown row {r!r}; known: {', '.join(known)}", file=sys.stderr)
             return 2
 
-    if args.cache_only:
-        if args.no_cache:
-            print("--cache-only and --no-cache contradict each other", file=sys.stderr)
-            return 2
-
-        def _no_request(request):
-            raise BackendError("--cache-only: cache miss, no request sent")
-
-        backend.chat = _no_request
-
     fixtures = load_all()
     configs = (
         [known[r] for r in args.rows] if args.rows else list(ABLATION)
     )
-    cache = Cache(enabled=not args.no_cache)
 
     print(f"backend: {backend.spec}")
     for caveat in backend.capabilities.caveats():
@@ -212,7 +189,6 @@ def main() -> int:
             config,
             fixtures,
             backend,
-            cache,
             args.samples,
             args.run_dir,
             resolver_mode=args.resolver,

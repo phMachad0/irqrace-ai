@@ -74,6 +74,19 @@ class Spend:
             return None
         return self.cost_usd / self.candidates
 
+    def machine_line(self) -> str:
+        """One parseable line, ``spend: key=value ...``, for batch logs.
+
+        ``scripts/bench-triage-report.py`` reads it back from a case's log: the
+        run directory records no tokens, so without this line a batch run's
+        cost would exist only on a terminal that has since been closed.
+        """
+        return (
+            f"spend: requests={self.requests} tokens_in={self.input_tokens} "
+            f"tokens_out={self.output_tokens} cache_read={self.cache_read_tokens} "
+            f"cache_write={self.cache_write_tokens} latency_s={self.latency_s:.1f}"
+        )
+
     def report(self) -> str:
         lines = [
             f"{self.spec} · {self.started} · {self.candidates} candidates, "

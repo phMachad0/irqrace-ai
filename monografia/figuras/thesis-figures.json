@@ -1,0 +1,70 @@
+{
+  "data": "results\\thesis",
+  "font": "Latin Modern Roman",
+  "labels": "53/33",
+  "case_subset": "all",
+  "view": "likely_real",
+  "manifest": {
+    "date": "2026-11-16T22:28:16Z"
+  },
+  "figures": {
+    "F1": {
+      "run_ids": [
+        "+racebench/1",
+        "+racebench/2",
+        "+racebench/3"
+      ],
+      "published_rows": 32,
+      "file": "F1-recall-armadilhas.pdf",
+      "s2_prompt": "+racebench"
+    },
+    "F2": {
+      "run_ids": [
+        "+racebench/1",
+        "+racebench/2",
+        "+racebench/3"
+      ],
+      "file": "F2-funil.pdf",
+      "s2_prompt": "+racebench"
+    },
+    "F3": {
+      "run_ids": [
+        "+racebench/1",
+        "+racebench/2",
+        "+racebench/3"
+      ],
+      "traps": 33,
+      "file": "F3-disposicao-armadilhas.pdf",
+      "s2_prompt": "+racebench"
+    },
+    "F4": {
+      "published_groups": [
+        [
+          "BMC4AV",
+          "25"
+        ]
+      ],
+      "file": "F4-recall-por-padrao.pdf",
+      "s2_prompt": "+racebench"
+    },
+    "F5": {
+      "labels": [
+        "48/38",
+        "53/33"
+      ],
+      "file": "F5-pontuacao.pdf",
+      "s2_prompt": "+racebench"
+    },
+    "F9": {
+      "run_ids": [
+        "+racebench/1",
+        "+racebench/2",
+        "+racebench/3"
+      ],
+      "cases": 31,
+      "source": "cases.csv",
+      "file": "F9-inspection-ratio.pdf",
+      "s2_prompt": "+racebench"
+    }
+  }
+}

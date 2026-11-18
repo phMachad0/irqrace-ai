@@ -51,8 +51,8 @@ putting it in a cost column would be a claim this run did not incur.
 ## Known differences from the API adapters, reported as caveats
 
 * temperature and ``max_tokens`` cannot be set from the CLI;
-* a multi-turn request (only the deferred ``+progressive`` row sends one) is
-  rendered as a transcript inside a single prompt, because ``claude -p`` takes
+* a multi-turn request (only rows with C4 requests send one) is flattened into a
+  single prompt without the model's earlier turns, because ``claude -p`` takes
   one user turn;
 * a model alias (``sonnet``, ``opus``) resolves to whatever the CLI maps it to
   that day. :attr:`ClaudeCLIBackend.resolved_model` records what actually
@@ -191,7 +191,8 @@ class ClaudeCLIBackend(Backend):
 
         if data.get("is_error") or code != 0:
             status = data.get("api_error_status")
-            message = str(data.get("result") or stderr.strip() or "unknown error")[:500]
+            detail = data.get("errors") or data.get("subtype") or "unknown error"
+            message = str(data.get("result") or stderr.strip() or detail)[:500]
             raise BackendError(
                 f"claude-cli:{self.model} failed"
                 + (f" (HTTP {status})" if status else "")
@@ -212,22 +213,16 @@ def _render_messages(messages: list[dict[str, str]]) -> str:
     """One prompt from a message list.
 
     ``claude -p`` takes a single user turn. One message -- every active ablation
-    row -- goes through verbatim. A longer history is rendered as a transcript,
-    which is a different input from a native multi-turn request and is listed
-    as such in the module docstring.
+    row -- goes through verbatim. A longer history keeps only the user side: the
+    task, the record, the C4 replies and the closing instruction.
+
+    The model's earlier prose is left out on purpose. Replaying it as a
+    transcript and asking for it in a final form made Sonnet's safeguards refuse
+    the call as ``reasoning_extraction`` on 16 candidates (2026-10-30), and the
+    schema asks for the reasoning again anyway. This is listed as a difference
+    from a native multi-turn request in the module docstring.
     """
-    if len(messages) == 1:
-        return messages[0]["content"]
-    *history, last = messages
-    turns = "\n\n".join(
-        f'<turn role="{m["role"]}">\n{m["content"]}\n</turn>' for m in history
-    )
-    return (
-        "The conversation so far:\n\n"
-        f"<conversation>\n{turns}\n</conversation>\n\n"
-        "Now answer the latest user turn:\n\n"
-        f"{last['content']}"
-    )
+    return "\n\n---\n\n".join(m["content"] for m in messages if m["role"] != "assistant")
 
 
 def _subscription_env() -> dict[str, str]:

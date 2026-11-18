@@ -17,7 +17,7 @@ four; that is the point, and it is why it is small.
 
 ## Versioning
 
-Every instance document carries `schema_version` (`c1/2.0.0`, `c2/2.0.0`, `c3/1.0.0`, `c4/1.0.0`). **C2 is the
+Every instance document carries `schema_version` (`c1/2.1.0`, `c2/2.1.0`, `c3/1.1.0`, `c4/1.0.0`). **C2 is the
 critical one** — it is the seam between the two people. The Roadmap's stated response to
 contract churn is to freeze C2 by decree and *version it rather than renegotiate it*, so:
 
@@ -55,8 +55,8 @@ so it cannot be quietly reversed in code:
    been reversed without anyone deciding to reverse it.
 
 A sixth, structural rather than semantic: **`fingerprint` depends only on subject, class,
-variable and access locations** — never on run id, timing or solver output — because Track B's
-result cache is keyed by it.
+variable and access locations** — never on run id, timing or solver output — because two runs of the
+same subject are compared by it.
 
 ## Examples
 

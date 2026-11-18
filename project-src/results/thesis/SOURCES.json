@@ -1,0 +1,11 @@
+{
+ "combined_from": [
+  "results/m1",
+  "results/m2/bmc4av-25-allpatterns-48-38",
+  "results/m2/bmc4av-terms-48-38",
+  "results/m2/bmc4av-terms-53-33",
+  "results/m2/full-48-38",
+  "results/m2/full-53-33"
+ ],
+ "note": "runs.csv and patterns.csv are the de-duplicated union; items, agreement, cases and published come from results/m1 (53/33, all cases)"
+}

@@ -301,6 +301,22 @@ def test_an_exhausted_quota_ends_the_run_rather_than_hanging(monkeypatch):
         backend.chat(_request())
 
 
+def test_a_dropped_connection_is_retried_not_an_escape(monkeypatch):
+    """A connection lost mid-response is not a URLError. It escaped the retry
+    logic and every handler in the stages, ending the case at that candidate."""
+    import http.client
+
+    import irqrace.llm.backends.openai_backend as mod
+
+    monkeypatch.setattr(mod.time, "sleep", lambda s: None)
+    monkeypatch.setattr(
+        "urllib.request.urlopen",
+        lambda *a, **k: (_ for _ in ()).throw(http.client.RemoteDisconnected("closed")),
+    )
+    with pytest.raises(BackendError, match="gave up after 3 attempt"):
+        OpenAICompatibleBackend("m", base_url="http://x", api_key="k", max_retries=2).chat(_request())
+
+
 def test_a_read_timeout_is_a_backend_error_not_an_escape(monkeypatch):
     """TimeoutError does not subclass URLError, so it was escaping the handler
     and the retry logic entirely -- ten silent minutes per stalled request."""
@@ -498,16 +514,19 @@ def test_claude_cli_without_json_output_points_at_the_login():
         _cli(runner).chat(_request())
 
 
-def test_claude_cli_renders_a_multi_turn_request_as_one_transcript():
+def test_claude_cli_flattens_a_multi_turn_request_without_the_models_turns():
+    """Replaying the model's prose tripped Sonnet's reasoning_extraction safeguard."""
     from irqrace.llm.backends.claude_cli_backend import _render_messages
 
     text = _render_messages([
-        {"role": "user", "content": "first"},
-        {"role": "assistant", "content": "reply"},
-        {"role": "user", "content": "second"},
+        {"role": "user", "content": "the task"},
+        {"role": "assistant", "content": "my earlier reasoning"},
+        {"role": "user", "content": "Reply to r-1"},
+        {"role": "assistant", "content": "more reasoning"},
+        {"role": "user", "content": "Now answer."},
     ])
-    assert '<turn role="user">\nfirst' in text and '<turn role="assistant">\nreply' in text
-    assert text.rstrip().endswith("second")
+    assert "reasoning" not in text and "<turn" not in text
+    assert text.index("the task") < text.index("Reply to r-1") < text.index("Now answer.")
 
 
 def test_claude_cli_process_honours_stop_and_timeout(tmp_path):

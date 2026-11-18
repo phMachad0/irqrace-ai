@@ -28,7 +28,7 @@ status: solid
 | **W1** — Protocolo C4 especificado pelo consumidor LLM | pronto | `contracts/c4-*.schema.json`, `src/irqrace/llm/resolver.py` |
 | **W1** — 20 *fixtures* C2 rotulados (10 *bug points*, 10 *traps*, 6 pares adversariais) | pronto (20/20) | `fixtures/`, `scripts/build-fixtures.py`, `src/irqrace/llm/fixtures.py` |
 | **W1 (Marco M1)** — *Feasibility probe* (go/no-go) | **GO** (recall 9/9, *trap rejection* 80%) | `ablation-groq.json`, `ablation-groq.md` |
-| **W2** — *Harness* agnóstico a provedor (`anthropic`, `openai`, `ollama`), *cache* por *fingerprint* + *schema hash*, modelo de custo | pronto | `src/irqrace/llm/backends/`, `client.py`, `cache.py`, `cost.py` |
+| **W2** — *Harness* agnóstico a provedor (`anthropic`, `openai`, `ollama`), *cache* por *fingerprint* + *schema hash*, modelo de custo | pronto; o *cache* foi removido em 30 out ([[Semana 8 — Integração das Trilhas A e B]] §3.19) | `src/irqrace/llm/backends/`, `client.py`, `cost.py` |
 | **W3** — Linha 2 (`+domain`): regras de domínio de interrupção (D#1) | pronto e medido | `src/irqrace/llm/prompts/domain_rules.md` |
 | **W4** — Linha 3 (`+progressive`): protocolo C4 com *rules* de *recall* e `SourceBackedResolver` sobre a árvore `.c`/`.h` (D#2) | pronto | `src/irqrace/llm/resolver.py`, `prompts/context_requests.md` |
 | **W5** — Linha 4 (`+decomposition`): separação entre viabilidade (*feasibility*) e nocividade (*harmfulness*) + propagação estilo IRIS (D#3) | pronto | `src/irqrace/llm/client.py`, `verdict.py`, `scoring.py` |
@@ -164,8 +164,7 @@ A função `prepare_context(store)` promove candidatos sobreviventes de `stage2`
 .\venv\Scripts\python.exe -m irqrace llm prompts
 .\venv\Scripts\python.exe -m irqrace llm backends
 
-# Rodar a ablação (M3) — com cache ou contra um backend real
-.\venv\Scripts\python.exe project-src/scripts/run-ablation.py --cache-only --rows simple +domain
+# Rodar a ablação (M3) contra um backend real. Toda execução chama o modelo.
 .\venv\Scripts\python.exe project-src/scripts/run-ablation.py --backend anthropic:claude-opus-5 --samples 3 --resolver auto --include-deferred --json ablation-opus.json
 
 # Rodar a avaliação do estágio de reparo (W7)

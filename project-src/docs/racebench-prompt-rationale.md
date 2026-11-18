@@ -301,3 +301,144 @@ The asset declares precedence explicitly for each of these.
 - Persistence of an ISR's unmask after it returns (1.13) is consistent with every label but not
   distinguished by any.
 - "Zero activations" and "state before initialisation" are readings of what the README leaves open.
+
+---
+
+## 5. Experimental variants (T3, 2026-11-12)
+
+Five rows for the prompt comparison of `wiki/Lucas Tasks.md` § T3. Each is `+racebench` with
+**exactly one change**, so a measured difference between a variant and `+racebench` has one
+cause. None of them has been measured; the hypotheses below are what a measurement should test.
+
+**Composition.** A variant that changes how feasibility is argued must not reach the harmfulness
+prompt, or the harm answers become a second cause. `PromptConfig.stage_extra` adds an asset to
+one question only; `extra` (used by `+racebench` itself and by the rubric) adds it to both. Every
+add-on is rendered after `racebench_semantics.md`, so an add-on that overrides one of its rules
+says so and is read last, as the semantics asset does with the earlier sections. The baselines'
+hashes are pinned in `tests/test_llm_prompt_variants.py`; no existing asset was edited.
+
+**The schema is unchanged.** Contract C2 (`FeasibilityAnswer`, `HarmfulnessAnswer`) has no
+witness, location or rubric field. The variants that need one write it into `reasoning` under a
+fixed heading (`Witness:`, `Location:`, `Rubric:`), which a scorer can find but the schema does
+not enforce. A missing heading is therefore not a protocol violation; it has to be counted from
+the text.
+
+Measurement rules that apply to every row (§ T3 Protocol): a frozen static run, n = 3, paired
+per item against `+racebench`, about ±3 points of run-to-run noise
+(`wiki/comparisons/Racebench Full Run 2026-10-28.md`, third run), and a recall veto on any bug
+point moved to `likely_infeasible`.
+
+### 5.1 `+racebench-selfval` — the self-validation checklists removed
+
+- **Change:** `self_validation=False`. This drops `self_validation.md` from the feasibility prompt
+  and `harm_validation.md` from the harmfulness prompt: the flag gates both. The second was already
+  declared replaced by the semantics asset's Harmfulness section, so in practice the change is the
+  feasibility checklist plus a harm checklist the model was told to set aside.
+- **Target:** whether the checklist still earns its place. In the 2026-10-26 study it turned
+  correct `benign` answers into `uncertain` (`wiki/comparisons/Triage Study 2026-10-26.md`,
+  cause 3); it has since been confined to feasibility, and the semantics asset overrides its
+  rule 3 (equal priority). What remains are rules 1, 2 and 4: unknown masking is enabled, an
+  unavailable body may access the variable, `uncertain` over `infeasible` without a named
+  blocking element.
+- **Expected risk:** more traps accepted is the risk the wiki states; the larger one is recall.
+  Rule 4 is the sentence that leans the model away from `infeasible`; without it, a bug point may
+  be called infeasible on a weak argument. Watch `likely_infeasible` on bug points by name.
+- **Hypothesis:** on Racebench, with the record now complete (study follow-up), the checklist adds
+  little: `uncertain` counts fall slightly and no bug point moves to `likely_infeasible`. If one
+  does, the checklist is doing real work and stays.
+
+### 5.2 `+racebench+witness` — `feasible` needs a written witness
+
+- **Change:** `racebench_witness.md`, feasibility only. It sharpens the semantics asset's
+  Ambiguity rule ("if you can show the interleaving...") into four items written in the
+  reasoning: the arrival point (and every activation or nested preemption the execution needs),
+  the masking state there and the statements that leave it so, the values that pass every guard
+  and fix every index or pointer, and the effect at the three accesses. Without all four, the
+  answer is `uncertain`, never `infeasible`.
+- **Wording choices.** Item 4 asks for the effect *at the accesses* (the values A1 and A2 disagree
+  on, the write that is lost), not a downstream use, because the semantics asset says the effect
+  need not be observable. Multiple activations are named explicitly because two of the relabelled
+  former traps (001 #1, 020 #1) need an activation before the first masking call or a second
+  activation (`wiki/benchmarks/Racebench.md`, relabel 2026-10-28). A solver `sat` is not accepted
+  as a witness on its own, matching `base.md`'s reading of `unconstrained`.
+- **Target:** the confidence clustering on 0.85/0.90 (Triage Study, Results), by making `feasible`
+  cost an argument; and the witnesses T2's adjudication needs (§ T2 Risk 1 uses the same four
+  fields). The output is in the format of T2's witness template, but the adjudicator must not see
+  it (T2 rule 2, blind adjudication).
+- **Expected risk:** bug points moving from `likely_real` to `uncertain` when the model cannot or
+  does not write all four items: a recall cost in the headline bucket, not a veto (`uncertain` is
+  still reported). Longer answers, more tokens per call.
+- **Hypothesis:** traps accepted because the model reached for `feasible` without a concrete
+  execution (007 #1, unstable) fall to `uncertain` or `infeasible`; bug points keep `feasible`
+  because their witnesses exist in the code. Success: no bug point leaves `likely_real`, and at
+  least one named error disappears across the three runs.
+
+### 5.3 `+racebench+location` — the location settled first
+
+- **Change:** `racebench_location.md`, feasibility only. The reasoning opens with a `Location:`
+  paragraph: the storage each of A1, B and A2 touches, every index and pointer evaluated at the
+  moment that access executes in the judged interleaving, then one of `same storage`, `different
+  storage on every path` (a blocking element), or `cannot pin down` (treated as shared).
+- **Target:** 007 trap #1, the one unstable model error: the ISR increments the index before
+  writing and A2 re-reads it, so the three accesses are not on one element; it was `feasible` in
+  run 2 and `infeasible` in run 3 (`Racebench Full Run 2026-10-28`, verdict table and variance).
+  The asset names both mechanisms that error depends on: stores the remote flow makes before B,
+  and stores it made that A2's re-evaluation then sees.
+- **Departure from the wiki's proposal:** T3 asks for "a separate answer field". C2 stays
+  unchanged, so the paragraph lives in `reasoning` (see Composition). It adds no rule:
+  `domain_rules.md` already has the different-location row and `base.md` the one-location
+  definition; the variant only fixes the *order* of reasoning.
+- **Expected risk:** in the study's counterfactual, a similar paragraph turned the 007 trap
+  `infeasible` but lowered a real candidate's confidence from 0.90 to 0.55 (Triage Study,
+  cause 3). The asset adds one sentence against that ("`same storage` settles the question and is
+  no reason for doubt"); whether it holds is part of the measurement. A model that over-applies
+  "different storage" to an index it cannot pin down would cost recall; the asset routes that
+  case to "shared".
+- **Hypothesis:** 007 #1 is `infeasible` in all three runs; bug points' feasibility is unchanged
+  and their mean feasibility confidence falls by less than 0.05.
+
+### 5.4 `+racebench+effectfree` — measured for its recall cost only
+
+- **Change:** `racebench_effectfree.md`, harmfulness only. A remote write that stores the value the
+  location already holds, with the local flow writing the location again between A1 and A2 on
+  every path, is `benign`, named in `criterion_matched`. It overrides two semantics-asset rules,
+  "its effect need not be observable" and "`benign` only for a shape outside the four", and says so.
+- **Target:** 022 traps #1 and #3, the annotator-hedged "可能误报" items and the last traps still
+  accepted in runs 2 and 3 (`Racebench Full Run 2026-10-28`, verdict table: "neither" is wrong).
+- **Why harmfulness and not feasibility.** The interleaving does occur in those traps. Asking it as
+  `infeasible` would redefine feasibility, which is what made the adjacency rule unsafe (§ 1.7,
+  conflict 3.3). As a harm rule, the reported bucket is `likely_benign`, the feasibility verdict
+  stays a statement about reachability, and the feasibility prompt is byte-identical to
+  `+racebench`'s. Two consequences for the measurement: the recall veto (`likely_infeasible`)
+  cannot fire by construction, so the cost must be read on the `likely_real` reading and listed
+  by name; and under the "harm not scored" view (`scoring.scoring_bucket(harm_scored=False)`,
+  option C) the variant has no effect at all. `bench-triage-report.py` scores the reported bucket,
+  where it does.
+- **Expected risk:** it is the adjacency rule's family (an effect-based exclusion), which cost two
+  bug points in 017 in run 1. The two conditions together are narrower than adjacency, but the
+  first ("the value already held") is easy to argue wrongly for a flag set to a constant that is
+  usually, but not always, already set. **Its ROW_HELP says "só para medir, não usar"**; it is not
+  a candidate for the screen's default or for the thesis's headline row.
+- **Hypothesis:** both 022 traps move to `likely_benign` (+6), and at least one bug point moves with
+  them, which would confirm that effect-based rules cost recall on this suite even in narrow form.
+
+### 5.5 `+racebench+rubric` — confidence from a fixed rubric
+
+- **Change:** `racebench_rubric.md`, both questions (the report's rank key takes the lower of the
+  two confidences, so both must follow the same scale). Each fact the verdict rests on is sorted as
+  *shown* (by the record, including `proven` writers and `assumed_from_config` facts), *defaulted*
+  (a safe default the prompt states), or *assumed*; the weakest sets the level, and each level maps
+  to one number: A 0.95, B 0.85, C 0.75, D 0.60, and for `uncertain` E 0.45 (one missing fact) or
+  F 0.30 (several). The level is written in a final `Rubric:` line.
+- **Schema:** the numeric `confidence` field stays (C2 unchanged); the rubric only fixes how the
+  number is chosen, and the `Rubric:` line lets a scorer check the mapping after the run.
+- **Target:** the Inspection Ratio. Confidences cluster on 0.85/0.90 (Triage Study, Results), so
+  the order inside a bucket is close to arbitrary; IR rose from 0.56 to 0.72 when the adjacency
+  rule left (`Racebench Full Run 2026-10-28`, second run), mostly from unannotated candidates in
+  `likely_real` whose order the confidence does not resolve.
+- **Expected risk:** none on recall, since confidence never changes a bucket. Possibly more tokens.
+  The levels may still collapse onto A if most answers rest only on shown facts, which would itself
+  be a finding: the record is complete enough that confidence carries no signal.
+- **Hypothesis:** bug points rest on shown facts more often than accepted traps and unannotated
+  candidates, so within `likely_real` they rank first and the mean IR falls below `+racebench`'s by
+  more than the run-to-run spread. Verdicts should match `+racebench`'s on almost every item.
