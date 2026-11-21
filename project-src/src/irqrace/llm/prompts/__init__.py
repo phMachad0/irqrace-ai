@@ -225,6 +225,14 @@ EXPERIMENTAL: dict[str, PromptConfig] = {
         _RACEBENCH, name="+racebench+rubric",
         extra=(*_RACEBENCH.extra, "racebench_rubric.md"),
     ),
+    # The defect notion of +racebench ("the interleaving is the defect", union
+    # members are one location) without its arrival model: priorities, equal-
+    # priority preemption, nesting and the initial masking state are read from
+    # the context record, as the program's C1 configures them. Nothing in the
+    # asset names a suite, a program or a variable.
+    "+interleaving": dataclasses.replace(
+        FULL, name="+interleaving", extra=("interleaving_semantics.md",)
+    ),
 }
 
 #: What each row is for, as the interface shows it.
@@ -242,4 +250,5 @@ ROW_HELP: dict[str, str] = {
     "+racebench+location": "+racebench, e o endereço que A1, B e A2 tocam (índice, ponteiro) é resolvido antes da viabilidade. Variante experimental (T3).",
     "+racebench+effectfree": "+racebench, e escrita remota do valor já presente, reescrito antes de A2, vira 'benign'. Só para medir, não usar.",
     "+racebench+rubric": "+racebench, com a confiança lida de uma rubrica fixa (o que o registro mostra vs. o que foi suposto). Variante experimental (T3).",
+    "+interleaving": "A intercalação é o defeito, mesmo com leitor morto, e o modelo de execução vem da configuração do programa. Genérico; para código real avaliado como o Racebench.",
 }

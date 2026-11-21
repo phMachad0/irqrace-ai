@@ -125,3 +125,30 @@ def test_the_request_prompt_stands_alone_and_offers_only_what_is_served():
     text = DEFERRED["+progressive"].system_prompt()
     assert "checklist" not in text and "masking_state_at" not in text
     assert "optional" in text and "not_found" in text
+
+
+def test_the_interleaving_row_is_generic():
+    """+interleaving carries +racebench's notion of a defect and none of its
+    arrival model: the execution model is read from the record, and nothing in
+    the asset names a suite, a program or one of their variables."""
+    import re
+
+    from irqrace.llm.prompts import EXPERIMENTAL, _read
+
+    row = EXPERIMENTAL["+interleaving"]
+    assert row.extra == ("interleaving_semantics.md",)
+    assert (row.domain_rules, row.decomposition, row.self_validation, row.progressive) == (
+        FULL.domain_rules, FULL.decomposition, FULL.self_validation, FULL.progressive)
+    text = _read("interleaving_semantics.md")
+    lowered = text.lower()
+    for word in ("racebench", "benchmark", "planted", "svp_", "nichecker", "bmc4av", "test_global",
+                 "expect_close", "wdt_pci", "i8xx", "blink", "brake", "logger"):
+        assert word not in lowered, word
+    assert not re.search(r"\bline \d", text)
+    # The arrival model is the record's, not a fixed one.
+    assert "equal_priority_preemption" in text
+    assert "Equal priority does not preempt" not in text
+    assert "union members overlap" in text
+    assert "the interleaving is the defect" in lowered
+    assert "interleaving_semantics.md" in row.assets("feasibility")
+    assert "interleaving_semantics.md" in row.assets("harmfulness")
