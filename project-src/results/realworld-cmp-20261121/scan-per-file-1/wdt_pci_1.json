@@ -1,0 +1,168 @@
+{
+  "case": "wdt_pci_1",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "expect_close",
+        "a1_line": 1002,
+        "a1_kind": "write",
+        "b_line": 1071,
+        "b_kind": "write",
+        "a2_line": 1018,
+        "a2_kind": "read",
+        "why": "writer1_isr (priority 4) can preempt closer1_isr and reset expect_close between its write of 42 and the check."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1002,
+        "a1_kind": "write",
+        "b_line": 1093,
+        "b_kind": "write",
+        "a2_line": 1018,
+        "a2_kind": "read",
+        "why": "writer2_isr can preempt closer1_isr between the write of 42 and the read."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1018,
+        "a1_kind": "read",
+        "b_line": 1071,
+        "b_kind": "write",
+        "a2_line": 1025,
+        "a2_kind": "write",
+        "why": "A writer ISR can write expect_close between closer1's check and its later reset."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1018,
+        "a1_kind": "read",
+        "b_line": 1093,
+        "b_kind": "write",
+        "a2_line": 1025,
+        "a2_kind": "write",
+        "why": "writer2_isr can write expect_close between closer1's check and its reset."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1037,
+        "a1_kind": "write",
+        "b_line": 1071,
+        "b_kind": "write",
+        "a2_line": 1054,
+        "a2_kind": "read",
+        "why": "writer1_isr can preempt closer2_isr and overwrite expect_close before the check."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1037,
+        "a1_kind": "write",
+        "b_line": 1093,
+        "b_kind": "write",
+        "a2_line": 1054,
+        "a2_kind": "read",
+        "why": "writer2_isr can preempt closer2_isr and overwrite expect_close before the check."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1054,
+        "a1_kind": "read",
+        "b_line": 1071,
+        "b_kind": "write",
+        "a2_line": 1060,
+        "a2_kind": "write",
+        "why": "writer1_isr can write expect_close between closer2's check and its reset."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1054,
+        "a1_kind": "read",
+        "b_line": 1093,
+        "b_kind": "write",
+        "a2_line": 1060,
+        "a2_kind": "write",
+        "why": "writer2_isr can write expect_close between closer2's check and its reset."
+      },
+      {
+        "variable": "count",
+        "a1_line": 1003,
+        "a1_kind": "write",
+        "b_line": 1070,
+        "b_kind": "write",
+        "a2_line": 1005,
+        "a2_kind": "read",
+        "why": "writer1_isr sets count to 0 between closer1's write of 1 and its read."
+      },
+      {
+        "variable": "count",
+        "a1_line": 1003,
+        "a1_kind": "write",
+        "b_line": 1092,
+        "b_kind": "write",
+        "a2_line": 1005,
+        "a2_kind": "read",
+        "why": "writer2_isr sets count to 0 between closer1's write of 1 and its read."
+      },
+      {
+        "variable": "count",
+        "a1_line": 1037,
+        "a1_kind": "write",
+        "b_line": 1070,
+        "b_kind": "write",
+        "a2_line": 1039,
+        "a2_kind": "read",
+        "why": "writer1_isr sets count to 0 between closer2's write of 1 and its read."
+      },
+      {
+        "variable": "count",
+        "a1_line": 1037,
+        "a1_kind": "write",
+        "b_line": 1092,
+        "b_kind": "write",
+        "a2_line": 1039,
+        "a2_kind": "read",
+        "why": "writer2_isr sets count to 0 between closer2's write of 1 and its read."
+      },
+      {
+        "variable": "test_global_var1",
+        "a1_line": 989,
+        "a1_kind": "read",
+        "b_line": 1084,
+        "b_kind": "write",
+        "a2_line": 990,
+        "a2_kind": "read",
+        "why": "writer1_isr can write var1 between the two reads in JudgeCondi, which closer1_isr calls."
+      },
+      {
+        "variable": "test_global_var2",
+        "a1_line": 992,
+        "a1_kind": "read",
+        "b_line": 1107,
+        "b_kind": "write",
+        "a2_line": 993,
+        "a2_kind": "read",
+        "why": "writer2_isr can write var2 between the two reads in JudgeCondi, which closer1_isr calls."
+      },
+      {
+        "variable": "test_global_var3",
+        "a1_line": 1049,
+        "a1_kind": "read",
+        "b_line": 1108,
+        "b_kind": "write",
+        "a2_line": 1050,
+        "a2_kind": "read",
+        "why": "writer2_isr can write var3 between closer2_isr's two reads."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"expect_close\",\"a1_line\":1002,\"a1_kind\":\"write\",\"b_line\":1071,\"b_kind\":\"write\",\"a2_line\":1018,\"a2_kind\":\"read\",\"why\":\"writer1_isr (priority 4) can preempt closer1_isr and reset expect_close between its write of 42 and the check.\"},{\"variable\":\"expect_close\",\"a1_line\":1002,\"a1_kind\":\"write\",\"b_line\":1093,\"b_kind\":\"write\",\"a2_line\":1018,\"a2_kind\":\"read\",\"why\":\"writer2_isr can preempt closer1_isr between the write of 42 and the read.\"},{\"variable\":\"expect_close\",\"a1_line\":1018,\"a1_kind\":\"read\",\"b_line\":1071,\"b_kind\":\"write\",\"a2_line\":1025,\"a2_kind\":\"write\",\"why\":\"A writer ISR can write expect_close between closer1's check and its later reset.\"},{\"variable\":\"expect_close\",\"a1_line\":1018,\"a1_kind\":\"read\",\"b_line\":1093,\"b_kind\":\"write\",\"a2_line\":1025,\"a2_kind\":\"write\",\"why\":\"writer2_isr can write expect_close between closer1's check and its reset.\"},{\"variable\":\"expect_close\",\"a1_line\":1037,\"a1_kind\":\"write\",\"b_line\":1071,\"b_kind\":\"write\",\"a2_line\":1054,\"a2_kind\":\"read\",\"why\":\"writer1_isr can preempt closer2_isr and overwrite expect_close before the check.\"},{\"variable\":\"expect_close\",\"a1_line\":1037,\"a1_kind\":\"write\",\"b_line\":1093,\"b_kind\":\"write\",\"a2_line\":1054,\"a2_kind\":\"read\",\"why\":\"writer2_isr can preempt closer2_isr and overwrite expect_close before the check.\"},{\"variable\":\"expect_close\",\"a1_line\":1054,\"a1_kind\":\"read\",\"b_line\":1071,\"b_kind\":\"write\",\"a2_line\":1060,\"a2_kind\":\"write\",\"why\":\"writer1_isr can write expect_close between closer2's check and its reset.\"},{\"variable\":\"expect_close\",\"a1_line\":1054,\"a1_kind\":\"read\",\"b_line\":1093,\"b_kind\":\"write\",\"a2_line\":1060,\"a2_kind\":\"write\",\"why\":\"writer2_isr can write expect_close between closer2's check and its reset.\"},{\"variable\":\"count\",\"a1_line\":1003,\"a1_kind\":\"write\",\"b_line\":1070,\"b_kind\":\"write\",\"a2_line\":1005,\"a2_kind\":\"read\",\"why\":\"writer1_isr sets count to 0 between closer1's write of 1 and its read.\"},{\"variable\":\"count\",\"a1_line\":1003,\"a1_kind\":\"write\",\"b_line\":1092,\"b_kind\":\"write\",\"a2_line\":1005,\"a2_kind\":\"read\",\"why\":\"writer2_isr sets count to 0 between closer1's write of 1 and its read.\"},{\"variable\":\"count\",\"a1_line\":1037,\"a1_kind\":\"write\",\"b_line\":1070,\"b_kind\":\"write\",\"a2_line\":1039,\"a2_kind\":\"read\",\"why\":\"writer1_isr sets count to 0 between closer2's write of 1 and its read.\"},{\"variable\":\"count\",\"a1_line\":1037,\"a1_kind\":\"write\",\"b_line\":1092,\"b_kind\":\"write\",\"a2_line\":1039,\"a2_kind\":\"read\",\"why\":\"writer2_isr sets count to 0 between closer2's write of 1 and its read.\"},{\"variable\":\"test_global_var1\",\"a1_line\":989,\"a1_kind\":\"read\",\"b_line\":1084,\"b_kind\":\"write\",\"a2_line\":990,\"a2_kind\":\"read\",\"why\":\"writer1_isr can write var1 between the two reads in JudgeCondi, which closer1_isr calls.\"},{\"variable\":\"test_global_var2\",\"a1_line\":992,\"a1_kind\":\"read\",\"b_line\":1107,\"b_kind\":\"write\",\"a2_line\":993,\"a2_kind\":\"read\",\"why\":\"writer2_isr can write var2 between the two reads in JudgeCondi, which closer1_isr calls.\"},{\"variable\":\"test_global_var3\",\"a1_line\":1049,\"a1_kind\":\"read\",\"b_line\":1108,\"b_kind\":\"write\",\"a2_line\":1050,\"a2_kind\":\"read\",\"why\":\"writer2_isr can write var3 between closer2_isr's two reads.\"}]}",
+  "wall_s": 16.641629695892334,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 2413,
+    "cache_read": 986,
+    "cache_write": 19638,
+    "latency_s": 16.64144359799684
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

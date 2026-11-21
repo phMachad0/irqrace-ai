@@ -1,0 +1,8 @@
+{
+  "mode": "per-file",
+  "backend": "claude-cli:sonnet@low",
+  "workers": 4,
+  "suite": "realworld",
+  "max_tokens": 16000,
+  "wall_s": 80.96521019935608
+}

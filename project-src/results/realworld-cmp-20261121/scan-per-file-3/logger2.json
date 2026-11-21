@@ -1,0 +1,88 @@
+{
+  "case": "logger2",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "tickCounter",
+        "a1_line": 81,
+        "a1_kind": "write",
+        "b_line": 100,
+        "b_kind": "write",
+        "a2_line": 82,
+        "a2_kind": "read",
+        "why": "measure2 (prio 3) preempts measure1 between its increment and read, so the read sees 0 instead of the value it wrote."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 81,
+        "a1_kind": "write",
+        "b_line": 158,
+        "b_kind": "write",
+        "a2_line": 82,
+        "a2_kind": "read",
+        "why": "communicate (prio 5) can preempt measure1 and reset tickCounter between the increment and the read."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 82,
+        "a1_kind": "read",
+        "b_line": 100,
+        "b_kind": "write",
+        "a2_line": 86,
+        "a2_kind": "write",
+        "why": "measure2 can write tickCounter between measure1's read and its write of 0."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 100,
+        "a1_kind": "write",
+        "b_line": 158,
+        "b_kind": "write",
+        "a2_line": 101,
+        "a2_kind": "read",
+        "why": "communicate preempts measure2 between the write and the check; the write is not guaranteed to be seen."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 90,
+        "a1_kind": "read",
+        "b_line": 159,
+        "b_kind": "write",
+        "a2_line": 92,
+        "a2_kind": "write",
+        "why": "communicate can reset numberOfRecords between measure1 using it as an index and incrementing it, so the record is stored at a stale index."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 90,
+        "a1_kind": "read",
+        "b_line": 159,
+        "b_kind": "write",
+        "a2_line": 92,
+        "a2_kind": "read",
+        "why": "communicate resets the count between measure1's index read and increment read."
+      },
+      {
+        "variable": "intervalCounter",
+        "a1_line": 89,
+        "a1_kind": "read",
+        "b_line": 157,
+        "b_kind": "write",
+        "a2_line": 89,
+        "a2_kind": "write",
+        "why": "The increment is not atomic, and communicate's reset of intervalCounter can fall between its read and write, so the reset is lost."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"tickCounter\",\"a1_line\":81,\"a1_kind\":\"write\",\"b_line\":100,\"b_kind\":\"write\",\"a2_line\":82,\"a2_kind\":\"read\",\"why\":\"measure2 (prio 3) preempts measure1 between its increment and read, so the read sees 0 instead of the value it wrote.\"},{\"variable\":\"tickCounter\",\"a1_line\":81,\"a1_kind\":\"write\",\"b_line\":158,\"b_kind\":\"write\",\"a2_line\":82,\"a2_kind\":\"read\",\"why\":\"communicate (prio 5) can preempt measure1 and reset tickCounter between the increment and the read.\"},{\"variable\":\"tickCounter\",\"a1_line\":82,\"a1_kind\":\"read\",\"b_line\":100,\"b_kind\":\"write\",\"a2_line\":86,\"a2_kind\":\"write\",\"why\":\"measure2 can write tickCounter between measure1's read and its write of 0.\"},{\"variable\":\"tickCounter\",\"a1_line\":100,\"a1_kind\":\"write\",\"b_line\":158,\"b_kind\":\"write\",\"a2_line\":101,\"a2_kind\":\"read\",\"why\":\"communicate preempts measure2 between the write and the check; the write is not guaranteed to be seen.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":90,\"a1_kind\":\"read\",\"b_line\":159,\"b_kind\":\"write\",\"a2_line\":92,\"a2_kind\":\"write\",\"why\":\"communicate can reset numberOfRecords between measure1 using it as an index and incrementing it, so the record is stored at a stale index.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":90,\"a1_kind\":\"read\",\"b_line\":159,\"b_kind\":\"write\",\"a2_line\":92,\"a2_kind\":\"read\",\"why\":\"communicate resets the count between measure1's index read and increment read.\"},{\"variable\":\"intervalCounter\",\"a1_line\":89,\"a1_kind\":\"read\",\"b_line\":157,\"b_kind\":\"write\",\"a2_line\":89,\"a2_kind\":\"write\",\"why\":\"The increment is not atomic, and communicate's reset of intervalCounter can fall between its read and write, so the reset is lost.\"}]}",
+  "wall_s": 12.644723892211914,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1556,
+    "cache_read": 3594,
+    "cache_write": 490,
+    "latency_s": 12.64445516798878
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

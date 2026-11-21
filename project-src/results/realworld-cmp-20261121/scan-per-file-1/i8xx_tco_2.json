@@ -1,0 +1,58 @@
+{
+  "case": "i8xx_tco_2",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_var1",
+        "a1_line": 744,
+        "a1_kind": "read",
+        "b_line": 771,
+        "b_kind": "write",
+        "a2_line": 745,
+        "a2_kind": "read",
+        "why": "closer2_isr can preempt main between the two reads of test_global_var1 in JudgeCondi and change its value."
+      },
+      {
+        "variable": "test_global_var2",
+        "a1_line": 747,
+        "a1_kind": "read",
+        "b_line": 787,
+        "b_kind": "write",
+        "a2_line": 748,
+        "a2_kind": "read",
+        "why": "writer2_isr can preempt main between the two reads of test_global_var2, so the two reads can return different values."
+      },
+      {
+        "variable": "tco_expect_close",
+        "a1_line": 755,
+        "a1_kind": "write",
+        "b_line": 376,
+        "b_kind": "write",
+        "a2_line": 756,
+        "a2_kind": "read",
+        "why": "closer2_isr has higher priority and runs i8xx_tco_release, which resets tco_expect_close to 0. If it runs between closer1's write of 42 and its check, the check fails."
+      },
+      {
+        "variable": "tco_expect_close",
+        "a1_line": 423,
+        "a1_kind": "write",
+        "b_line": 369,
+        "b_kind": "read",
+        "a2_line": 426,
+        "a2_kind": "write",
+        "why": "closer2_isr can preempt closer1_isr inside i8xx_tco_write, between its two writes to tco_expect_close, and read the intermediate value."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":744,\"a1_kind\":\"read\",\"b_line\":771,\"b_kind\":\"write\",\"a2_line\":745,\"a2_kind\":\"read\",\"why\":\"closer2_isr can preempt main between the two reads of test_global_var1 in JudgeCondi and change its value.\"},{\"variable\":\"test_global_var2\",\"a1_line\":747,\"a1_kind\":\"read\",\"b_line\":787,\"b_kind\":\"write\",\"a2_line\":748,\"a2_kind\":\"read\",\"why\":\"writer2_isr can preempt main between the two reads of test_global_var2, so the two reads can return different values.\"},{\"variable\":\"tco_expect_close\",\"a1_line\":755,\"a1_kind\":\"write\",\"b_line\":376,\"b_kind\":\"write\",\"a2_line\":756,\"a2_kind\":\"read\",\"why\":\"closer2_isr has higher priority and runs i8xx_tco_release, which resets tco_expect_close to 0. If it runs between closer1's write of 42 and its check, the check fails.\"},{\"variable\":\"tco_expect_close\",\"a1_line\":423,\"a1_kind\":\"write\",\"b_line\":369,\"b_kind\":\"read\",\"a2_line\":426,\"a2_kind\":\"write\",\"why\":\"closer2_isr can preempt closer1_isr inside i8xx_tco_write, between its two writes to tco_expect_close, and read the intermediate value.\"}]}",
+  "wall_s": 14.855190992355347,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1563,
+    "cache_read": 986,
+    "cache_write": 15362,
+    "latency_s": 14.855032317980658
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

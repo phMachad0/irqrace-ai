@@ -1,0 +1,68 @@
+{
+  "case": "logger3",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "tickCounter",
+        "a1_line": 99,
+        "a1_kind": "write",
+        "b_line": 109,
+        "b_kind": "write",
+        "a2_line": 100,
+        "a2_kind": "read",
+        "why": "task_measure3_isr (prio 6) can preempt measure2 between its write and read of tickCounter, so the read sees a changed value."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 99,
+        "a1_kind": "write",
+        "b_line": 164,
+        "b_kind": "write",
+        "a2_line": 100,
+        "a2_kind": "read",
+        "why": "The communicate ISR (prio 3) can preempt measure2 (prio 2) between the write and the read and reset tickCounter."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 89,
+        "a1_kind": "read",
+        "b_line": 110,
+        "b_kind": "write",
+        "a2_line": 91,
+        "a2_kind": "write",
+        "why": "measure3 (prio 6) can preempt measure1 between using numberOfRecords as the index and incrementing it, so one increment is lost and the record slot is wrong."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 159,
+        "a1_kind": "read",
+        "b_line": 110,
+        "b_kind": "write",
+        "a2_line": 165,
+        "a2_kind": "write",
+        "why": "measure3 can preempt the communicate ISR between its read and the reset of numberOfRecords, so the overflow check uses a stale value."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 159,
+        "a1_kind": "read",
+        "b_line": 91,
+        "b_kind": "write",
+        "a2_line": 165,
+        "a2_kind": "write",
+        "why": "measure1 (prio 5) can preempt the communicate ISR (prio 3) between the read and the write of numberOfRecords, so the check uses a stale value."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"tickCounter\",\"a1_line\":99,\"a1_kind\":\"write\",\"b_line\":109,\"b_kind\":\"write\",\"a2_line\":100,\"a2_kind\":\"read\",\"why\":\"task_measure3_isr (prio 6) can preempt measure2 between its write and read of tickCounter, so the read sees a changed value.\"},{\"variable\":\"tickCounter\",\"a1_line\":99,\"a1_kind\":\"write\",\"b_line\":164,\"b_kind\":\"write\",\"a2_line\":100,\"a2_kind\":\"read\",\"why\":\"The communicate ISR (prio 3) can preempt measure2 (prio 2) between the write and the read and reset tickCounter.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":89,\"a1_kind\":\"read\",\"b_line\":110,\"b_kind\":\"write\",\"a2_line\":91,\"a2_kind\":\"write\",\"why\":\"measure3 (prio 6) can preempt measure1 between using numberOfRecords as the index and incrementing it, so one increment is lost and the record slot is wrong.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":159,\"a1_kind\":\"read\",\"b_line\":110,\"b_kind\":\"write\",\"a2_line\":165,\"a2_kind\":\"write\",\"why\":\"measure3 can preempt the communicate ISR between its read and the reset of numberOfRecords, so the overflow check uses a stale value.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":159,\"a1_kind\":\"read\",\"b_line\":91,\"b_kind\":\"write\",\"a2_line\":165,\"a2_kind\":\"write\",\"why\":\"measure1 (prio 5) can preempt the communicate ISR (prio 3) between the read and the write of numberOfRecords, so the check uses a stale value.\"}]}",
+  "wall_s": 14.038882493972778,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1618,
+    "cache_read": 986,
+    "cache_write": 3181,
+    "latency_s": 14.038725499995053
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

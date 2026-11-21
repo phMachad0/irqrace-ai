@@ -1,0 +1,88 @@
+{
+  "case": "i2c_pca_isa_1",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_var1",
+        "a1_line": 291,
+        "a1_kind": "read",
+        "b_line": 342,
+        "b_kind": "write",
+        "a2_line": 292,
+        "a2_kind": "read",
+        "why": "req4_isr can preempt JudgeCondi between its two reads of test_global_var1. The two reads can then see different values."
+      },
+      {
+        "variable": "test_global_var3",
+        "a1_line": 302,
+        "a1_kind": "write",
+        "b_line": 320,
+        "b_kind": "read",
+        "a2_line": 308,
+        "a2_kind": "write",
+        "why": "req2_isr, at equal priority, can preempt req1_isr between its two writes. It then reads the intermediate value 0x33."
+      },
+      {
+        "variable": "irq",
+        "a1_line": 303,
+        "a1_kind": "write",
+        "b_line": 314,
+        "b_kind": "write",
+        "a2_line": 199,
+        "a2_kind": "read",
+        "why": "req2_isr can overwrite irq after req1_isr stores it and before pca_isa_probe reads it. The probe then sees a different value."
+      },
+      {
+        "variable": "irq",
+        "a1_line": 326,
+        "a1_kind": "write",
+        "b_line": 340,
+        "b_kind": "write",
+        "a2_line": 327,
+        "a2_kind": "read",
+        "why": "req4_isr can overwrite irq with -1 between req3_isr's write and its check. The irq==3 test then fails."
+      },
+      {
+        "variable": "irq",
+        "a1_line": 340,
+        "a1_kind": "write",
+        "b_line": 326,
+        "b_kind": "write",
+        "a2_line": 341,
+        "a2_kind": "read",
+        "why": "req3_isr can overwrite irq between req4_isr's write and its check. The irq==-1 test then fails."
+      },
+      {
+        "variable": "global_id",
+        "a1_line": 231,
+        "a1_kind": "write",
+        "b_line": 236,
+        "b_kind": "write",
+        "a2_line": 200,
+        "a2_kind": "read",
+        "why": "Another ISR's pca_isa_exit or pca_isa_init can change global_id between this ISR's init write and its probe read. The probe then compares against a clobbered value."
+      },
+      {
+        "variable": "global_dev",
+        "a1_line": 232,
+        "a1_kind": "write",
+        "b_line": 237,
+        "b_kind": "write",
+        "a2_line": 196,
+        "a2_kind": "read",
+        "why": "Another ISR's pca_isa_exit can overwrite global_dev between this ISR's init write and its probe read."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":291,\"a1_kind\":\"read\",\"b_line\":342,\"b_kind\":\"write\",\"a2_line\":292,\"a2_kind\":\"read\",\"why\":\"req4_isr can preempt JudgeCondi between its two reads of test_global_var1. The two reads can then see different values.\"},{\"variable\":\"test_global_var3\",\"a1_line\":302,\"a1_kind\":\"write\",\"b_line\":320,\"b_kind\":\"read\",\"a2_line\":308,\"a2_kind\":\"write\",\"why\":\"req2_isr, at equal priority, can preempt req1_isr between its two writes. It then reads the intermediate value 0x33.\"},{\"variable\":\"irq\",\"a1_line\":303,\"a1_kind\":\"write\",\"b_line\":314,\"b_kind\":\"write\",\"a2_line\":199,\"a2_kind\":\"read\",\"why\":\"req2_isr can overwrite irq after req1_isr stores it and before pca_isa_probe reads it. The probe then sees a different value.\"},{\"variable\":\"irq\",\"a1_line\":326,\"a1_kind\":\"write\",\"b_line\":340,\"b_kind\":\"write\",\"a2_line\":327,\"a2_kind\":\"read\",\"why\":\"req4_isr can overwrite irq with -1 between req3_isr's write and its check. The irq==3 test then fails.\"},{\"variable\":\"irq\",\"a1_line\":340,\"a1_kind\":\"write\",\"b_line\":326,\"b_kind\":\"write\",\"a2_line\":341,\"a2_kind\":\"read\",\"why\":\"req3_isr can overwrite irq between req4_isr's write and its check. The irq==-1 test then fails.\"},{\"variable\":\"global_id\",\"a1_line\":231,\"a1_kind\":\"write\",\"b_line\":236,\"b_kind\":\"write\",\"a2_line\":200,\"a2_kind\":\"read\",\"why\":\"Another ISR's pca_isa_exit or pca_isa_init can change global_id between this ISR's init write and its probe read. The probe then compares against a clobbered value.\"},{\"variable\":\"global_dev\",\"a1_line\":232,\"a1_kind\":\"write\",\"b_line\":237,\"b_kind\":\"write\",\"a2_line\":196,\"a2_kind\":\"read\",\"why\":\"Another ISR's pca_isa_exit can overwrite global_dev between this ISR's init write and its probe read.\"}]}",
+  "wall_s": 13.442223310470581,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1749,
+    "cache_read": 6310,
+    "cache_write": 485,
+    "latency_s": 13.442057685984764
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

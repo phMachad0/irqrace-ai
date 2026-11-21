@@ -1,0 +1,88 @@
+{
+  "case": "i8xx_tco_1",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_array[9000]",
+        "a1_line": 791,
+        "a1_kind": "write",
+        "b_line": 780,
+        "b_kind": "write",
+        "a2_line": 794,
+        "a2_kind": "read",
+        "why": "closer1_isr (higher priority) can preempt writer1_isr between its write and its read of the element and overwrite it."
+      },
+      {
+        "variable": "test_global_var2",
+        "a1_line": 750,
+        "a1_kind": "read",
+        "b_line": 773,
+        "b_kind": "write",
+        "a2_line": 751,
+        "a2_kind": "read",
+        "why": "closer1_isr can preempt closer2_isr between the two reads in JudgeCondi and change the value, so the reads can disagree."
+      },
+      {
+        "variable": "test_global_var1",
+        "a1_line": 747,
+        "a1_kind": "read",
+        "b_line": 771,
+        "b_kind": "write",
+        "a2_line": 748,
+        "a2_kind": "read",
+        "why": "closer1_isr can preempt closer2_isr between the two reads in JudgeCondi and change the value."
+      },
+      {
+        "variable": "tco_expect_close",
+        "a1_line": 759,
+        "a1_kind": "write",
+        "b_line": 777,
+        "b_kind": "write",
+        "a2_line": 760,
+        "a2_kind": "read",
+        "why": "closer1_isr can preempt closer2_isr between its write of 42 and the check, and it also writes this variable."
+      },
+      {
+        "variable": "tco_expect_close",
+        "a1_line": 759,
+        "a1_kind": "write",
+        "b_line": 380,
+        "b_kind": "write",
+        "a2_line": 760,
+        "a2_kind": "read",
+        "why": "closer1_isr's release can reset the flag to 0 between closer2_isr's write of 42 and its check."
+      },
+      {
+        "variable": "tco_write_buf",
+        "a1_line": 757,
+        "a1_kind": "write",
+        "b_line": 775,
+        "b_kind": "write",
+        "a2_line": 429,
+        "a2_kind": "read",
+        "why": "closer1_isr can preempt closer2_isr and overwrite the buffer between its write and the read in i8xx_tco_write. The reverse nesting also works."
+      },
+      {
+        "variable": "tco_write_buf",
+        "a1_line": 775,
+        "a1_kind": "write",
+        "b_line": 757,
+        "b_kind": "write",
+        "a2_line": 429,
+        "a2_kind": "read",
+        "why": "closer2_isr can preempt closer1_isr (equal priority) between its write and the read in i8xx_tco_write."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_array[9000]\",\"a1_line\":791,\"a1_kind\":\"write\",\"b_line\":780,\"b_kind\":\"write\",\"a2_line\":794,\"a2_kind\":\"read\",\"why\":\"closer1_isr (higher priority) can preempt writer1_isr between its write and its read of the element and overwrite it.\"},{\"variable\":\"test_global_var2\",\"a1_line\":750,\"a1_kind\":\"read\",\"b_line\":773,\"b_kind\":\"write\",\"a2_line\":751,\"a2_kind\":\"read\",\"why\":\"closer1_isr can preempt closer2_isr between the two reads in JudgeCondi and change the value, so the reads can disagree.\"},{\"variable\":\"test_global_var1\",\"a1_line\":747,\"a1_kind\":\"read\",\"b_line\":771,\"b_kind\":\"write\",\"a2_line\":748,\"a2_kind\":\"read\",\"why\":\"closer1_isr can preempt closer2_isr between the two reads in JudgeCondi and change the value.\"},{\"variable\":\"tco_expect_close\",\"a1_line\":759,\"a1_kind\":\"write\",\"b_line\":777,\"b_kind\":\"write\",\"a2_line\":760,\"a2_kind\":\"read\",\"why\":\"closer1_isr can preempt closer2_isr between its write of 42 and the check, and it also writes this variable.\"},{\"variable\":\"tco_expect_close\",\"a1_line\":759,\"a1_kind\":\"write\",\"b_line\":380,\"b_kind\":\"write\",\"a2_line\":760,\"a2_kind\":\"read\",\"why\":\"closer1_isr's release can reset the flag to 0 between closer2_isr's write of 42 and its check.\"},{\"variable\":\"tco_write_buf\",\"a1_line\":757,\"a1_kind\":\"write\",\"b_line\":775,\"b_kind\":\"write\",\"a2_line\":429,\"a2_kind\":\"read\",\"why\":\"closer1_isr can preempt closer2_isr and overwrite the buffer between its write and the read in i8xx_tco_write. The reverse nesting also works.\"},{\"variable\":\"tco_write_buf\",\"a1_line\":775,\"a1_kind\":\"write\",\"b_line\":757,\"b_kind\":\"write\",\"a2_line\":429,\"a2_kind\":\"read\",\"why\":\"closer2_isr can preempt closer1_isr (equal priority) between its write and the read in i8xx_tco_write.\"}]}",
+  "wall_s": 18.742760181427002,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 2156,
+    "cache_read": 986,
+    "cache_write": 13692,
+    "latency_s": 18.74260296099237
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

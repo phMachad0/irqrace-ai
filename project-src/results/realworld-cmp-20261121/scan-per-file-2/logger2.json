@@ -1,0 +1,118 @@
+{
+  "case": "logger2",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "tickCounter",
+        "a1_line": 81,
+        "a1_kind": "write",
+        "b_line": 100,
+        "b_kind": "write",
+        "a2_line": 82,
+        "a2_kind": "read",
+        "why": "measure2 (prio 3) can preempt measure1 between the increment and the read, resetting tickCounter."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 81,
+        "a1_kind": "write",
+        "b_line": 158,
+        "b_kind": "write",
+        "a2_line": 82,
+        "a2_kind": "read",
+        "why": "The communicate ISR can preempt measure1 and zero tickCounter before it is read."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 82,
+        "a1_kind": "read",
+        "b_line": 100,
+        "b_kind": "write",
+        "a2_line": 86,
+        "a2_kind": "write",
+        "why": "measure2 can write tickCounter between measure1's read and its later write."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 82,
+        "a1_kind": "read",
+        "b_line": 158,
+        "b_kind": "write",
+        "a2_line": 86,
+        "a2_kind": "write",
+        "why": "The communicate ISR can write tickCounter between measure1's read and its write."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 81,
+        "a1_kind": "read",
+        "b_line": 100,
+        "b_kind": "write",
+        "a2_line": 81,
+        "a2_kind": "write",
+        "why": "tickCounter++ is a non-atomic read-modify-write that measure2 can interrupt."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 100,
+        "a1_kind": "write",
+        "b_line": 158,
+        "b_kind": "write",
+        "a2_line": 101,
+        "a2_kind": "read",
+        "why": "The communicate ISR can preempt measure2 between its write and its read of tickCounter."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 90,
+        "a1_kind": "read",
+        "b_line": 159,
+        "b_kind": "write",
+        "a2_line": 92,
+        "a2_kind": "write",
+        "why": "The communicate ISR can reset numberOfRecords between measure1's use as an index and its increment."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 90,
+        "a1_kind": "read",
+        "b_line": 159,
+        "b_kind": "write",
+        "a2_line": 92,
+        "a2_kind": "read",
+        "why": "The communicate ISR can reset numberOfRecords between measure1's two reads of it."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 92,
+        "a1_kind": "read",
+        "b_line": 159,
+        "b_kind": "write",
+        "a2_line": 92,
+        "a2_kind": "write",
+        "why": "numberOfRecords++ is a non-atomic read-modify-write, and a reset between the read and the write is lost."
+      },
+      {
+        "variable": "intervalCounter",
+        "a1_line": 89,
+        "a1_kind": "read",
+        "b_line": 157,
+        "b_kind": "write",
+        "a2_line": 89,
+        "a2_kind": "write",
+        "why": "intervalCounter++ is a non-atomic read-modify-write, and the communicate ISR's reset between the read and the write is lost."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"tickCounter\",\"a1_line\":81,\"a1_kind\":\"write\",\"b_line\":100,\"b_kind\":\"write\",\"a2_line\":82,\"a2_kind\":\"read\",\"why\":\"measure2 (prio 3) can preempt measure1 between the increment and the read, resetting tickCounter.\"},{\"variable\":\"tickCounter\",\"a1_line\":81,\"a1_kind\":\"write\",\"b_line\":158,\"b_kind\":\"write\",\"a2_line\":82,\"a2_kind\":\"read\",\"why\":\"The communicate ISR can preempt measure1 and zero tickCounter before it is read.\"},{\"variable\":\"tickCounter\",\"a1_line\":82,\"a1_kind\":\"read\",\"b_line\":100,\"b_kind\":\"write\",\"a2_line\":86,\"a2_kind\":\"write\",\"why\":\"measure2 can write tickCounter between measure1's read and its later write.\"},{\"variable\":\"tickCounter\",\"a1_line\":82,\"a1_kind\":\"read\",\"b_line\":158,\"b_kind\":\"write\",\"a2_line\":86,\"a2_kind\":\"write\",\"why\":\"The communicate ISR can write tickCounter between measure1's read and its write.\"},{\"variable\":\"tickCounter\",\"a1_line\":81,\"a1_kind\":\"read\",\"b_line\":100,\"b_kind\":\"write\",\"a2_line\":81,\"a2_kind\":\"write\",\"why\":\"tickCounter++ is a non-atomic read-modify-write that measure2 can interrupt.\"},{\"variable\":\"tickCounter\",\"a1_line\":100,\"a1_kind\":\"write\",\"b_line\":158,\"b_kind\":\"write\",\"a2_line\":101,\"a2_kind\":\"read\",\"why\":\"The communicate ISR can preempt measure2 between its write and its read of tickCounter.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":90,\"a1_kind\":\"read\",\"b_line\":159,\"b_kind\":\"write\",\"a2_line\":92,\"a2_kind\":\"write\",\"why\":\"The communicate ISR can reset numberOfRecords between measure1's use as an index and its increment.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":90,\"a1_kind\":\"read\",\"b_line\":159,\"b_kind\":\"write\",\"a2_line\":92,\"a2_kind\":\"read\",\"why\":\"The communicate ISR can reset numberOfRecords between measure1's two reads of it.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":92,\"a1_kind\":\"read\",\"b_line\":159,\"b_kind\":\"write\",\"a2_line\":92,\"a2_kind\":\"write\",\"why\":\"numberOfRecords++ is a non-atomic read-modify-write, and a reset between the read and the write is lost.\"},{\"variable\":\"intervalCounter\",\"a1_line\":89,\"a1_kind\":\"read\",\"b_line\":157,\"b_kind\":\"write\",\"a2_line\":89,\"a2_kind\":\"write\",\"why\":\"intervalCounter++ is a non-atomic read-modify-write, and the communicate ISR's reset between the read and the write is lost.\"}]}",
+  "wall_s": 12.718891859054565,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1781,
+    "cache_read": 3594,
+    "cache_write": 487,
+    "latency_s": 12.718720433011185
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

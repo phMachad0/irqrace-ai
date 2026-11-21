@@ -1,0 +1,208 @@
+{
+  "case": "blink3",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 109,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "write",
+        "why": "Timer_B (equal priority) can preempt the A increment between its read and write, so the update is lost."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 123,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "write",
+        "why": "Timer_C has higher priority and can preempt the increment between its read and write, so the update is lost."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 136,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "write",
+        "why": "Timer_Force has higher priority and can preempt the increment between its read and write, so the update is lost."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 146,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "write",
+        "why": "Timer_Reset has higher priority and can preempt the increment between its read and write, so the update is lost."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "write",
+        "b_line": 109,
+        "b_kind": "write",
+        "a2_line": 97,
+        "a2_kind": "read",
+        "why": "Timer_B can overwrite timerCount between the increment and the check at line 97."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "write",
+        "b_line": 123,
+        "b_kind": "write",
+        "a2_line": 97,
+        "a2_kind": "read",
+        "why": "Timer_C can overwrite timerCount between the increment and the check at line 97."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "write",
+        "b_line": 136,
+        "b_kind": "write",
+        "a2_line": 97,
+        "a2_kind": "read",
+        "why": "Timer_Force can change timerCount between the increment and the check at line 97."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "write",
+        "b_line": 146,
+        "b_kind": "write",
+        "a2_line": 97,
+        "a2_kind": "read",
+        "why": "Timer_Reset can overwrite timerCount between the increment and the check at line 97."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 109,
+        "b_kind": "write",
+        "a2_line": 97,
+        "a2_kind": "read",
+        "why": "Timer_B can change timerCount between the two reads in Timer_A, so they see different values."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 123,
+        "b_kind": "write",
+        "a2_line": 97,
+        "a2_kind": "read",
+        "why": "Timer_C can change timerCount between the two reads in Timer_A, so they see different values."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 136,
+        "b_kind": "write",
+        "a2_line": 97,
+        "a2_kind": "read",
+        "why": "Timer_Force can change timerCount between the two reads in Timer_A, so they see different values."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 146,
+        "b_kind": "write",
+        "a2_line": 97,
+        "a2_kind": "read",
+        "why": "Timer_Reset can change timerCount between the two reads in Timer_A, so they see different values."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 109,
+        "a1_kind": "write",
+        "b_line": 95,
+        "b_kind": "write",
+        "a2_line": 111,
+        "a2_kind": "read",
+        "why": "Timer_A (equal priority) can modify timerCount between Timer_B's write and its check."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 109,
+        "a1_kind": "write",
+        "b_line": 123,
+        "b_kind": "write",
+        "a2_line": 111,
+        "a2_kind": "read",
+        "why": "Timer_C can modify timerCount between Timer_B's write and its check."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 109,
+        "a1_kind": "write",
+        "b_line": 136,
+        "b_kind": "write",
+        "a2_line": 111,
+        "a2_kind": "read",
+        "why": "Timer_Force can modify timerCount between Timer_B's write and its check."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 109,
+        "a1_kind": "write",
+        "b_line": 146,
+        "b_kind": "write",
+        "a2_line": 111,
+        "a2_kind": "read",
+        "why": "Timer_Reset can modify timerCount between Timer_B's write and its check."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 123,
+        "a1_kind": "write",
+        "b_line": 146,
+        "b_kind": "write",
+        "a2_line": 125,
+        "a2_kind": "read",
+        "why": "Timer_Reset has higher priority and can reset timerCount between Timer_C's write and its check."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 136,
+        "a1_kind": "read",
+        "b_line": 123,
+        "b_kind": "write",
+        "a2_line": 136,
+        "a2_kind": "write",
+        "why": "Timer_C has higher priority and can preempt Timer_Force's increment, so the update is lost."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 136,
+        "a1_kind": "read",
+        "b_line": 146,
+        "b_kind": "write",
+        "a2_line": 136,
+        "a2_kind": "write",
+        "why": "Timer_Reset has higher priority and can preempt Timer_Force's increment, so the update is lost."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":109,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"Timer_B (equal priority) can preempt the A increment between its read and write, so the update is lost.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":123,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"Timer_C has higher priority and can preempt the increment between its read and write, so the update is lost.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"Timer_Force has higher priority and can preempt the increment between its read and write, so the update is lost.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"Timer_Reset has higher priority and can preempt the increment between its read and write, so the update is lost.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":109,\"b_kind\":\"write\",\"a2_line\":97,\"a2_kind\":\"read\",\"why\":\"Timer_B can overwrite timerCount between the increment and the check at line 97.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":123,\"b_kind\":\"write\",\"a2_line\":97,\"a2_kind\":\"read\",\"why\":\"Timer_C can overwrite timerCount between the increment and the check at line 97.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":97,\"a2_kind\":\"read\",\"why\":\"Timer_Force can change timerCount between the increment and the check at line 97.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":97,\"a2_kind\":\"read\",\"why\":\"Timer_Reset can overwrite timerCount between the increment and the check at line 97.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":109,\"b_kind\":\"write\",\"a2_line\":97,\"a2_kind\":\"read\",\"why\":\"Timer_B can change timerCount between the two reads in Timer_A, so they see different values.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":123,\"b_kind\":\"write\",\"a2_line\":97,\"a2_kind\":\"read\",\"why\":\"Timer_C can change timerCount between the two reads in Timer_A, so they see different values.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":97,\"a2_kind\":\"read\",\"why\":\"Timer_Force can change timerCount between the two reads in Timer_A, so they see different values.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":97,\"a2_kind\":\"read\",\"why\":\"Timer_Reset can change timerCount between the two reads in Timer_A, so they see different values.\"},{\"variable\":\"timerCount\",\"a1_line\":109,\"a1_kind\":\"write\",\"b_line\":95,\"b_kind\":\"write\",\"a2_line\":111,\"a2_kind\":\"read\",\"why\":\"Timer_A (equal priority) can modify timerCount between Timer_B's write and its check.\"},{\"variable\":\"timerCount\",\"a1_line\":109,\"a1_kind\":\"write\",\"b_line\":123,\"b_kind\":\"write\",\"a2_line\":111,\"a2_kind\":\"read\",\"why\":\"Timer_C can modify timerCount between Timer_B's write and its check.\"},{\"variable\":\"timerCount\",\"a1_line\":109,\"a1_kind\":\"write\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":111,\"a2_kind\":\"read\",\"why\":\"Timer_Force can modify timerCount between Timer_B's write and its check.\"},{\"variable\":\"timerCount\",\"a1_line\":109,\"a1_kind\":\"write\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":111,\"a2_kind\":\"read\",\"why\":\"Timer_Reset can modify timerCount between Timer_B's write and its check.\"},{\"variable\":\"timerCount\",\"a1_line\":123,\"a1_kind\":\"write\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":125,\"a2_kind\":\"read\",\"why\":\"Timer_Reset has higher priority and can reset timerCount between Timer_C's write and its check.\"},{\"variable\":\"timerCount\",\"a1_line\":136,\"a1_kind\":\"read\",\"b_line\":123,\"b_kind\":\"write\",\"a2_line\":136,\"a2_kind\":\"write\",\"why\":\"Timer_C has higher priority and can preempt Timer_Force's increment, so the update is lost.\"},{\"variable\":\"timerCount\",\"a1_line\":136,\"a1_kind\":\"read\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":136,\"a2_kind\":\"write\",\"why\":\"Timer_Reset has higher priority and can preempt Timer_Force's increment, so the update is lost.\"}]}",
+  "wall_s": 19.347696542739868,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 2820,
+    "cache_read": 3759,
+    "cache_write": 477,
+    "latency_s": 19.347447717009345
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,168 @@
+{
+  "case": "blink3",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "write",
+        "b_line": 109,
+        "b_kind": "write",
+        "a2_line": 97,
+        "a2_kind": "read",
+        "why": "Timer_B (equal priority) can preempt Timer_A between the increment and the check, so the check sees B's value."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "write",
+        "b_line": 123,
+        "b_kind": "write",
+        "a2_line": 97,
+        "a2_kind": "read",
+        "why": "Timer_C preempts Timer_A after its write and overwrites the value before the check."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "write",
+        "b_line": 136,
+        "b_kind": "write",
+        "a2_line": 97,
+        "a2_kind": "read",
+        "why": "Timer_Force preempts and increments, so the check reads a changed value."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "write",
+        "b_line": 146,
+        "b_kind": "write",
+        "a2_line": 97,
+        "a2_kind": "read",
+        "why": "Timer_Reset preempts and zeroes the counter before the check."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 109,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "write",
+        "why": "The increment is a non-atomic read-modify-write; Timer_B can write in between, so its update is lost."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 123,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "write",
+        "why": "Timer_C's write is lost when the preempted increment completes."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 136,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "write",
+        "why": "Timer_Force's increment is lost when the preempted increment writes back."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 146,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "write",
+        "why": "Timer_Reset's zeroing is overwritten by the preempted increment."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 109,
+        "a1_kind": "write",
+        "b_line": 95,
+        "b_kind": "write",
+        "a2_line": 111,
+        "a2_kind": "read",
+        "why": "Timer_A (equal priority) can preempt Timer_B between its write and check, so the check no longer sees 1."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 109,
+        "a1_kind": "write",
+        "b_line": 123,
+        "b_kind": "write",
+        "a2_line": 111,
+        "a2_kind": "read",
+        "why": "Timer_C can write between B's write and its check."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 109,
+        "a1_kind": "write",
+        "b_line": 136,
+        "b_kind": "write",
+        "a2_line": 111,
+        "a2_kind": "read",
+        "why": "Timer_Force increments between B's write and check, so the check fails."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 109,
+        "a1_kind": "write",
+        "b_line": 146,
+        "b_kind": "write",
+        "a2_line": 111,
+        "a2_kind": "read",
+        "why": "Timer_Reset zeroes the counter between B's write and check."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 123,
+        "a1_kind": "write",
+        "b_line": 146,
+        "b_kind": "write",
+        "a2_line": 125,
+        "a2_kind": "read",
+        "why": "Timer_Reset (highest priority) preempts Timer_C between its write and check and resets the counter."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 136,
+        "a1_kind": "read",
+        "b_line": 123,
+        "b_kind": "write",
+        "a2_line": 136,
+        "a2_kind": "write",
+        "why": "Timer_C preempts Timer_Force's read-modify-write, and its write is lost."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 136,
+        "a1_kind": "read",
+        "b_line": 146,
+        "b_kind": "write",
+        "a2_line": 136,
+        "a2_kind": "write",
+        "why": "Timer_Reset preempts Timer_Force's increment, and the reset is overwritten."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":109,\"b_kind\":\"write\",\"a2_line\":97,\"a2_kind\":\"read\",\"why\":\"Timer_B (equal priority) can preempt Timer_A between the increment and the check, so the check sees B's value.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":123,\"b_kind\":\"write\",\"a2_line\":97,\"a2_kind\":\"read\",\"why\":\"Timer_C preempts Timer_A after its write and overwrites the value before the check.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":97,\"a2_kind\":\"read\",\"why\":\"Timer_Force preempts and increments, so the check reads a changed value.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":97,\"a2_kind\":\"read\",\"why\":\"Timer_Reset preempts and zeroes the counter before the check.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":109,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"The increment is a non-atomic read-modify-write; Timer_B can write in between, so its update is lost.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":123,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"Timer_C's write is lost when the preempted increment completes.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"Timer_Force's increment is lost when the preempted increment writes back.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"Timer_Reset's zeroing is overwritten by the preempted increment.\"},{\"variable\":\"timerCount\",\"a1_line\":109,\"a1_kind\":\"write\",\"b_line\":95,\"b_kind\":\"write\",\"a2_line\":111,\"a2_kind\":\"read\",\"why\":\"Timer_A (equal priority) can preempt Timer_B between its write and check, so the check no longer sees 1.\"},{\"variable\":\"timerCount\",\"a1_line\":109,\"a1_kind\":\"write\",\"b_line\":123,\"b_kind\":\"write\",\"a2_line\":111,\"a2_kind\":\"read\",\"why\":\"Timer_C can write between B's write and its check.\"},{\"variable\":\"timerCount\",\"a1_line\":109,\"a1_kind\":\"write\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":111,\"a2_kind\":\"read\",\"why\":\"Timer_Force increments between B's write and check, so the check fails.\"},{\"variable\":\"timerCount\",\"a1_line\":109,\"a1_kind\":\"write\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":111,\"a2_kind\":\"read\",\"why\":\"Timer_Reset zeroes the counter between B's write and check.\"},{\"variable\":\"timerCount\",\"a1_line\":123,\"a1_kind\":\"write\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":125,\"a2_kind\":\"read\",\"why\":\"Timer_Reset (highest priority) preempts Timer_C between its write and check and resets the counter.\"},{\"variable\":\"timerCount\",\"a1_line\":136,\"a1_kind\":\"read\",\"b_line\":123,\"b_kind\":\"write\",\"a2_line\":136,\"a2_kind\":\"write\",\"why\":\"Timer_C preempts Timer_Force's read-modify-write, and its write is lost.\"},{\"variable\":\"timerCount\",\"a1_line\":136,\"a1_kind\":\"read\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":136,\"a2_kind\":\"write\",\"why\":\"Timer_Reset preempts Timer_Force's increment, and the reset is overwritten.\"}]}",
+  "wall_s": 16.45757222175598,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 2220,
+    "cache_read": 0,
+    "cache_write": 4248,
+    "latency_s": 16.45727560200612
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -328,6 +328,12 @@ with the date.
   project created in the relabel ([[Triage Cost and Speed 2026-11-21]]). The suite has been public
   since 2019 with its answers in the comments. Run the scan on a renamed, reordered copy (identifiers,
   function order, line numbers shifted) before the scan is quoted as a baseline.
+- [ ] **Which prompt row for the real-world suite?** With the production row the triage keeps all
+  45 entries out of `likely_infeasible` but puts 24 in `likely_benign`, because the planted reads feed
+  nothing; the suite, like Racebench, counts the interleaving as the defect. `+racebench` cannot be
+  reused (equal-priority preemption differs). A row with Racebench's defect notion and the
+  real-world arrival model, or scoring production rows on feasibility only, as on Racebench
+  ([[Triage Cost and Speed 2026-11-21]]).
 - [ ] **Should the context record spell out what a type is?** On the disguised Racebench the triage
   called a union's bug point infeasible in 3 of 3 runs, because `.header` and `.data` "are different
   fields"; with the name `global_union` it never did. `variable.declared_type` carries the typedef

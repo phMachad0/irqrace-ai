@@ -1,0 +1,88 @@
+{
+  "case": "i8xx_tco_3",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_var1",
+        "a1_line": 741,
+        "a1_kind": "read",
+        "b_line": 791,
+        "b_kind": "write",
+        "a2_line": 742,
+        "a2_kind": "read",
+        "why": "writer1_isr (prio 3) can preempt closer2_isr between its two reads of test_global_var1, so they may see different values."
+      },
+      {
+        "variable": "test_global_var2",
+        "a1_line": 744,
+        "a1_kind": "read",
+        "b_line": 801,
+        "b_kind": "write",
+        "a2_line": 745,
+        "a2_kind": "read",
+        "why": "writer2_isr (prio 4) can preempt closer2_isr between the two reads, so they may differ."
+      },
+      {
+        "variable": "test_global_var3",
+        "a1_line": 779,
+        "a1_kind": "read",
+        "b_line": 810,
+        "b_kind": "write",
+        "a2_line": 779,
+        "a2_kind": "write",
+        "why": "The increment is a non-atomic read-modify-write. writer3_isr (prio 5) can preempt it, and its write is then overwritten."
+      },
+      {
+        "variable": "tco_expect_close",
+        "a1_line": 764,
+        "a1_kind": "write",
+        "b_line": 753,
+        "b_kind": "write",
+        "a2_line": 765,
+        "a2_kind": "read",
+        "why": "closer1_isr has equal priority and can preempt closer2_isr between its write and its check. It can also reset the value through i8xx_tco_write."
+      },
+      {
+        "variable": "tco_expect_close",
+        "a1_line": 777,
+        "a1_kind": "write",
+        "b_line": 753,
+        "b_kind": "write",
+        "a2_line": 778,
+        "a2_kind": "read",
+        "why": "Another equal-priority closer ISR can preempt between the write and the check and change the value."
+      },
+      {
+        "variable": "tco_expect_close",
+        "a1_line": 367,
+        "a1_kind": "read",
+        "b_line": 753,
+        "b_kind": "write",
+        "a2_line": 374,
+        "a2_kind": "write",
+        "why": "closer3_isr's check in release and its later reset can be split by a preempting closer ISR that writes the variable, so the reset overwrites that write."
+      },
+      {
+        "variable": "tco_write_buf",
+        "a1_line": 751,
+        "a1_kind": "write",
+        "b_line": 762,
+        "b_kind": "write",
+        "a2_line": 423,
+        "a2_kind": "read",
+        "why": "closer1_isr writes 'V' and then reads it in i8xx_tco_write. An equal-priority closer ISR can preempt in between and overwrite the buffer."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":741,\"a1_kind\":\"read\",\"b_line\":791,\"b_kind\":\"write\",\"a2_line\":742,\"a2_kind\":\"read\",\"why\":\"writer1_isr (prio 3) can preempt closer2_isr between its two reads of test_global_var1, so they may see different values.\"},{\"variable\":\"test_global_var2\",\"a1_line\":744,\"a1_kind\":\"read\",\"b_line\":801,\"b_kind\":\"write\",\"a2_line\":745,\"a2_kind\":\"read\",\"why\":\"writer2_isr (prio 4) can preempt closer2_isr between the two reads, so they may differ.\"},{\"variable\":\"test_global_var3\",\"a1_line\":779,\"a1_kind\":\"read\",\"b_line\":810,\"b_kind\":\"write\",\"a2_line\":779,\"a2_kind\":\"write\",\"why\":\"The increment is a non-atomic read-modify-write. writer3_isr (prio 5) can preempt it, and its write is then overwritten.\"},{\"variable\":\"tco_expect_close\",\"a1_line\":764,\"a1_kind\":\"write\",\"b_line\":753,\"b_kind\":\"write\",\"a2_line\":765,\"a2_kind\":\"read\",\"why\":\"closer1_isr has equal priority and can preempt closer2_isr between its write and its check. It can also reset the value through i8xx_tco_write.\"},{\"variable\":\"tco_expect_close\",\"a1_line\":777,\"a1_kind\":\"write\",\"b_line\":753,\"b_kind\":\"write\",\"a2_line\":778,\"a2_kind\":\"read\",\"why\":\"Another equal-priority closer ISR can preempt between the write and the check and change the value.\"},{\"variable\":\"tco_expect_close\",\"a1_line\":367,\"a1_kind\":\"read\",\"b_line\":753,\"b_kind\":\"write\",\"a2_line\":374,\"a2_kind\":\"write\",\"why\":\"closer3_isr's check in release and its later reset can be split by a preempting closer ISR that writes the variable, so the reset overwrites that write.\"},{\"variable\":\"tco_write_buf\",\"a1_line\":751,\"a1_kind\":\"write\",\"b_line\":762,\"b_kind\":\"write\",\"a2_line\":423,\"a2_kind\":\"read\",\"why\":\"closer1_isr writes 'V' and then reads it in i8xx_tco_write. An equal-priority closer ISR can preempt in between and overwrite the buffer.\"}]}",
+  "wall_s": 18.213284015655518,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1945,
+    "cache_read": 986,
+    "cache_write": 15040,
+    "latency_s": 18.213048170000548
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

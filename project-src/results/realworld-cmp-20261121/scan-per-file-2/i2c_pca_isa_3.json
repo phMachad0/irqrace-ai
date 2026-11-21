@@ -1,0 +1,118 @@
+{
+  "case": "i2c_pca_isa_3",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "irq",
+        "a1_line": 303,
+        "a1_kind": "write",
+        "b_line": 363,
+        "b_kind": "write",
+        "a2_line": 308,
+        "a2_kind": "read",
+        "why": "req6 (prio 3) can preempt req1 (prio 2) between irq=0 and the irq==0 check, setting irq=-1 so the check fails."
+      },
+      {
+        "variable": "irq",
+        "a1_line": 303,
+        "a1_kind": "write",
+        "b_line": 326,
+        "b_kind": "write",
+        "a2_line": 308,
+        "a2_kind": "read",
+        "why": "Higher-priority req3 writes irq between req1's write and read."
+      },
+      {
+        "variable": "irq",
+        "a1_line": 303,
+        "a1_kind": "write",
+        "b_line": 341,
+        "b_kind": "write",
+        "a2_line": 308,
+        "a2_kind": "read",
+        "why": "Higher-priority req4 writes irq between req1's write and read."
+      },
+      {
+        "variable": "irq",
+        "a1_line": 303,
+        "a1_kind": "write",
+        "b_line": 352,
+        "b_kind": "write",
+        "a2_line": 308,
+        "a2_kind": "read",
+        "why": "Higher-priority req5 writes irq between req1's write and read."
+      },
+      {
+        "variable": "irq",
+        "a1_line": 303,
+        "a1_kind": "write",
+        "b_line": 373,
+        "b_kind": "write",
+        "a2_line": 308,
+        "a2_kind": "read",
+        "why": "Higher-priority req7 writes irq between req1's write and read."
+      },
+      {
+        "variable": "irq",
+        "a1_line": 303,
+        "a1_kind": "write",
+        "b_line": 392,
+        "b_kind": "write",
+        "a2_line": 308,
+        "a2_kind": "read",
+        "why": "Higher-priority req8 writes irq between req1's write and read."
+      },
+      {
+        "variable": "test_global_var1",
+        "a1_line": 293,
+        "a1_kind": "read",
+        "b_line": 332,
+        "b_kind": "write",
+        "a2_line": 294,
+        "a2_kind": "read",
+        "why": "req3 (prio 3) can preempt req1's JudgeCondi between its two reads of test_global_var1 and change the value."
+      },
+      {
+        "variable": "test_global_var2",
+        "a1_line": 296,
+        "a1_kind": "read",
+        "b_line": 334,
+        "b_kind": "write",
+        "a2_line": 297,
+        "a2_kind": "read",
+        "why": "req3 can preempt req1's JudgeCondi between the two reads of test_global_var2 and change it."
+      },
+      {
+        "variable": "global_id",
+        "a1_line": 239,
+        "a1_kind": "write",
+        "b_line": 234,
+        "b_kind": "write",
+        "a2_line": 331,
+        "a2_kind": "read",
+        "why": "req3 sets global_id=-1 in pca_isa_exit then tests it. Higher-priority req5, req7 or req8 can run pca_isa_init in between and overwrite global_id."
+      },
+      {
+        "variable": "test_global_array[9000]",
+        "a1_line": 382,
+        "a1_kind": "write",
+        "b_line": 398,
+        "b_kind": "write",
+        "a2_line": 385,
+        "a2_kind": "read",
+        "why": "req8 (prio 6) preempts req7 (prio 5) between its write and its later read of array[9000], changing the value."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"irq\",\"a1_line\":303,\"a1_kind\":\"write\",\"b_line\":363,\"b_kind\":\"write\",\"a2_line\":308,\"a2_kind\":\"read\",\"why\":\"req6 (prio 3) can preempt req1 (prio 2) between irq=0 and the irq==0 check, setting irq=-1 so the check fails.\"},{\"variable\":\"irq\",\"a1_line\":303,\"a1_kind\":\"write\",\"b_line\":326,\"b_kind\":\"write\",\"a2_line\":308,\"a2_kind\":\"read\",\"why\":\"Higher-priority req3 writes irq between req1's write and read.\"},{\"variable\":\"irq\",\"a1_line\":303,\"a1_kind\":\"write\",\"b_line\":341,\"b_kind\":\"write\",\"a2_line\":308,\"a2_kind\":\"read\",\"why\":\"Higher-priority req4 writes irq between req1's write and read.\"},{\"variable\":\"irq\",\"a1_line\":303,\"a1_kind\":\"write\",\"b_line\":352,\"b_kind\":\"write\",\"a2_line\":308,\"a2_kind\":\"read\",\"why\":\"Higher-priority req5 writes irq between req1's write and read.\"},{\"variable\":\"irq\",\"a1_line\":303,\"a1_kind\":\"write\",\"b_line\":373,\"b_kind\":\"write\",\"a2_line\":308,\"a2_kind\":\"read\",\"why\":\"Higher-priority req7 writes irq between req1's write and read.\"},{\"variable\":\"irq\",\"a1_line\":303,\"a1_kind\":\"write\",\"b_line\":392,\"b_kind\":\"write\",\"a2_line\":308,\"a2_kind\":\"read\",\"why\":\"Higher-priority req8 writes irq between req1's write and read.\"},{\"variable\":\"test_global_var1\",\"a1_line\":293,\"a1_kind\":\"read\",\"b_line\":332,\"b_kind\":\"write\",\"a2_line\":294,\"a2_kind\":\"read\",\"why\":\"req3 (prio 3) can preempt req1's JudgeCondi between its two reads of test_global_var1 and change the value.\"},{\"variable\":\"test_global_var2\",\"a1_line\":296,\"a1_kind\":\"read\",\"b_line\":334,\"b_kind\":\"write\",\"a2_line\":297,\"a2_kind\":\"read\",\"why\":\"req3 can preempt req1's JudgeCondi between the two reads of test_global_var2 and change it.\"},{\"variable\":\"global_id\",\"a1_line\":239,\"a1_kind\":\"write\",\"b_line\":234,\"b_kind\":\"write\",\"a2_line\":331,\"a2_kind\":\"read\",\"why\":\"req3 sets global_id=-1 in pca_isa_exit then tests it. Higher-priority req5, req7 or req8 can run pca_isa_init in between and overwrite global_id.\"},{\"variable\":\"test_global_array[9000]\",\"a1_line\":382,\"a1_kind\":\"write\",\"b_line\":398,\"b_kind\":\"write\",\"a2_line\":385,\"a2_kind\":\"read\",\"why\":\"req8 (prio 6) preempts req7 (prio 5) between its write and its later read of array[9000], changing the value.\"}]}",
+  "wall_s": 16.38620638847351,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1993,
+    "cache_read": 7070,
+    "cache_write": 487,
+    "latency_s": 16.38600560001214
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

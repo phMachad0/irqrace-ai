@@ -1,0 +1,88 @@
+{
+  "case": "logger3",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "tickCounter",
+        "a1_line": 99,
+        "a1_kind": "write",
+        "b_line": 109,
+        "b_kind": "write",
+        "a2_line": 100,
+        "a2_kind": "read",
+        "why": "measure3 (prio 6) can preempt measure2 between its write and the read and change tickCounter, so the check sees a different value."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 99,
+        "a1_kind": "write",
+        "b_line": 164,
+        "b_kind": "write",
+        "a2_line": 100,
+        "a2_kind": "read",
+        "why": "communicate (prio 3) preempts measure2 (prio 2) between the write and the read and rewrites tickCounter."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 89,
+        "a1_kind": "read",
+        "b_line": 110,
+        "b_kind": "write",
+        "a2_line": 91,
+        "a2_kind": "read",
+        "why": "measure3 (prio 6) preempts measure1 and increments numberOfRecords after it was used as the index, so the later increment reads a changed value."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 89,
+        "a1_kind": "read",
+        "b_line": 110,
+        "b_kind": "write",
+        "a2_line": 91,
+        "a2_kind": "write",
+        "why": "measure3 changes numberOfRecords between the index read and the increment write, which makes the record slot stale and loses an update."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 91,
+        "a1_kind": "read",
+        "b_line": 110,
+        "b_kind": "write",
+        "a2_line": 91,
+        "a2_kind": "write",
+        "why": "The non-atomic increment in measure1 can be preempted by measure3's increment, and one update is lost."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 159,
+        "a1_kind": "read",
+        "b_line": 91,
+        "b_kind": "write",
+        "a2_line": 165,
+        "a2_kind": "write",
+        "why": "measure1 (prio 5) preempts communicate (prio 3) between its read of numberOfRecords and its reset to 0, so the overflow check uses a stale value."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 159,
+        "a1_kind": "read",
+        "b_line": 110,
+        "b_kind": "write",
+        "a2_line": 165,
+        "a2_kind": "write",
+        "why": "measure3 (prio 6) preempts communicate between its read of numberOfRecords and its reset, so the overflow check uses a stale value."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"tickCounter\",\"a1_line\":99,\"a1_kind\":\"write\",\"b_line\":109,\"b_kind\":\"write\",\"a2_line\":100,\"a2_kind\":\"read\",\"why\":\"measure3 (prio 6) can preempt measure2 between its write and the read and change tickCounter, so the check sees a different value.\"},{\"variable\":\"tickCounter\",\"a1_line\":99,\"a1_kind\":\"write\",\"b_line\":164,\"b_kind\":\"write\",\"a2_line\":100,\"a2_kind\":\"read\",\"why\":\"communicate (prio 3) preempts measure2 (prio 2) between the write and the read and rewrites tickCounter.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":89,\"a1_kind\":\"read\",\"b_line\":110,\"b_kind\":\"write\",\"a2_line\":91,\"a2_kind\":\"read\",\"why\":\"measure3 (prio 6) preempts measure1 and increments numberOfRecords after it was used as the index, so the later increment reads a changed value.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":89,\"a1_kind\":\"read\",\"b_line\":110,\"b_kind\":\"write\",\"a2_line\":91,\"a2_kind\":\"write\",\"why\":\"measure3 changes numberOfRecords between the index read and the increment write, which makes the record slot stale and loses an update.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":91,\"a1_kind\":\"read\",\"b_line\":110,\"b_kind\":\"write\",\"a2_line\":91,\"a2_kind\":\"write\",\"why\":\"The non-atomic increment in measure1 can be preempted by measure3's increment, and one update is lost.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":159,\"a1_kind\":\"read\",\"b_line\":91,\"b_kind\":\"write\",\"a2_line\":165,\"a2_kind\":\"write\",\"why\":\"measure1 (prio 5) preempts communicate (prio 3) between its read of numberOfRecords and its reset to 0, so the overflow check uses a stale value.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":159,\"a1_kind\":\"read\",\"b_line\":110,\"b_kind\":\"write\",\"a2_line\":165,\"a2_kind\":\"write\",\"why\":\"measure3 (prio 6) preempts communicate between its read of numberOfRecords and its reset, so the overflow check uses a stale value.\"}]}",
+  "wall_s": 13.956468343734741,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1793,
+    "cache_read": 3680,
+    "cache_write": 492,
+    "latency_s": 13.955959831015207
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

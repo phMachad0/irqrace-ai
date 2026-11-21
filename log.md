@@ -2005,3 +2005,13 @@ Per-file scan on the disguised copy: 28/53 and 34/53 bug points, 5 and 10 traps,
 (Sonnet low: 48–52, 6–10, 70–86). Run 3 stopped at 19/31 on the daily cap and is scheduled to be
 re-run whole on 2026-11-22. The one-prompt scan (~15 k tokens in one request) and irqrace (every
 prompt above 8,000 tokens; 1.4–2.7 M per run) cannot run on this tier.
+
+## [2026-11-21] result | real-world suite: irqrace (pool + by variable) against the LLM-only scan
+`project-src/results/realworld-cmp-20261121/`, Sonnet at low effort, scored per `violation.info`
+entry with the recall gate's matcher. irqrace n = 1 with the production row `+self-validation`;
+scans n = 3 (answer comments cut from `blink1`–3; files not disguised).
+- irqrace: static 45/45; triage puts 21 entries in `likely_real` and 24 in `likely_benign` (the
+  planted `test_global_*` reads feed nothing), none infeasible; 2 of 14 false violations on top,
+  9 in the not-infeasible view. 215 calls, 13.1 M input tokens, 813 s.
+- Scan per file: 43–45/45, 5–10 false violations, ~0.2 M input tokens, ~78 s. One prompt: 9–36/45.
+- New question in [[Open Questions]]: which row for this suite.

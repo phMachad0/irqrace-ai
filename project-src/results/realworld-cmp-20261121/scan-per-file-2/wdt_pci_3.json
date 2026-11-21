@@ -1,0 +1,188 @@
+{
+  "case": "wdt_pci_3",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_var1",
+        "a1_line": 1140,
+        "a1_kind": "write",
+        "b_line": 987,
+        "b_kind": "write",
+        "a2_line": 1141,
+        "a2_kind": "read",
+        "why": "closer1_isr (prio 5) preempts writer1_isr between its write and the read-back."
+      },
+      {
+        "variable": "test_global_var1",
+        "a1_line": 1140,
+        "a1_kind": "write",
+        "b_line": 987,
+        "b_kind": "write",
+        "a2_line": 1142,
+        "a2_kind": "read",
+        "why": "closer1_isr can preempt between the write and the second read."
+      },
+      {
+        "variable": "test_global_var1",
+        "a1_line": 1141,
+        "a1_kind": "read",
+        "b_line": 987,
+        "b_kind": "write",
+        "a2_line": 1142,
+        "a2_kind": "read",
+        "why": "closer1_isr can change the value between the two reads."
+      },
+      {
+        "variable": "test_global_var2",
+        "a1_line": 1111,
+        "a1_kind": "write",
+        "b_line": 1048,
+        "b_kind": "read",
+        "a2_line": 1112,
+        "a2_kind": "write",
+        "why": "closer2_isr (prio 3) can preempt closer4_isr (prio 1) between its two writes and observe the intermediate state."
+      },
+      {
+        "variable": "test_global_var3",
+        "a1_line": 1164,
+        "a1_kind": "read",
+        "b_line": 1193,
+        "b_kind": "write",
+        "a2_line": 1164,
+        "a2_kind": "write",
+        "why": "The non-atomic increment in writer2_isr can be preempted by writer4_isr (prio 4), whose write is lost."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1022,
+        "a1_kind": "write",
+        "b_line": 989,
+        "b_kind": "write",
+        "a2_line": 1038,
+        "a2_kind": "read",
+        "why": "closer1_isr can preempt closer2_isr and overwrite expect_close before the check."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1038,
+        "a1_kind": "read",
+        "b_line": 989,
+        "b_kind": "write",
+        "a2_line": 1044,
+        "a2_kind": "write",
+        "why": "closer1_isr can modify expect_close between the check and the reset."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1058,
+        "a1_kind": "write",
+        "b_line": 989,
+        "b_kind": "write",
+        "a2_line": 1074,
+        "a2_kind": "read",
+        "why": "Higher-priority ISRs can preempt closer3_isr and overwrite expect_close before the check."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1074,
+        "a1_kind": "read",
+        "b_line": 989,
+        "b_kind": "write",
+        "a2_line": 1080,
+        "a2_kind": "write",
+        "why": "A higher-priority ISR can modify expect_close between the check and the reset."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1090,
+        "a1_kind": "write",
+        "b_line": 989,
+        "b_kind": "write",
+        "a2_line": 1106,
+        "a2_kind": "read",
+        "why": "Higher-priority ISRs can preempt closer4_isr and overwrite expect_close before the check."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1106,
+        "a1_kind": "read",
+        "b_line": 989,
+        "b_kind": "write",
+        "a2_line": 1113,
+        "a2_kind": "write",
+        "why": "A higher-priority ISR can modify expect_close between the check and the reset."
+      },
+      {
+        "variable": "wdtpci_write_buf",
+        "a1_line": 1021,
+        "a1_kind": "write",
+        "b_line": 988,
+        "b_kind": "write",
+        "a2_line": 1031,
+        "a2_kind": "read",
+        "why": "closer1_isr can preempt closer2_isr between its write and read of the buffer."
+      },
+      {
+        "variable": "wdtpci_write_buf",
+        "a1_line": 1057,
+        "a1_kind": "write",
+        "b_line": 988,
+        "b_kind": "write",
+        "a2_line": 1067,
+        "a2_kind": "read",
+        "why": "closer1_isr can preempt closer3_isr between its write and read of the buffer."
+      },
+      {
+        "variable": "wdtpci_write_buf",
+        "a1_line": 1089,
+        "a1_kind": "write",
+        "b_line": 988,
+        "b_kind": "write",
+        "a2_line": 1099,
+        "a2_kind": "read",
+        "why": "closer1_isr can preempt closer4_isr between its write and read of the buffer."
+      },
+      {
+        "variable": "count",
+        "a1_line": 1023,
+        "a1_kind": "write",
+        "b_line": 990,
+        "b_kind": "write",
+        "a2_line": 1025,
+        "a2_kind": "read",
+        "why": "closer1_isr (or a writer ISR storing count = 0) can preempt closer2_isr between its write and read of count."
+      },
+      {
+        "variable": "count",
+        "a1_line": 1059,
+        "a1_kind": "write",
+        "b_line": 990,
+        "b_kind": "write",
+        "a2_line": 1061,
+        "a2_kind": "read",
+        "why": "A higher-priority ISR can preempt closer3_isr between its write and read of count."
+      },
+      {
+        "variable": "count",
+        "a1_line": 1091,
+        "a1_kind": "write",
+        "b_line": 990,
+        "b_kind": "write",
+        "a2_line": 1093,
+        "a2_kind": "read",
+        "why": "A higher-priority ISR can preempt closer4_isr between its write and read of count."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":1140,\"a1_kind\":\"write\",\"b_line\":987,\"b_kind\":\"write\",\"a2_line\":1141,\"a2_kind\":\"read\",\"why\":\"closer1_isr (prio 5) preempts writer1_isr between its write and the read-back.\"},{\"variable\":\"test_global_var1\",\"a1_line\":1140,\"a1_kind\":\"write\",\"b_line\":987,\"b_kind\":\"write\",\"a2_line\":1142,\"a2_kind\":\"read\",\"why\":\"closer1_isr can preempt between the write and the second read.\"},{\"variable\":\"test_global_var1\",\"a1_line\":1141,\"a1_kind\":\"read\",\"b_line\":987,\"b_kind\":\"write\",\"a2_line\":1142,\"a2_kind\":\"read\",\"why\":\"closer1_isr can change the value between the two reads.\"},{\"variable\":\"test_global_var2\",\"a1_line\":1111,\"a1_kind\":\"write\",\"b_line\":1048,\"b_kind\":\"read\",\"a2_line\":1112,\"a2_kind\":\"write\",\"why\":\"closer2_isr (prio 3) can preempt closer4_isr (prio 1) between its two writes and observe the intermediate state.\"},{\"variable\":\"test_global_var3\",\"a1_line\":1164,\"a1_kind\":\"read\",\"b_line\":1193,\"b_kind\":\"write\",\"a2_line\":1164,\"a2_kind\":\"write\",\"why\":\"The non-atomic increment in writer2_isr can be preempted by writer4_isr (prio 4), whose write is lost.\"},{\"variable\":\"expect_close\",\"a1_line\":1022,\"a1_kind\":\"write\",\"b_line\":989,\"b_kind\":\"write\",\"a2_line\":1038,\"a2_kind\":\"read\",\"why\":\"closer1_isr can preempt closer2_isr and overwrite expect_close before the check.\"},{\"variable\":\"expect_close\",\"a1_line\":1038,\"a1_kind\":\"read\",\"b_line\":989,\"b_kind\":\"write\",\"a2_line\":1044,\"a2_kind\":\"write\",\"why\":\"closer1_isr can modify expect_close between the check and the reset.\"},{\"variable\":\"expect_close\",\"a1_line\":1058,\"a1_kind\":\"write\",\"b_line\":989,\"b_kind\":\"write\",\"a2_line\":1074,\"a2_kind\":\"read\",\"why\":\"Higher-priority ISRs can preempt closer3_isr and overwrite expect_close before the check.\"},{\"variable\":\"expect_close\",\"a1_line\":1074,\"a1_kind\":\"read\",\"b_line\":989,\"b_kind\":\"write\",\"a2_line\":1080,\"a2_kind\":\"write\",\"why\":\"A higher-priority ISR can modify expect_close between the check and the reset.\"},{\"variable\":\"expect_close\",\"a1_line\":1090,\"a1_kind\":\"write\",\"b_line\":989,\"b_kind\":\"write\",\"a2_line\":1106,\"a2_kind\":\"read\",\"why\":\"Higher-priority ISRs can preempt closer4_isr and overwrite expect_close before the check.\"},{\"variable\":\"expect_close\",\"a1_line\":1106,\"a1_kind\":\"read\",\"b_line\":989,\"b_kind\":\"write\",\"a2_line\":1113,\"a2_kind\":\"write\",\"why\":\"A higher-priority ISR can modify expect_close between the check and the reset.\"},{\"variable\":\"wdtpci_write_buf\",\"a1_line\":1021,\"a1_kind\":\"write\",\"b_line\":988,\"b_kind\":\"write\",\"a2_line\":1031,\"a2_kind\":\"read\",\"why\":\"closer1_isr can preempt closer2_isr between its write and read of the buffer.\"},{\"variable\":\"wdtpci_write_buf\",\"a1_line\":1057,\"a1_kind\":\"write\",\"b_line\":988,\"b_kind\":\"write\",\"a2_line\":1067,\"a2_kind\":\"read\",\"why\":\"closer1_isr can preempt closer3_isr between its write and read of the buffer.\"},{\"variable\":\"wdtpci_write_buf\",\"a1_line\":1089,\"a1_kind\":\"write\",\"b_line\":988,\"b_kind\":\"write\",\"a2_line\":1099,\"a2_kind\":\"read\",\"why\":\"closer1_isr can preempt closer4_isr between its write and read of the buffer.\"},{\"variable\":\"count\",\"a1_line\":1023,\"a1_kind\":\"write\",\"b_line\":990,\"b_kind\":\"write\",\"a2_line\":1025,\"a2_kind\":\"read\",\"why\":\"closer1_isr (or a writer ISR storing count = 0) can preempt closer2_isr between its write and read of count.\"},{\"variable\":\"count\",\"a1_line\":1059,\"a1_kind\":\"write\",\"b_line\":990,\"b_kind\":\"write\",\"a2_line\":1061,\"a2_kind\":\"read\",\"why\":\"A higher-priority ISR can preempt closer3_isr between its write and read of count.\"},{\"variable\":\"count\",\"a1_line\":1091,\"a1_kind\":\"write\",\"b_line\":990,\"b_kind\":\"write\",\"a2_line\":1093,\"a2_kind\":\"read\",\"why\":\"A higher-priority ISR can preempt closer4_isr between its write and read of count.\"}]}",
+  "wall_s": 23.706125736236572,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 3570,
+    "cache_read": 21345,
+    "cache_write": 488,
+    "latency_s": 23.705945316993166
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

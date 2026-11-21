@@ -1,0 +1,58 @@
+{
+  "case": "i8xx_tco_2",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_var1",
+        "a1_line": 744,
+        "a1_kind": "read",
+        "b_line": 771,
+        "b_kind": "write",
+        "a2_line": 745,
+        "a2_kind": "read",
+        "why": "closer2_isr (priority 2) can preempt main between its two reads of test_global_var1 and change the value."
+      },
+      {
+        "variable": "test_global_var2",
+        "a1_line": 747,
+        "a1_kind": "read",
+        "b_line": 787,
+        "b_kind": "write",
+        "a2_line": 748,
+        "a2_kind": "read",
+        "why": "writer2_isr can preempt main between the two reads of test_global_var2 and write it. Its condition is satisfied once writer1_isr has run."
+      },
+      {
+        "variable": "tco_expect_close",
+        "a1_line": 755,
+        "a1_kind": "write",
+        "b_line": 376,
+        "b_kind": "write",
+        "a2_line": 756,
+        "a2_kind": "read",
+        "why": "closer2_isr (priority 2) preempts closer1_isr after it stores 42. i8xx_tco_release resets the flag to 0, so closer1_isr's check at 756 fails."
+      },
+      {
+        "variable": "tco_expect_close",
+        "a1_line": 755,
+        "a1_kind": "write",
+        "b_line": 423,
+        "b_kind": "write",
+        "a2_line": 756,
+        "a2_kind": "read",
+        "why": "closer2_isr, running inside i8xx_tco_write, clears the flag to 0 between closer1_isr's write of 42 and its read."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":744,\"a1_kind\":\"read\",\"b_line\":771,\"b_kind\":\"write\",\"a2_line\":745,\"a2_kind\":\"read\",\"why\":\"closer2_isr (priority 2) can preempt main between its two reads of test_global_var1 and change the value.\"},{\"variable\":\"test_global_var2\",\"a1_line\":747,\"a1_kind\":\"read\",\"b_line\":787,\"b_kind\":\"write\",\"a2_line\":748,\"a2_kind\":\"read\",\"why\":\"writer2_isr can preempt main between the two reads of test_global_var2 and write it. Its condition is satisfied once writer1_isr has run.\"},{\"variable\":\"tco_expect_close\",\"a1_line\":755,\"a1_kind\":\"write\",\"b_line\":376,\"b_kind\":\"write\",\"a2_line\":756,\"a2_kind\":\"read\",\"why\":\"closer2_isr (priority 2) preempts closer1_isr after it stores 42. i8xx_tco_release resets the flag to 0, so closer1_isr's check at 756 fails.\"},{\"variable\":\"tco_expect_close\",\"a1_line\":755,\"a1_kind\":\"write\",\"b_line\":423,\"b_kind\":\"write\",\"a2_line\":756,\"a2_kind\":\"read\",\"why\":\"closer2_isr, running inside i8xx_tco_write, clears the flag to 0 between closer1_isr's write of 42 and its read.\"}]}",
+  "wall_s": 12.29997205734253,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1467,
+    "cache_read": 15855,
+    "cache_write": 486,
+    "latency_s": 12.299769473000197
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -146,6 +146,28 @@ The thesis can use the scan honestly as the cost floor of a pure-LLM approach: o
 copy it keeps most of the recall (2–3 bug points missed per run, with nothing behind a miss) and
 loses the precision.
 
+## The 18 real-world programs
+
+The same comparison on the real-world suite (`results/realworld-cmp-20261121/`), Sonnet at low
+effort, scored per `violation.info` entry (45 true, 14 false) with the recall gate's matcher.
+irqrace n = 1 with the production row `+self-validation` (the `+racebench` row's arrival model
+contradicts these configs); scans n = 3, files not disguised, answer comments cut from `blink1`–3.
+
+| | irqrace `likely_real` | irqrace not infeasible | scan per file | scan one prompt |
+| --- | --- | --- | --- | --- |
+| Entries found (of 45) | 21 | 45 | 43–45 | 9–36 |
+| Annotated false violations (of 14) | 2 | 9 | 5–10 | 2–9 |
+| Input tokens | 13.1 M | | 203–230 k | 173 k |
+| Wall time | 813 s | | 72–81 s | 21–113 s |
+
+- The production row puts 24 of the 45 entries in `likely_benign`: the planted `test_global_*`
+  reads feed nothing, which the production harm criterion counts as benign and the suite counts as
+  a defect. No entry is called infeasible. A real-world row with "the interleaving is the defect"
+  semantics does not exist yet.
+- The per-file scan finds 43–45 entries at 1/60 of the input, on files that keep their planted
+  names; the one-prompt scan degrades (one run stopped after 19 findings).
+- One irqrace run costs 13.1 M input tokens here, 6.5× the Racebench run.
+
 ## Lucas's T3 runs, scored here
 
 Two of the five T3 variants ran on 2026-11-17 and were never scored (`results/m3/`, n = 1):

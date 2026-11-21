@@ -1,0 +1,108 @@
+{
+  "case": "blink2",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "timerCount",
+        "a1_line": 93,
+        "a1_kind": "read",
+        "b_line": 119,
+        "b_kind": "write",
+        "a2_line": 93,
+        "a2_kind": "write",
+        "why": "Timer_C (higher priority) can preempt Timer_A between the read and the write-back of timerCount+1, so its update is lost."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 93,
+        "a1_kind": "read",
+        "b_line": 132,
+        "b_kind": "write",
+        "a2_line": 93,
+        "a2_kind": "write",
+        "why": "Timer_Force (equal priority) can preempt Timer_A between the read and the write, so its update is lost."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 93,
+        "a1_kind": "write",
+        "b_line": 119,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "read",
+        "why": "Timer_C can overwrite timerCount after Timer_A stores it and before Timer_A tests it."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 93,
+        "a1_kind": "write",
+        "b_line": 132,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "read",
+        "why": "Timer_Force can overwrite timerCount after Timer_A stores it and before Timer_A tests it, so the test sees a different value."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 93,
+        "a1_kind": "read",
+        "b_line": 119,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "read",
+        "why": "Timer_C can change timerCount between Timer_A's read and its later check."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 93,
+        "a1_kind": "read",
+        "b_line": 132,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "read",
+        "why": "Timer_Force can change timerCount between Timer_A's read and its later check."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 106,
+        "a1_kind": "write",
+        "b_line": 93,
+        "b_kind": "write",
+        "a2_line": 108,
+        "a2_kind": "read",
+        "why": "Timer_A (higher priority) can preempt Timer_B between its write of 0 and its check, so the check no longer sees 0."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 106,
+        "a1_kind": "write",
+        "b_line": 119,
+        "b_kind": "write",
+        "a2_line": 108,
+        "a2_kind": "read",
+        "why": "Timer_C writes timerCount between Timer_B's write and its check; the value is 0 in this case, but the check is still not atomic with the write."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 106,
+        "a1_kind": "write",
+        "b_line": 132,
+        "b_kind": "write",
+        "a2_line": 108,
+        "a2_kind": "read",
+        "why": "Timer_Force can set timerCount to 1 between Timer_B's write of 0 and its check."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"timerCount\",\"a1_line\":93,\"a1_kind\":\"read\",\"b_line\":119,\"b_kind\":\"write\",\"a2_line\":93,\"a2_kind\":\"write\",\"why\":\"Timer_C (higher priority) can preempt Timer_A between the read and the write-back of timerCount+1, so its update is lost.\"},{\"variable\":\"timerCount\",\"a1_line\":93,\"a1_kind\":\"read\",\"b_line\":132,\"b_kind\":\"write\",\"a2_line\":93,\"a2_kind\":\"write\",\"why\":\"Timer_Force (equal priority) can preempt Timer_A between the read and the write, so its update is lost.\"},{\"variable\":\"timerCount\",\"a1_line\":93,\"a1_kind\":\"write\",\"b_line\":119,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"read\",\"why\":\"Timer_C can overwrite timerCount after Timer_A stores it and before Timer_A tests it.\"},{\"variable\":\"timerCount\",\"a1_line\":93,\"a1_kind\":\"write\",\"b_line\":132,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"read\",\"why\":\"Timer_Force can overwrite timerCount after Timer_A stores it and before Timer_A tests it, so the test sees a different value.\"},{\"variable\":\"timerCount\",\"a1_line\":93,\"a1_kind\":\"read\",\"b_line\":119,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"read\",\"why\":\"Timer_C can change timerCount between Timer_A's read and its later check.\"},{\"variable\":\"timerCount\",\"a1_line\":93,\"a1_kind\":\"read\",\"b_line\":132,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"read\",\"why\":\"Timer_Force can change timerCount between Timer_A's read and its later check.\"},{\"variable\":\"timerCount\",\"a1_line\":106,\"a1_kind\":\"write\",\"b_line\":93,\"b_kind\":\"write\",\"a2_line\":108,\"a2_kind\":\"read\",\"why\":\"Timer_A (higher priority) can preempt Timer_B between its write of 0 and its check, so the check no longer sees 0.\"},{\"variable\":\"timerCount\",\"a1_line\":106,\"a1_kind\":\"write\",\"b_line\":119,\"b_kind\":\"write\",\"a2_line\":108,\"a2_kind\":\"read\",\"why\":\"Timer_C writes timerCount between Timer_B's write and its check; the value is 0 in this case, but the check is still not atomic with the write.\"},{\"variable\":\"timerCount\",\"a1_line\":106,\"a1_kind\":\"write\",\"b_line\":132,\"b_kind\":\"write\",\"a2_line\":108,\"a2_kind\":\"read\",\"why\":\"Timer_Force can set timerCount to 1 between Timer_B's write of 0 and its check.\"}]}",
+  "wall_s": 19.118128061294556,
+  "usage": {
+    "input_tokens": 4,
+    "output_tokens": 2686,
+    "cache_read": 4072,
+    "cache_write": 5840,
+    "latency_s": 19.108269083983032
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -48,6 +49,11 @@ Program model: one main task runs at the lowest priority. An ISR can preempt the
 An atomicity violation is a triple of accesses to the same memory location: A1 and A2 in one flow, B in another flow that can run between them, in one of four shapes (A1-B-A2): read-write-read, write-write-read, read-write-write, write-read-write.
 
 Report every atomicity violation you find, each as the three source line numbers in the order A1, B, A2 and their access kinds. Report only violations you believe can actually happen."""
+
+SYSTEM_REALWORLD = SYSTEM.replace(
+    "An ISR can preempt the main task, or an ISR of strictly lower priority, whenever its interrupt is enabled; larger priority numbers are higher.",
+    "An ISR can preempt the main task, or another ISR of lower or equal priority, whenever its interrupt is enabled; larger priority numbers are higher. The initial masking state is unknown.")
+assert SYSTEM_REALWORLD != SYSTEM
 
 FINDING = {
     "type": "object",
@@ -75,10 +81,20 @@ DISGUISED: Path | None = None
 #: Set by --max-tokens. Providers that count the requested output against a
 #: per-minute token limit (Groq's free tier: 8,000) need it lower than the default.
 MAX_TOKENS = 16000
+#: Set by --realworld: the 18 programs of bench/realworld (official configs) instead of Racebench.
+REALWORLD = False
+RW_CONFIGS = ROOT / "bench" / "configs-realworld"
+RW_SUITE = ROOT / "bench" / "realworld"
+
+#: The real-world configs allow equal-priority ISRs to preempt each other (the conservative
+#: semantics the shipped ground truth needs), so the scan states the same model.
+
 
 
 def cases() -> list[str]:
     """The names the model sees: case names, or ``program_NN`` in a disguised copy."""
+    if REALWORLD:
+        return sorted(p.stem for p in RW_CONFIGS.glob("*.yaml") if "__" not in p.stem)
     if DISGUISED is not None:
         return sorted(json.loads((DISGUISED / "index.json").read_text())["programs"])
     return sorted(p.stem for p in CONFIGS.glob("svp_simple_*.yaml"))
@@ -98,6 +114,14 @@ def original(name: str, line: int) -> tuple[str, int]:
 
 def source_of(case: str) -> str:
     """The case's C file, numbered, without the trailing annotation block."""
+    if REALWORLD:
+        lines = (RW_SUITE / case / "main.c").read_text(encoding="utf-8", errors="replace").splitlines()
+        # blink1-3 end with their answers ("//violations", "//true violations", "//false positive").
+        cut = next((i for i, l in enumerate(lines)
+                    if re.match(r"^//\s*(true\s+)?violations|^//\s*false positive", l)), len(lines))
+        lines = lines[:cut]
+        width = len(str(len(lines)))
+        return "\n".join(f"{i:>{width}}  {l}" for i, l in enumerate(lines, 1))
     if DISGUISED is not None:
         lines = (DISGUISED / f"{case}.c").read_text(encoding="utf-8").splitlines()
         width = len(str(len(lines)))
@@ -111,7 +135,10 @@ def source_of(case: str) -> str:
 
 
 def flows_of(case: str) -> str:
-    flows = _meta(case)["flows"] if DISGUISED is not None else yaml.safe_load((CONFIGS / f"{case}.yaml").read_text())["flows"]
+    if REALWORLD:
+        flows = yaml.safe_load((RW_CONFIGS / f"{case}.yaml").read_text())["flows"]
+    else:
+        flows = _meta(case)["flows"] if DISGUISED is not None else yaml.safe_load((CONFIGS / f"{case}.yaml").read_text())["flows"]
     rows = []
     for f in flows:
         kind = "ISR" if f["kind"] == "isr" else "task"
@@ -121,15 +148,21 @@ def flows_of(case: str) -> str:
 
 
 def header() -> str:
+    if REALWORLD:
+        return ("void disable_isr(int n);  /* mask interrupt n; -1 masks all */\n"
+                "void enable_isr(int n);   /* unmask interrupt n; -1 unmasks all */")
     return ((DISGUISED or SUITE) / "common.h").read_text(encoding="utf-8")
 
 
 def case_block(case: str) -> str:
+    fname = "main.c" if REALWORLD else f"{case}.c"
     return (f'<case name="{case}">\nFlows:\n{flows_of(case)}\n\n'
-            f'<source file="{case}.c">\n{source_of(case)}\n</source>\n</case>')
+            f'<source file="{fname}">\n{source_of(case)}\n</source>\n</case>')
 
 
-def ask(backend, prompt: str, schema: dict, name: str, system: str = SYSTEM) -> dict:
+def ask(backend, prompt: str, schema: dict, name: str, system: str | None = None) -> dict:
+    if system is None:
+        system = SYSTEM_REALWORLD if REALWORLD else SYSTEM
     t0 = time.time()
     resp = backend.chat(ChatRequest(system=system, messages=[{"role": "user", "content": prompt}],
                                     schema=schema, schema_name=name, max_tokens=MAX_TOKENS))
@@ -160,7 +193,7 @@ def cmd_per_file(args) -> int:
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         list(pool.map(one, cases()))
     (out / "run.json").write_text(json.dumps({"mode": "per-file", "backend": args.backend, "workers": args.workers,
-                                              "suite": str(DISGUISED) if DISGUISED else "original", "max_tokens": MAX_TOKENS,
+                                              "suite": "realworld" if REALWORLD else (str(DISGUISED) if DISGUISED else "original"), "max_tokens": MAX_TOKENS,
                                               "wall_s": time.time() - t0}, indent=2))
     return 0
 
@@ -180,7 +213,7 @@ def cmd_one_prompt(args) -> int:
         res = {"error": str(e)}
     (out / "all.json").write_text(json.dumps(res, indent=2, ensure_ascii=False))
     (out / "run.json").write_text(json.dumps({"mode": "one-prompt", "backend": args.backend,
-                                              "suite": str(DISGUISED) if DISGUISED else "original", "max_tokens": MAX_TOKENS,
+                                              "suite": "realworld" if REALWORLD else (str(DISGUISED) if DISGUISED else "original"), "max_tokens": MAX_TOKENS,
                                               "wall_s": time.time() - t0}, indent=2))
     print("error" if "error" in res else f"{sum(len(c['violations']) for c in res['parsed']['cases'])} findings")
     return 0
@@ -224,7 +257,7 @@ def findings_by_case(out: Path) -> tuple[dict[str, list[dict]], list[dict], dict
     calls: list[dict] = []
     by_case: dict[str, list[dict]] = {}
     if run["mode"] == "per-file":
-        for f in sorted(p for p in out.glob("*.json") if p.stem.startswith(("svp_simple_", "program_"))):
+        for f in sorted(p for p in out.glob("*.json") if p.stem not in ("run", "score", "all") and not p.stem.startswith("score")):
             d = json.loads(f.read_text())
             calls.append(d)
             by_case[d["case"]] = [] if "error" in d else d["parsed"]["violations"]
@@ -237,13 +270,64 @@ def findings_by_case(out: Path) -> tuple[dict[str, list[dict]], list[dict], dict
     return by_case, calls, run
 
 
+def score_realworld(out: Path, by_name: dict, calls: list, run: dict) -> int:
+    """Entries of violation.info (line errata applied) against the scan's findings, with
+    irqrace.realworld.match: same variable and pattern, and the lines for instance entries."""
+    import csv
+
+    from irqrace.evaluation import normalise_variable
+    from irqrace.realworld import load_errata, match, parse_violation_info
+
+    errata = load_errata()
+    rows = []
+    tot = {"bugs": 0, "bugs_found": 0, "traps": 0, "traps_found": 0, "findings": 0, "unmatched": 0}
+    for prog in cases():
+        entries, _ = parse_violation_info(RW_SUITE / prog / "violation.info", prog, errata)
+        cands = []
+        for i, v in enumerate(by_name.get(prog, [])):
+            kinds = (v["a1_kind"], v["b_kind"], v["a2_kind"])
+            cands.append({"id": f"{prog}#{i}", "variable": {"name": normalise_variable(v["variable"])},
+                          "pattern": "".join(k[0].upper() for k in kinds),
+                          "accesses": [{"source": {"line": v[f"{r}_line"]}, "kind": k}
+                                       for r, k in zip(("a1", "b", "a2"), kinds)]})
+        ms = match(entries, cands)
+        used = {c for m in ms for c in m.candidates}
+        bugs = [m for m in ms if m.entry.label == "bug"]
+        traps = [m for m in ms if m.entry.label == "trap"]
+        row = {"program": prog, "bugs": len(bugs), "bugs_found": sum(m.found for m in bugs),
+               "traps": len(traps), "traps_found": sum(m.found for m in traps),
+               "findings": len(cands), "unmatched": len(cands) - len(used),
+               "missed": "; ".join(f"#{m.entry.index} {m.entry.raw}" for m in bugs if not m.found),
+               "traps_reported": "; ".join(f"#{m.entry.index} {m.entry.raw}" for m in traps if m.found)}
+        rows.append(row)
+        for k in tot:
+            tot[k] += row[k]
+    usage = {k: sum((c.get("usage") or {}).get(k, 0) or 0 for c in calls)
+             for k in ("input_tokens", "output_tokens", "cache_read", "cache_write", "latency_s")}
+    summary = {"suite": "realworld", "mode": run["mode"], "backend": run["backend"], "wall_s": run["wall_s"],
+               "calls": len(calls), "errors": [c.get("case", "all") for c in calls if "error" in c], **tot,
+               "input_total": usage["input_tokens"] + usage["cache_read"] + usage["cache_write"],
+               "output_tokens": usage["output_tokens"], "latency_sum_s": usage["latency_s"],
+               "models": sorted({c.get("model") for c in calls if c.get("model")})}
+    (out / "score.json").write_text(json.dumps({"summary": summary, "programs": rows}, indent=2, ensure_ascii=False))
+    with (out / "cases.csv").open("w", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=list(rows[0]))
+        w.writeheader()
+        w.writerows(rows)
+    print(json.dumps(summary, indent=2))
+    return 0
+
+
 def cmd_score(args) -> int:
     from irqrace.bench_metrics import label_set
     from irqrace.evaluation import match_subject
 
-    global DISGUISED
+    global DISGUISED, REALWORLD
     out = Path(args.dir)
     by_name, calls, run = findings_by_case(out)
+    if run.get("suite") == "realworld":
+        REALWORLD = True
+        return score_realworld(out, by_name, calls, run)
     DISGUISED = Path(run["suite"]) if run.get("suite", "original") != "original" else None
     by_case: dict[str, list[dict]] = {}
     for name, found in by_name.items():
@@ -310,12 +394,16 @@ def main() -> int:
     for name in ("per-file", "one-prompt"):
         sub.choices[name].add_argument("--suite", help="a disguised copy (racebench-disguise.py)")
         sub.choices[name].add_argument("--max-tokens", type=int, default=16000)
+        sub.choices[name].add_argument("--realworld", action="store_true",
+                                       help="the 18 real-world programs instead of Racebench")
     s = sub.add_parser("score")
     s.add_argument("dir")
     s.add_argument("--labels", default="53/33", help="53/33 (default) or 48/38")
     args = ap.parse_args()
     global DISGUISED, MAX_TOKENS
     MAX_TOKENS = getattr(args, "max_tokens", MAX_TOKENS)
+    global REALWORLD
+    REALWORLD = getattr(args, "realworld", False)
     if getattr(args, "suite", None):
         DISGUISED = Path(args.suite).resolve()
     return {"recall": cmd_recall, "per-file": cmd_per_file, "one-prompt": cmd_one_prompt, "score": cmd_score}[args.cmd](args)
