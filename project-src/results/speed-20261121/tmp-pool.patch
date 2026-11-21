@@ -1,0 +1,124 @@
+diff --git a/project-src/scripts/freeze-and-triage.py b/project-src/scripts/freeze-and-triage.py
+index b9c5c9c..997285e 100644
+--- a/project-src/scripts/freeze-and-triage.py
++++ b/project-src/scripts/freeze-and-triage.py
+@@ -116,7 +116,8 @@ def cmd_triage(args: argparse.Namespace) -> int:
+     try:
+         docs = bb.run_plan(pairs, Path(args.frozen), backend=args.backend, workers=args.workers,
+                            case_timeout=args.case_timeout, python=args.python, resume=args.resume,
+-                           keep_going=args.keep_going, env=env, log=lambda m: print(m, flush=True))
++                           keep_going=args.keep_going, env=env, log=lambda m: print(m, flush=True),
++                           case_parallel=args.case_parallel)
+     except bb.BatchError as e:
+         print(f"error: {e}", file=sys.stderr)
+         return 2
+@@ -148,6 +149,8 @@ def main(argv: list[str] | None = None) -> int:
+     tr.add_argument("--samples", type=int, default=3, help="independent runs per row")
+     tr.add_argument("--backend", required=True, help="provider:model, e.g. claude-cli:sonnet")
+     tr.add_argument("--workers", type=int, default=4, help="conversations at a time inside one case")
++    tr.add_argument("--case-parallel", type=int, default=1,
++                    help="cases at a time; the pool is case-parallel x workers conversations")
+     tr.add_argument("--resume", action="store_true", help="skip pairs whose batch.json says ok")
+     tr.add_argument("--keep-going", action="store_true", help="continue after a failed pair")
+     tr.set_defaults(func=cmd_triage, default_timeout=3600.0)
+diff --git a/project-src/src/irqrace/bench_batch.py b/project-src/src/irqrace/bench_batch.py
+index 94b9474..a52fb20 100644
+--- a/project-src/src/irqrace/bench_batch.py
++++ b/project-src/src/irqrace/bench_batch.py
+@@ -285,28 +285,46 @@ def not_triaged(case_dir: Path) -> int | None:
+                if line.strip() and json.loads(line).get("not_triaged"))
+ 
+ 
++def _records_in(case_dir: Path) -> int:
++    """Context records a case sends to the LLM -- its share of the pool's work."""
++    return sum(1 for _ in (case_dir / "context").glob("*.json"))
++
++
+ def run_pair(pair: Pair, frozen: Path, cases: Sequence[Path], *, backend: str, workers: int,
+              case_timeout: float, python: str = sys.executable, runner: Runner = run_logged,
+-             env: dict[str, str] | None = None, log: Callable[[str], None] = print) -> dict[str, Any]:
+-    """Copy the frozen root to ``pair.dest`` and triage every case there, in series."""
++             env: dict[str, str] | None = None, log: Callable[[str], None] = print,
++             case_parallel: int = 1) -> dict[str, Any]:
++    """Copy the frozen root to ``pair.dest`` and triage every case there.
++
++    ``case_parallel`` cases run at once, each with ``workers`` conversations, so
++    the pool holds ``case_parallel * workers`` conversations across the whole
++    suite. With more than one, cases are started largest first (longest
++    processing time first), so the last case to finish is a small one.
++    """
++    import threading
++    from concurrent.futures import ThreadPoolExecutor
++
+     env = env if env is not None else child_env()
+     copies = copy_frozen(frozen, pair.dest, cases)
+     doc: dict[str, Any] = {
+         "run_id": pair.run_id, "row": pair.row, "sample": pair.sample, "backend": backend,
+-        "workers": workers, "case_timeout_s": case_timeout, "frozen_root": str(Path(frozen).resolve()),
++        "workers": workers, "case_parallel": case_parallel, "case_timeout_s": case_timeout,
++        "frozen_root": str(Path(frozen).resolve()),
+         "triaged_with_commit": _git("rev-parse", "HEAD"), "status": "running", "started": _now(),
+         "failures": [],
+     }
+     _write_json(pair.dest / "batch.json", doc)
+     (pair.dest / "start.txt").write_text(f"{time.time():.3f}")
+-    for n, case_dir in enumerate(copies, 1):
++    lock = threading.Lock()
++    order = (sorted(copies, key=_records_in, reverse=True) if case_parallel > 1 else list(copies))
++
++    def one(n: int, case_dir: Path) -> None:
+         case = subject_of(case_dir)
+         log(f"[{pair.run_id} {n}/{len(copies)}] {case} ...")
+         t0 = time.time()
+         rc = runner(triage_command(python, case_dir, pair.row, backend, workers),
+                     log_path=pair.dest / "logs" / f"{case}.log", timeout=case_timeout, env=env, cwd=REPO_ROOT)
+         t1 = time.time()
+-        _append_timing(pair.dest, case, t0, t1, rc)
+         missing = not_triaged(case_dir)
+         reason = None
+         if rc == TIMEOUT_RC:
+@@ -317,12 +335,23 @@ def run_pair(pair: Pair, frozen: Path, cases: Sequence[Path], *, backend: str, w
+             reason = "no llm/triage.jsonl"
+         elif missing:
+             reason = f"{missing} candidate(s) not triaged"
+-        if reason:
+-            doc["failures"].append({"case": case, "reason": reason})
++        with lock:
++            _append_timing(pair.dest, case, t0, t1, rc)
++            if reason:
++                doc["failures"].append({"case": case, "reason": reason})
++            _write_json(pair.dest / "batch.json", doc)
+         log(f"[{pair.run_id} {n}/{len(copies)}] {case} exit {rc} in {t1 - t0:.0f} s"
+             + (f" -- FAILED: {reason}" if reason else ""))
+-        _write_json(pair.dest / "batch.json", doc)
++
++    if case_parallel <= 1:
++        for n, case_dir in enumerate(order, 1):
++            one(n, case_dir)
++    else:
++        with ThreadPoolExecutor(max_workers=case_parallel) as pool:
++            for future in [pool.submit(one, n, c) for n, c in enumerate(order, 1)]:
++                future.result()
+     (pair.dest / "end.txt").write_text(f"{time.time():.3f}")
++    doc["failures"].sort(key=lambda f: f["case"])
+     doc["status"] = "failed" if doc["failures"] else "ok"
+     doc["finished"] = _now()
+     _write_json(pair.dest / "batch.json", doc)
+@@ -342,7 +371,7 @@ def pair_status(pair: Pair) -> str | None:
+ def run_plan(pairs: Sequence[Pair], frozen: Path, *, backend: str, workers: int, case_timeout: float,
+              python: str = sys.executable, resume: bool = False, keep_going: bool = False,
+              runner: Runner = run_logged, env: dict[str, str] | None = None,
+-             log: Callable[[str], None] = print) -> list[dict[str, Any]]:
++             log: Callable[[str], None] = print, case_parallel: int = 1) -> list[dict[str, Any]]:
+     """Run ``pairs`` in series. An existing pair is skipped only with ``resume`` and
+     only if it finished ``ok``; anything else in the way is an error, never overwritten."""
+     cases = frozen_cases(frozen)
+@@ -357,7 +386,7 @@ def run_plan(pairs: Sequence[Pair], frozen: Path, *, backend: str, workers: int,
+             continue
+         log(f"== pair {i}/{len(pairs)} {pair.run_id} -> {pair.dest}")
+         doc = run_pair(pair, frozen, cases, backend=backend, workers=workers, case_timeout=case_timeout,
+-                       python=python, runner=runner, env=env, log=log)
++                       python=python, runner=runner, env=env, log=log, case_parallel=case_parallel)
+         done.append(doc)
+         log(f"== pair {pair.run_id}: {doc['status']}"
+             + (f" ({len(doc['failures'])} failing case(s))" if doc["failures"] else ""))

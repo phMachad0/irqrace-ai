@@ -1,0 +1,29 @@
+{
+  "scorer_version": "bench_metrics/1.0.0",
+  "date": "2026-11-21T14:48:43Z",
+  "tool_git_commit": "6de9b4c34581f31d3a43b88220f26bbf39d10434",
+  "scorer_git_commit": {
+    "commit": "6de9b4c34581f31d3a43b88220f26bbf39d10434",
+    "dirty": true
+  },
+  "backend": [
+    "claude-cli:sonnet"
+  ],
+  "prompt_rows": [
+    "+racebench"
+  ],
+  "label_set": "53/33",
+  "case_subset": {
+    "name": "all",
+    "cases": null,
+    "exclude_patterns": []
+  },
+  "input_run_roots": [
+    {
+      "path": "/home/pedro/Documentos/tcc/worktrees/runs-speed-20261121/baseline/+racebench/1",
+      "run_id": "+racebench/1",
+      "status": "failed",
+      "cases": 31
+    }
+  ]
+}
