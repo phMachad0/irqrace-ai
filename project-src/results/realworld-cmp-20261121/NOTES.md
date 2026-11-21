@@ -69,3 +69,38 @@ infeasible, and none was left untriaged.
    per item (`scan-estimate-20261121`).
 
 n = 1 for irqrace: the two readings above are one draw.
+
+## The 972 static candidates, examined (same day)
+
+On Pedro's question whether the static stage lets through more than it should. Counts over the
+official run root (`runs-realworld-20261121`, 18 programs), checked against `violation.info` with
+the gate's matcher.
+
+- **The priority logic is right.** In all 972 candidates B's flow is an ISR whose priority is
+  higher than, or equal to, the flow of A1/A2. 968 have A1/A2 inside an ISR; `main` masks every
+  interrupt around its initialisation, so only 4 involve it.
+- **Equal-priority preemption is half of the set.** 476 candidates (49%) exist only because the
+  configs say `equal_priority_preemption: true`. Only 2 of the 45 entries depend on it, both in
+  `i8xx_tco_1` (#1 `test_global_var1 rwr`, #3 `tco_expect_close wwr`), whose `closer1`/`closer2`
+  share priority 4. [[NIChecker (paper)]]'s own semantics say equal priorities do not preempt
+  (Semana 9 §3.9; [[Contradictions]] #10). Off everywhere: 972 → 496 candidates, 43/45 entries.
+  Off everywhere except `i8xx_tco_1`: 972 → 522, 45/45 — but choosing that per program from the
+  ground truth is circular unless the platform's semantics justify it.
+- **The same line triple appears under several flow pairs.** Handlers that run the same code
+  (`closer1`…`closer4`) multiply each triple: 972 records hold 794 distinct
+  (variable, A1, B, A2) line triples. Merging them, with every flow pair kept on the merged
+  record, drops nothing.
+- **Few triples are covered by an adjacent one.** A WWR whose A1 is followed, on every path, by
+  another write of the same flow before A2 is the adjacent triple's defect, not a new one. A text
+  check finds 209 candidates with some access in between, but most are conditional
+  (`brake1` line 388, `if (i == MAX_LENGTH + 1) test_global_array[TRIGGER] = 1;`) and do not kill
+  A1's value; dropping all 209 would lose 4 entries (`test_global_array wwr` in `brake1`,
+  `i2c_pca_isa_3`, `i8xx_tco_1`, `wdt_pci_2`). Only about 60 have an unconditional write in
+  between, and none of them is an entry's only candidate. Doing this soundly needs a must-write
+  check on the CFG (dominance), in stage 2.
+- **Combined:** equal priority off except `i8xx_tco_1`, merged triples, adjacent triples only:
+  972 → 448 candidates with 45/45 entries.
+
+What the stage reports is faithful to the configured model; the volume comes from that model —
+eight handlers per driver at assigned priorities, equal ones allowed to preempt — and from the
+copies of one handler body.

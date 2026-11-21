@@ -2015,3 +2015,11 @@ scans n = 3 (answer comments cut from `blink1`–3; files not disguised).
   9 in the not-infeasible view. 215 calls, 13.1 M input tokens, 813 s.
 - Scan per file: 43–45/45, 5–10 false violations, ~0.2 M input tokens, ~78 s. One prompt: 9–36/45.
 - New question in [[Open Questions]]: which row for this suite.
+
+## [2026-11-21] query | are the real-world static candidates right?
+Examined the 972 candidates (`results/realworld-cmp-20261121/NOTES.md`). Priority logic is
+consistent in all of them. 476 (49%) come only from `equal_priority_preemption: true`, which 2
+entries need (`i8xx_tco_1`); off everywhere gives 496 candidates and 43/45. 972 records are 794
+distinct line triples (handlers sharing code); about 60 are covered by an adjacent triple. All
+three together, keeping `i8xx_tco_1`'s equal priority: 448 candidates, 45/45. Decision pending
+(Pedro); added to [[Open Questions]].

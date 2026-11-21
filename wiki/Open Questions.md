@@ -328,6 +328,12 @@ with the date.
   project created in the relabel ([[Triage Cost and Speed 2026-11-21]]). The suite has been public
   since 2019 with its answers in the comments. Run the scan on a renamed, reordered copy (identifiers,
   function order, line numbers shifted) before the scan is quoted as a baseline.
+- [ ] **Equal-priority preemption on the real-world suite.** 476 of its 972 candidates (49%) exist
+  only because the configs allow equal priorities to preempt; 2 of the 45 entries need it, both in
+  `i8xx_tco_1`. Off everywhere, as NIChecker's paper states: 496 candidates, 43/45. Decide by the
+  platform's semantics, then record the loss as errata as was done for the priorities
+  (`results/realworld-cmp-20261121/NOTES.md`). Merging line triples repeated across flow pairs
+  (972 → 794 records) and a must-write check for adjacent triples (≈60 more) are recall-safe.
 - [ ] **Which prompt row for the real-world suite?** With the production row the triage keeps all
   45 entries out of `likely_infeasible` but puts 24 in `likely_benign`, because the planted reads feed
   nothing; the suite, like Racebench, counts the interleaving as the defect. `+racebench` cannot be
