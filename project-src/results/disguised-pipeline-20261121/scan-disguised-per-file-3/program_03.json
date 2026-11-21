@@ -1,0 +1,38 @@
+{
+  "case": "program_03",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_fjord",
+        "a1_line": 25,
+        "a1_kind": "read",
+        "b_line": 48,
+        "b_kind": "write",
+        "a2_line": 30,
+        "a2_kind": "read",
+        "why": "irq_summit can preempt the task between the two reads of v_fjord and change it, so the reads can see different values."
+      },
+      {
+        "variable": "v_nimbus",
+        "a1_line": 26,
+        "a1_kind": "read",
+        "b_line": 50,
+        "b_kind": "write",
+        "a2_line": 31,
+        "a2_kind": "read",
+        "why": "irq_summit can preempt the task between the two reads of v_nimbus and write it on the else branch, so the reads can differ. This assumes v_harbor can be something other than 1, for example if init() changes it."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_fjord\",\"a1_line\":25,\"a1_kind\":\"read\",\"b_line\":48,\"b_kind\":\"write\",\"a2_line\":30,\"a2_kind\":\"read\",\"why\":\"irq_summit can preempt the task between the two reads of v_fjord and change it, so the reads can see different values.\"},{\"variable\":\"v_nimbus\",\"a1_line\":26,\"a1_kind\":\"read\",\"b_line\":50,\"b_kind\":\"write\",\"a2_line\":31,\"a2_kind\":\"read\",\"why\":\"irq_summit can preempt the task between the two reads of v_nimbus and write it on the else branch, so the reads can differ. This assumes v_harbor can be something other than 1, for example if init() changes it.\"}]}",
+  "wall_s": 11.743286371231079,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1251,
+    "cache_read": 2107,
+    "cache_write": 491,
+    "latency_s": 11.742998658010038
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

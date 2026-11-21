@@ -1,0 +1,68 @@
+{
+  "case": "program_04",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_cedar",
+        "a1_line": 37,
+        "a1_kind": "write",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 69,
+        "a2_kind": "read",
+        "why": "ISR can overwrite v_cedar between the task's write and its read, so the task copies the ISR value instead of its own."
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 69,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 30,
+        "a2_kind": "read",
+        "why": "ISR can change v_cedar between the two task reads, so the values are inconsistent."
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 30,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 32,
+        "a2_kind": "read",
+        "why": "The check v_cedar>=16 can be invalidated by the ISR before v_cedar is read again as an argument."
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 32,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 54,
+        "a2_kind": "read",
+        "why": "ISR can change v_cedar between the argument read and the read in fn_dune."
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 30,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 54,
+        "a2_kind": "read",
+        "why": "ISR can change v_cedar after the >=16 check, so fn_dune sees a different value."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_cedar\",\"a1_line\":37,\"a1_kind\":\"write\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":69,\"a2_kind\":\"read\",\"why\":\"ISR can overwrite v_cedar between the task's write and its read, so the task copies the ISR value instead of its own.\"},{\"variable\":\"v_cedar\",\"a1_line\":69,\"a1_kind\":\"read\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":30,\"a2_kind\":\"read\",\"why\":\"ISR can change v_cedar between the two task reads, so the values are inconsistent.\"},{\"variable\":\"v_cedar\",\"a1_line\":30,\"a1_kind\":\"read\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":32,\"a2_kind\":\"read\",\"why\":\"The check v_cedar>=16 can be invalidated by the ISR before v_cedar is read again as an argument.\"},{\"variable\":\"v_cedar\",\"a1_line\":32,\"a1_kind\":\"read\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":54,\"a2_kind\":\"read\",\"why\":\"ISR can change v_cedar between the argument read and the read in fn_dune.\"},{\"variable\":\"v_cedar\",\"a1_line\":30,\"a1_kind\":\"read\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":54,\"a2_kind\":\"read\",\"why\":\"ISR can change v_cedar after the >=16 check, so fn_dune sees a different value.\"}]}",
+  "wall_s": 9.1469144821167,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1000,
+    "cache_read": 2353,
+    "cache_write": 490,
+    "latency_s": 9.146752100990852
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

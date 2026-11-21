@@ -1,0 +1,58 @@
+{
+  "case": "program_14",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_pylon",
+        "a1_line": 52,
+        "a1_kind": "read",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 53,
+        "a2_kind": "write",
+        "why": "The ISR can update v_pylon between the check at line 52 and the reset at line 53, so the write acts on a stale decision."
+      },
+      {
+        "variable": "v_pylon",
+        "a1_line": 53,
+        "a1_kind": "write",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 30,
+        "a2_kind": "read",
+        "why": "After the task resets v_pylon to 0, the ISR can overwrite it before line 30 reads it, so the task copies a value it did not expect."
+      },
+      {
+        "variable": "v_pylon",
+        "a1_line": 52,
+        "a1_kind": "read",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 30,
+        "a2_kind": "read",
+        "why": "The ISR can change v_pylon between the read at line 52 and the read at line 30, so the two reads can see different values."
+      },
+      {
+        "variable": "v_pylon",
+        "a1_line": 63,
+        "a1_kind": "write",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 52,
+        "a2_kind": "read",
+        "why": "The ISR can overwrite the value written at line 63 before line 52 reads it, for example during init()."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_pylon\",\"a1_line\":52,\"a1_kind\":\"read\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":53,\"a2_kind\":\"write\",\"why\":\"The ISR can update v_pylon between the check at line 52 and the reset at line 53, so the write acts on a stale decision.\"},{\"variable\":\"v_pylon\",\"a1_line\":53,\"a1_kind\":\"write\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":30,\"a2_kind\":\"read\",\"why\":\"After the task resets v_pylon to 0, the ISR can overwrite it before line 30 reads it, so the task copies a value it did not expect.\"},{\"variable\":\"v_pylon\",\"a1_line\":52,\"a1_kind\":\"read\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":30,\"a2_kind\":\"read\",\"why\":\"The ISR can change v_pylon between the read at line 52 and the read at line 30, so the two reads can see different values.\"},{\"variable\":\"v_pylon\",\"a1_line\":63,\"a1_kind\":\"write\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":52,\"a2_kind\":\"read\",\"why\":\"The ISR can overwrite the value written at line 63 before line 52 reads it, for example during init().\"}]}",
+  "wall_s": 8.348913669586182,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 929,
+    "cache_read": 975,
+    "cache_write": 1743,
+    "latency_s": 8.348732062993804
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

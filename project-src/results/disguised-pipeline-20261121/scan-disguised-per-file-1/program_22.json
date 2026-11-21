@@ -1,0 +1,58 @@
+{
+  "case": "program_22",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_quiver",
+        "a1_line": 33,
+        "a1_kind": "read",
+        "b_line": 16,
+        "b_kind": "write",
+        "a2_line": 35,
+        "a2_kind": "read",
+        "why": "ISR is enabled and can fire between the two task reads, changing v_quiver so they return different values."
+      },
+      {
+        "variable": "v_willow",
+        "a1_line": 38,
+        "a1_kind": "read",
+        "b_line": 20,
+        "b_kind": "write",
+        "a2_line": 44,
+        "a2_kind": "read",
+        "why": "The ISR is unmasked between line 38 and disable_isr at line 40 (and during idlerun), so it can write v_willow between the reads."
+      },
+      {
+        "variable": "v_willow",
+        "a1_line": 44,
+        "a1_kind": "read",
+        "b_line": 20,
+        "b_kind": "write",
+        "a2_line": 52,
+        "a2_kind": "read",
+        "why": "The ISR is re-enabled at line 43, so it can run after the read at 44 and before the disable at 48, changing v_willow before the read at 52."
+      },
+      {
+        "variable": "v_garnet",
+        "a1_line": 41,
+        "a1_kind": "read",
+        "b_line": 18,
+        "b_kind": "write",
+        "a2_line": 49,
+        "a2_kind": "read",
+        "why": "After enable_isr at line 43 the ISR can set v_garnet to 0, so the check at line 49 can see a different value than the check at line 41."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_quiver\",\"a1_line\":33,\"a1_kind\":\"read\",\"b_line\":16,\"b_kind\":\"write\",\"a2_line\":35,\"a2_kind\":\"read\",\"why\":\"ISR is enabled and can fire between the two task reads, changing v_quiver so they return different values.\"},{\"variable\":\"v_willow\",\"a1_line\":38,\"a1_kind\":\"read\",\"b_line\":20,\"b_kind\":\"write\",\"a2_line\":44,\"a2_kind\":\"read\",\"why\":\"The ISR is unmasked between line 38 and disable_isr at line 40 (and during idlerun), so it can write v_willow between the reads.\"},{\"variable\":\"v_willow\",\"a1_line\":44,\"a1_kind\":\"read\",\"b_line\":20,\"b_kind\":\"write\",\"a2_line\":52,\"a2_kind\":\"read\",\"why\":\"The ISR is re-enabled at line 43, so it can run after the read at 44 and before the disable at 48, changing v_willow before the read at 52.\"},{\"variable\":\"v_garnet\",\"a1_line\":41,\"a1_kind\":\"read\",\"b_line\":18,\"b_kind\":\"write\",\"a2_line\":49,\"a2_kind\":\"read\",\"why\":\"After enable_isr at line 43 the ISR can set v_garnet to 0, so the check at line 49 can see a different value than the check at line 41.\"}]}",
+  "wall_s": 11.376300811767578,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1283,
+    "cache_read": 975,
+    "cache_write": 1593,
+    "latency_s": 11.376129754004069
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

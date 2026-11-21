@@ -1,0 +1,28 @@
+{
+  "case": "program_09",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_meadow",
+        "a1_line": 35,
+        "a1_kind": "read",
+        "b_line": 55,
+        "b_kind": "write",
+        "a2_line": 40,
+        "a2_kind": "read",
+        "why": "irq_basalt is enabled at line 32 and can preempt the task between the two reads of v_meadow, writing 999 so the reads may see different values. The write at line 57 is unreachable because v_jasper stays 0."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_meadow\",\"a1_line\":35,\"a1_kind\":\"read\",\"b_line\":55,\"b_kind\":\"write\",\"a2_line\":40,\"a2_kind\":\"read\",\"why\":\"irq_basalt is enabled at line 32 and can preempt the task between the two reads of v_meadow, writing 999 so the reads may see different values. The write at line 57 is unreachable because v_jasper stays 0.\"}]}",
+  "wall_s": 6.0056540966033936,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 580,
+    "cache_read": 975,
+    "cache_write": 1649,
+    "latency_s": 6.005494202981936
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

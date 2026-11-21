@@ -1,0 +1,88 @@
+{
+  "case": "program_07",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_pylon",
+        "a1_line": 23,
+        "a1_kind": "read",
+        "b_line": 13,
+        "b_kind": "write",
+        "a2_line": 25,
+        "a2_kind": "read",
+        "why": "ISR increments v_pylon between the task's two index reads, so the two accesses may use different elements."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 23,
+        "a1_kind": "write",
+        "b_line": 14,
+        "b_kind": "write",
+        "a2_line": 25,
+        "a2_kind": "read",
+        "why": "ISR writes v_vessel between the task's write and read-back, so the read may not return the value just written."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 23,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 25,
+        "a2_kind": "read",
+        "why": "ISR writes v_vessel[2] between the task's write and read-back when v_pylon is 2."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 25,
+        "a1_kind": "read",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 33,
+        "a2_kind": "read",
+        "why": "ISR overwrites v_vessel[2] between the task's reads."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 29,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 33,
+        "a2_kind": "read",
+        "why": "ISR overwrites v_vessel[2] after the task writes it and before the task reads it."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 31,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 33,
+        "a2_kind": "read",
+        "why": "ISR overwrites v_vessel[2] after the task's write (when i is 2) and before the task's read."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 25,
+        "a1_kind": "read",
+        "b_line": 14,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "write",
+        "why": "ISR writes v_vessel between the task's read and its later write."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_pylon\",\"a1_line\":23,\"a1_kind\":\"read\",\"b_line\":13,\"b_kind\":\"write\",\"a2_line\":25,\"a2_kind\":\"read\",\"why\":\"ISR increments v_pylon between the task's two index reads, so the two accesses may use different elements.\"},{\"variable\":\"v_vessel\",\"a1_line\":23,\"a1_kind\":\"write\",\"b_line\":14,\"b_kind\":\"write\",\"a2_line\":25,\"a2_kind\":\"read\",\"why\":\"ISR writes v_vessel between the task's write and read-back, so the read may not return the value just written.\"},{\"variable\":\"v_vessel\",\"a1_line\":23,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"write\",\"a2_line\":25,\"a2_kind\":\"read\",\"why\":\"ISR writes v_vessel[2] between the task's write and read-back when v_pylon is 2.\"},{\"variable\":\"v_vessel\",\"a1_line\":25,\"a1_kind\":\"read\",\"b_line\":11,\"b_kind\":\"write\",\"a2_line\":33,\"a2_kind\":\"read\",\"why\":\"ISR overwrites v_vessel[2] between the task's reads.\"},{\"variable\":\"v_vessel\",\"a1_line\":29,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"write\",\"a2_line\":33,\"a2_kind\":\"read\",\"why\":\"ISR overwrites v_vessel[2] after the task writes it and before the task reads it.\"},{\"variable\":\"v_vessel\",\"a1_line\":31,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"write\",\"a2_line\":33,\"a2_kind\":\"read\",\"why\":\"ISR overwrites v_vessel[2] after the task's write (when i is 2) and before the task's read.\"},{\"variable\":\"v_vessel\",\"a1_line\":25,\"a1_kind\":\"read\",\"b_line\":14,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"write\",\"why\":\"ISR writes v_vessel between the task's read and its later write.\"}]}",
+  "wall_s": 9.710134029388428,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1332,
+    "cache_read": 975,
+    "cache_write": 1339,
+    "latency_s": 9.709976277023088
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

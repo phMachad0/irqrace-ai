@@ -1,0 +1,28 @@
+{
+  "case": "program_28",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_glacier[40]",
+        "a1_line": 18,
+        "a1_kind": "write",
+        "b_line": 24,
+        "b_kind": "write",
+        "a2_line": 33,
+        "a2_kind": "read",
+        "why": "The task writes v_glacier[40] at line 18 and reads it at line 33 with interrupts never masked. The ISR loop can overwrite the element in between, so the read may not return the value the task wrote."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_glacier[40]\",\"a1_line\":18,\"a1_kind\":\"write\",\"b_line\":24,\"b_kind\":\"write\",\"a2_line\":33,\"a2_kind\":\"read\",\"why\":\"The task writes v_glacier[40] at line 18 and reads it at line 33 with interrupts never masked. The ISR loop can overwrite the element in between, so the read may not return the value the task wrote.\"}]}",
+  "wall_s": 5.560470104217529,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 432,
+    "cache_read": 975,
+    "cache_write": 1369,
+    "latency_s": 5.560099656984676
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

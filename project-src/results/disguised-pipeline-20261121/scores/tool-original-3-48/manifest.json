@@ -1,0 +1,29 @@
+{
+  "scorer_version": "bench_metrics/1.0.0",
+  "date": "2026-11-21T18:08:57Z",
+  "tool_git_commit": "6de9b4c34581f31d3a43b88220f26bbf39d10434",
+  "scorer_git_commit": {
+    "commit": "2ad11794dc1f8af95bab053fa6f1681e54d39b3a",
+    "dirty": true
+  },
+  "backend": [
+    "claude-cli:sonnet@low"
+  ],
+  "prompt_rows": [
+    "+racebench"
+  ],
+  "label_set": "48/38",
+  "case_subset": {
+    "name": "all",
+    "cases": null,
+    "exclude_patterns": []
+  },
+  "input_run_roots": [
+    {
+      "path": "/home/pedro/Documentos/tcc/worktrees/runs-disguised-20261121/tool-original-3/+racebench/1",
+      "run_id": "+racebench/1",
+      "status": "ok",
+      "cases": 31
+    }
+  ]
+}

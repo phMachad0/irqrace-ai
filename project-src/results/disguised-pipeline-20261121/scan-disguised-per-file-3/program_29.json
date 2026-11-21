@@ -1,0 +1,38 @@
+{
+  "case": "program_29",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_garnet",
+        "a1_line": 39,
+        "a1_kind": "read",
+        "b_line": 29,
+        "b_kind": "write",
+        "a2_line": 40,
+        "a2_kind": "write",
+        "why": "irq_walnut (enabled at line 38) can preempt the task between the check and the reset, so its increment is overwritten by the reset based on a stale read."
+      },
+      {
+        "variable": "v_garnet",
+        "a1_line": 39,
+        "a1_kind": "read",
+        "b_line": 13,
+        "b_kind": "write",
+        "a2_line": 40,
+        "a2_kind": "write",
+        "why": "Once irq_walnut has enabled irq_dune, irq_dune can preempt the task between the read and the write and increment v_garnet. The reset then overwrites that update."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_garnet\",\"a1_line\":39,\"a1_kind\":\"read\",\"b_line\":29,\"b_kind\":\"write\",\"a2_line\":40,\"a2_kind\":\"write\",\"why\":\"irq_walnut (enabled at line 38) can preempt the task between the check and the reset, so its increment is overwritten by the reset based on a stale read.\"},{\"variable\":\"v_garnet\",\"a1_line\":39,\"a1_kind\":\"read\",\"b_line\":13,\"b_kind\":\"write\",\"a2_line\":40,\"a2_kind\":\"write\",\"why\":\"Once irq_walnut has enabled irq_dune, irq_dune can preempt the task between the read and the write and increment v_garnet. The reset then overwrites that update.\"}]}",
+  "wall_s": 9.888505697250366,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 882,
+    "cache_read": 1909,
+    "cache_write": 487,
+    "latency_s": 9.888349179993384
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,28 @@
+{
+  "case": "program_20",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_beacon",
+        "a1_line": 50,
+        "a1_kind": "read",
+        "b_line": 24,
+        "b_kind": "write",
+        "a2_line": 51,
+        "a2_kind": "read",
+        "why": "The ISR can preempt the task between the two reads in v_glacier and zero the v_beacon entries. The task then builds a word from inconsistent array values, for example element 1 read before the clear and element 0 read after it."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_beacon\",\"a1_line\":50,\"a1_kind\":\"read\",\"b_line\":24,\"b_kind\":\"write\",\"a2_line\":51,\"a2_kind\":\"read\",\"why\":\"The ISR can preempt the task between the two reads in v_glacier and zero the v_beacon entries. The task then builds a word from inconsistent array values, for example element 1 read before the clear and element 0 read after it.\"}]}",
+  "wall_s": 6.065813302993774,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 531,
+    "cache_read": 2103,
+    "cache_write": 486,
+    "latency_s": 6.065605116978986
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

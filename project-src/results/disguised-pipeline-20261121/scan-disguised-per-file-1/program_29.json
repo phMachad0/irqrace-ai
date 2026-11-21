@@ -1,0 +1,48 @@
+{
+  "case": "program_29",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_garnet",
+        "a1_line": 39,
+        "a1_kind": "read",
+        "b_line": 29,
+        "b_kind": "write",
+        "a2_line": 40,
+        "a2_kind": "write",
+        "why": "Only walnut is enabled after line 38; it can preempt main between the check and the reset and its increment is overwritten."
+      },
+      {
+        "variable": "v_garnet",
+        "a1_line": 39,
+        "a1_kind": "read",
+        "b_line": 13,
+        "b_kind": "write",
+        "a2_line": 40,
+        "a2_kind": "write",
+        "why": "After walnut enables ISR 2, dune can preempt main between the check and the reset and its increment is overwritten."
+      },
+      {
+        "variable": "v_garnet",
+        "a1_line": 29,
+        "a1_kind": "read",
+        "b_line": 13,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "write",
+        "why": "On a later walnut run ISR 2 is already enabled, so dune can preempt the walnut increment between its read and write and the update is lost."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_garnet\",\"a1_line\":39,\"a1_kind\":\"read\",\"b_line\":29,\"b_kind\":\"write\",\"a2_line\":40,\"a2_kind\":\"write\",\"why\":\"Only walnut is enabled after line 38; it can preempt main between the check and the reset and its increment is overwritten.\"},{\"variable\":\"v_garnet\",\"a1_line\":39,\"a1_kind\":\"read\",\"b_line\":13,\"b_kind\":\"write\",\"a2_line\":40,\"a2_kind\":\"write\",\"why\":\"After walnut enables ISR 2, dune can preempt main between the check and the reset and its increment is overwritten.\"},{\"variable\":\"v_garnet\",\"a1_line\":29,\"a1_kind\":\"read\",\"b_line\":13,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"write\",\"why\":\"On a later walnut run ISR 2 is already enabled, so dune can preempt the walnut increment between its read and write and the update is lost.\"}]}",
+  "wall_s": 11.511449098587036,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1263,
+    "cache_read": 975,
+    "cache_write": 1420,
+    "latency_s": 11.511095818015747
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

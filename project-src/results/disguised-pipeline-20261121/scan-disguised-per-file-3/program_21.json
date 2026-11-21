@@ -1,0 +1,88 @@
+{
+  "case": "program_21",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_lantern",
+        "a1_line": 23,
+        "a1_kind": "read",
+        "b_line": 37,
+        "b_kind": "write",
+        "a2_line": 24,
+        "a2_kind": "write",
+        "why": "After line 22 meadow is enabled and can preempt the task between the check and the reset, so the reset overwrites its increment."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 23,
+        "a1_kind": "read",
+        "b_line": 15,
+        "b_kind": "write",
+        "a2_line": 24,
+        "a2_kind": "write",
+        "why": "Meadow's enable_isr(2) leaves nectar enabled, so it can run between the check and the reset and its update is lost."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 31,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 23,
+        "a2_kind": "read",
+        "why": "Before the task masks interrupts, vessel can preempt between the rand() store and the later check, so the check sees a value the task did not write."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 31,
+        "a1_kind": "write",
+        "b_line": 15,
+        "b_kind": "write",
+        "a2_line": 23,
+        "a2_kind": "read",
+        "why": "Nectar can preempt between the store at 31 and the read at 23 and change the value."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 31,
+        "a1_kind": "write",
+        "b_line": 37,
+        "b_kind": "write",
+        "a2_line": 23,
+        "a2_kind": "read",
+        "why": "Meadow can preempt between the store at 31 and the read at 23 and change the value."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 37,
+        "a1_kind": "read",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 37,
+        "a2_kind": "write",
+        "why": "Vessel has higher priority and can preempt meadow's non-atomic increment, so its update is lost."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 15,
+        "a1_kind": "read",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 15,
+        "a2_kind": "write",
+        "why": "Vessel can preempt nectar's non-atomic += and its update is lost."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_lantern\",\"a1_line\":23,\"a1_kind\":\"read\",\"b_line\":37,\"b_kind\":\"write\",\"a2_line\":24,\"a2_kind\":\"write\",\"why\":\"After line 22 meadow is enabled and can preempt the task between the check and the reset, so the reset overwrites its increment.\"},{\"variable\":\"v_lantern\",\"a1_line\":23,\"a1_kind\":\"read\",\"b_line\":15,\"b_kind\":\"write\",\"a2_line\":24,\"a2_kind\":\"write\",\"why\":\"Meadow's enable_isr(2) leaves nectar enabled, so it can run between the check and the reset and its update is lost.\"},{\"variable\":\"v_lantern\",\"a1_line\":31,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"write\",\"a2_line\":23,\"a2_kind\":\"read\",\"why\":\"Before the task masks interrupts, vessel can preempt between the rand() store and the later check, so the check sees a value the task did not write.\"},{\"variable\":\"v_lantern\",\"a1_line\":31,\"a1_kind\":\"write\",\"b_line\":15,\"b_kind\":\"write\",\"a2_line\":23,\"a2_kind\":\"read\",\"why\":\"Nectar can preempt between the store at 31 and the read at 23 and change the value.\"},{\"variable\":\"v_lantern\",\"a1_line\":31,\"a1_kind\":\"write\",\"b_line\":37,\"b_kind\":\"write\",\"a2_line\":23,\"a2_kind\":\"read\",\"why\":\"Meadow can preempt between the store at 31 and the read at 23 and change the value.\"},{\"variable\":\"v_lantern\",\"a1_line\":37,\"a1_kind\":\"read\",\"b_line\":11,\"b_kind\":\"write\",\"a2_line\":37,\"a2_kind\":\"write\",\"why\":\"Vessel has higher priority and can preempt meadow's non-atomic increment, so its update is lost.\"},{\"variable\":\"v_lantern\",\"a1_line\":15,\"a1_kind\":\"read\",\"b_line\":11,\"b_kind\":\"write\",\"a2_line\":15,\"a2_kind\":\"write\",\"why\":\"Vessel can preempt nectar's non-atomic += and its update is lost.\"}]}",
+  "wall_s": 14.782191753387451,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1742,
+    "cache_read": 1862,
+    "cache_write": 486,
+    "latency_s": 14.782008377020247
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

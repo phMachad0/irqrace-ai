@@ -125,9 +125,14 @@ no source: **31 of 31 answers were empty** (`results/contamination-20261121/`).
 - **The cue is not separated.** Names, comments and function order changed together; memory of the
   suite and meaningful identifiers (`condition6`, `global_flag`) both explain the original's low
   trap count.
-- **The comparison with irqrace is not yet like for like.** irqrace's 97 came from the original
-  names, and its triage reads names too; its static recall does not. Running the full pipeline on
-  the disguised copy is the next measurement.
+- **The comparison with irqrace, on the same disguised files** (`results/disguised-pipeline-20261121/`,
+  n = 3, pool + by variable, low effort): irqrace's static stages give the same 166 records and
+  53/53 on both copies; its triage keeps 3–4 traps in `likely_real` (the same items as on the
+  original) and scores 90–95, against the per-file scan's 6–10 traps and 70–86. **One recall-veto
+  event**: `010` bug#1, on a union, goes `likely_infeasible` in all three disguised runs ("different
+  struct fields"); with the original name `global_union` it is `likely_real` every time. It stays
+  in the report, but the configuration fails the T3 veto on the disguised copy. The context record
+  could state that the declared type is a union; today it says `volatile v_juniper`.
 
 **Other limits of the scan comparison.**
 - **Scale.** 60 k characters for 31 programs with one or two handlers each. The estimate for the

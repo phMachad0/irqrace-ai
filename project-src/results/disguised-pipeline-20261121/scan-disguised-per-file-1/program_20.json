@@ -1,0 +1,28 @@
+{
+  "case": "program_20",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_beacon[1]",
+        "a1_line": 50,
+        "a1_kind": "read",
+        "b_line": 24,
+        "b_kind": "write",
+        "a2_line": 51,
+        "a2_kind": "read",
+        "why": "v_glacier(v_beacon,0) reads v_beacon[1] at line 50, and the later call v_glacier(v_beacon,1) reads the same element at line 51. The ISR can zero it between the two reads (line 24), so the two reads can see different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_beacon[1]\",\"a1_line\":50,\"a1_kind\":\"read\",\"b_line\":24,\"b_kind\":\"write\",\"a2_line\":51,\"a2_kind\":\"read\",\"why\":\"v_glacier(v_beacon,0) reads v_beacon[1] at line 50, and the later call v_glacier(v_beacon,1) reads the same element at line 51. The ISR can zero it between the two reads (line 24), so the two reads can see different values.\"}]}",
+  "wall_s": 6.057729005813599,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 613,
+    "cache_read": 975,
+    "cache_write": 1612,
+    "latency_s": 6.057552840997232
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

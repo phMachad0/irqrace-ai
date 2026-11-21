@@ -11,8 +11,11 @@ disguised 2, original 2, disguised 3, original 3), all on the same day.
 
 ## The disguised copy
 
-`scripts/racebench-disguise.py --seed 2026` (the copy itself is not in git; it regenerates
-identically from the seed, and `disguise-index.json` lists which program is which case):
+`scripts/racebench-disguise.py --seed 2026` (the copy itself is not in git; `disguise-index.json`
+lists which program is which case). **Correction, same day:** this first copy ("copy A") was not
+reproducible after all — the order in which names were assigned depended on Python's hash seed.
+The script is deterministic since the next commit; `disguised-pipeline-20261121` reruns the scan on
+the deterministic copy B, with results that agree with these.
 
 - the header comment (suite name, company, dates, the Chinese notes), every other comment and the
   trailing answer block are removed; `common.h` loses its comments too;
@@ -77,6 +80,6 @@ What was missed and reported across the three per-file runs:
    stages do not depend on them, its triage does, so the tool's trap count on the disguised copy is
    unmeasured and may rise too. Running the full pipeline on the disguised copy (it needs C1
    configs for the new names, and the reordered files to still compile) is the comparison that
-   would settle it. Recall is the part that does not need it: the static stages keep every bug
+   would settle it — done in `disguised-pipeline-20261121`: irqrace's traps stay at 3–4. Recall is the part that does not need it: the static stages keep every bug
    point whatever the names, while the scan misses 2–3 per run with no proof behind any miss. The
    scan stays far cheaper: 74–81 k input tokens against 2.0 M.

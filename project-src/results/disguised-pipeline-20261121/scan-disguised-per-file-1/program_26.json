@@ -1,0 +1,28 @@
+{
+  "case": "program_26",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_glacier",
+        "a1_line": 21,
+        "a1_kind": "write",
+        "b_line": 13,
+        "b_kind": "read",
+        "a2_line": 29,
+        "a2_kind": "write",
+        "why": "The ISR can preempt the task between the write at line 21 and the write at line 29, since interrupts are never masked. It would read an intermediate value of v_glacier. The write at line 27 is not reported because v_meadow is never set to 1."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_glacier\",\"a1_line\":21,\"a1_kind\":\"write\",\"b_line\":13,\"b_kind\":\"read\",\"a2_line\":29,\"a2_kind\":\"write\",\"why\":\"The ISR can preempt the task between the write at line 21 and the write at line 29, since interrupts are never masked. It would read an intermediate value of v_glacier. The write at line 27 is not reported because v_meadow is never set to 1.\"}]}",
+  "wall_s": 6.634883165359497,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 580,
+    "cache_read": 975,
+    "cache_write": 1329,
+    "latency_s": 6.634701805975055
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

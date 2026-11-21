@@ -1,0 +1,58 @@
+{
+  "case": "program_14",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_pylon",
+        "a1_line": 52,
+        "a1_kind": "read",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 53,
+        "a2_kind": "write",
+        "why": "The ISR can overwrite v_pylon after the task's check at line 52. The task then writes 0 at line 53 based on a stale value."
+      },
+      {
+        "variable": "v_pylon",
+        "a1_line": 52,
+        "a1_kind": "read",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 30,
+        "a2_kind": "read",
+        "why": "The ISR can change v_pylon between the task's check at line 52 and its later read at line 30. The two reads can see different values."
+      },
+      {
+        "variable": "v_pylon",
+        "a1_line": 63,
+        "a1_kind": "write",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 52,
+        "a2_kind": "read",
+        "why": "The ISR can overwrite the value the task stored at line 63 before the task reads it at line 52. Interrupts are not masked."
+      },
+      {
+        "variable": "v_pylon",
+        "a1_line": 53,
+        "a1_kind": "write",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 30,
+        "a2_kind": "read",
+        "why": "After the task resets v_pylon to 0 at line 53, the ISR can write a new value. The read at line 30 then copies that value into v_falcon instead of the reset one."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_pylon\",\"a1_line\":52,\"a1_kind\":\"read\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":53,\"a2_kind\":\"write\",\"why\":\"The ISR can overwrite v_pylon after the task's check at line 52. The task then writes 0 at line 53 based on a stale value.\"},{\"variable\":\"v_pylon\",\"a1_line\":52,\"a1_kind\":\"read\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":30,\"a2_kind\":\"read\",\"why\":\"The ISR can change v_pylon between the task's check at line 52 and its later read at line 30. The two reads can see different values.\"},{\"variable\":\"v_pylon\",\"a1_line\":63,\"a1_kind\":\"write\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":52,\"a2_kind\":\"read\",\"why\":\"The ISR can overwrite the value the task stored at line 63 before the task reads it at line 52. Interrupts are not masked.\"},{\"variable\":\"v_pylon\",\"a1_line\":53,\"a1_kind\":\"write\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":30,\"a2_kind\":\"read\",\"why\":\"After the task resets v_pylon to 0 at line 53, the ISR can write a new value. The read at line 30 then copies that value into v_falcon instead of the reset one.\"}]}",
+  "wall_s": 8.016520738601685,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 924,
+    "cache_read": 2231,
+    "cache_write": 489,
+    "latency_s": 8.016294493019814
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1981,3 +1981,19 @@ scan (`project-src/results/contamination-20261121/`).
   relabel's bug points was one draw, and is corrected in `scan-measure-20261121/NOTES.md`.
 - Not yet like for like with irqrace, whose triage also read the original names. Updated
   [[Triage Cost and Speed 2026-11-21]] and [[Open Questions]].
+
+## [2026-11-21] result | irqrace on the disguised Racebench: precision holds, one union bug point lost to the name
+`racebench-disguise.py` made deterministic (names depended on the hash seed) and given
+`--compilable` (prototypes, `common.c`, C1 configs). irqrace's whole pipeline and the scan ran on
+the same disguised files, n = 3 each, Sonnet at low effort
+(`project-src/results/disguised-pipeline-20261121/`).
+- Static stages identical on both copies: 316 → 202 → 166, 53/53, 11/33.
+- Triage (pool + by variable): 51–52 bug points in `likely_real`, 3–4 traps (the same items as on
+  the original), score 90–95, against 52–53, 3–4 and 94–97 on the original.
+- `010` bug#1, on a union, is `likely_infeasible` in all three disguised runs and `likely_real` in
+  every original run: without the name `global_union` the model read `.header` and `.data` as
+  different locations. A recall-veto event for this configuration; new question in
+  [[Open Questions]] (resolve typedefs in the context record).
+- The scan on the same copy: per file 48–52 bug points, 6–10 traps, score 70–86; one prompt 46–52,
+  3–4, 80–95. Copy A of the first contamination test agrees.
+- One pair lost two checklist groups to `claude -p` timeouts (600 s); moved aside, re-run whole.

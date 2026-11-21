@@ -1,0 +1,38 @@
+{
+  "case": "program_10",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_amber",
+        "a1_line": 19,
+        "a1_kind": "read",
+        "b_line": 29,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "irq_vessel can preempt irq_upland after its disable_isr(3), then enable_isr(3) lets irq_nimbus run and write v_amber between the two reads."
+      },
+      {
+        "variable": "v_fjord",
+        "a1_line": 23,
+        "a1_kind": "read",
+        "b_line": 30,
+        "b_kind": "write",
+        "a2_line": 25,
+        "a2_kind": "read",
+        "why": "irq_vessel can preempt irq_upland and unmask interrupt 3, so irq_nimbus can write v_fjord between the two reads."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_amber\",\"a1_line\":19,\"a1_kind\":\"read\",\"b_line\":29,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"irq_vessel can preempt irq_upland after its disable_isr(3), then enable_isr(3) lets irq_nimbus run and write v_amber between the two reads.\"},{\"variable\":\"v_fjord\",\"a1_line\":23,\"a1_kind\":\"read\",\"b_line\":30,\"b_kind\":\"write\",\"a2_line\":25,\"a2_kind\":\"read\",\"why\":\"irq_vessel can preempt irq_upland and unmask interrupt 3, so irq_nimbus can write v_fjord between the two reads.\"}]}",
+  "wall_s": 8.803748369216919,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 921,
+    "cache_read": 975,
+    "cache_write": 1510,
+    "latency_s": 8.803354175004642
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

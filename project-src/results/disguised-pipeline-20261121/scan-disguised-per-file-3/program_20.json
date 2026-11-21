@@ -1,0 +1,28 @@
+{
+  "case": "program_20",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_beacon",
+        "a1_line": 50,
+        "a1_kind": "read",
+        "b_line": 24,
+        "b_kind": "write",
+        "a2_line": 51,
+        "a2_kind": "read",
+        "why": "The task reads array elements in v_glacier at lines 50 and 51 with interrupts enabled. irq_delta can preempt between the reads and zero v_beacon elements. The two reads then see inconsistent data, and element 1 is read by both calls."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_beacon\",\"a1_line\":50,\"a1_kind\":\"read\",\"b_line\":24,\"b_kind\":\"write\",\"a2_line\":51,\"a2_kind\":\"read\",\"why\":\"The task reads array elements in v_glacier at lines 50 and 51 with interrupts enabled. irq_delta can preempt between the reads and zero v_beacon elements. The two reads then see inconsistent data, and element 1 is read by both calls.\"}]}",
+  "wall_s": 5.53304648399353,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 452,
+    "cache_read": 2103,
+    "cache_write": 485,
+    "latency_s": 5.5328948800161015
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,28 @@
+{
+  "case": "program_01",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_pebble",
+        "a1_line": 21,
+        "a1_kind": "read",
+        "b_line": 9,
+        "b_kind": "write",
+        "a2_line": 22,
+        "a2_kind": "read",
+        "why": "The ISR can preempt the task between its two reads of v_pebble in the condition and change the value. The two reads can then see different values, so the range check is inconsistent."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_pebble\",\"a1_line\":21,\"a1_kind\":\"read\",\"b_line\":9,\"b_kind\":\"write\",\"a2_line\":22,\"a2_kind\":\"read\",\"why\":\"The ISR can preempt the task between its two reads of v_pebble in the condition and change the value. The two reads can then see different values, so the range check is inconsistent.\"}]}",
+  "wall_s": 5.018808841705322,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 282,
+    "cache_read": 1725,
+    "cache_write": 488,
+    "latency_s": 5.018568651983514
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

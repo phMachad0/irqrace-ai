@@ -1,0 +1,48 @@
+{
+  "case": "program_26",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_glacier",
+        "a1_line": 21,
+        "a1_kind": "write",
+        "b_line": 13,
+        "b_kind": "read",
+        "a2_line": 29,
+        "a2_kind": "write",
+        "why": "The ISR can preempt the task between the two writes and read an intermediate value (0x01) that the final write overwrites. Interrupts are never masked."
+      },
+      {
+        "variable": "v_glacier",
+        "a1_line": 27,
+        "a1_kind": "write",
+        "b_line": 13,
+        "b_kind": "read",
+        "a2_line": 29,
+        "a2_kind": "write",
+        "why": "The ISR can run between the writes at lines 27 and 29 and observe 0x09, which is immediately overwritten by 0x05."
+      },
+      {
+        "variable": "v_glacier",
+        "a1_line": 21,
+        "a1_kind": "write",
+        "b_line": 13,
+        "b_kind": "read",
+        "a2_line": 27,
+        "a2_kind": "write",
+        "why": "If v_meadow==1, the ISR can read between the write at line 21 and the write at line 27, seeing the transient value 0x01."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_glacier\",\"a1_line\":21,\"a1_kind\":\"write\",\"b_line\":13,\"b_kind\":\"read\",\"a2_line\":29,\"a2_kind\":\"write\",\"why\":\"The ISR can preempt the task between the two writes and read an intermediate value (0x01) that the final write overwrites. Interrupts are never masked.\"},{\"variable\":\"v_glacier\",\"a1_line\":27,\"a1_kind\":\"write\",\"b_line\":13,\"b_kind\":\"read\",\"a2_line\":29,\"a2_kind\":\"write\",\"why\":\"The ISR can run between the writes at lines 27 and 29 and observe 0x09, which is immediately overwritten by 0x05.\"},{\"variable\":\"v_glacier\",\"a1_line\":21,\"a1_kind\":\"write\",\"b_line\":13,\"b_kind\":\"read\",\"a2_line\":27,\"a2_kind\":\"write\",\"why\":\"If v_meadow==1, the ISR can read between the write at line 21 and the write at line 27, seeing the transient value 0x01.\"}]}",
+  "wall_s": 6.006977319717407,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 581,
+    "cache_read": 1819,
+    "cache_write": 486,
+    "latency_s": 6.006736302981153
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

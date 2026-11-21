@@ -1,0 +1,6 @@
+{
+  "mode": "one-prompt",
+  "backend": "claude-cli:sonnet@low",
+  "suite": "/home/pedro/Documentos/tcc/worktrees/racebench-disguised-c",
+  "wall_s": 96.69599771499634
+}

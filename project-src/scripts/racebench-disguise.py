@@ -96,13 +96,23 @@ def blocks(lines: list[tuple[int, str]]) -> tuple[list[tuple[int, str]], list[li
     return prelude, funcs
 
 
-def disguise_case(case: str, rng: random.Random) -> tuple[list[str], dict[int, int], dict[str, str]]:
+def prototype(block: list[tuple[int, str]]) -> str:
+    """``void f(int a)`` from a definition, for the reordered file to compile."""
+    head = []
+    for _, text in block:
+        head.append(text.split("{", 1)[0])
+        if "{" in text:
+            break
+    return " ".join(h.strip() for h in head if h.strip()) + ";"
+
+
+def disguise_case(case: str, rng: random.Random, prototypes: bool = False) -> tuple[list[str], dict[int, int], dict[str, str]]:
     path = SUITE / case.rsplit("_", 1)[0] / f"{case}.c"
     raw = path.read_text(encoding="utf-8").splitlines()
     cut = next((i for i, l in enumerate(raw) if l.strip().startswith("//bug")), len(raw))
     clean = strip_comments(raw[:cut])
 
-    tails = sorted({m.group(1) for l in clean for m in PREFIX.finditer(l)}, key=len, reverse=True)
+    tails = sorted({m.group(1) for l in clean for m in PREFIX.finditer(l)}, key=lambda t: (-len(t), t))
     words = rng.sample(WORDS, len(tails))
     names: dict[str, str] = {}
     for tail, word in zip(tails, words):
@@ -134,6 +144,9 @@ def disguise_case(case: str, rng: random.Random) -> tuple[list[str], dict[int, i
 
     for orig, text in prelude:
         emit(orig, text)
+    if prototypes:
+        for block in funcs:
+            emit(None, prototype(block))
     for k in order:
         emit(None, "")
         for orig, text in funcs[k]:
@@ -145,6 +158,8 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", required=True)
     ap.add_argument("--seed", type=int, default=2026)
+    ap.add_argument("--compilable", action="store_true",
+                    help="add prototypes, a <program>/ copy and C1 configs for the pipeline (same names and order)")
     args = ap.parse_args()
     rng = random.Random(args.seed)
     out = Path(args.out)
@@ -154,16 +169,30 @@ def main() -> int:
     rng.shuffle(programs)
     header = strip_comments((SUITE / "common.h").read_text(encoding="utf-8").splitlines())
     (out / "common.h").write_text("\n".join(l for l in header if l.strip()) + "\n")
+    if args.compilable:
+        body = strip_comments((SUITE / "common.c").read_text(encoding="utf-8").splitlines())
+        (out / "common.c").write_text("\n".join(l for l in body if l.strip()) + "\n")
+        (out / "configs").mkdir()
     index = {}
     for case, num in zip(cases, programs):
         program = f"program_{num:02d}"
-        src, line_map, names = disguise_case(case, rng)
+        src, line_map, names = disguise_case(case, rng, prototypes=args.compilable)
         cfg = yaml.safe_load((CONFIGS / f"{case}.yaml").read_text())
         flows = []
         for f in cfg["flows"]:
             tail = PREFIX.match(f["entry"]).group(1)
             flows.append({"entry": names[tail], "kind": f["kind"], "priority": f["priority"], "irq": f.get("irq")})
         (out / f"{program}.c").write_text("\n".join(src) + "\n")
+        if args.compilable:
+            (out / program).mkdir()
+            (out / program / f"{program}.c").write_text("\n".join(src) + "\n")
+            c1 = dict(cfg)
+            c1["subject"] = {**cfg["subject"], "name": program, "source_root": str(out.resolve()),
+                             "sources": [f"{program}/{program}.c"]}
+            c1["flows"] = [{**f, "id": f["id"], "entry": names[PREFIX.match(f["entry"]).group(1)]}
+                           for f in cfg["flows"]]
+            c1.pop("ground_truth", None)
+            (out / "configs" / f"{program}.yaml").write_text(yaml.safe_dump(c1, sort_keys=False, allow_unicode=True))
         (out / f"{program}.json").write_text(json.dumps(
             {"program": program, "case": case, "flows": flows, "names": names,
              "line_map": {str(k): v for k, v in line_map.items()}}, indent=2))

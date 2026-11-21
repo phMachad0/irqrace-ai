@@ -1,0 +1,38 @@
+{
+  "case": "program_19",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_falcon",
+        "a1_line": 34,
+        "a1_kind": "read",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 37,
+        "a2_kind": "read",
+        "why": "After irq_jasper runs and enables interrupt 2, irq_nimbus can preempt the task between the two reads of v_falcon and change it. The two conditions can then disagree."
+      },
+      {
+        "variable": "v_meadow",
+        "a1_line": 35,
+        "a1_kind": "read",
+        "b_line": 12,
+        "b_kind": "write",
+        "a2_line": 38,
+        "a2_kind": "read",
+        "why": "irq_nimbus can run between the task's two reads of v_meadow once irq_jasper has set v_hazel and enabled interrupt 2. It writes v_meadow = 5, so the two reads can return different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_falcon\",\"a1_line\":34,\"a1_kind\":\"read\",\"b_line\":11,\"b_kind\":\"write\",\"a2_line\":37,\"a2_kind\":\"read\",\"why\":\"After irq_jasper runs and enables interrupt 2, irq_nimbus can preempt the task between the two reads of v_falcon and change it. The two conditions can then disagree.\"},{\"variable\":\"v_meadow\",\"a1_line\":35,\"a1_kind\":\"read\",\"b_line\":12,\"b_kind\":\"write\",\"a2_line\":38,\"a2_kind\":\"read\",\"why\":\"irq_nimbus can run between the task's two reads of v_meadow once irq_jasper has set v_hazel and enabled interrupt 2. It writes v_meadow = 5, so the two reads can return different values.\"}]}",
+  "wall_s": 9.199516534805298,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 956,
+    "cache_read": 1903,
+    "cache_write": 483,
+    "latency_s": 9.199337598023703
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

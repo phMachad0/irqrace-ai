@@ -1,0 +1,58 @@
+{
+  "case": "program_23",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_timber",
+        "a1_line": 28,
+        "a1_kind": "write",
+        "b_line": 13,
+        "b_kind": "write",
+        "a2_line": 30,
+        "a2_kind": "read",
+        "why": "The ISR can preempt between the task's assignment and its use, repointing v_timber at the ISR's stack local. The task then dereferences the wrong pointer."
+      },
+      {
+        "variable": "v_timber",
+        "a1_line": 28,
+        "a1_kind": "write",
+        "b_line": 13,
+        "b_kind": "write",
+        "a2_line": 31,
+        "a2_kind": "read",
+        "why": "The ISR can overwrite v_timber after line 28 and before line 31 reads it, so the task uses the ISR's pointer."
+      },
+      {
+        "variable": "v_timber",
+        "a1_line": 30,
+        "a1_kind": "read",
+        "b_line": 13,
+        "b_kind": "write",
+        "a2_line": 31,
+        "a2_kind": "read",
+        "why": "The ISR can change v_timber between the task's two reads, so line 31 dereferences a different pointer than line 30 did."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 25,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "read",
+        "a2_line": 26,
+        "a2_kind": "write",
+        "why": "v_tundra and v_indigo both point at v_vessel. The ISR's read through v_tundra can run between the task's two writes and see the intermediate value 2."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_timber\",\"a1_line\":28,\"a1_kind\":\"write\",\"b_line\":13,\"b_kind\":\"write\",\"a2_line\":30,\"a2_kind\":\"read\",\"why\":\"The ISR can preempt between the task's assignment and its use, repointing v_timber at the ISR's stack local. The task then dereferences the wrong pointer.\"},{\"variable\":\"v_timber\",\"a1_line\":28,\"a1_kind\":\"write\",\"b_line\":13,\"b_kind\":\"write\",\"a2_line\":31,\"a2_kind\":\"read\",\"why\":\"The ISR can overwrite v_timber after line 28 and before line 31 reads it, so the task uses the ISR's pointer.\"},{\"variable\":\"v_timber\",\"a1_line\":30,\"a1_kind\":\"read\",\"b_line\":13,\"b_kind\":\"write\",\"a2_line\":31,\"a2_kind\":\"read\",\"why\":\"The ISR can change v_timber between the task's two reads, so line 31 dereferences a different pointer than line 30 did.\"},{\"variable\":\"v_vessel\",\"a1_line\":25,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"read\",\"a2_line\":26,\"a2_kind\":\"write\",\"why\":\"v_tundra and v_indigo both point at v_vessel. The ISR's read through v_tundra can run between the task's two writes and see the intermediate value 2.\"}]}",
+  "wall_s": 11.013300895690918,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1301,
+    "cache_read": 1830,
+    "cache_write": 489,
+    "latency_s": 11.013042573002167
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

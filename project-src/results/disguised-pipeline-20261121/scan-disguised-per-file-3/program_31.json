@@ -1,0 +1,58 @@
+{
+  "case": "program_31",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_basalt",
+        "a1_line": 21,
+        "a1_kind": "read",
+        "b_line": 14,
+        "b_kind": "write",
+        "a2_line": 22,
+        "a2_kind": "write",
+        "why": "disable_isr(1) only masks irq_willow. irq_kestrel (priority 2) can still run between the check and the reset, so the reset can overwrite its decrement."
+      },
+      {
+        "variable": "v_basalt",
+        "a1_line": 30,
+        "a1_kind": "write",
+        "b_line": 14,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "irq_kestrel can modify v_basalt after the rand() store and before the task's check. The check then reads a value the task did not write."
+      },
+      {
+        "variable": "v_basalt",
+        "a1_line": 30,
+        "a1_kind": "write",
+        "b_line": 10,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "irq_willow is still enabled between line 30 and disable_isr(1) at line 20. It can modify v_basalt before the task reads it at line 21."
+      },
+      {
+        "variable": "v_basalt",
+        "a1_line": 10,
+        "a1_kind": "read",
+        "b_line": 14,
+        "b_kind": "write",
+        "a2_line": 10,
+        "a2_kind": "write",
+        "why": "irq_kestrel has higher priority and can preempt irq_willow's non-atomic increment. The increment's write then overwrites the decrement."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_basalt\",\"a1_line\":21,\"a1_kind\":\"read\",\"b_line\":14,\"b_kind\":\"write\",\"a2_line\":22,\"a2_kind\":\"write\",\"why\":\"disable_isr(1) only masks irq_willow. irq_kestrel (priority 2) can still run between the check and the reset, so the reset can overwrite its decrement.\"},{\"variable\":\"v_basalt\",\"a1_line\":30,\"a1_kind\":\"write\",\"b_line\":14,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"irq_kestrel can modify v_basalt after the rand() store and before the task's check. The check then reads a value the task did not write.\"},{\"variable\":\"v_basalt\",\"a1_line\":30,\"a1_kind\":\"write\",\"b_line\":10,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"irq_willow is still enabled between line 30 and disable_isr(1) at line 20. It can modify v_basalt before the task reads it at line 21.\"},{\"variable\":\"v_basalt\",\"a1_line\":10,\"a1_kind\":\"read\",\"b_line\":14,\"b_kind\":\"write\",\"a2_line\":10,\"a2_kind\":\"write\",\"why\":\"irq_kestrel has higher priority and can preempt irq_willow's non-atomic increment. The increment's write then overwrites the decrement.\"}]}",
+  "wall_s": 10.253868818283081,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1167,
+    "cache_read": 1782,
+    "cache_write": 487,
+    "latency_s": 10.25367549600196
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,58 @@
+{
+  "case": "program_18",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_vessel",
+        "a1_line": 22,
+        "a1_kind": "write",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 33,
+        "a2_kind": "read",
+        "why": "The ISR can reset v_vessel between the task's write and the later read in fn_juniper."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 33,
+        "a1_kind": "read",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 34,
+        "a2_kind": "write",
+        "why": "The ISR can write 0 after the task reads v_vessel at line 33, so the write at line 34 acts on a stale check."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 33,
+        "a1_kind": "read",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 36,
+        "a2_kind": "write",
+        "why": "The ISR can write v_vessel between the check at line 33 and the write at line 36."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 57,
+        "a1_kind": "read",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "read",
+        "why": "The ISR can change v_vessel between the two task reads at lines 57 and 29, so they can see different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_vessel\",\"a1_line\":22,\"a1_kind\":\"write\",\"b_line\":41,\"b_kind\":\"write\",\"a2_line\":33,\"a2_kind\":\"read\",\"why\":\"The ISR can reset v_vessel between the task's write and the later read in fn_juniper.\"},{\"variable\":\"v_vessel\",\"a1_line\":33,\"a1_kind\":\"read\",\"b_line\":41,\"b_kind\":\"write\",\"a2_line\":34,\"a2_kind\":\"write\",\"why\":\"The ISR can write 0 after the task reads v_vessel at line 33, so the write at line 34 acts on a stale check.\"},{\"variable\":\"v_vessel\",\"a1_line\":33,\"a1_kind\":\"read\",\"b_line\":41,\"b_kind\":\"write\",\"a2_line\":36,\"a2_kind\":\"write\",\"why\":\"The ISR can write v_vessel between the check at line 33 and the write at line 36.\"},{\"variable\":\"v_vessel\",\"a1_line\":57,\"a1_kind\":\"read\",\"b_line\":41,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"read\",\"why\":\"The ISR can change v_vessel between the two task reads at lines 57 and 29, so they can see different values.\"}]}",
+  "wall_s": 8.817061424255371,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 966,
+    "cache_read": 2047,
+    "cache_write": 489,
+    "latency_s": 8.816882307990454
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

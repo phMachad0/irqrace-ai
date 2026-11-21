@@ -1,0 +1,98 @@
+{
+  "case": "program_21",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_lantern",
+        "a1_line": 23,
+        "a1_kind": "read",
+        "b_line": 37,
+        "b_kind": "write",
+        "a2_line": 24,
+        "a2_kind": "write",
+        "why": "After enable_isr(1), meadow can run between the check and the reset, so its increment is overwritten."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 23,
+        "a1_kind": "read",
+        "b_line": 15,
+        "b_kind": "write",
+        "a2_line": 24,
+        "a2_kind": "write",
+        "why": "Meadow enables ISR 2 at line 38, so nectar can then run between the check and the reset."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 31,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 23,
+        "a2_kind": "read",
+        "why": "Interrupts are not yet masked, so vessel can modify the value between the rand() store and the later check."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 31,
+        "a1_kind": "write",
+        "b_line": 15,
+        "b_kind": "write",
+        "a2_line": 23,
+        "a2_kind": "read",
+        "why": "Nectar can preempt the task before disable_isr(-1) and change the value after the rand() store."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 31,
+        "a1_kind": "write",
+        "b_line": 37,
+        "b_kind": "write",
+        "a2_line": 23,
+        "a2_kind": "read",
+        "why": "Meadow can preempt the task before disable_isr(-1) and change the value after the rand() store."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 37,
+        "a1_kind": "read",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 37,
+        "a2_kind": "write",
+        "why": "Vessel has higher priority and can preempt meadow's increment, so its update is lost."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 15,
+        "a1_kind": "read",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 15,
+        "a2_kind": "write",
+        "why": "Vessel can preempt nectar's read-modify-write, so its update is lost."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 37,
+        "a1_kind": "read",
+        "b_line": 15,
+        "b_kind": "write",
+        "a2_line": 37,
+        "a2_kind": "write",
+        "why": "Nectar has higher priority and can preempt meadow's increment if ISR 2 is enabled, so its update is lost."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_lantern\",\"a1_line\":23,\"a1_kind\":\"read\",\"b_line\":37,\"b_kind\":\"write\",\"a2_line\":24,\"a2_kind\":\"write\",\"why\":\"After enable_isr(1), meadow can run between the check and the reset, so its increment is overwritten.\"},{\"variable\":\"v_lantern\",\"a1_line\":23,\"a1_kind\":\"read\",\"b_line\":15,\"b_kind\":\"write\",\"a2_line\":24,\"a2_kind\":\"write\",\"why\":\"Meadow enables ISR 2 at line 38, so nectar can then run between the check and the reset.\"},{\"variable\":\"v_lantern\",\"a1_line\":31,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"write\",\"a2_line\":23,\"a2_kind\":\"read\",\"why\":\"Interrupts are not yet masked, so vessel can modify the value between the rand() store and the later check.\"},{\"variable\":\"v_lantern\",\"a1_line\":31,\"a1_kind\":\"write\",\"b_line\":15,\"b_kind\":\"write\",\"a2_line\":23,\"a2_kind\":\"read\",\"why\":\"Nectar can preempt the task before disable_isr(-1) and change the value after the rand() store.\"},{\"variable\":\"v_lantern\",\"a1_line\":31,\"a1_kind\":\"write\",\"b_line\":37,\"b_kind\":\"write\",\"a2_line\":23,\"a2_kind\":\"read\",\"why\":\"Meadow can preempt the task before disable_isr(-1) and change the value after the rand() store.\"},{\"variable\":\"v_lantern\",\"a1_line\":37,\"a1_kind\":\"read\",\"b_line\":11,\"b_kind\":\"write\",\"a2_line\":37,\"a2_kind\":\"write\",\"why\":\"Vessel has higher priority and can preempt meadow's increment, so its update is lost.\"},{\"variable\":\"v_lantern\",\"a1_line\":15,\"a1_kind\":\"read\",\"b_line\":11,\"b_kind\":\"write\",\"a2_line\":15,\"a2_kind\":\"write\",\"why\":\"Vessel can preempt nectar's read-modify-write, so its update is lost.\"},{\"variable\":\"v_lantern\",\"a1_line\":37,\"a1_kind\":\"read\",\"b_line\":15,\"b_kind\":\"write\",\"a2_line\":37,\"a2_kind\":\"write\",\"why\":\"Nectar has higher priority and can preempt meadow's increment if ISR 2 is enabled, so its update is lost.\"}]}",
+  "wall_s": 16.583553314208984,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 2002,
+    "cache_read": 975,
+    "cache_write": 1371,
+    "latency_s": 16.58333539799787
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

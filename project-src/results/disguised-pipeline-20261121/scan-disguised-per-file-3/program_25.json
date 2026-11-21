@@ -1,0 +1,48 @@
+{
+  "case": "program_25",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_amber",
+        "a1_line": 14,
+        "a1_kind": "write",
+        "b_line": 8,
+        "b_kind": "write",
+        "a2_line": 15,
+        "a2_kind": "read",
+        "why": "The ISR can preempt the task between its write of 1 and the first read, so the read sees 9 instead of 1."
+      },
+      {
+        "variable": "v_amber",
+        "a1_line": 15,
+        "a1_kind": "read",
+        "b_line": 8,
+        "b_kind": "write",
+        "a2_line": 16,
+        "a2_kind": "read",
+        "why": "The ISR can write between the first and second reads, so the two reads can return different values."
+      },
+      {
+        "variable": "v_amber",
+        "a1_line": 16,
+        "a1_kind": "read",
+        "b_line": 8,
+        "b_kind": "write",
+        "a2_line": 17,
+        "a2_kind": "read",
+        "why": "The ISR can write between the second and third reads, so the two reads can return different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_amber\",\"a1_line\":14,\"a1_kind\":\"write\",\"b_line\":8,\"b_kind\":\"write\",\"a2_line\":15,\"a2_kind\":\"read\",\"why\":\"The ISR can preempt the task between its write of 1 and the first read, so the read sees 9 instead of 1.\"},{\"variable\":\"v_amber\",\"a1_line\":15,\"a1_kind\":\"read\",\"b_line\":8,\"b_kind\":\"write\",\"a2_line\":16,\"a2_kind\":\"read\",\"why\":\"The ISR can write between the first and second reads, so the two reads can return different values.\"},{\"variable\":\"v_amber\",\"a1_line\":16,\"a1_kind\":\"read\",\"b_line\":8,\"b_kind\":\"write\",\"a2_line\":17,\"a2_kind\":\"read\",\"why\":\"The ISR can write between the second and third reads, so the two reads can return different values.\"}]}",
+  "wall_s": 6.804197788238525,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 609,
+    "cache_read": 1643,
+    "cache_write": 489,
+    "latency_s": 6.804011293017538
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

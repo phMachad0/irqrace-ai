@@ -1,0 +1,78 @@
+{
+  "case": "program_31",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_basalt",
+        "a1_line": 30,
+        "a1_kind": "write",
+        "b_line": 14,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "irq_kestrel is never masked and can decrement between the task's write at 30 and its read at 21, so the check sees a modified value."
+      },
+      {
+        "variable": "v_basalt",
+        "a1_line": 21,
+        "a1_kind": "read",
+        "b_line": 14,
+        "b_kind": "write",
+        "a2_line": 22,
+        "a2_kind": "write",
+        "why": "Only interrupt 1 is disabled, so irq_kestrel can modify the value after the check at 21 and before the write at 22. The check is then stale and the decrement is overwritten."
+      },
+      {
+        "variable": "v_basalt",
+        "a1_line": 30,
+        "a1_kind": "write",
+        "b_line": 14,
+        "b_kind": "read",
+        "a2_line": 22,
+        "a2_kind": "write",
+        "why": "irq_kestrel can read the value between the task's two writes, at 30 and 22, and observe an intermediate state."
+      },
+      {
+        "variable": "v_basalt",
+        "a1_line": 30,
+        "a1_kind": "write",
+        "b_line": 10,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "irq_willow is still enabled between line 30 and the disable_isr(1) at line 20, so its increment can land before the read at 21."
+      },
+      {
+        "variable": "v_basalt",
+        "a1_line": 30,
+        "a1_kind": "write",
+        "b_line": 10,
+        "b_kind": "read",
+        "a2_line": 22,
+        "a2_kind": "write",
+        "why": "irq_willow can read the value after the write at 30, before it is masked at line 20, and it sees an intermediate state before the task's write at 22."
+      },
+      {
+        "variable": "v_basalt",
+        "a1_line": 10,
+        "a1_kind": "read",
+        "b_line": 14,
+        "b_kind": "write",
+        "a2_line": 10,
+        "a2_kind": "write",
+        "why": "irq_kestrel has higher priority and can preempt irq_willow between the read and write of v_basalt++. The decrement is then lost."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_basalt\",\"a1_line\":30,\"a1_kind\":\"write\",\"b_line\":14,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"irq_kestrel is never masked and can decrement between the task's write at 30 and its read at 21, so the check sees a modified value.\"},{\"variable\":\"v_basalt\",\"a1_line\":21,\"a1_kind\":\"read\",\"b_line\":14,\"b_kind\":\"write\",\"a2_line\":22,\"a2_kind\":\"write\",\"why\":\"Only interrupt 1 is disabled, so irq_kestrel can modify the value after the check at 21 and before the write at 22. The check is then stale and the decrement is overwritten.\"},{\"variable\":\"v_basalt\",\"a1_line\":30,\"a1_kind\":\"write\",\"b_line\":14,\"b_kind\":\"read\",\"a2_line\":22,\"a2_kind\":\"write\",\"why\":\"irq_kestrel can read the value between the task's two writes, at 30 and 22, and observe an intermediate state.\"},{\"variable\":\"v_basalt\",\"a1_line\":30,\"a1_kind\":\"write\",\"b_line\":10,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"irq_willow is still enabled between line 30 and the disable_isr(1) at line 20, so its increment can land before the read at 21.\"},{\"variable\":\"v_basalt\",\"a1_line\":30,\"a1_kind\":\"write\",\"b_line\":10,\"b_kind\":\"read\",\"a2_line\":22,\"a2_kind\":\"write\",\"why\":\"irq_willow can read the value after the write at 30, before it is masked at line 20, and it sees an intermediate state before the task's write at 22.\"},{\"variable\":\"v_basalt\",\"a1_line\":10,\"a1_kind\":\"read\",\"b_line\":14,\"b_kind\":\"write\",\"a2_line\":10,\"a2_kind\":\"write\",\"why\":\"irq_kestrel has higher priority and can preempt irq_willow between the read and write of v_basalt++. The decrement is then lost.\"}]}",
+  "wall_s": 16.040417432785034,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1553,
+    "cache_read": 975,
+    "cache_write": 1291,
+    "latency_s": 16.040199236012995
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

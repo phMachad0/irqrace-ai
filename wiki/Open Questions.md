@@ -320,13 +320,19 @@ with the date.
 - [x] **Has the model memorised Racebench?** *Tested 2026-11-21, n = 3: on a disguised copy the
   scan keeps its recall (50–51/53) and loses its precision (6–8 traps per run instead of 1–4); a
   by-name recall probe returned nothing. Names, comments and order changed together, so memory and
-  meaningful identifiers are not separated ([[Triage Cost and Speed 2026-11-21]]). Next: irqrace's
-  full pipeline on the same disguised copy.* Original question: A plain "read the file and list the violations" scan
+  meaningful identifiers are not separated ([[Triage Cost and Speed 2026-11-21]]). irqrace on the
+  same copy: traps unchanged (3–4), one bug point on a union called infeasible without its telling
+  name.* Original question: A plain "read the file and list the violations" scan
   with Sonnet at low effort found 50/53 bug points with 1 trap at 99 k input tokens, against the
   triage's 2.0–3.5 M, and **48/48 on the published labels**: its only misses are the bug points this
   project created in the relabel ([[Triage Cost and Speed 2026-11-21]]). The suite has been public
   since 2019 with its answers in the comments. Run the scan on a renamed, reordered copy (identifiers,
   function order, line numbers shifted) before the scan is quoted as a baseline.
+- [ ] **Should the context record spell out what a type is?** On the disguised Racebench the triage
+  called a union's bug point infeasible in 3 of 3 runs, because `.header` and `.data` "are different
+  fields"; with the name `global_union` it never did. `variable.declared_type` carries the typedef
+  name only. Resolving typedefs to `union`/`struct`/scalar in the record (stage 1 has the debug
+  info) is cheap and removes a name dependence from the triage ([[Triage Cost and Speed 2026-11-21]]).
 - [ ] **Does the checklist grouping hold at n = 3, and on real code?** By variable cut calls 72% and,
   with the global pool, wall time 4× on Racebench with recall intact; at low effort one answer left
   14 of 15 items out ([[Triage Cost and Speed 2026-11-21]]). On the real-world suite it currently

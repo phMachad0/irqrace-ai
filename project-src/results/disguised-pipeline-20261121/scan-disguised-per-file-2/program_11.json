@@ -1,0 +1,78 @@
+{
+  "case": "program_11",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_umber",
+        "a1_line": 18,
+        "a1_kind": "read",
+        "b_line": 42,
+        "b_kind": "write",
+        "a2_line": 19,
+        "a2_kind": "write",
+        "why": "After enable_isr(1), quiver can run between the check and the reset and modify v_umber, so the reset acts on a stale check."
+      },
+      {
+        "variable": "v_umber",
+        "a1_line": 18,
+        "a1_kind": "read",
+        "b_line": 30,
+        "b_kind": "write",
+        "a2_line": 19,
+        "a2_kind": "write",
+        "why": "Quiver enables raptor, which can then increment v_umber between the task's check and its reset."
+      },
+      {
+        "variable": "v_umber",
+        "a1_line": 35,
+        "a1_kind": "write",
+        "b_line": 25,
+        "b_kind": "write",
+        "a2_line": 18,
+        "a2_kind": "read",
+        "why": "Before the interrupts are disabled, pylon can overwrite v_umber, so the task reads a value it did not write."
+      },
+      {
+        "variable": "v_umber",
+        "a1_line": 35,
+        "a1_kind": "write",
+        "b_line": 42,
+        "b_kind": "write",
+        "a2_line": 18,
+        "a2_kind": "read",
+        "why": "Quiver can modify v_umber between the task's write and its later read."
+      },
+      {
+        "variable": "v_umber",
+        "a1_line": 42,
+        "a1_kind": "read",
+        "b_line": 25,
+        "b_kind": "write",
+        "a2_line": 42,
+        "a2_kind": "write",
+        "why": "The increment in quiver is not atomic. Higher-priority pylon can preempt it, and its update is lost."
+      },
+      {
+        "variable": "v_umber",
+        "a1_line": 30,
+        "a1_kind": "read",
+        "b_line": 25,
+        "b_kind": "write",
+        "a2_line": 30,
+        "a2_kind": "write",
+        "why": "The increment in raptor can be preempted by higher-priority pylon, and its update is lost."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_umber\",\"a1_line\":18,\"a1_kind\":\"read\",\"b_line\":42,\"b_kind\":\"write\",\"a2_line\":19,\"a2_kind\":\"write\",\"why\":\"After enable_isr(1), quiver can run between the check and the reset and modify v_umber, so the reset acts on a stale check.\"},{\"variable\":\"v_umber\",\"a1_line\":18,\"a1_kind\":\"read\",\"b_line\":30,\"b_kind\":\"write\",\"a2_line\":19,\"a2_kind\":\"write\",\"why\":\"Quiver enables raptor, which can then increment v_umber between the task's check and its reset.\"},{\"variable\":\"v_umber\",\"a1_line\":35,\"a1_kind\":\"write\",\"b_line\":25,\"b_kind\":\"write\",\"a2_line\":18,\"a2_kind\":\"read\",\"why\":\"Before the interrupts are disabled, pylon can overwrite v_umber, so the task reads a value it did not write.\"},{\"variable\":\"v_umber\",\"a1_line\":35,\"a1_kind\":\"write\",\"b_line\":42,\"b_kind\":\"write\",\"a2_line\":18,\"a2_kind\":\"read\",\"why\":\"Quiver can modify v_umber between the task's write and its later read.\"},{\"variable\":\"v_umber\",\"a1_line\":42,\"a1_kind\":\"read\",\"b_line\":25,\"b_kind\":\"write\",\"a2_line\":42,\"a2_kind\":\"write\",\"why\":\"The increment in quiver is not atomic. Higher-priority pylon can preempt it, and its update is lost.\"},{\"variable\":\"v_umber\",\"a1_line\":30,\"a1_kind\":\"read\",\"b_line\":25,\"b_kind\":\"write\",\"a2_line\":30,\"a2_kind\":\"write\",\"why\":\"The increment in raptor can be preempted by higher-priority pylon, and its update is lost.\"}]}",
+  "wall_s": 14.283002853393555,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1710,
+    "cache_read": 1940,
+    "cache_write": 486,
+    "latency_s": 14.282841624022694
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}
