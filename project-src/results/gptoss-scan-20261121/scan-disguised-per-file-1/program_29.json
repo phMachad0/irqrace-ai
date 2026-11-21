@@ -1,0 +1,48 @@
+{
+  "case": "program_29",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_garnet",
+        "a1_line": 22,
+        "a1_kind": "write",
+        "b_line": 29,
+        "b_kind": "write",
+        "a2_line": 39,
+        "a2_kind": "read",
+        "why": "After disabling all interrupts, the main task re‑enables only interrupt 1. irq_walnut can pre‑empt the task between line 22 and line 39 and increments v_garnet, so the read at line 39 may see a value modified by the ISR."
+      },
+      {
+        "variable": "v_garnet",
+        "a1_line": 22,
+        "a1_kind": "write",
+        "b_line": 13,
+        "b_kind": "write",
+        "a2_line": 39,
+        "a2_kind": "read",
+        "why": "irq_walnut can pre‑empt the main task, enable interrupt 2, and then be pre‑empted by irq_dune. The write to v_garnet in irq_dune can occur between the two main‑task accesses."
+      },
+      {
+        "variable": "v_garnet",
+        "a1_line": 39,
+        "a1_kind": "read",
+        "b_line": 29,
+        "b_kind": "write",
+        "a2_line": 40,
+        "a2_kind": "write",
+        "why": "After the read at line 39 the main task still has interrupt 1 enabled, so irq_walnut may fire before the write at line 40, inserting a write between the read and the subsequent write."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_garnet\",\n      \"a1_line\": 22,\n      \"a1_kind\": \"write\",\n      \"b_line\": 29,\n      \"b_kind\": \"write\",\n      \"a2_line\": 39,\n      \"a2_kind\": \"read\",\n      \"why\": \"After disabling all interrupts, the main task re‑enables only interrupt 1. irq_walnut can pre‑empt the task between line 22 and line 39 and increments v_garnet, so the read at line 39 may see a value modified by the ISR.\"\n    },\n    {\n      \"variable\": \"v_garnet\",\n      \"a1_line\": 22,\n      \"a1_kind\": \"write\",\n      \"b_line\": 13,\n      \"b_kind\": \"write\",\n      \"a2_line\": 39,\n      \"a2_kind\": \"read\",\n      \"why\": \"irq_walnut can pre‑empt the main task, enable interrupt 2, and then be pre‑empted by irq_dune. The write to v_garnet in irq_dune can occur between the two main‑task accesses.\"\n    },\n    {\n      \"variable\": \"v_garnet\",\n      \"a1_line\": 39,\n      \"a1_kind\": \"read\",\n      \"b_line\": 29,\n      \"b_kind\": \"write\",\n      \"a2_line\": 40,\n      \"a2_kind\": \"write\",\n      \"why\": \"After the read at line 39 the main task still has interrupt 1 enabled, so irq_walnut may fire before the write at line 40, inserting a write between the read and the subsequent write.\"\n    }]}",
+  "wall_s": 10.283559799194336,
+  "usage": {
+    "input_tokens": 432,
+    "output_tokens": 4000,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 10.283445802982897
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

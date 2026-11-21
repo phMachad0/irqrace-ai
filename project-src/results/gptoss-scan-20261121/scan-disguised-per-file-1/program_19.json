@@ -1,0 +1,48 @@
+{
+  "case": "program_19",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_meadow",
+        "a1_line": 35,
+        "a1_kind": "read",
+        "b_line": 17,
+        "b_kind": "write",
+        "a2_line": 38,
+        "a2_kind": "read",
+        "why": "Jasper ISR (priority 1) can pre‑empt the low‑priority task between the two reads of v_meadow, writing a new value and causing the task to see inconsistent data."
+      },
+      {
+        "variable": "v_meadow",
+        "a1_line": 35,
+        "a1_kind": "read",
+        "b_line": 12,
+        "b_kind": "write",
+        "a2_line": 38,
+        "a2_kind": "read",
+        "why": "Nimbus ISR (priority 2) becomes enabled after Jasper runs and can pre‑empt the task between the two reads of v_meadow, overwriting it and leading to a read‑write‑read race."
+      },
+      {
+        "variable": "v_falcon",
+        "a1_line": 34,
+        "a1_kind": "read",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 37,
+        "a2_kind": "read",
+        "why": "Nimbus ISR may execute after the first comparison (line 34) but before the second (line 37), writing v_falcon and causing the two comparisons to be based on different values."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_meadow\",\n      \"a1_line\": 35,\n      \"a1_kind\": \"read\",\n      \"b_line\": 17,\n      \"b_kind\": \"write\",\n      \"a2_line\": 38,\n      \"a2_kind\": \"read\",\n      \"why\": \"Jasper ISR (priority 1) can pre‑empt the low‑priority task between the two reads of v_meadow, writing a new value and causing the task to see inconsistent data.\"\n    },\n    {\n      \"variable\": \"v_meadow\",\n      \"a1_line\": 35,\n      \"a1_kind\": \"read\",\n      \"b_line\": 12,\n      \"b_kind\": \"write\",\n      \"a2_line\": 38,\n      \"a2_kind\": \"read\",\n      \"why\": \"Nimbus ISR (priority 2) becomes enabled after Jasper runs and can pre‑empt the task between the two reads of v_meadow, overwriting it and leading to a read‑write‑read race.\"\n    },\n    {\n      \"variable\": \"v_falcon\",\n      \"a1_line\": 34,\n      \"a1_kind\": \"read\",\n      \"b_line\": 11,\n      \"b_kind\": \"write\",\n      \"a2_line\": 37,\n      \"a2_kind\": \"read\",\n      \"why\": \"Nimbus ISR may execute after the first comparison (line 34) but before the second (line 37), writing v_falcon and causing the two comparisons to be based on different values.\"\n    }\n  ]\n}",
+  "wall_s": 34.676220417022705,
+  "usage": {
+    "input_tokens": 421,
+    "output_tokens": 2282,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 34.67614900402259
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

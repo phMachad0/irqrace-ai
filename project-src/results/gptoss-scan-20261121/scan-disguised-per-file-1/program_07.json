@@ -1,0 +1,48 @@
+{
+  "case": "program_07",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_pylon",
+        "a1_line": 23,
+        "a1_kind": "read",
+        "b_line": 13,
+        "b_kind": "write",
+        "a2_line": 25,
+        "a2_kind": "read",
+        "why": "The task reads v_pylon to index v_vessel, then the ISR increments v_pylon, and the task reads v_pylon again; a read‑write‑read interleaving can occur."
+      },
+      {
+        "variable": "v_vessel[2]",
+        "a1_line": 29,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 33,
+        "a2_kind": "read",
+        "why": "If the random index i equals 2, the task writes v_vessel[2] then the ISR writes the same element, and the task later reads it; a write‑write‑read race is possible."
+      },
+      {
+        "variable": "v_vessel[2]",
+        "a1_line": 31,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 33,
+        "a2_kind": "read",
+        "why": "If the random index i equals 2, the task writes v_vessel[2] with 0x09, the ISR overwrites it with 0x09, and the task subsequently reads the element; this creates a write‑write‑read atomicity violation."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_pylon\",\n      \"a1_line\": 23,\n      \"a1_kind\": \"read\",\n      \"b_line\": 13,\n      \"b_kind\": \"write\",\n      \"a2_line\": 25,\n      \"a2_kind\": \"read\",\n      \"why\": \"The task reads v_pylon to index v_vessel, then the ISR increments v_pylon, and the task reads v_pylon again; a read‑write‑read interleaving can occur.\"\n    },\n    {\n      \"variable\": \"v_vessel[2]\",\n      \"a1_line\": 29,\n      \"a1_kind\": \"write\",\n      \"b_line\": 11,\n      \"b_kind\": \"write\",\n      \"a2_line\": 33,\n      \"a2_kind\": \"read\",\n      \"why\": \"If the random index i equals 2, the task writes v_vessel[2] then the ISR writes the same element, and the task later reads it; a write‑write‑read race is possible.\"\n    },\n    {\n      \"variable\": \"v_vessel[2]\",\n      \"a1_line\": 31,\n      \"a1_kind\": \"write\",\n      \"b_line\": 11,\n      \"b_kind\": \"write\",\n      \"a2_line\": 33,\n      \"a2_kind\": \"read\",\n      \"why\": \"If the random index i equals 2, the task writes v_vessel[2] with 0x09, the ISR overwrites it with 0x09, and the task subsequently reads the element; this creates a write‑write‑read atomicity violation.\"\n    }\n  ]\n}",
+  "wall_s": 16.438570499420166,
+  "usage": {
+    "input_tokens": 884,
+    "output_tokens": 2289,
+    "cache_read": 0,
+    "cache_write": 0,
+    "latency_s": 16.438393771997653
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

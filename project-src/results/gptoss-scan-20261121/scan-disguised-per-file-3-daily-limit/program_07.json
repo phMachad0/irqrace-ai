@@ -1,0 +1,68 @@
+{
+  "case": "program_07",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_pylon",
+        "a1_line": 23,
+        "a1_kind": "read",
+        "b_line": 13,
+        "b_kind": "write",
+        "a2_line": 25,
+        "a2_kind": "read",
+        "why": "The ISR increments v_pylon between two reads of v_pylon used as an index, breaking atomicity."
+      },
+      {
+        "variable": "v_vessel[2]",
+        "a1_line": 23,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 33,
+        "a2_kind": "read",
+        "why": "The task writes v_vessel[2] (if v_pylon == 2) and later reads it, while the ISR can write the same element in between."
+      },
+      {
+        "variable": "v_vessel[2]",
+        "a1_line": 25,
+        "a1_kind": "read",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 33,
+        "a2_kind": "read",
+        "why": "The task reads v_vessel[2] (if v_pylon == 2), the ISR may write that element, and the task reads it again, forming a read‑write‑read violation."
+      },
+      {
+        "variable": "v_vessel[2]",
+        "a1_line": 23,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 25,
+        "a2_kind": "read",
+        "why": "A write to v_vessel[2] by the task can be interleaved with the ISR’s write to the same element before the task reads it."
+      },
+      {
+        "variable": "v_vessel[2]",
+        "a1_line": 29,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 33,
+        "a2_kind": "read",
+        "why": "If the random index i equals 2, the task writes v_vessel[2], the ISR may write the same element, and the task later reads it, yielding a write‑write‑read violation."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_pylon\",\n      \"a1_line\": 23,\n      \"a1_kind\": \"read\",\n      \"b_line\": 13,\n      \"b_kind\": \"write\",\n      \"a2_line\": 25,\n      \"a2_kind\": \"read\",\n      \"why\": \"The ISR increments v_pylon between two reads of v_pylon used as an index, breaking atomicity.\"\n    },\n    {\n      \"variable\": \"v_vessel[2]\",\n      \"a1_line\": 23,\n      \"a1_kind\": \"write\",\n      \"b_line\": 11,\n      \"b_kind\": \"write\",\n      \"a2_line\": 33,\n      \"a2_kind\": \"read\",\n      \"why\": \"The task writes v_vessel[2] (if v_pylon == 2) and later reads it, while the ISR can write the same element in between.\"\n    },\n    {\n      \"variable\": \"v_vessel[2]\",\n      \"a1_line\": 25,\n      \"a1_kind\": \"read\",\n      \"b_line\": 11,\n      \"b_kind\": \"write\",\n      \"a2_line\": 33,\n      \"a2_kind\": \"read\",\n      \"why\": \"The task reads v_vessel[2] (if v_pylon == 2), the ISR may write that element, and the task reads it again, forming a read‑write‑read violation.\"\n    },\n    {\n      \"variable\": \"v_vessel[2]\",\n      \"a1_line\": 23,\n      \"a1_kind\": \"write\",\n      \"b_line\": 11,\n      \"b_kind\": \"write\",\n      \"a2_line\": 25,\n      \"a2_kind\": \"read\",\n      \"why\": \"A write to v_vessel[2] by the task can be interleaved with the ISR’s write to the same element before the task reads it.\"\n    },\n    {\n      \"variable\": \"v_vessel[2]\",\n      \"a1_line\": 29,\n      \"a1_kind\": \"write\",\n      \"b_line\": 11,\n      \"b_kind\": \"write\",\n      \"a2_line\": 33,\n      \"a2_kind\": \"read\",\n      \"why\": \"If the random index i equals 2, the task writes v_vessel[2], the ISR may write the same element, and the task later reads it, yielding a write‑write‑read violation.\"\n    }\n  ]\n}",
+  "wall_s": 11.756433486938477,
+  "usage": {
+    "input_tokens": 372,
+    "output_tokens": 2778,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 11.756255291984417
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

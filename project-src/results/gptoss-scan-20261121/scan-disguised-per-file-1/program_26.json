@@ -1,0 +1,28 @@
+{
+  "case": "program_26",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_glacier",
+        "a1_line": 21,
+        "a1_kind": "write",
+        "b_line": 13,
+        "b_kind": "read",
+        "a2_line": 29,
+        "a2_kind": "write",
+        "why": "irq_indigo may read v_glacier between the write at line 21 and the later write at line 29 in task_juniper, creating a write‑read‑write atomicity violation."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_glacier\",\n      \"a1_line\": 21,\n      \"a1_kind\": \"write\",\n      \"b_line\": 13,\n      \"b_kind\": \"read\",\n      \"a2_line\": 29,\n      \"a2_kind\": \"write\",\n      \"why\": \"irq_indigo may read v_glacier between the write at line 21 and the later write at line 29 in task_juniper, creating a write‑read‑write atomicity violation.\"\n    }\n  ]\n}",
+  "wall_s": 3.160876989364624,
+  "usage": {
+    "input_tokens": 876,
+    "output_tokens": 1290,
+    "cache_read": 0,
+    "cache_write": 0,
+    "latency_s": 3.160768130008364
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

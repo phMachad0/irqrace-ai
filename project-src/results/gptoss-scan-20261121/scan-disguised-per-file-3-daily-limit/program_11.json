@@ -1,0 +1,28 @@
+{
+  "case": "program_11",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_umber",
+        "a1_line": 18,
+        "a1_kind": "read",
+        "b_line": 42,
+        "b_kind": "write",
+        "a2_line": 19,
+        "a2_kind": "write",
+        "why": "After re‑enabling only interrupt 1, irq_quiver can pre‑empt v_orchid between the read of v_umber (line 18) and its conditional write (line 19); irq_quiver increments v_umber via addData (line 42), creating a read‑write‑write atomicity violation."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_umber\",\"a1_line\":18,\"a1_kind\":\"read\",\"b_line\":42,\"b_kind\":\"write\",\"a2_line\":19,\"a2_kind\":\"write\",\"why\":\"After re‑enabling only interrupt 1, irq_quiver can pre‑empt v_orchid between the read of v_umber (line 18) and its conditional write (line 19); irq_quiver increments v_umber via addData (line 42), creating a read‑write‑write atomicity violation.\"}]}",
+  "wall_s": 21.765395879745483,
+  "usage": {
+    "input_tokens": 447,
+    "output_tokens": 2836,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 21.765274836012395
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

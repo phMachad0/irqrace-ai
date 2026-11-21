@@ -1,0 +1,28 @@
+{
+  "case": "program_16",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_iris",
+        "a1_line": 25,
+        "a1_kind": "read",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 26,
+        "a2_kind": "read",
+        "why": "The task reads v_iris twice in fn_saffron; an ISR (irq_beacon → irq_orchid) can write v_iris between the two reads, causing an inconsistent value."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_iris\",\n      \"a1_line\": 25,\n      \"a1_kind\": \"read\",\n      \"b_line\": 44,\n      \"b_kind\": \"write\",\n      \"a2_line\": 26,\n      \"a2_kind\": \"read\",\n      \"why\": \"The task reads v_iris twice in fn_saffron; an ISR (irq_beacon → irq_orchid) can write v_iris between the two reads, causing an inconsistent value.\"\n    }\n  ]\n}",
+  "wall_s": 18.664357662200928,
+  "usage": {
+    "input_tokens": 483,
+    "output_tokens": 1449,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 18.66428242099937
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

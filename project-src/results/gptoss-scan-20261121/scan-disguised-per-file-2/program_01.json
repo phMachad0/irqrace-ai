@@ -1,0 +1,28 @@
+{
+  "case": "program_01",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_pebble",
+        "a1_line": 21,
+        "a1_kind": "read",
+        "b_line": 9,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "The ISR can write v_pebble between the two reads of v_pebble in the task's && condition, creating a read‑write‑read atomicity violation."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_pebble\",\"a1_line\":21,\"a1_kind\":\"read\",\"b_line\":9,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"The ISR can write v_pebble between the two reads of v_pebble in the task's && condition, creating a read‑write‑read atomicity violation.\"}]}",
+  "wall_s": 11.388089179992676,
+  "usage": {
+    "input_tokens": 818,
+    "output_tokens": 795,
+    "cache_read": 0,
+    "cache_write": 0,
+    "latency_s": 11.388004189007916
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

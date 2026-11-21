@@ -1,0 +1,28 @@
+{
+  "case": "program_20",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_beacon",
+        "a1_line": 50,
+        "a1_kind": "read",
+        "b_line": 24,
+        "b_kind": "write",
+        "a2_line": 51,
+        "a2_kind": "read",
+        "why": "ISR irq_delta can write v_beacon[1] between two reads of the same element in task_quiver, causing inconsistent data"
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_beacon\",\"a1_line\":50,\"a1_kind\":\"read\",\"b_line\":24,\"b_kind\":\"write\",\"a2_line\":51,\"a2_kind\":\"read\",\"why\":\"ISR irq_delta can write v_beacon[1] between two reads of the same element in task_quiver, causing inconsistent data\"}]}",
+  "wall_s": 19.454447269439697,
+  "usage": {
+    "input_tokens": 1083,
+    "output_tokens": 1759,
+    "cache_read": 0,
+    "cache_write": 0,
+    "latency_s": 19.45437437298824
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

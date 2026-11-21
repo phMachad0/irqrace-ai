@@ -156,9 +156,12 @@ flips in every series measured. `-selfval` failed 13 times on the rate limit; `+
 
 ## Open
 
-- A free, non-Anthropic model on the same rows: `gpt-oss-120b` through Groq's free tier, already
-  supported by the `openai:` backend (`ablation-groq.json` is an earlier run on the 20 fixtures).
-  The free tier's daily token limits are unknown here; grouping by variable halves what a run needs.
+- A free, non-Anthropic model: `gpt-oss-120b` on Groq's free tier, **partial, not for the
+  monograph** (`results/gptoss-scan-20261121/`). The tier allows 8,000 tokens per minute and about
+  200,000 a day, so only the per-file scan runs: on the disguised copy it found 28 and 34 of 53 bug
+  points in two runs (Sonnet low: 48–52). The one-prompt scan and irqrace do not fit — every irqrace
+  prompt is above 8,000 tokens in that tokenizer — and need a paid tier. Run 3 is scheduled for
+  2026-11-22.
 - Compacting `provenance.entries` (about 7.8 k characters per real-world record, 75% of a checklist
   item) before the checklist is tried on real code, where it currently costs more input than the
   per-interval grouping.

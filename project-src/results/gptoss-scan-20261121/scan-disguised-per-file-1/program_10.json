@@ -1,0 +1,28 @@
+{
+  "case": "program_10",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_amber",
+        "a1_line": 19,
+        "a1_kind": "read",
+        "b_line": 29,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "irq_upland reads v_amber, can be preempted by irq_vessel which enables irq_nimbus; irq_nimbus may write v_amber before irq_upland resumes, creating a read‑write‑read race."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_amber\",\"a1_line\":19,\"a1_kind\":\"read\",\"b_line\":29,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"irq_upland reads v_amber, can be preempted by irq_vessel which enables irq_nimbus; irq_nimbus may write v_amber before irq_upland resumes, creating a read‑write‑read race.\"}]}",
+  "wall_s": 6.726649284362793,
+  "usage": {
+    "input_tokens": 490,
+    "output_tokens": 1667,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 6.726576003013179
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

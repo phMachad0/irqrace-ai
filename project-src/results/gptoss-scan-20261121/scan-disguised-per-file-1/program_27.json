@@ -1,0 +1,28 @@
+{
+  "case": "program_27",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_fjord",
+        "a1_line": 24,
+        "a1_kind": "write",
+        "b_line": 17,
+        "b_kind": "write",
+        "a2_line": 28,
+        "a2_kind": "read",
+        "why": "irq_lantern writes v_fjord[TRIGGER] then can be preempted by higher‑priority irq_kelp which writes the same location before irq_lantern reads it, causing a write‑write‑read atomicity violation."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_fjord\",\"a1_line\":24,\"a1_kind\":\"write\",\"b_line\":17,\"b_kind\":\"write\",\"a2_line\":28,\"a2_kind\":\"read\",\"why\":\"irq_lantern writes v_fjord[TRIGGER] then can be preempted by higher‑priority irq_kelp which writes the same location before irq_lantern reads it, causing a write‑write‑read atomicity violation.\"}]}",
+  "wall_s": 27.513011932373047,
+  "usage": {
+    "input_tokens": 399,
+    "output_tokens": 1104,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 27.512936261016876
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

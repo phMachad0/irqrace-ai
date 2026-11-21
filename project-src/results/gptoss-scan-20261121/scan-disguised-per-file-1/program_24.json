@@ -1,0 +1,48 @@
+{
+  "case": "program_24",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_fjord",
+        "a1_line": 26,
+        "a1_kind": "write",
+        "b_line": 22,
+        "b_kind": "write",
+        "a2_line": 12,
+        "a2_kind": "read",
+        "why": "The ISR can write v_fjord after fn_lagoon stores a value (line 26) but before fn_zenith reads it as an argument (line 12), losing the stored value."
+      },
+      {
+        "variable": "v_fjord",
+        "a1_line": 26,
+        "a1_kind": "write",
+        "b_line": 22,
+        "b_kind": "write",
+        "a2_line": 17,
+        "a2_kind": "read",
+        "why": "The ISR can write v_fjord after fn_lagoon's write (line 26) but before fn_zenith reads it for the increment (line 17), corrupting the value used for the update."
+      },
+      {
+        "variable": "v_fjord",
+        "a1_line": 12,
+        "a1_kind": "read",
+        "b_line": 22,
+        "b_kind": "write",
+        "a2_line": 17,
+        "a2_kind": "write",
+        "why": "The ISR can write v_fjord after fn_zenith reads it as an argument (line 12) but before fn_zenith writes the incremented result (line 17), causing an inconsistent update."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_fjord\",\n      \"a1_line\": 26,\n      \"a1_kind\": \"write\",\n      \"b_line\": 22,\n      \"b_kind\": \"write\",\n      \"a2_line\": 12,\n      \"a2_kind\": \"read\",\n      \"why\": \"The ISR can write v_fjord after fn_lagoon stores a value (line 26) but before fn_zenith reads it as an argument (line 12), losing the stored value.\"\n    },\n    {\n      \"variable\": \"v_fjord\",\n      \"a1_line\": 26,\n      \"a1_kind\": \"write\",\n      \"b_line\": 22,\n      \"b_kind\": \"write\",\n      \"a2_line\": 17,\n      \"a2_kind\": \"read\",\n      \"why\": \"The ISR can write v_fjord after fn_lagoon's write (line 26) but before fn_zenith reads it for the increment (line 17), corrupting the value used for the update.\"\n    },\n    {\n      \"variable\": \"v_fjord\",\n      \"a1_line\": 12,\n      \"a1_kind\": \"read\",\n      \"b_line\": 22,\n      \"b_kind\": \"write\",\n      \"a2_line\": 17,\n      \"a2_kind\": \"write\",\n      \"why\": \"The ISR can write v_fjord after fn_zenith reads it as an argument (line 12) but before fn_zenith writes the incremented result (line 17), causing an inconsistent update.\"\n    }\n  ]\n}",
+  "wall_s": 7.575958251953125,
+  "usage": {
+    "input_tokens": 324,
+    "output_tokens": 1852,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 7.575817436998477
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

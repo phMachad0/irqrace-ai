@@ -1,0 +1,38 @@
+{
+  "case": "program_30",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_vessel",
+        "a1_line": 30,
+        "a1_kind": "write",
+        "b_line": 23,
+        "b_kind": "read",
+        "a2_line": 31,
+        "a2_kind": "write",
+        "why": "irq_indigo (priority 2) can preempt irq_zenith between its two writes to v_vessel, reading the intermediate value and breaking atomicity."
+      },
+      {
+        "variable": "v_quartz[9999]",
+        "a1_line": 45,
+        "a1_kind": "write",
+        "b_line": 14,
+        "b_kind": "read",
+        "a2_line": 48,
+        "a2_kind": "write",
+        "why": "task_quiver writes the trigger element to 0, then irq_indigo may read it before task updates it to 1, causing a write‑read‑write race on the same array element."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_vessel\",\"a1_line\":30,\"a1_kind\":\"write\",\"b_line\":23,\"b_kind\":\"read\",\"a2_line\":31,\"a2_kind\":\"write\",\"why\":\"irq_indigo (priority 2) can preempt irq_zenith between its two writes to v_vessel, reading the intermediate value and breaking atomicity.\"},{\"variable\":\"v_quartz[9999]\",\"a1_line\":45,\"a1_kind\":\"write\",\"b_line\":14,\"b_kind\":\"read\",\"a2_line\":48,\"a2_kind\":\"write\",\"why\":\"task_quiver writes the trigger element to 0, then irq_indigo may read it before task updates it to 1, causing a write‑read‑write race on the same array element.\"}]}",
+  "wall_s": 18.636444568634033,
+  "usage": {
+    "input_tokens": 490,
+    "output_tokens": 2015,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 18.636305343010463
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

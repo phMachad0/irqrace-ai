@@ -1,0 +1,38 @@
+{
+  "case": "program_02",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_ember",
+        "a1_line": 24,
+        "a1_kind": "read",
+        "b_line": 34,
+        "b_kind": "write",
+        "a2_line": 26,
+        "a2_kind": "read",
+        "why": "The task reads v_ember at line 24, then irq_ridge can enable irq_hazel, which later enables irq_yarrow; irq_yarrow may write v_ember at line 34 before the task’s second read at line 26, creating a read‑write‑read violation."
+      },
+      {
+        "variable": "v_raptor",
+        "a1_line": 28,
+        "a1_kind": "read",
+        "b_line": 35,
+        "b_kind": "write",
+        "a2_line": 30,
+        "a2_kind": "read",
+        "why": "The task reads v_raptor at line 28, then the same interrupt‑enabling chain allows irq_yarrow to write v_raptor at line 35 before the task’s second read at line 30, producing a read‑write‑read violation."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_ember\",\"a1_line\":24,\"a1_kind\":\"read\",\"b_line\":34,\"b_kind\":\"write\",\"a2_line\":26,\"a2_kind\":\"read\",\"why\":\"The task reads v_ember at line 24, then irq_ridge can enable irq_hazel, which later enables irq_yarrow; irq_yarrow may write v_ember at line 34 before the task’s second read at line 26, creating a read‑write‑read violation.\"},{\"variable\":\"v_raptor\",\"a1_line\":28,\"a1_kind\":\"read\",\"b_line\":35,\"b_kind\":\"write\",\"a2_line\":30,\"a2_kind\":\"read\",\"why\":\"The task reads v_raptor at line 28, then the same interrupt‑enabling chain allows irq_yarrow to write v_raptor at line 35 before the task’s second read at line 30, producing a read‑write‑read violation.\"}]}",
+  "wall_s": 4.00056791305542,
+  "usage": {
+    "input_tokens": 1036,
+    "output_tokens": 1738,
+    "cache_read": 0,
+    "cache_write": 0,
+    "latency_s": 4.000431814987678
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

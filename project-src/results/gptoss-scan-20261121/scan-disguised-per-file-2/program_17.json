@@ -1,0 +1,28 @@
+{
+  "case": "program_17",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_quiver[36]",
+        "a1_line": 42,
+        "a1_kind": "write",
+        "b_line": 50,
+        "b_kind": "write",
+        "a2_line": 54,
+        "a2_kind": "read",
+        "why": "task_pebble (via fn_garnet) writes v_quiver[36]; the higher‑priority irq_dune ISR can preempt and write the same element through v_pylon; later task_pebble reads the element via v_summit in v_quartz, yielding a write‑write‑read atomicity violation."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_quiver[36]\",\"a1_line\":42,\"a1_kind\":\"write\",\"b_line\":50,\"b_kind\":\"write\",\"a2_line\":54,\"a2_kind\":\"read\",\"why\":\"task_pebble (via fn_garnet) writes v_quiver[36]; the higher‑priority irq_dune ISR can preempt and write the same element through v_pylon; later task_pebble reads the element via v_summit in v_quartz, yielding a write‑write‑read atomicity violation.\"}]}",
+  "wall_s": 24.780662775039673,
+  "usage": {
+    "input_tokens": 915,
+    "output_tokens": 2293,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 24.78056079900125
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

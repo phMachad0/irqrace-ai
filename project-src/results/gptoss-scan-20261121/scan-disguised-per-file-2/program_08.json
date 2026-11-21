@@ -1,0 +1,38 @@
+{
+  "case": "program_08",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_amber",
+        "a1_line": 23,
+        "a1_kind": "read",
+        "b_line": 27,
+        "b_kind": "write",
+        "a2_line": 23,
+        "a2_kind": "write",
+        "why": "ISR writes v_amber between the read and write parts of *ptr_var = *ptr_var + 1, breaking the atomic read‑modify‑write."
+      },
+      {
+        "variable": "v_amber",
+        "a1_line": 12,
+        "a1_kind": "write",
+        "b_line": 27,
+        "b_kind": "write",
+        "a2_line": 23,
+        "a2_kind": "read",
+        "why": "ISR writes v_amber after it is set in fn_raptor but before fn_fjord reads it, allowing the ISR to overwrite the value before the task reads it."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_amber\",\"a1_line\":23,\"a1_kind\":\"read\",\"b_line\":27,\"b_kind\":\"write\",\"a2_line\":23,\"a2_kind\":\"write\",\"why\":\"ISR writes v_amber between the read and write parts of *ptr_var = *ptr_var + 1, breaking the atomic read‑modify‑write.\"},{\"variable\":\"v_amber\",\"a1_line\":12,\"a1_kind\":\"write\",\"b_line\":27,\"b_kind\":\"write\",\"a2_line\":23,\"a2_kind\":\"read\",\"why\":\"ISR writes v_amber after it is set in fn_raptor but before fn_fjord reads it, allowing the ISR to overwrite the value before the task reads it.\"}]}",
+  "wall_s": 12.226433992385864,
+  "usage": {
+    "input_tokens": 320,
+    "output_tokens": 1418,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 12.226283926982433
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

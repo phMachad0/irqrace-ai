@@ -72,6 +72,9 @@ ONE_PROMPT_SCHEMA = {
 
 #: Set by --suite: a disguised copy made by racebench-disguise.py, or None for the original.
 DISGUISED: Path | None = None
+#: Set by --max-tokens. Providers that count the requested output against a
+#: per-minute token limit (Groq's free tier: 8,000) need it lower than the default.
+MAX_TOKENS = 16000
 
 
 def cases() -> list[str]:
@@ -129,7 +132,7 @@ def case_block(case: str) -> str:
 def ask(backend, prompt: str, schema: dict, name: str, system: str = SYSTEM) -> dict:
     t0 = time.time()
     resp = backend.chat(ChatRequest(system=system, messages=[{"role": "user", "content": prompt}],
-                                    schema=schema, schema_name=name))
+                                    schema=schema, schema_name=name, max_tokens=MAX_TOKENS))
     u = resp.usage
     return {"parsed": resp.parsed, "text": resp.text, "wall_s": time.time() - t0,
             "usage": {"input_tokens": u.input_tokens, "output_tokens": u.output_tokens,
@@ -157,7 +160,7 @@ def cmd_per_file(args) -> int:
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         list(pool.map(one, cases()))
     (out / "run.json").write_text(json.dumps({"mode": "per-file", "backend": args.backend, "workers": args.workers,
-                                              "suite": str(DISGUISED) if DISGUISED else "original",
+                                              "suite": str(DISGUISED) if DISGUISED else "original", "max_tokens": MAX_TOKENS,
                                               "wall_s": time.time() - t0}, indent=2))
     return 0
 
@@ -177,7 +180,7 @@ def cmd_one_prompt(args) -> int:
         res = {"error": str(e)}
     (out / "all.json").write_text(json.dumps(res, indent=2, ensure_ascii=False))
     (out / "run.json").write_text(json.dumps({"mode": "one-prompt", "backend": args.backend,
-                                              "suite": str(DISGUISED) if DISGUISED else "original",
+                                              "suite": str(DISGUISED) if DISGUISED else "original", "max_tokens": MAX_TOKENS,
                                               "wall_s": time.time() - t0}, indent=2))
     print("error" if "error" in res else f"{sum(len(c['violations']) for c in res['parsed']['cases'])} findings")
     return 0
@@ -306,11 +309,13 @@ def main() -> int:
         p.add_argument("--workers", type=int, default=4)
     for name in ("per-file", "one-prompt"):
         sub.choices[name].add_argument("--suite", help="a disguised copy (racebench-disguise.py)")
+        sub.choices[name].add_argument("--max-tokens", type=int, default=16000)
     s = sub.add_parser("score")
     s.add_argument("dir")
     s.add_argument("--labels", default="53/33", help="53/33 (default) or 48/38")
     args = ap.parse_args()
-    global DISGUISED
+    global DISGUISED, MAX_TOKENS
+    MAX_TOKENS = getattr(args, "max_tokens", MAX_TOKENS)
     if getattr(args, "suite", None):
         DISGUISED = Path(args.suite).resolve()
     return {"recall": cmd_recall, "per-file": cmd_per_file, "one-prompt": cmd_one_prompt, "score": cmd_score}[args.cmd](args)

@@ -1,0 +1,58 @@
+{
+  "case": "program_15",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_onyx",
+        "a1_line": 21,
+        "a1_kind": "write",
+        "b_line": 12,
+        "b_kind": "write",
+        "a2_line": 22,
+        "a2_kind": "read",
+        "why": "The ISR can interrupt after the loop initializes v_onyx (line 21) and before the increment reads the old value (line 22), breaking the atomic write‑read sequence."
+      },
+      {
+        "variable": "v_onyx",
+        "a1_line": 21,
+        "a1_kind": "read",
+        "b_line": 12,
+        "b_kind": "write",
+        "a2_line": 22,
+        "a2_kind": "write",
+        "why": "The loop condition reads v_onyx (line 21). The ISR may run and write v_onyx (line 12) before the loop increment writes the updated value (line 22), forming a read‑write‑write violation."
+      },
+      {
+        "variable": "v_onyx",
+        "a1_line": 24,
+        "a1_kind": "read",
+        "b_line": 12,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "The body reads v_onyx as an index (line 24). The ISR can intervene and write v_onyx (line 12) before the next loop‑condition read (line 21), yielding a read‑write‑read violation."
+      },
+      {
+        "variable": "v_onyx",
+        "a1_line": 21,
+        "a1_kind": "write",
+        "b_line": 12,
+        "b_kind": "write",
+        "a2_line": 24,
+        "a2_kind": "read",
+        "why": "After the loop initialization write (line 21), the ISR may execute and write v_onyx (line 12) before the body reads it for the array index (line 24), creating a write‑write‑read violation."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_onyx\",\n      \"a1_line\": 21,\n      \"a1_kind\": \"write\",\n      \"b_line\": 12,\n      \"b_kind\": \"write\",\n      \"a2_line\": 22,\n      \"a2_kind\": \"read\",\n      \"why\": \"The ISR can interrupt after the loop initializes v_onyx (line 21) and before the increment reads the old value (line 22), breaking the atomic write‑read sequence.\"\n    },\n    {\n      \"variable\": \"v_onyx\",\n      \"a1_line\": 21,\n      \"a1_kind\": \"read\",\n      \"b_line\": 12,\n      \"b_kind\": \"write\",\n      \"a2_line\": 22,\n      \"a2_kind\": \"write\",\n      \"why\": \"The loop condition reads v_onyx (line 21). The ISR may run and write v_onyx (line 12) before the loop increment writes the updated value (line 22), forming a read‑write‑write violation.\"\n    },\n    {\n      \"variable\": \"v_onyx\",\n      \"a1_line\": 24,\n      \"a1_kind\": \"read\",\n      \"b_line\": 12,\n      \"b_kind\": \"write\",\n      \"a2_line\": 21,\n      \"a2_kind\": \"read\",\n      \"why\": \"The body reads v_onyx as an index (line 24). The ISR can intervene and write v_onyx (line 12) before the next loop‑condition read (line 21), yielding a read‑write‑read violation.\"\n    },\n    {\n      \"variable\": \"v_onyx\",\n      \"a1_line\": 21,\n      \"a1_kind\": \"write\",\n      \"b_line\": 12,\n      \"b_kind\": \"write\",\n      \"a2_line\": 24,\n      \"a2_kind\": \"read\",\n      \"why\": \"After the loop initialization write (line 21), the ISR may execute and write v_onyx (line 12) before the body reads it for the array index (line 24), creating a write‑write‑read violation.\"\n    }\n  ]\n}",
+  "wall_s": 23.074941873550415,
+  "usage": {
+    "input_tokens": 309,
+    "output_tokens": 3021,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 23.074810966994846
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

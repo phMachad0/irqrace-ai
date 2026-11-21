@@ -1,0 +1,118 @@
+{
+  "case": "program_04",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_cedar",
+        "a1_line": 37,
+        "a1_kind": "write",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 68,
+        "a2_kind": "read",
+        "why": "ISR can preempt after task writes v_cedar and before it reads it for v_harbor, so the value may be overwritten"
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 37,
+        "a1_kind": "write",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 30,
+        "a2_kind": "read",
+        "why": "ISR can run between the task's initial write and the later read in fn_walnut, breaking atomicity"
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 37,
+        "a1_kind": "write",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 31,
+        "a2_kind": "read",
+        "why": "ISR can preempt between the task's write and the read passed as argument to fn_willow"
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 37,
+        "a1_kind": "write",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 54,
+        "a2_kind": "read",
+        "why": "ISR can preempt before fn_dune reads v_cedar, so the value may have changed"
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 68,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 30,
+        "a2_kind": "read",
+        "why": "ISR can run after the first read for v_harbor and before the later read in fn_walnut"
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 68,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 31,
+        "a2_kind": "read",
+        "why": "ISR can intervene between the read for v_harbor and the read used as argument to fn_willow"
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 68,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 54,
+        "a2_kind": "read",
+        "why": "ISR can preempt after the read for v_harbor and before fn_dune reads v_cedar"
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 30,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 31,
+        "a2_kind": "read",
+        "why": "ISR can run between the two consecutive reads of v_cedar inside fn_walnut and fn_willow"
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 30,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 54,
+        "a2_kind": "read",
+        "why": "ISR can intervene between the read in fn_walnut and the later read in fn_dune"
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 31,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 54,
+        "a2_kind": "read",
+        "why": "ISR can preempt after the argument read for fn_willow and before fn_dune reads v_cedar"
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_cedar\",\n      \"a1_line\": 37,\n      \"a1_kind\": \"write\",\n      \"b_line\": 79,\n      \"b_kind\": \"write\",\n      \"a2_line\": 68,\n      \"a2_kind\": \"read\",\n      \"why\": \"ISR can preempt after task writes v_cedar and before it reads it for v_harbor, so the value may be overwritten\"\n    },\n    {\n      \"variable\": \"v_cedar\",\n      \"a1_line\": 37,\n      \"a1_kind\": \"write\",\n      \"b_line\": 79,\n      \"b_kind\": \"write\",\n      \"a2_line\": 30,\n      \"a2_kind\": \"read\",\n      \"why\": \"ISR can run between the task's initial write and the later read in fn_walnut, breaking atomicity\"\n    },\n    {\n      \"variable\": \"v_cedar\",\n      \"a1_line\": 37,\n      \"a1_kind\": \"write\",\n      \"b_line\": 79,\n      \"b_kind\": \"write\",\n      \"a2_line\": 31,\n      \"a2_kind\": \"read\",\n      \"why\": \"ISR can preempt between the task's write and the read passed as argument to fn_willow\"\n    },\n    {\n      \"variable\": \"v_cedar\",\n      \"a1_line\": 37,\n      \"a1_kind\": \"write\",\n      \"b_line\": 79,\n      \"b_kind\": \"write\",\n      \"a2_line\": 54,\n      \"a2_kind\": \"read\",\n      \"why\": \"ISR can preempt before fn_dune reads v_cedar, so the value may have changed\"\n    },\n    {\n      \"variable\": \"v_cedar\",\n      \"a1_line\": 68,\n      \"a1_kind\": \"read\",\n      \"b_line\": 79,\n      \"b_kind\": \"write\",\n      \"a2_line\": 30,\n      \"a2_kind\": \"read\",\n      \"why\": \"ISR can run after the first read for v_harbor and before the later read in fn_walnut\"\n    },\n    {\n      \"variable\": \"v_cedar\",\n      \"a1_line\": 68,\n      \"a1_kind\": \"read\",\n      \"b_line\": 79,\n      \"b_kind\": \"write\",\n      \"a2_line\": 31,\n      \"a2_kind\": \"read\",\n      \"why\": \"ISR can intervene between the read for v_harbor and the read used as argument to fn_willow\"\n    },\n    {\n      \"variable\": \"v_cedar\",\n      \"a1_line\": 68,\n      \"a1_kind\": \"read\",\n      \"b_line\": 79,\n      \"b_kind\": \"write\",\n      \"a2_line\": 54,\n      \"a2_kind\": \"read\",\n      \"why\": \"ISR can preempt after the read for v_harbor and before fn_dune reads v_cedar\"\n    },\n    {\n      \"variable\": \"v_cedar\",\n      \"a1_line\": 30,\n      \"a1_kind\": \"read\",\n      \"b_line\": 79,\n      \"b_kind\": \"write\",\n      \"a2_line\": 31,\n      \"a2_kind\": \"read\",\n      \"why\": \"ISR can run between the two consecutive reads of v_cedar inside fn_walnut and fn_willow\"\n    },\n    {\n      \"variable\": \"v_cedar\",\n      \"a1_line\": 30,\n      \"a1_kind\": \"read\",\n      \"b_line\": 79,\n      \"b_kind\": \"write\",\n      \"a2_line\": 54,\n      \"a2_kind\": \"read\",\n      \"why\": \"ISR can intervene between the read in fn_walnut and the later read in fn_dune\"\n    },\n    {\n      \"variable\": \"v_cedar\",\n      \"a1_line\": 31,\n      \"a1_kind\": \"read\",\n      \"b_line\": 79,\n      \"b_kind\": \"write\",\n      \"a2_line\": 54,\n      \"a2_kind\": \"read\",\n      \"why\": \"ISR can preempt after the argument read for fn_willow and before fn_dune reads v_cedar\"\n    }\n  ]\n}",
+  "wall_s": 7.989071369171143,
+  "usage": {
+    "input_tokens": 1235,
+    "output_tokens": 3644,
+    "cache_read": 0,
+    "cache_write": 0,
+    "latency_s": 7.988794942997629
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

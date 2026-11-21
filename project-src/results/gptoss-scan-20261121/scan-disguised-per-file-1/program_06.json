@@ -1,0 +1,28 @@
+{
+  "case": "program_06",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_meadow",
+        "a1_line": 26,
+        "a1_kind": "read",
+        "b_line": 14,
+        "b_kind": "write",
+        "a2_line": 28,
+        "a2_kind": "read",
+        "why": "The ISR can preempt between the two reads of v_meadow in task_dune and writes v_meadow, so the value may change between reads (read‑write‑read)."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_meadow\",\"a1_line\":26,\"a1_kind\":\"read\",\"b_line\":14,\"b_kind\":\"write\",\"a2_line\":28,\"a2_kind\":\"read\",\"why\":\"The ISR can preempt between the two reads of v_meadow in task_dune and writes v_meadow, so the value may change between reads (read‑write‑read).\"}]}",
+  "wall_s": 23.569480180740356,
+  "usage": {
+    "input_tokens": 964,
+    "output_tokens": 953,
+    "cache_read": 0,
+    "cache_write": 0,
+    "latency_s": 23.56937948599807
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

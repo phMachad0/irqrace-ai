@@ -1,0 +1,28 @@
+{
+  "case": "program_09",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_meadow",
+        "a1_line": 35,
+        "a1_kind": "read",
+        "b_line": 55,
+        "b_kind": "write",
+        "a2_line": 41,
+        "a2_kind": "read",
+        "why": "After enabling interrupt 1, irq_basalt can preempt task_vessel between its two reads of v_meadow and write v_meadow, breaking atomicity."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_meadow\",\n      \"a1_line\": 35,\n      \"a1_kind\": \"read\",\n      \"b_line\": 55,\n      \"b_kind\": \"write\",\n      \"a2_line\": 41,\n      \"a2_kind\": \"read\",\n      \"why\": \"After enabling interrupt 1, irq_basalt can preempt task_vessel between its two reads of v_meadow and write v_meadow, breaking atomicity.\"\n    }\n  ]\n}",
+  "wall_s": 18.85557198524475,
+  "usage": {
+    "input_tokens": 1098,
+    "output_tokens": 1593,
+    "cache_read": 0,
+    "cache_write": 0,
+    "latency_s": 18.855442661995767
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

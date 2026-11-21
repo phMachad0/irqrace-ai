@@ -1,0 +1,28 @@
+{
+  "case": "program_01",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_pebble",
+        "a1_line": 21,
+        "a1_kind": "read",
+        "b_line": 9,
+        "b_kind": "write",
+        "a2_line": 22,
+        "a2_kind": "read",
+        "why": "The ISR can preempt between the two reads of v_pebble in the task, allowing the ISR write to change the value and causing an inconsistent view."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_pebble\",\"a1_line\":21,\"a1_kind\":\"read\",\"b_line\":9,\"b_kind\":\"write\",\"a2_line\":22,\"a2_kind\":\"read\",\"why\":\"The ISR can preempt between the two reads of v_pebble in the task, allowing the ISR write to change the value and causing an inconsistent view.\"}]}",
+  "wall_s": 8.286630392074585,
+  "usage": {
+    "input_tokens": 818,
+    "output_tokens": 840,
+    "cache_read": 0,
+    "cache_write": 0,
+    "latency_s": 8.286524716007989
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

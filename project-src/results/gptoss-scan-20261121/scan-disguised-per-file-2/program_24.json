@@ -1,0 +1,38 @@
+{
+  "case": "program_24",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_fjord",
+        "a1_line": 26,
+        "a1_kind": "write",
+        "b_line": 22,
+        "b_kind": "write",
+        "a2_line": 12,
+        "a2_kind": "read",
+        "why": "The task writes v_fjord in fn_lagoon (line 26), the ISR can preempt before the task reads v_fjord to pass it to fn_zenith (line 12), causing a write‑write‑read race."
+      },
+      {
+        "variable": "v_fjord",
+        "a1_line": 12,
+        "a1_kind": "read",
+        "b_line": 22,
+        "b_kind": "write",
+        "a2_line": 17,
+        "a2_kind": "write",
+        "why": "The task reads v_fjord as an argument (line 12), the ISR may run and reset v_fjord (line 22) before fn_zenith increments it (line 17), creating a read‑write‑write violation."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_fjord\",\n      \"a1_line\": 26,\n      \"a1_kind\": \"write\",\n      \"b_line\": 22,\n      \"b_kind\": \"write\",\n      \"a2_line\": 12,\n      \"a2_kind\": \"read\",\n      \"why\": \"The task writes v_fjord in fn_lagoon (line 26), the ISR can preempt before the task reads v_fjord to pass it to fn_zenith (line 12), causing a write‑write‑read race.\"\n    },\n    {\n      \"variable\": \"v_fjord\",\n      \"a1_line\": 12,\n      \"a1_kind\": \"read\",\n      \"b_line\": 22,\n      \"b_kind\": \"write\",\n      \"a2_line\": 17,\n      \"a2_kind\": \"write\",\n      \"why\": \"The task reads v_fjord as an argument (line 12), the ISR may run and reset v_fjord (line 22) before fn_zenith increments it (line 17), creating a read‑write‑write violation.\"\n    }\n  ]\n}",
+  "wall_s": 19.148041248321533,
+  "usage": {
+    "input_tokens": 324,
+    "output_tokens": 1985,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 19.14788512600353
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

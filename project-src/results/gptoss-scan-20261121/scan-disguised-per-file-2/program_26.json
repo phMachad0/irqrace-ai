@@ -1,0 +1,48 @@
+{
+  "case": "program_26",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_glacier",
+        "a1_line": 21,
+        "a1_kind": "write",
+        "b_line": 13,
+        "b_kind": "read",
+        "a2_line": 27,
+        "a2_kind": "write",
+        "why": "ISR irq_indigo can read v_glacier between the two writes at lines 21 and 27, forming a write‑read‑write atomicity violation."
+      },
+      {
+        "variable": "v_glacier",
+        "a1_line": 21,
+        "a1_kind": "write",
+        "b_line": 13,
+        "b_kind": "read",
+        "a2_line": 29,
+        "a2_kind": "write",
+        "why": "ISR irq_indigo can read v_glacier between the writes at lines 21 and 29, causing a write‑read‑write violation."
+      },
+      {
+        "variable": "v_glacier",
+        "a1_line": 27,
+        "a1_kind": "write",
+        "b_line": 13,
+        "b_kind": "read",
+        "a2_line": 29,
+        "a2_kind": "write",
+        "why": "ISR irq_indigo can read v_glacier between the writes at lines 27 and 29, another write‑read‑write atomicity violation."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_glacier\",\"a1_line\":21,\"a1_kind\":\"write\",\"b_line\":13,\"b_kind\":\"read\",\"a2_line\":27,\"a2_kind\":\"write\",\"why\":\"ISR irq_indigo can read v_glacier between the two writes at lines 21 and 27, forming a write‑read‑write atomicity violation.\"},{\"variable\":\"v_glacier\",\"a1_line\":21,\"a1_kind\":\"write\",\"b_line\":13,\"b_kind\":\"read\",\"a2_line\":29,\"a2_kind\":\"write\",\"why\":\"ISR irq_indigo can read v_glacier between the writes at lines 21 and 29, causing a write‑read‑write violation.\"},{\"variable\":\"v_glacier\",\"a1_line\":27,\"a1_kind\":\"write\",\"b_line\":13,\"b_kind\":\"read\",\"a2_line\":29,\"a2_kind\":\"write\",\"why\":\"ISR irq_indigo can read v_glacier between the writes at lines 27 and 29, another write‑read‑write atomicity violation.\"}]}",
+  "wall_s": 21.109277963638306,
+  "usage": {
+    "input_tokens": 876,
+    "output_tokens": 1662,
+    "cache_read": 0,
+    "cache_write": 0,
+    "latency_s": 21.10910997298197
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

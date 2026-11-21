@@ -1,0 +1,38 @@
+{
+  "case": "program_11",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_umber",
+        "a1_line": 18,
+        "a1_kind": "read",
+        "b_line": 42,
+        "b_kind": "write",
+        "a2_line": 19,
+        "a2_kind": "write",
+        "why": "irq_quiver can preempt v_orchid between the read at line 18 and the write at line 19, modifying v_umber and breaking atomicity."
+      },
+      {
+        "variable": "v_umber",
+        "a1_line": 18,
+        "a1_kind": "read",
+        "b_line": 30,
+        "b_kind": "write",
+        "a2_line": 19,
+        "a2_kind": "write",
+        "why": "irq_raptor can be enabled by irq_quiver and preempt v_orchid between the read at line 18 and the write at line 19, modifying v_umber and violating atomicity."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_umber\",\n      \"a1_line\": 18,\n      \"a1_kind\": \"read\",\n      \"b_line\": 42,\n      \"b_kind\": \"write\",\n      \"a2_line\": 19,\n      \"a2_kind\": \"write\",\n      \"why\": \"irq_quiver can preempt v_orchid between the read at line 18 and the write at line 19, modifying v_umber and breaking atomicity.\"\n    },\n    {\n      \"variable\": \"v_umber\",\n      \"a1_line\": 18,\n      \"a1_kind\": \"read\",\n      \"b_line\": 30,\n      \"b_kind\": \"write\",\n      \"a2_line\": 19,\n      \"a2_kind\": \"write\",\n      \"why\": \"irq_raptor can be enabled by irq_quiver and preempt v_orchid between the read at line 18 and the write at line 19, modifying v_umber and violating atomicity.\"\n    }\n  ]\n}",
+  "wall_s": 23.603305339813232,
+  "usage": {
+    "input_tokens": 959,
+    "output_tokens": 2838,
+    "cache_read": 0,
+    "cache_write": 0,
+    "latency_s": 23.6031903809926
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

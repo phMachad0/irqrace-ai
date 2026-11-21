@@ -1,0 +1,38 @@
+{
+  "case": "program_05",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_quartz",
+        "a1_line": 21,
+        "a1_kind": "write",
+        "b_line": 13,
+        "b_kind": "read",
+        "a2_line": 22,
+        "a2_kind": "write",
+        "why": "ISR irq_falcon can preempt between the two writes to v_quartz, reading its value in between, forming a write‑read‑write atomicity violation."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 24,
+        "a1_kind": "write",
+        "b_line": 13,
+        "b_kind": "read",
+        "a2_line": 26,
+        "a2_kind": "write",
+        "why": "The ISR reads the volatile pointer v_vessel while the main task writes the pointer before and after, yielding a write‑read‑write violation."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_quartz\",\"a1_line\":21,\"a1_kind\":\"write\",\"b_line\":13,\"b_kind\":\"read\",\"a2_line\":22,\"a2_kind\":\"write\",\"why\":\"ISR irq_falcon can preempt between the two writes to v_quartz, reading its value in between, forming a write‑read‑write atomicity violation.\"},{\"variable\":\"v_vessel\",\"a1_line\":24,\"a1_kind\":\"write\",\"b_line\":13,\"b_kind\":\"read\",\"a2_line\":26,\"a2_kind\":\"write\",\"why\":\"The ISR reads the volatile pointer v_vessel while the main task writes the pointer before and after, yielding a write‑read‑write violation.\"}]}",
+  "wall_s": 17.753674745559692,
+  "usage": {
+    "input_tokens": 343,
+    "output_tokens": 1993,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 17.753562359983334
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

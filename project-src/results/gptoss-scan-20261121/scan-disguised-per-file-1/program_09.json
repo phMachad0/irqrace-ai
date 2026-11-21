@@ -1,0 +1,38 @@
+{
+  "case": "program_09",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_meadow",
+        "a1_line": 35,
+        "a1_kind": "read",
+        "b_line": 55,
+        "b_kind": "write",
+        "a2_line": 41,
+        "a2_kind": "read",
+        "why": "After irq_basalt is enabled, it can preempt task_vessel between the two reads of v_meadow and write v_meadow, producing a read‑write‑read atomicity violation."
+      },
+      {
+        "variable": "v_meadow",
+        "a1_line": 35,
+        "a1_kind": "read",
+        "b_line": 58,
+        "b_kind": "write",
+        "a2_line": 41,
+        "a2_kind": "read",
+        "why": "irq_basalt may execute the else‑branch and write v_meadow at line 58 between the task's two reads, creating another read‑write‑read violation."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_meadow\",\n      \"a1_line\": 35,\n      \"a1_kind\": \"read\",\n      \"b_line\": 55,\n      \"b_kind\": \"write\",\n      \"a2_line\": 41,\n      \"a2_kind\": \"read\",\n      \"why\": \"After irq_basalt is enabled, it can preempt task_vessel between the two reads of v_meadow and write v_meadow, producing a read‑write‑read atomicity violation.\"\n    },\n    {\n      \"variable\": \"v_meadow\",\n      \"a1_line\": 35,\n      \"a1_kind\": \"read\",\n      \"b_line\": 58,\n      \"b_kind\": \"write\",\n      \"a2_line\": 41,\n      \"a2_kind\": \"read\",\n      \"why\": \"irq_basalt may execute the else‑branch and write v_meadow at line 58 between the task's two reads, creating another read‑write‑read violation.\"\n    }\n  ]\n}",
+  "wall_s": 22.557774305343628,
+  "usage": {
+    "input_tokens": 586,
+    "output_tokens": 1776,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 22.557672191003803
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

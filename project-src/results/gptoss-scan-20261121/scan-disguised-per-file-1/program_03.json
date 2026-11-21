@@ -1,0 +1,38 @@
+{
+  "case": "program_03",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_fjord",
+        "a1_line": 25,
+        "a1_kind": "read",
+        "b_line": 48,
+        "b_kind": "write",
+        "a2_line": 30,
+        "a2_kind": "read",
+        "why": "task_juniper reads v_fjord, then irq_summit can write v_fjord before the second read, breaking atomicity"
+      },
+      {
+        "variable": "v_nimbus",
+        "a1_line": 26,
+        "a1_kind": "read",
+        "b_line": 50,
+        "b_kind": "write",
+        "a2_line": 32,
+        "a2_kind": "read",
+        "why": "task_juniper reads v_nimbus, then irq_summit may write v_nimbus before the later read, causing an atomicity violation"
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_fjord\",\"a1_line\":25,\"a1_kind\":\"read\",\"b_line\":48,\"b_kind\":\"write\",\"a2_line\":30,\"a2_kind\":\"read\",\"why\":\"task_juniper reads v_fjord, then irq_summit can write v_fjord before the second read, breaking atomicity\"},{\"variable\":\"v_nimbus\",\"a1_line\":26,\"a1_kind\":\"read\",\"b_line\":50,\"b_kind\":\"write\",\"a2_line\":32,\"a2_kind\":\"read\",\"why\":\"task_juniper reads v_nimbus, then irq_summit may write v_nimbus before the later read, causing an atomicity violation\"}]}",
+  "wall_s": 3.6388332843780518,
+  "usage": {
+    "input_tokens": 1084,
+    "output_tokens": 1525,
+    "cache_read": 0,
+    "cache_write": 0,
+    "latency_s": 3.638722976000281
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

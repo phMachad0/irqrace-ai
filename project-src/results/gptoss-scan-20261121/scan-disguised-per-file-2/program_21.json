@@ -1,0 +1,58 @@
+{
+  "case": "program_21",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_lantern",
+        "a1_line": 23,
+        "a1_kind": "read",
+        "b_line": 37,
+        "b_kind": "write",
+        "a2_line": 24,
+        "a2_kind": "write",
+        "why": "The task reads v_lantern (line 23) while interrupt 1 is enabled; irq_meadow can pre‑empt, increment v_lantern (line 37), then the task continues and may write v_lantern (line 24)."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 23,
+        "a1_kind": "read",
+        "b_line": 15,
+        "b_kind": "write",
+        "a2_line": 24,
+        "a2_kind": "write",
+        "why": "After the task reads v_lantern (line 23), irq_meadow may fire, enable interrupt 2, and then irq_nectar can pre‑empt before the task writes (line 24), modifying v_lantern (line 15)."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 31,
+        "a1_kind": "write",
+        "b_line": 37,
+        "b_kind": "write",
+        "a2_line": 23,
+        "a2_kind": "read",
+        "why": "fn_saffron writes v_lantern (line 31) while interrupts are enabled; irq_meadow can pre‑empt, increment v_lantern (line 37), then the task later reads v_lantern (line 23) after disabling interrupts."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 31,
+        "a1_kind": "write",
+        "b_line": 15,
+        "b_kind": "write",
+        "a2_line": 23,
+        "a2_kind": "read",
+        "why": "During fn_saffron’s write (line 31), irq_meadow may fire, enable interrupt 2, and irq_nectar can pre‑empt before the task later reads v_lantern (line 23)."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_lantern\",\n      \"a1_line\": 23,\n      \"a1_kind\": \"read\",\n      \"b_line\": 37,\n      \"b_kind\": \"write\",\n      \"a2_line\": 24,\n      \"a2_kind\": \"write\",\n      \"why\": \"The task reads v_lantern (line 23) while interrupt 1 is enabled; irq_meadow can pre‑empt, increment v_lantern (line 37), then the task continues and may write v_lantern (line 24).\"\n    },\n    {\n      \"variable\": \"v_lantern\",\n      \"a1_line\": 23,\n      \"a1_kind\": \"read\",\n      \"b_line\": 15,\n      \"b_kind\": \"write\",\n      \"a2_line\": 24,\n      \"a2_kind\": \"write\",\n      \"why\": \"After the task reads v_lantern (line 23), irq_meadow may fire, enable interrupt 2, and then irq_nectar can pre‑empt before the task writes (line 24), modifying v_lantern (line 15).\"\n    },\n    {\n      \"variable\": \"v_lantern\",\n      \"a1_line\": 31,\n      \"a1_kind\": \"write\",\n      \"b_line\": 37,\n      \"b_kind\": \"write\",\n      \"a2_line\": 23,\n      \"a2_kind\": \"read\",\n      \"why\": \"fn_saffron writes v_lantern (line 31) while interrupts are enabled; irq_meadow can pre‑empt, increment v_lantern (line 37), then the task later reads v_lantern (line 23) after disabling interrupts.\"\n    },\n    {\n      \"variable\": \"v_lantern\",\n      \"a1_line\": 31,\n      \"a1_kind\": \"write\",\n      \"b_line\": 15,\n      \"b_kind\": \"write\",\n      \"a2_line\": 23,\n      \"a2_kind\": \"read\",\n      \"why\": \"During fn_saffron’s write (line 31), irq_meadow may fire, enable interrupt 2, and irq_nectar can pre‑empt before the task later reads v_lantern (line 23).\"\n    }\n  ]\n}",
+  "wall_s": 24.577437162399292,
+  "usage": {
+    "input_tokens": 400,
+    "output_tokens": 3491,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 24.577320362994215
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

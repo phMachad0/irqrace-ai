@@ -1,0 +1,4 @@
+{
+  "case": "program_19",
+  "error": "ratelimited from https://api.groq.com/openai/v1; gave up after 4 attempt(s) within a 300s budget: {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m5mszm15esyres0hf3t2ktrw` service tier `on_demand` on tokens per "
+}

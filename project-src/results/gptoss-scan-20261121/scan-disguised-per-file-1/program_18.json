@@ -1,0 +1,138 @@
+{
+  "case": "program_18",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_vessel",
+        "a1_line": 49,
+        "a1_kind": "write",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 33,
+        "a2_kind": "read",
+        "why": "ISR can write v_vessel between the write in fn_summit and the later read in fn_juniper, forming a write‑write‑read pattern."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 49,
+        "a1_kind": "write",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 57,
+        "a2_kind": "read",
+        "why": "ISR write may occur between the write in fn_summit and the read in fn_nectar, yielding a write‑write‑read violation."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 49,
+        "a1_kind": "write",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "read",
+        "why": "ISR can interpose between the write in fn_summit and the read used to assign v_basalt, creating a write‑write‑read race."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 22,
+        "a1_kind": "write",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 33,
+        "a2_kind": "read",
+        "why": "The write at line 22 may be overwritten by the ISR before the subsequent read in fn_juniper, a write‑write‑read issue."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 22,
+        "a1_kind": "write",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 57,
+        "a2_kind": "read",
+        "why": "ISR write can occur between the task's write at line 22 and the later read in fn_nectar, forming a write‑write‑read conflict."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 22,
+        "a1_kind": "write",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "read",
+        "why": "A write at line 22 followed by ISR write and then a read for v_basalt (line 29) yields a write‑write‑read violation."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 33,
+        "a1_kind": "read",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 34,
+        "a2_kind": "write",
+        "why": "The read in the if‑condition can be followed by ISR write and then the true‑branch assignment, a read‑write‑write race."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 33,
+        "a1_kind": "read",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 36,
+        "a2_kind": "write",
+        "why": "If the else‑branch is taken, the read at line 33, ISR write, and else assignment form a read‑write‑write violation."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 33,
+        "a1_kind": "read",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 57,
+        "a2_kind": "read",
+        "why": "A read in fn_juniper, ISR write, and later read in fn_nectar give a read‑write‑read atomicity breach."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 33,
+        "a1_kind": "read",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "read",
+        "why": "The read at line 33, ISR write, and final read for v_basalt (line 29) constitute a read‑write‑read conflict."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 34,
+        "a1_kind": "write",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 57,
+        "a2_kind": "read",
+        "why": "ISR write may occur between the true‑branch assignment (line 34) and the later read in fn_nectar, yielding a write‑write‑read issue."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 34,
+        "a1_kind": "write",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "read",
+        "why": "A write at line 34 followed by ISR write and then a read for v_basalt (line 29) creates a write‑write‑read race."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_vessel\",\n      \"a1_line\": 49,\n      \"a1_kind\": \"write\",\n      \"b_line\": 41,\n      \"b_kind\": \"write\",\n      \"a2_line\": 33,\n      \"a2_kind\": \"read\",\n      \"why\": \"ISR can write v_vessel between the write in fn_summit and the later read in fn_juniper, forming a write‑write‑read pattern.\"\n    },\n    {\n      \"variable\": \"v_vessel\",\n      \"a1_line\": 49,\n      \"a1_kind\": \"write\",\n      \"b_line\": 41,\n      \"b_kind\": \"write\",\n      \"a2_line\": 57,\n      \"a2_kind\": \"read\",\n      \"why\": \"ISR write may occur between the write in fn_summit and the read in fn_nectar, yielding a write‑write‑read violation.\"\n    },\n    {\n      \"variable\": \"v_vessel\",\n      \"a1_line\": 49,\n      \"a1_kind\": \"write\",\n      \"b_line\": 41,\n      \"b_kind\": \"write\",\n      \"a2_line\": 29,\n      \"a2_kind\": \"read\",\n      \"why\": \"ISR can interpose between the write in fn_summit and the read used to assign v_basalt, creating a write‑write‑read race.\"\n    },\n    {\n      \"variable\": \"v_vessel\",\n      \"a1_line\": 22,\n      \"a1_kind\": \"write\",\n      \"b_line\": 41,\n      \"b_kind\": \"write\",\n      \"a2_line\": 33,\n      \"a2_kind\": \"read\",\n      \"why\": \"The write at line 22 may be overwritten by the ISR before the subsequent read in fn_juniper, a write‑write‑read issue.\"\n    },\n    {\n      \"variable\": \"v_vessel\",\n      \"a1_line\": 22,\n      \"a1_kind\": \"write\",\n      \"b_line\": 41,\n      \"b_kind\": \"write\",\n      \"a2_line\": 57,\n      \"a2_kind\": \"read\",\n      \"why\": \"ISR write can occur between the task's write at line 22 and the later read in fn_nectar, forming a write‑write‑read conflict.\"\n    },\n    {\n      \"variable\": \"v_vessel\",\n      \"a1_line\": 22,\n      \"a1_kind\": \"write\",\n      \"b_line\": 41,\n      \"b_kind\": \"write\",\n      \"a2_line\": 29,\n      \"a2_kind\": \"read\",\n      \"why\": \"A write at line 22 followed by ISR write and then a read for v_basalt (line 29) yields a write‑write‑read violation.\"\n    },\n    {\n      \"variable\": \"v_vessel\",\n      \"a1_line\": 33,\n      \"a1_kind\": \"read\",\n      \"b_line\": 41,\n      \"b_kind\": \"write\",\n      \"a2_line\": 34,\n      \"a2_kind\": \"write\",\n      \"why\": \"The read in the if‑condition can be followed by ISR write and then the true‑branch assignment, a read‑write‑write race.\"\n    },\n    {\n      \"variable\": \"v_vessel\",\n      \"a1_line\": 33,\n      \"a1_kind\": \"read\",\n      \"b_line\": 41,\n      \"b_kind\": \"write\",\n      \"a2_line\": 36,\n      \"a2_kind\": \"write\",\n      \"why\": \"If the else‑branch is taken, the read at line 33, ISR write, and else assignment form a read‑write‑write violation.\"\n    },\n    {\n      \"variable\": \"v_vessel\",\n      \"a1_line\": 33,\n      \"a1_kind\": \"read\",\n      \"b_line\": 41,\n      \"b_kind\": \"write\",\n      \"a2_line\": 57,\n      \"a2_kind\": \"read\",\n      \"why\": \"A read in fn_juniper, ISR write, and later read in fn_nectar give a read‑write‑read atomicity breach.\"\n    },\n    {\n      \"variable\": \"v_vessel\",\n      \"a1_line\": 33,\n      \"a1_kind\": \"read\",\n      \"b_line\": 41,\n      \"b_kind\": \"write\",\n      \"a2_line\": 29,\n      \"a2_kind\": \"read\",\n      \"why\": \"The read at line 33, ISR write, and final read for v_basalt (line 29) constitute a read‑write‑read conflict.\"\n    },\n    {\n      \"variable\": \"v_vessel\",\n      \"a1_line\": 34,\n      \"a1_kind\": \"write\",\n      \"b_line\": 41,\n      \"b_kind\": \"write\",\n      \"a2_line\": 57,\n      \"a2_kind\": \"read\",\n      \"why\": \"ISR write may occur between the true‑branch assignment (line 34) and the later read in fn_nectar, yielding a write‑write‑read issue.\"\n    },\n    {\n      \"variable\": \"v_vessel\",\n      \"a1_line\": 34,\n      \"a1_kind\": \"write\",\n      \"b_line\": 41,\n      \"b_kind\": \"write\",\n      \"a2_line\": 29,\n      \"a2_kind\": \"read\",\n      \"why\": \"A write at line 34 followed by ISR write and then a read for v_basalt (line 29) creates a write‑write‑read race.\"\n    }]}",
+  "wall_s": 28.02751135826111,
+  "usage": {
+    "input_tokens": 1043,
+    "output_tokens": 4000,
+    "cache_read": 0,
+    "cache_write": 0,
+    "latency_s": 28.027336736005964
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

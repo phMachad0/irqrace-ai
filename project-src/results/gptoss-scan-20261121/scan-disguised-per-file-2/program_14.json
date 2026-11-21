@@ -1,0 +1,68 @@
+{
+  "case": "program_14",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_pylon",
+        "a1_line": 30,
+        "a1_kind": "read",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 52,
+        "a2_kind": "read",
+        "why": "The ISR can write v_pylon between two reads in the task, breaking atomicity."
+      },
+      {
+        "variable": "v_pylon",
+        "a1_line": 30,
+        "a1_kind": "read",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 53,
+        "a2_kind": "write",
+        "why": "The ISR can write v_pylon between a read and a subsequent write in the task."
+      },
+      {
+        "variable": "v_pylon",
+        "a1_line": 52,
+        "a1_kind": "read",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 53,
+        "a2_kind": "write",
+        "why": "The ISR can write v_pylon between the read and the write inside v_lantern."
+      },
+      {
+        "variable": "v_pylon",
+        "a1_line": 63,
+        "a1_kind": "write",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 30,
+        "a2_kind": "read",
+        "why": "The ISR can overwrite v_pylon after it is written in fn_lagoon but before it is read later in the loop."
+      },
+      {
+        "variable": "v_pylon",
+        "a1_line": 63,
+        "a1_kind": "write",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 52,
+        "a2_kind": "read",
+        "why": "The ISR can write v_pylon between the write in fn_lagoon and a later read in v_lantern."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_pylon\",\n      \"a1_line\": 30,\n      \"a1_kind\": \"read\",\n      \"b_line\": 44,\n      \"b_kind\": \"write\",\n      \"a2_line\": 52,\n      \"a2_kind\": \"read\",\n      \"why\": \"The ISR can write v_pylon between two reads in the task, breaking atomicity.\"\n    },\n    {\n      \"variable\": \"v_pylon\",\n      \"a1_line\": 30,\n      \"a1_kind\": \"read\",\n      \"b_line\": 44,\n      \"b_kind\": \"write\",\n      \"a2_line\": 53,\n      \"a2_kind\": \"write\",\n      \"why\": \"The ISR can write v_pylon between a read and a subsequent write in the task.\"\n    },\n    {\n      \"variable\": \"v_pylon\",\n      \"a1_line\": 52,\n      \"a1_kind\": \"read\",\n      \"b_line\": 44,\n      \"b_kind\": \"write\",\n      \"a2_line\": 53,\n      \"a2_kind\": \"write\",\n      \"why\": \"The ISR can write v_pylon between the read and the write inside v_lantern.\"\n    },\n    {\n      \"variable\": \"v_pylon\",\n      \"a1_line\": 63,\n      \"a1_kind\": \"write\",\n      \"b_line\": 44,\n      \"b_kind\": \"write\",\n      \"a2_line\": 30,\n      \"a2_kind\": \"read\",\n      \"why\": \"The ISR can overwrite v_pylon after it is written in fn_lagoon but before it is read later in the loop.\"\n    },\n    {\n      \"variable\": \"v_pylon\",\n      \"a1_line\": 63,\n      \"a1_kind\": \"write\",\n      \"b_line\": 44,\n      \"b_kind\": \"write\",\n      \"a2_line\": 52,\n      \"a2_kind\": \"read\",\n      \"why\": \"The ISR can write v_pylon between the write in fn_lagoon and a later read in v_lantern.\"\n    }\n  ]\n}",
+  "wall_s": 12.793100118637085,
+  "usage": {
+    "input_tokens": 631,
+    "output_tokens": 3402,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 12.792982929007849
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

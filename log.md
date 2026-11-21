@@ -1997,3 +1997,11 @@ the same disguised files, n = 3 each, Sonnet at low effort
 - The scan on the same copy: per file 48–52 bug points, 6–10 traps, score 70–86; one prompt 46–52,
   3–4, 80–95. Copy A of the first contamination test agrees.
 - One pair lost two checklist groups to `claude -p` timeouts (600 s); moved aside, re-run whole.
+
+## [2026-11-21] result | gpt-oss-120b on Groq's free tier: the per-file scan only, partial
+Pedro's direction: record it, keep it out of the monograph for now (`project-src/results/gptoss-scan-20261121/`).
+Free tier: 8,000 tokens per minute, and the run stopped being served at 200,616 tokens for the day.
+Per-file scan on the disguised copy: 28/53 and 34/53 bug points, 5 and 10 traps, scores 41 and 38
+(Sonnet low: 48–52, 6–10, 70–86). Run 3 stopped at 19/31 on the daily cap and is scheduled to be
+re-run whole on 2026-11-22. The one-prompt scan (~15 k tokens in one request) and irqrace (every
+prompt above 8,000 tokens; 1.4–2.7 M per run) cannot run on this tier.

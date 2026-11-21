@@ -1,0 +1,28 @@
+{
+  "case": "program_28",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_glacier[40]",
+        "a1_line": 18,
+        "a1_kind": "write",
+        "b_line": 24,
+        "b_kind": "write",
+        "a2_line": 33,
+        "a2_kind": "read",
+        "why": "The ISR can preempt after the task writes v_glacier[40] and before it reads the same element, overwriting it and breaking atomicity."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_glacier[40]\",\n      \"a1_line\": 18,\n      \"a1_kind\": \"write\",\n      \"b_line\": 24,\n      \"b_kind\": \"write\",\n      \"a2_line\": 33,\n      \"a2_kind\": \"read\",\n      \"why\": \"The ISR can preempt after the task writes v_glacier[40] and before it reads the same element, overwriting it and breaking atomicity.\"\n    }\n  ]\n}",
+  "wall_s": 15.974474430084229,
+  "usage": {
+    "input_tokens": 155,
+    "output_tokens": 1120,
+    "cache_read": 768,
+    "cache_write": 0,
+    "latency_s": 15.974371130985674
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}
