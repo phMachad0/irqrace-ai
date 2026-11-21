@@ -1,0 +1,28 @@
+{
+  "case": "svp_simple_026_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_026_001_gloable_var",
+        "a1_line": 26,
+        "a1_kind": "read",
+        "b_line": 43,
+        "b_kind": "write",
+        "a2_line": 27,
+        "a2_kind": "write",
+        "why": "Main only masks interrupt 1, so higher-priority ISR 2 can preempt between the check at line 26 and the reset at line 27 and decrement the variable. Main then writes 0 based on a stale check."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_026_001_gloable_var\",\"a1_line\":26,\"a1_kind\":\"read\",\"b_line\":43,\"b_kind\":\"write\",\"a2_line\":27,\"a2_kind\":\"write\",\"why\":\"Main only masks interrupt 1, so higher-priority ISR 2 can preempt between the check at line 26 and the reset at line 27 and decrement the variable. Main then writes 0 based on a stale check.\"}]}",
+  "wall_s": 8.7036771774292,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 464,
+    "cache_read": 975,
+    "cache_write": 1866,
+    "latency_s": 8.703488622006262
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

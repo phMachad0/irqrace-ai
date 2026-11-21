@@ -1,0 +1,28 @@
+{
+  "case": "svp_simple_012_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_012_001_global_var",
+        "a1_line": 27,
+        "a1_kind": "write",
+        "b_line": 34,
+        "b_kind": "read",
+        "a2_line": 29,
+        "a2_kind": "write",
+        "why": "The ISR can preempt main between its two writes to the variable (the second through alias pointer p) and read the intermediate value 0x01. This is a write-read-write pattern."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_012_001_global_var\",\"a1_line\":27,\"a1_kind\":\"write\",\"b_line\":34,\"b_kind\":\"read\",\"a2_line\":29,\"a2_kind\":\"write\",\"why\":\"The ISR can preempt main between its two writes to the variable (the second through alias pointer p) and read the intermediate value 0x01. This is a write-read-write pattern.\"}]}",
+  "wall_s": 7.348246097564697,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 319,
+    "cache_read": 975,
+    "cache_write": 1588,
+    "latency_s": 7.347941899992293
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

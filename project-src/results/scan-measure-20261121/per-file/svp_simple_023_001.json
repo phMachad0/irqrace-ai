@@ -1,0 +1,38 @@
+{
+  "case": "svp_simple_023_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_023_001_global_var",
+        "a1_line": 25,
+        "a1_kind": "read",
+        "b_line": 39,
+        "b_kind": "write",
+        "a2_line": 35,
+        "a2_kind": "read",
+        "why": "Main reads the global at line 25 as the argument, then the ISR sets it to 0, then main re-reads it at line 35 inside the guarded branch, so the checked value is stale."
+      },
+      {
+        "variable": "svp_simple_023_001_global_var",
+        "a1_line": 35,
+        "a1_kind": "read",
+        "b_line": 39,
+        "b_kind": "write",
+        "a2_line": 35,
+        "a2_kind": "write",
+        "why": "Main's increment at line 35 reads the global and then writes it back. If the ISR writes 0 in between, main overwrites it with the stale value plus 1, so the ISR's update is lost."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_023_001_global_var\",\"a1_line\":25,\"a1_kind\":\"read\",\"b_line\":39,\"b_kind\":\"write\",\"a2_line\":35,\"a2_kind\":\"read\",\"why\":\"Main reads the global at line 25 as the argument, then the ISR sets it to 0, then main re-reads it at line 35 inside the guarded branch, so the checked value is stale.\"},{\"variable\":\"svp_simple_023_001_global_var\",\"a1_line\":35,\"a1_kind\":\"read\",\"b_line\":39,\"b_kind\":\"write\",\"a2_line\":35,\"a2_kind\":\"write\",\"why\":\"Main's increment at line 35 reads the global and then writes it back. If the ISR writes 0 in between, main overwrites it with the stale value plus 1, so the ISR's update is lost.\"}]}",
+  "wall_s": 4.102980613708496,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 318,
+    "cache_read": 975,
+    "cache_write": 1803,
+    "latency_s": 4.102663853991544
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

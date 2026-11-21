@@ -1950,3 +1950,20 @@ The `semana-9` branch (real-world suite, rastro-robot test, Semana 9 diary) was 
 PR #27 already cite it. The two copies of the real-world programs become **#10**. Its citations in
 `index.md`, [[Real-World Program Benchmark]], [[Contradictions]] and the Semana 9 diary are
 updated. Log entries above that call it #9 are left as they were written.
+
+## [2026-11-21] result | triage cost and speed: model, effort, pool, checklist by variable, LLM-only scan
+New page [[Triage Cost and Speed 2026-11-21]]; data in `project-src/results/speed-pilot-20261119/`,
+`speed-20261121/`, `scan-estimate-20261121/`, `scan-measure-20261121/` and `m3/`. All n = 1,
+`+racebench`, 53/33, on one frozen root that reproduces M1's (53/53, 11/33, 166 records).
+- Haiku and Sonnet at low effort are not faster (Haiku: 47/53 in `likely_real`, 5 schema failures).
+- A global pool of four conversations: wall −9%. One checklist conversation per shared variable:
+  calls −72%, input −44%, output −55%. Both together at low effort, with omitted items re-asked:
+  53/53, score 97, **1,079 → 263 s**. One low-effort checklist answer left 14 of 15 items out; they
+  stayed `uncertain`, and the re-ask was added.
+- An LLM-only scan (simple prompt, one call per file): 50/53, 1 trap, 99 k input tokens; one prompt
+  for all 31 files: 48/53, 33 k. On the published 48/38 labels the per-file scan finds 48/48: its
+  misses are exactly the relabel's bug points, which is what memorisation would look like. Added to
+  [[Open Questions]] with the scale of the checklist on real code.
+- Lucas's two completed T3 runs scored: `+effectfree` 53/53, 1 trap, score 103; `+rubric` 100.
+- Pedro's direction: continue with Sonnet at low effort; a free non-Anthropic model
+  (`gpt-oss-120b` through Groq) later.

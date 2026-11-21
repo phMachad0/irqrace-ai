@@ -1,0 +1,48 @@
+{
+  "case": "svp_simple_031_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_031_001_tc_block_rcvd_bytes_ch1",
+        "a1_line": 46,
+        "a1_kind": "read",
+        "b_line": 90,
+        "b_kind": "write",
+        "a2_line": 83,
+        "a2_kind": "read",
+        "why": "The ISR can update the counter between the copy at line 46 and the check at line 83, so the two reads can see different values."
+      },
+      {
+        "variable": "svp_simple_031_001_tc_block_rcvd_bytes_ch1",
+        "a1_line": 83,
+        "a1_kind": "read",
+        "b_line": 90,
+        "b_kind": "write",
+        "a2_line": 85,
+        "a2_kind": "read",
+        "why": "The ISR can change the value after the >=16 check at line 83 and before the argument read at line 85, so the call can use a value that no longer passes the check."
+      },
+      {
+        "variable": "svp_simple_031_001_tc_block_rcvd_bytes_ch1",
+        "a1_line": 85,
+        "a1_kind": "read",
+        "b_line": 90,
+        "b_kind": "write",
+        "a2_line": 65,
+        "a2_kind": "read",
+        "why": "The ISR can change the value after it is passed as an argument at line 85 and before func_2 reads it at line 65, so func_2 can see a different value."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_031_001_tc_block_rcvd_bytes_ch1\",\"a1_line\":46,\"a1_kind\":\"read\",\"b_line\":90,\"b_kind\":\"write\",\"a2_line\":83,\"a2_kind\":\"read\",\"why\":\"The ISR can update the counter between the copy at line 46 and the check at line 83, so the two reads can see different values.\"},{\"variable\":\"svp_simple_031_001_tc_block_rcvd_bytes_ch1\",\"a1_line\":83,\"a1_kind\":\"read\",\"b_line\":90,\"b_kind\":\"write\",\"a2_line\":85,\"a2_kind\":\"read\",\"why\":\"The ISR can change the value after the >=16 check at line 83 and before the argument read at line 85, so the call can use a value that no longer passes the check.\"},{\"variable\":\"svp_simple_031_001_tc_block_rcvd_bytes_ch1\",\"a1_line\":85,\"a1_kind\":\"read\",\"b_line\":90,\"b_kind\":\"write\",\"a2_line\":65,\"a2_kind\":\"read\",\"why\":\"The ISR can change the value after it is passed as an argument at line 85 and before func_2 reads it at line 65, so func_2 can see a different value.\"}]}",
+  "wall_s": 5.477056503295898,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 558,
+    "cache_read": 975,
+    "cache_write": 2877,
+    "latency_s": 5.476900234003551
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

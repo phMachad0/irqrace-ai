@@ -1,0 +1,28 @@
+{
+  "case": "svp_simple_008_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_008_001_global_array[40]",
+        "a1_line": 35,
+        "a1_kind": "write",
+        "b_line": 52,
+        "b_kind": "write",
+        "a2_line": 46,
+        "a2_kind": "read",
+        "why": "Main writes element 40 and later reads it (i*20+j*10 = 40). The ISR can preempt between them and overwrite it with 0x05, so main reads the ISR's value instead of the 0x01 it wrote."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_008_001_global_array[40]\",\"a1_line\":35,\"a1_kind\":\"write\",\"b_line\":52,\"b_kind\":\"write\",\"a2_line\":46,\"a2_kind\":\"read\",\"why\":\"Main writes element 40 and later reads it (i*20+j*10 = 40). The ISR can preempt between them and overwrite it with 0x05, so main reads the ISR's value instead of the 0x01 it wrote.\"}]}",
+  "wall_s": 5.580549001693726,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 459,
+    "cache_read": 975,
+    "cache_write": 1833,
+    "latency_s": 5.5803774390078615
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

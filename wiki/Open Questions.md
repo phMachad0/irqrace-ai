@@ -317,6 +317,17 @@ with the date.
   LLM call, full triage is ~$90 per program. [[AdaTaint (paper)]]'s embedding-plus-static-features
   scorer ranks without dropping. Measure whether it puts the real defects near the top.
 
+- [ ] **Has the model memorised Racebench?** A plain "read the file and list the violations" scan
+  with Sonnet at low effort found 50/53 bug points with 1 trap at 99 k input tokens, against the
+  triage's 2.0–3.5 M, and **48/48 on the published labels**: its only misses are the bug points this
+  project created in the relabel ([[Triage Cost and Speed 2026-11-21]]). The suite has been public
+  since 2019 with its answers in the comments. Run the scan on a renamed, reordered copy (identifiers,
+  function order, line numbers shifted) before the scan is quoted as a baseline.
+- [ ] **Does the checklist grouping hold at n = 3, and on real code?** By variable cut calls 72% and,
+  with the global pool, wall time 4× on Racebench with recall intact; at low effort one answer left
+  14 of 15 items out ([[Triage Cost and Speed 2026-11-21]]). On the real-world suite it currently
+  sends more input than per-interval grouping, because of `provenance.entries`.
+
 ## Method questions for the tool being built
 
 - [x] ~~What is the pattern set?~~ The four unserializable triple shapes, `(R,W,W)` included

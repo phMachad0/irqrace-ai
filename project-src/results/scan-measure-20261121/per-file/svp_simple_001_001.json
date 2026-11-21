@@ -1,0 +1,28 @@
+{
+  "case": "svp_simple_001_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_001_001_global_array[TRIGGER]",
+        "a1_line": 32,
+        "a1_kind": "write",
+        "b_line": 55,
+        "b_kind": "read",
+        "a2_line": 35,
+        "a2_kind": "write",
+        "why": "After isr_1 enables interrupt 2, isr_2 can preempt main between the zeroing loop (line 32) and the write of 1 at line 35. It then reads array[9999] (flag is already 1) and sees the transient 0 instead of the final 1."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_001_001_global_array[TRIGGER]\",\"a1_line\":32,\"a1_kind\":\"write\",\"b_line\":55,\"b_kind\":\"read\",\"a2_line\":35,\"a2_kind\":\"write\",\"why\":\"After isr_1 enables interrupt 2, isr_2 can preempt main between the zeroing loop (line 32) and the write of 1 at line 35. It then reads array[9999] (flag is already 1) and sees the transient 0 instead of the final 1.\"}]}",
+  "wall_s": 8.300971031188965,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 791,
+    "cache_read": 0,
+    "cache_write": 2989,
+    "latency_s": 8.30080984698725
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,28 @@
+{
+  "case": "svp_simple_014_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_014_001_global_var1",
+        "a1_line": 39,
+        "a1_kind": "read",
+        "b_line": 58,
+        "b_kind": "write",
+        "a2_line": 41,
+        "a2_kind": "read",
+        "why": "ISR1 masks ISR3, but ISR2 can preempt ISR1, set flag1 and call enable_isr(3). ISR3 then preempts ISR1 and writes var1 between ISR1's two reads, so the reads can return different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_014_001_global_var1\",\"a1_line\":39,\"a1_kind\":\"read\",\"b_line\":58,\"b_kind\":\"write\",\"a2_line\":41,\"a2_kind\":\"read\",\"why\":\"ISR1 masks ISR3, but ISR2 can preempt ISR1, set flag1 and call enable_isr(3). ISR3 then preempts ISR1 and writes var1 between ISR1's two reads, so the reads can return different values.\"}]}",
+  "wall_s": 10.774672269821167,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1185,
+    "cache_read": 975,
+    "cache_write": 2097,
+    "latency_s": 10.77449524999247
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

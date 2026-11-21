@@ -1,0 +1,38 @@
+{
+  "case": "svp_simple_019_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_019_001_global_var1",
+        "a1_line": 45,
+        "a1_kind": "read",
+        "b_line": 71,
+        "b_kind": "write",
+        "a2_line": 59,
+        "a2_kind": "read",
+        "why": "The ISR can fire between the reads at 45 and 59. It sets condition3=0, which lets the line 56 branch execute and the read at 59 see a changed var1."
+      },
+      {
+        "variable": "svp_simple_019_001_global_var1",
+        "a1_line": 51,
+        "a1_kind": "read",
+        "b_line": 71,
+        "b_kind": "write",
+        "a2_line": 59,
+        "a2_kind": "read",
+        "why": "ISR is enabled at line 50, so it can run after the read at 51. It sets condition3=0, so line 56 passes and the read at 59 sees a different var1."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_019_001_global_var1\",\"a1_line\":45,\"a1_kind\":\"read\",\"b_line\":71,\"b_kind\":\"write\",\"a2_line\":59,\"a2_kind\":\"read\",\"why\":\"The ISR can fire between the reads at 45 and 59. It sets condition3=0, which lets the line 56 branch execute and the read at 59 see a changed var1.\"},{\"variable\":\"svp_simple_019_001_global_var1\",\"a1_line\":51,\"a1_kind\":\"read\",\"b_line\":71,\"b_kind\":\"write\",\"a2_line\":59,\"a2_kind\":\"read\",\"why\":\"ISR is enabled at line 50, so it can run after the read at 51. It sets condition3=0, so line 56 passes and the read at 59 sees a different var1.\"}]}",
+  "wall_s": 11.4962477684021,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1274,
+    "cache_read": 975,
+    "cache_write": 2311,
+    "latency_s": 11.495979813014856
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

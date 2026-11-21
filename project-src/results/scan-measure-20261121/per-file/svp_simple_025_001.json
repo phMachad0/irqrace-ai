@@ -1,0 +1,28 @@
+{
+  "case": "svp_simple_025_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_025_001_global_var",
+        "a1_line": 35,
+        "a1_kind": "read",
+        "b_line": 38,
+        "b_kind": "write",
+        "a2_line": 35,
+        "a2_kind": "write",
+        "why": "The main task reads the variable at line 35, the ISR can preempt and write 0 at line 38, and then main writes back the stale value plus 1 at line 35. The ISR's reset is lost."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_025_001_global_var\",\"a1_line\":35,\"a1_kind\":\"read\",\"b_line\":38,\"b_kind\":\"write\",\"a2_line\":35,\"a2_kind\":\"write\",\"why\":\"The main task reads the variable at line 35, the ISR can preempt and write 0 at line 38, and then main writes back the stale value plus 1 at line 35. The ISR's reset is lost.\"}]}",
+  "wall_s": 3.3188979625701904,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 188,
+    "cache_read": 975,
+    "cache_write": 1756,
+    "latency_s": 3.3186805419973098
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

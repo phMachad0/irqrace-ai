@@ -1,0 +1,78 @@
+{
+  "case": "svp_simple_022_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_022_001_global_var1",
+        "a1_line": 32,
+        "a1_kind": "write",
+        "b_line": 66,
+        "b_kind": "write",
+        "a2_line": 55,
+        "a2_kind": "read",
+        "why": "ISR can reset var1 to 0 between main's init write and its read in func_3, so the read sees a value main did not write."
+      },
+      {
+        "variable": "svp_simple_022_001_global_var1",
+        "a1_line": 55,
+        "a1_kind": "read",
+        "b_line": 66,
+        "b_kind": "write",
+        "a2_line": 56,
+        "a2_kind": "write",
+        "why": "The ISR write can land between the check var1>=12 and the write of 12, so the check is stale."
+      },
+      {
+        "variable": "svp_simple_022_001_global_var1",
+        "a1_line": 55,
+        "a1_kind": "read",
+        "b_line": 66,
+        "b_kind": "write",
+        "a2_line": 58,
+        "a2_kind": "write",
+        "why": "The ISR write can land between the check and the else-branch write, so the check is stale."
+      },
+      {
+        "variable": "svp_simple_022_001_global_var1",
+        "a1_line": 56,
+        "a1_kind": "write",
+        "b_line": 66,
+        "b_kind": "write",
+        "a2_line": 63,
+        "a2_kind": "read",
+        "why": "The ISR can overwrite the 12 that main stored before func_4 reads var1."
+      },
+      {
+        "variable": "svp_simple_022_001_global_var1",
+        "a1_line": 58,
+        "a1_kind": "write",
+        "b_line": 66,
+        "b_kind": "write",
+        "a2_line": 63,
+        "a2_kind": "read",
+        "why": "The ISR write can land between main's write of 0 and the later read in func_4; the value is the same here, but the write-write-read shape still occurs."
+      },
+      {
+        "variable": "svp_simple_022_001_global_var1",
+        "a1_line": 63,
+        "a1_kind": "read",
+        "b_line": 66,
+        "b_kind": "write",
+        "a2_line": 39,
+        "a2_kind": "read",
+        "why": "The ISR can change var1 between the two reads, so line 39 can see a different value than line 63 did."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_022_001_global_var1\",\"a1_line\":32,\"a1_kind\":\"write\",\"b_line\":66,\"b_kind\":\"write\",\"a2_line\":55,\"a2_kind\":\"read\",\"why\":\"ISR can reset var1 to 0 between main's init write and its read in func_3, so the read sees a value main did not write.\"},{\"variable\":\"svp_simple_022_001_global_var1\",\"a1_line\":55,\"a1_kind\":\"read\",\"b_line\":66,\"b_kind\":\"write\",\"a2_line\":56,\"a2_kind\":\"write\",\"why\":\"The ISR write can land between the check var1>=12 and the write of 12, so the check is stale.\"},{\"variable\":\"svp_simple_022_001_global_var1\",\"a1_line\":55,\"a1_kind\":\"read\",\"b_line\":66,\"b_kind\":\"write\",\"a2_line\":58,\"a2_kind\":\"write\",\"why\":\"The ISR write can land between the check and the else-branch write, so the check is stale.\"},{\"variable\":\"svp_simple_022_001_global_var1\",\"a1_line\":56,\"a1_kind\":\"write\",\"b_line\":66,\"b_kind\":\"write\",\"a2_line\":63,\"a2_kind\":\"read\",\"why\":\"The ISR can overwrite the 12 that main stored before func_4 reads var1.\"},{\"variable\":\"svp_simple_022_001_global_var1\",\"a1_line\":58,\"a1_kind\":\"write\",\"b_line\":66,\"b_kind\":\"write\",\"a2_line\":63,\"a2_kind\":\"read\",\"why\":\"The ISR write can land between main's write of 0 and the later read in func_4; the value is the same here, but the write-write-read shape still occurs.\"},{\"variable\":\"svp_simple_022_001_global_var1\",\"a1_line\":63,\"a1_kind\":\"read\",\"b_line\":66,\"b_kind\":\"write\",\"a2_line\":39,\"a2_kind\":\"read\",\"why\":\"The ISR can change var1 between the two reads, so line 39 can see a different value than line 63 did.\"}]}",
+  "wall_s": 9.587979078292847,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1163,
+    "cache_read": 975,
+    "cache_write": 2464,
+    "latency_s": 9.58781676000217
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

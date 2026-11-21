@@ -1,0 +1,38 @@
+{
+  "case": "svp_simple_011_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_011_001_global_var1",
+        "a1_line": 30,
+        "a1_kind": "write",
+        "b_line": 42,
+        "b_kind": "read",
+        "a2_line": 31,
+        "a2_kind": "write",
+        "why": "ISR can preempt main between the two writes to var1 and read the intermediate value 0x01."
+      },
+      {
+        "variable": "svp_simple_011_001_u",
+        "a1_line": 33,
+        "a1_kind": "write",
+        "b_line": 43,
+        "b_kind": "read",
+        "a2_line": 35,
+        "a2_kind": "write",
+        "why": "ISR can preempt main between the two writes of pointer u and read it in an intermediate state, so it dereferences a different target than the final one."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_011_001_global_var1\",\"a1_line\":30,\"a1_kind\":\"write\",\"b_line\":42,\"b_kind\":\"read\",\"a2_line\":31,\"a2_kind\":\"write\",\"why\":\"ISR can preempt main between the two writes to var1 and read the intermediate value 0x01.\"},{\"variable\":\"svp_simple_011_001_u\",\"a1_line\":33,\"a1_kind\":\"write\",\"b_line\":43,\"b_kind\":\"read\",\"a2_line\":35,\"a2_kind\":\"write\",\"why\":\"ISR can preempt main between the two writes of pointer u and read it in an intermediate state, so it dereferences a different target than the final one.\"}]}",
+  "wall_s": 6.99851131439209,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 677,
+    "cache_read": 975,
+    "cache_write": 1782,
+    "latency_s": 6.9983629760099575
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}
