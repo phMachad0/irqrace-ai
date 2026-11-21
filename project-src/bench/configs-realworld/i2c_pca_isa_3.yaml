@@ -1,0 +1,98 @@
+schema_version: c1/2.0.0
+subject:
+  name: i2c_pca_isa_3
+  source_root: ../realworld
+  sources:
+  - i2c_pca_isa_3/main.c
+  build:
+    mode: single-tu
+    cc: clang-14
+    linker: llvm-link-14
+    flags:
+    - -g
+    - -O0
+    - -Xclang
+    - -disable-O0-optnone
+    defines: []
+priority_convention: larger-is-higher
+flows:
+- id: main
+  kind: task
+  entry: main
+  irq: null
+  priority: 0
+  identified_by: config
+- id: req1
+  kind: isr
+  entry: req1_isr
+  irq: 1
+  priority: 2
+  identified_by: config
+- id: req2
+  kind: isr
+  entry: req2_isr
+  irq: 2
+  priority: 2
+  identified_by: config
+- id: req3
+  kind: isr
+  entry: req3_isr
+  irq: 3
+  priority: 3
+  identified_by: config
+- id: req4
+  kind: isr
+  entry: req4_isr
+  irq: 4
+  priority: 3
+  identified_by: config
+- id: req5
+  kind: isr
+  entry: req5_isr
+  irq: 5
+  priority: 4
+  identified_by: config
+- id: req6
+  kind: isr
+  entry: req6_isr
+  irq: 6
+  priority: 3
+  identified_by: config
+- id: req7
+  kind: isr
+  entry: req7_isr
+  irq: 7
+  priority: 5
+  identified_by: config
+- id: req8
+  kind: isr
+  entry: req8_isr
+  irq: 8
+  priority: 6
+  identified_by: config
+masking:
+  primitives:
+  - function: disable_isr
+    effect: disable
+    irq_arg: 0
+    all_value: -1
+    non_constant_arg: unknown
+  - function: enable_isr
+    effect: enable
+    irq_arg: 0
+    all_value: -1
+    non_constant_arg: unknown
+  initial_state: unknown
+  isr_entry_masks_self: false
+semantics:
+  equal_priority_preemption: true
+  isr_arrival: unbounded
+  isr_reentrant: false
+  nesting: true
+  timing_model: unconstrained
+externals:
+  default: may-read-write-reachable
+  models: []
+ground_truth:
+  kind: violation-info
+  path: i2c_pca_isa_3/violation.info

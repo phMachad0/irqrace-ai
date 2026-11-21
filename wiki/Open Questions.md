@@ -137,6 +137,19 @@ with the date.
   indirect-call resolution in SVF, all in **may**-alias mode. Determines both recall and cost,
   and the function-pointer ISR vector table makes indirect-call handling recall-critical
   ([[Soundness and False Negatives]] §1). Blocks: stage 1.
+  *First real C++ subject, 2026-10-29 ([[Rastro-Robot Firmware]]):* two of these three choices
+  turned out to dominate, and neither ever showed on [[Racebench]]. Arity-only matching of
+  unresolved virtual calls blew stage 1 up to ~15.9M triples
+  ([#4](https://github.com/phMachad0/irqrace-ai/issues/4)). Context-insensitive `this` made 98%
+  of the remaining candidates false
+  ([#5](https://github.com/phMachad0/irqrace-ai/issues/5)).
+- [ ] **Model cores, not only priorities.** The stage-2 priority check is a single-core argument
+  ([[Soundness Assumptions]] E6). On a dual-core ESP32 it made 25 unsound drops. C1 needs a
+  per-flow `core` (or `any`), and `can_preempt` must answer *yes* for any two flows that may sit
+  on different cores. Cross-core critical sections (`portENTER_CRITICAL(&mux)`) also have to be
+  told apart from local interrupt masking.
+  [#6](https://github.com/phMachad0/irqrace-ai/issues/6). Blocks: any recall claim on an SMP
+  target.
 
 ### Still open — interface
 
@@ -178,6 +191,32 @@ with the date.
   **$0.35** for a 10-candidate probe on Claude Opus 5 and **$10.25** for the full five-row
   ablation over 20 fixtures ($2.05 on Haiku 4.5) — so the Roadmap's ">$30 on fixtures by W5"
   trigger is well calibrated: n=3 voting across all five rows lands at ~$31, exactly on it.
+- [ ] **Triage by interval, not by triple, and under a budget.** The real-world suite sends 972
+  triples to the LLM. They are 280 intervals (variable, A₁, A₂, pattern) and 119 (variable,
+  pattern) pairs. One call per interval, with all its B's listed, asks the same question at 29%
+  of the calls. The LLM never discards, so what a budget leaves untriaged stays in the report as
+  `not_triaged`, and recall is untouched. The order of magnitude, from the rastro-robot triage
+  (32.5 s per candidate on `claude-cli:sonnet` with `+self-validation`), is ~9 h for 972 triples
+  against ~2.5 h for 280 intervals ([[Semana 9 — O Benchmark de Programas Reais]] §3.9).
+  Issues [#9](https://github.com/phMachad0/irqrace-ai/issues/9) (per interval, budget) and
+  [#16](https://github.com/phMachad0/irqrace-ai/issues/16) (parallel calls; triage and repair in one
+  prompt, to be measured as a new ablation row rather than swapped in).
+- [ ] **Carry the file wherever a line goes.** Globals shared across translation units are
+  detected and the C2 record has every access's file. But the C3 drop record's schema has only
+  `lines`, the gate matchers and `stage3 -v` print or compare lines only, the Streamlit step 1
+  highlights every access in `sources[0]`, and the repair compile check patches and builds only
+  A₁'s file. None of this affects recall; the UI and the repair check do the wrong thing on
+  multi-file subjects ([[Semana 9 — O Benchmark de Programas Reais]] §3.10).
+  [#8](https://github.com/phMachad0/irqrace-ai/issues/8).
+- [ ] **Let the user declare the target hardware, and give it to the model.** *Direction,
+  2026-10-29 (Pedro).* MCU, architecture, cores, widest atomic access, RTOS and its API,
+  interrupt controller, ISR restrictions. On [[Rastro-Robot Firmware]] the facts the triage needs
+  are all platform facts: whether an aligned `uint32_t` load is atomic on Xtensa LX6, whether
+  two tasks share a core, and whether `ulTaskNotifyTake`'s return value is the natural repair.
+  None of them reaches the model today. The profile may rank, explain and steer the repair, but
+  it **does not license an LLM discard**. "Atomic on this core" becomes a reason to drop only once
+  it is a stated premise in [[Soundness Assumptions]] and a proof in stage 2 or 3.
+  [#7](https://github.com/phMachad0/irqrace-ai/issues/7).
 - [ ] **Instrument the progressive-prompt request channel from the first prototype.** What the
   model asks for, how often and how deep **is** the specification of the context record, now
   that precomputed slicing is out ([[Program Slicing]]). Not blocking, but it must be built in

@@ -1655,6 +1655,53 @@ In `svp_simple_030_001` only 2 of 11 candidates have a `turns.jsonl`. Fix:
 The 306 pre-existing entries have no transcript, and the tab says so. Diary:
 [[Semana 8 — Integração das Trilhas A e B]] §3.17.
 
+## [2026-10-29] result | first real-firmware run — rastro-robot (ESP32, C++, FreeRTOS), planted ISR×task race
+
+On the human's direction, a lost update was planted in their line-following robot firmware
+(`tasks.cpp`: `irTimerIsr` does `g_ir_ticks_pending++`, `taskLineSensor` reads it at 240 and zeroes
+it at 244) and the tool run on the whole `firmware` build: 13 C++ TUs, compiled by clang-14 against
+the real ESP-IDF 4.4.5 headers with no source change, and 9 flows (mangled entry names). **Found and
+kept to the end**: stage 1 2770 → stage 2 10 → solver 10 sat → triage puts it first (`claude-cli:sonnet`,
+`+self-validation`: feasible 0.93, harmful 0.80). Triage buckets 9/10 as `likely_real`. The criterion
+fires on "feeds a branch" for benign-by-design counters, so the ranking discriminates and the
+buckets do not.
+
+Three problems Racebench could not show, recorded in [[Soundness Assumptions]] (B2 note, C2b note,
+**new E6**), [[Soundness and False Negatives]] §1 and §6, and [[Open Questions]]. Issues opened on
+GitHub: arity-only indirect-call matching explodes on C++ virtual calls (~15.9M triples; the run
+only finished with the unsound `points-to-only`, [#4](https://github.com/phMachad0/irqrace-ai/issues/4));
+context-insensitive `this` makes two task-local `RateMeter`s one shared object (98% of stage-1
+candidates, [#5](https://github.com/phMachad0/irqrace-ai/issues/5)); the stage-2 priority check
+assumes one core, giving 25 unsound drops across the ESP32's two cores
+([#6](https://github.com/phMachad0/irqrace-ai/issues/6)). A fourth issue records a direction from the
+human: declare the target hardware in C1 and pass it to the LLM
+([#7](https://github.com/phMachad0/irqrace-ai/issues/7)). It is now in [[Open Questions]] (LLM side).
+The model had to guess "the 32-bit volatile read is probably atomic". Filed as
+[[Rastro-Robot Firmware]]. The C1 files used are kept outside the vault, in the human's Downloads.
+
+## [2026-10-29] result | real-world suite vendored and run — 1980 → 1005 → 941, gate 40/45 (45/45 with BMC4AV's priorities)
+
+Roadmap W9 started on a new branch, `bench/real-world`, cut from `main` (`55d25eb`). On the human's
+direction, NIChecker's copy of the 18 programs is vendored at `project-src/bench/realworld`
+(`zhvngyuan/NIChecker` `40267c0`, inputs only, unchanged, commit `8afcf8b`). Vendoring showed the
+two shipped copies are different programs: `main.c` differs in all 18, priorities in five, and
+`violation.info` in `i8xx_tco_1`. The wiki's "byte-identical" claim is corrected in [[Contradictions]]
+#1 and the difference recorded as **#9**. Six programs do not compile as shipped. They build from
+`-D` definitions and one `-Wno-error` flag in their C1, with the files untouched
+(`bench/realworld-errata.yaml`). `logger2`'s ground truth is unlabelled and names absent variables,
+so it is read as zero entries. `blink2`/`blink3` carry per-instance lines copied from `blink1`
+without the shift from an inserted ISR. They get six line errata, `likely`, which the recall gate
+surfaced (40/45 at stage 1 before them, 45/45 after).
+
+New: `src/irqrace/realworld.py`, `irqrace realworld gen-configs|run` (`-j` for parallel programs,
+`--raw` for the shipped ground truth), 23 C1 files (18 + 5 with BMC4AV's priorities) and 12 tests.
+First full run, stages 1→3: **1980 → 1005 → 941**, solver 842 sat / 99 inconclusive / 64 unsat.
+Gate **40/45**. All five misses are correct stage-2 priority drops: NIChecker's own `priority.info`
+makes its own annotated violations unreachable in `logger3`, `wdt_pci_1` and `wdt_pci_2`. Mirroring
+the convention gives 18/45, so the inversion is not global. With BMC4AV's priorities the five
+disputed programs are 9/9 and the suite 45/45. Which priorities to adopt is the human's decision.
+Diary: [[Semana 9 — O Benchmark de Programas Reais]].
+
 ## [2026-10-30] direction | Racebench batch in two lanes: the LLM no longer waits for the static steps
 On the human's direction, "Executar todos" at full depth no longer runs each case end to end before
 the next. `run_batch` (`ui/benchmark_screen.py`) keeps the static steps on one thread, one case at a
@@ -1711,6 +1758,44 @@ desktop: wrong source root (31/31 cases on `RecordBackedResolver`), `common.c` n
 the Sonnet safeguard error. Real calls: Haiku 4/6 bugs `likely_real`, Sonnet 3/3, 0 `benign`, and the
 first 4 real C4 requests of the project. Unresolved: 4 of 14 Haiku candidates failed with `unknown error`
 on the second call, cause unknown. Diary: [[Semana 8 — Integração das Trilhas A e B]] §3.21.
+
+## [2026-10-30] direction + result | real-world gate 45/45; branch renamed semana-9; triage cost and cross-file questions
+
+On the human's direction, BMC4AV's priorities are adopted as `priority_corrections` errata for the
+three programs where NIChecker's contradict NIChecker's own ground truth (`logger3`, `wdt_pci_1`,
+`wdt_pci_2`). `logger2` and `i8xx_tco_1` keep BMC4AV's as side configurations;
+`gen-configs --raw` reproduces the shipped priorities. Official run: **1980 → 1037 → 972, gate
+45/45**, solver 846 sat / 126 inconclusive / 65 unsat. The solver split is load-dependent, with a
+wall-clock timeout (`brake3`: 3/49 unsat/inconclusive on 10-29, 0/73 on 10-30). The branch
+`bench/real-world` is renamed `semana-9`, where all W9 work lands.
+
+Two questions from the human, investigated with data. **Does the static side filter too
+little?** 972 triples are 280 intervals and 119 (variable, pattern) pairs, the ground truth's
+grain, and 65 of those pairs are on variables the non-exhaustive ground truth does not annotate.
+Disabling equal-priority preemption (which NIChecker's paper says its semantics forbid) cuts stage
+2 by 44% but loses 2 annotated violations, so the default stays. The LLM never discards, so its
+cost can be bounded by triaging per interval (−71% calls) and by a budget without touching
+recall. **Are cross-file globals detected?** Yes: a two-TU fixture (task in `task.c`, ISR in
+`isr.c`, `extern`) yields the RWW, and the C2 record and fingerprint carry each access's file.
+Five consumers use lines only: `stage3 -v`, the C3 drop record schema, the gate matchers, the
+Streamlit step 1 (highlights the wrong file) and the repair compile check (patches and builds A₁'s
+file alone). Both recorded in [[Open Questions]] and in the diary,
+[[Semana 9 — O Benchmark de Programas Reais]] §3.9–3.10.
+
+## [2026-10-30] direction | issues #8–#17: Semana 9 follow-ups and the desktop app
+
+Ten issues opened on the human's request. Four come from the investigations of the same day:
+**#8** the file travels with the line everywhere (C3 drop record, gate matchers, `stage3 -v`,
+Streamlit step 1, the repair compile check, the desktop candidate list, where the human proposes an
+asterisk when the accesses span files); **#9** triage per interval and under a budget; **#10** a
+deterministic solver limit (`rlimit`); **#11** running triage on the 18 programs. Six come from
+the human's review of the desktop app: **#12** `obj_N` names, which the stage 1 takes from LLVM
+value names that clang discards for locals (recoverable from `DILocalVariable`); **#13** group
+candidates by variable; **#14** undiscarded candidates first and sort by column; **#15** a VS
+Code-style layout with a bottom panel showing a status per tab and a candidate-detail panel on
+the right; **#16** parallel triage calls, and triage and repair in one prompt, to be measured as a
+new ablation row; **#17** the repair pane's `wrap=tk.NONE`. Referenced from [[Open Questions]] and
+the diary's §6.
 
 ## [2026-10-31] direction | Issue #8: the file travels with the line; patches can no longer land blind
 `apply_unified_diff` ignored file names and context, so a diff for one file silently overwrote lines of
@@ -1856,3 +1941,12 @@ the relabel. With it set, `ground_truth("2.1")` reads 48/38, 8 of the T2 tests f
 dossier script returns the relabelled triples as unannotated (96 triples, 34 dossiers). With it
 unset, all 28 T2 tests pass. Still open: the name, the size of Pedro's second check, and whether
 the complex cases are included. Next: the human adjudication.
+
+
+## [2026-11-21] direction | semana-9 merged onto the PR #27 line; real-world contradiction renumbered #10
+The `semana-9` branch (real-world suite, rastro-robot test, Semana 9 diary) was merged into
+`tcc/t3-model-speed`, which sits on PR #27. Both lines had added a contradiction #9. Lucas's
+(BMC4AV's 38 is 37 under the errata) keeps #9, because the monograph, the T1 comparison page and
+PR #27 already cite it. The two copies of the real-world programs become **#10**. Its citations in
+`index.md`, [[Real-World Program Benchmark]], [[Contradictions]] and the Semana 9 diary are
+updated. Log entries above that call it #9 are left as they were written.
