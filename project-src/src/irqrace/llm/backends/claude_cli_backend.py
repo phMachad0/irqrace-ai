@@ -54,6 +54,9 @@ putting it in a cost column would be a claim this run did not incur.
 * a multi-turn request (only rows with C4 requests send one) is flattened into a
   single prompt without the model's earlier turns, because ``claude -p`` takes
   one user turn;
+* ``claude-cli:<model>@<effort>`` (``sonnet@low``) passes ``--effort``; the
+  suffix stays in :attr:`spec`, so the manifest says which effort answered.
+  Without it the CLI's default applies, as in every run before 2026-11-19;
 * a model alias (``sonnet``, ``opus``) resolves to whatever the CLI maps it to
   that day. :attr:`ClaudeCLIBackend.resolved_model` records what actually
   answered; prefer a full model id for any number that goes into the thesis.
@@ -84,6 +87,7 @@ from irqrace.llm.backends.base import (
 
 DEFAULT_EXECUTABLE = "claude"
 DEFAULT_TIMEOUT_S = 600.0
+EFFORTS = ("low", "medium", "high", "xhigh", "max")
 
 #: Credentials that would make the CLI bill an API account instead of the plan.
 _API_AUTH_VARS = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN")
@@ -105,6 +109,13 @@ class ClaudeCLIBackend(Backend):
         runner: Runner | None = None,
     ):
         super().__init__(model)
+        name, _, effort = model.partition("@")
+        if effort and effort not in EFFORTS:
+            raise BackendError(f"claude-cli: unknown effort {effort!r}; known: {', '.join(EFFORTS)}")
+        #: The ``--model`` argument, without the effort suffix.
+        self.cli_model = name
+        #: ``--effort``, or ``None`` for the CLI's default.
+        self.effort = effort or None
         self.executable = (
             executable or os.environ.get("IRQRACE_CLAUDE_CLI") or DEFAULT_EXECUTABLE
         )
@@ -160,7 +171,7 @@ class ClaudeCLIBackend(Backend):
         exe = shutil.which(self.executable) or self.executable
         argv = [
             exe, "-p",
-            "--model", self.model,
+            "--model", self.cli_model,
             "--output-format", "json",
             "--system-prompt", request.system,
             "--tools", "",
@@ -169,6 +180,8 @@ class ClaudeCLIBackend(Backend):
             "--setting-sources", "",
             "--no-session-persistence",
         ]
+        if self.effort:
+            argv += ["--effort", self.effort]
         if request.schema is not None:
             argv += ["--json-schema", json.dumps(request.schema)]
         return argv

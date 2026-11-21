@@ -438,6 +438,23 @@ def test_claude_cli_records_the_model_an_alias_resolved_to():
     assert backend.resolved_model == "claude-sonnet-5-5"
 
 
+def test_claude_cli_effort_suffix_becomes_the_effort_flag_and_stays_in_the_spec():
+    runner = _Runner()
+    backend = _cli(runner, model="sonnet@low")
+    backend.chat(_request())
+    argv = runner.calls[0]["argv"]
+    assert argv[argv.index("--model") + 1] == "sonnet"
+    assert argv[argv.index("--effort") + 1] == "low"
+    assert backend.spec == "claude-cli:sonnet@low"
+
+    plain = _Runner()
+    _cli(plain).chat(_request())
+    assert "--effort" not in plain.calls[0]["argv"]
+
+    with pytest.raises(BackendError):
+        _cli(_Runner(), model="sonnet@fast")
+
+
 def test_claude_cli_call_is_a_plain_model_call_not_an_agent_session():
     """Claude Code's own prompt, tools, MCP, skills, hooks and the project's
     CLAUDE.md must not reach the model -- only the triage prompt."""
