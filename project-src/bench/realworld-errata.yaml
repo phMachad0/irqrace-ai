@@ -11,6 +11,8 @@
 #                         ones make the program's own ground truth unreachable
 #   priority_alternatives the priorities BMC4AV's copy gives where they disagree
 #                         with NIChecker's and nothing decides; a second C1 per program
+#   semantics             execution-model settings of the primary C1s: a suite default and
+#                         the programs that differ from it, each with its evidence
 #   groundtruth           what the evaluation harness does with a violation.info
 #                         that cannot be read as written
 #
@@ -86,7 +88,31 @@ priority_corrections:
 priority_correction_evidence: >
     Mirroring the shipped priorities of all 18 programs gives 18/45, so the files
     are not inverted wholesale; the error is in these three. With the corrections
-    the suite is 45/45 (first full run, 2026-10-29). Contradictions #9.
+    the suite is 45/45 (first full run, 2026-10-29). Contradictions #10 (numbered #9
+    before the 2026-11-21 merge).
+
+semantics:
+  equal_priority_preemption:
+    # Adopted 2026-11-21 on the project's direction. Until then every C1 said true,
+    # the conservative choice, and 476 of the 972 candidates of the 2026-11-21 run
+    # existed only through it.
+    default: false
+    evidence: >
+      NIChecker's paper states that ISRs of equal priority do not preempt each other
+      (an ISR preempts another only when its priority is strictly higher). Of the 45
+      true-violation entries, 43 are reachable without equal-priority preemption.
+    exceptions:
+      i8xx_tco_1:
+        value: true
+        confidence: likely
+        evidence: >
+          Entries #1 (test_global_var1 rwr) and #3 (tco_expect_close wwr) need
+          closer1 and closer2, both at priority 4 in NIChecker's priority.info, to
+          interrupt each other: with equal priorities not preempting, stage 2 drops
+          every candidate for them with a correct proof. BMC4AV's copy gives closer2
+          priority 2 (priority_alternatives), under which they are reachable without
+          it. The program's own ground truth needs the preemption under NIChecker's
+          priorities, so it is kept here.
 
 priority_alternatives:
   # BMC4AV's priorities where they differ and nothing decides between the two:

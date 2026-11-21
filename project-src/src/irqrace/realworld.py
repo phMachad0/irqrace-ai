@@ -172,9 +172,24 @@ def parse_violation_info(path: Path, program: str, errata: dict[str, Any] | None
 
 # -- C1 ---------------------------------------------------------------------
 
+def equal_priority_preemption(program: str, errata: dict[str, Any] | None, *,
+                              corrected: bool = True) -> bool:
+    """Whether equal-priority ISRs may preempt each other in *program*'s primary C1.
+
+    ``semantics.equal_priority_preemption`` in the errata gives a suite default and
+    the programs that differ from it. Without the errata (``--raw``) it is true, the
+    conservative setting every C1 had before 2026-11-21.
+    """
+    setting = ((errata or {}).get("semantics") or {}).get("equal_priority_preemption") if corrected else None
+    if not setting:
+        return True
+    exception = (setting.get("exceptions") or {}).get(program)
+    return bool(exception["value"] if exception else setting["default"])
+
+
 def config_for(program: str, suite_root: Path, *, errata: dict[str, Any],
                priorities: list[tuple[str, int]] | None = None,
-               name: str | None = None) -> dict[str, Any]:
+               name: str | None = None, corrected: bool = True) -> dict[str, Any]:
     prios = priorities or parse_priority(suite_root / program / "priority.info")
     flows: list[dict[str, Any]] = [
         {"id": "main", "kind": "task", "entry": "main", "irq": None, "priority": 0,
@@ -208,7 +223,7 @@ def config_for(program: str, suite_root: Path, *, errata: dict[str, Any],
             "isr_entry_masks_self": False,
         },
         "semantics": {
-            "equal_priority_preemption": True,
+            "equal_priority_preemption": equal_priority_preemption(program, errata, corrected=corrected),
             "isr_arrival": "unbounded",
             "isr_reentrant": False,
             "nesting": True,
@@ -262,14 +277,14 @@ def generate(suite_root: Path, out_dir: Path, errata_path: Path = ERRATA,
 
     for program in PROGRAMS:
         shipped = priorities_for(program, suite_root, errata, corrected=corrected)
-        write(config_for(program, root, errata=errata, priorities=shipped))
+        write(config_for(program, root, errata=errata, priorities=shipped, corrected=corrected))
         alt = (errata.get("priority_alternatives") or {}).get(program)
         if alt:
             if set(alt) != {n for n, _ in shipped}:
                 raise RealWorldError(f"{program}: alternative priorities name other flows")
             write(config_for(program, root, errata=errata,
                              priorities=[(n, alt[n]) for n, _ in shipped],
-                             name=program + ALT_SUFFIX))
+                             name=program + ALT_SUFFIX, corrected=corrected))
     return written
 
 

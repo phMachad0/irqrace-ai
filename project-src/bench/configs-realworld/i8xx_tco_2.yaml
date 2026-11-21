@@ -1,4 +1,4 @@
-schema_version: c1/2.0.0
+schema_version: c1/2.1.0
 subject:
   name: i8xx_tco_2
   source_root: ../realworld
@@ -63,7 +63,7 @@ masking:
   initial_state: unknown
   isr_entry_masks_self: false
 semantics:
-  equal_priority_preemption: true
+  equal_priority_preemption: false
   isr_arrival: unbounded
   isr_reentrant: false
   nesting: true

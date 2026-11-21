@@ -145,3 +145,15 @@ def test_priority_corrections_are_exactly_the_three_contradicted_programs():
 def test_wdt_pci_1_writers_preempt_closers_after_correction():
     levels = dict(priorities_for("wdt_pci_1", SUITE, load_errata()))
     assert levels["writer1"] > levels["closer1"] and levels["writer2"] > levels["closer2"]
+
+
+def test_equal_priority_preemption_follows_the_errata():
+    """Off by default (NIChecker's stated semantics), on for i8xx_tco_1, whose own
+    ground truth needs it under NIChecker's priorities; on everywhere with --raw."""
+    from irqrace.realworld import ERRATA, equal_priority_preemption, load_errata
+
+    errata = load_errata(ERRATA)
+    assert equal_priority_preemption("wdt_pci_3", errata) is False
+    assert equal_priority_preemption("i8xx_tco_1", errata) is True
+    assert equal_priority_preemption("wdt_pci_3", errata, corrected=False) is True
+    assert equal_priority_preemption("wdt_pci_3", None) is True
