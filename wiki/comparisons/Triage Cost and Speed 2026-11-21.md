@@ -98,15 +98,38 @@ low-effort triage runs.
 | Output tokens | 20 k | 11 k | 113 k |
 | Wall time | 57 s | 73 s | 263 s (+ ≈30 s static) |
 
-On Racebench the scan is competitive at a twentieth of the input. The three bug points the
-per-file scan misses are all bug points this project created in the 2026-10-28 relabel
-([[Contradictions]] #7, #8); on the published labels it finds every one.
+On the original files the scan looked competitive at a twentieth of the input, and in that one
+run its three misses were all bug points this project created in the 2026-10-28 relabel
+([[Contradictions]] #7, #8). That reading did not survive the contamination test below.
 
-**Why this does not settle the question.**
-- **Contamination.** Racebench has been public on GitHub since 2019 with its answers in the
-  `2.1_remarks` comments, and the headers still name the suite. A model that has seen it can recall
-  the planted bugs. Agreeing with the published labels against the relabel is what recall would
-  look like. Untested; a renamed, reordered copy of the suite is the test.
+### Contamination test (n = 3 per arm)
+
+A disguised copy (`scripts/racebench-disguise.py`, seed 2026): every comment and the header gone,
+every `svp_simple_*` identifier renamed to a neutral word, cases renamed `program_NN`, and the
+functions reordered so all 258 annotated lines move; findings are mapped back line by line and
+scored with the same matcher. A second probe asked for each case's bug points by name alone, with
+no source: **31 of 31 answers were empty** (`results/contamination-20261121/`).
+
+| Min–max over 3 runs | original, per file | disguised, per file | original, one prompt | disguised, one prompt |
+| --- | --- | --- | --- | --- |
+| Bug points (53/33) | 49–51 | **50–51** | 48–51 | 44–49 |
+| Traps reported | 1–4 | **6–8** | 0–1 | 2–6 |
+| NASAC score /106 | 86–99 | **76–84** | 93–100 | 75–82 |
+| Findings matching no annotation | 6–8 | 20–26 | 3–11 | 7–17 |
+| Input / output tokens | 94–99 k / 20 k | 74–81 k / 27–28 k | 33 k / 11–13 k | 17–35 k / 11–14 k |
+
+- **Recall survives the disguise; precision does not.** Per file the scan still finds 50–51 of 53
+  bug points, but it reports 3–4× as many planted traps, six of them in every disguised run. Over
+  three runs the original arm's misses also include non-relabel bug points (`008`, `009`), so the
+  "it agrees with the published labels" signature was one draw.
+- **The cue is not separated.** Names, comments and function order changed together; memory of the
+  suite and meaningful identifiers (`condition6`, `global_flag`) both explain the original's low
+  trap count.
+- **The comparison with irqrace is not yet like for like.** irqrace's 97 came from the original
+  names, and its triage reads names too; its static recall does not. Running the full pipeline on
+  the disguised copy is the next measurement.
+
+**Other limits of the scan comparison.**
 - **Scale.** 60 k characters for 31 programs with one or two handlers each. The estimate for the
   18 real-world programs (`scan-estimate-20261121`, characters calibrated on M1's prompts) has the
   scan at 0.15–0.22 M input tokens against 9–29 M for triage, but they are extracted programs of
@@ -114,9 +137,9 @@ per-file scan misses are all bug points this project created in the 2026-10-28 r
 - **Guarantees.** The scan's recall is a sample with nothing behind a miss. irqrace's static stages
   keep every bug point by construction and the triage removes none ([[Thesis Goal]]).
 
-The thesis can still use the scan honestly: as the cost floor and the recall ceiling a pure-LLM
-approach reaches on a suite it may have memorised, with the contamination test run before any
-claim is made.
+The thesis can use the scan honestly as the cost floor of a pure-LLM approach: on the disguised
+copy it keeps most of the recall (2–3 bug points missed per run, with nothing behind a miss) and
+loses the precision.
 
 ## Lucas's T3 runs, scored here
 

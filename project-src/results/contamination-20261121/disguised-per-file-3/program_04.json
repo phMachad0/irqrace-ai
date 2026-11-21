@@ -1,0 +1,58 @@
+{
+  "case": "program_04",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_tundra",
+        "a1_line": 24,
+        "a1_kind": "read",
+        "b_line": 73,
+        "b_kind": "write",
+        "a2_line": 26,
+        "a2_kind": "read",
+        "why": "The ISR can change v_tundra between the >=16 check and its use as an argument, so the checked value differs from the used value."
+      },
+      {
+        "variable": "v_tundra",
+        "a1_line": 26,
+        "a1_kind": "read",
+        "b_line": 73,
+        "b_kind": "write",
+        "a2_line": 48,
+        "a2_kind": "read",
+        "why": "The ISR can change v_tundra between the read passed to fn_walnut and the re-read in fn_dune, giving inconsistent values."
+      },
+      {
+        "variable": "v_tundra",
+        "a1_line": 31,
+        "a1_kind": "write",
+        "b_line": 73,
+        "b_kind": "write",
+        "a2_line": 63,
+        "a2_kind": "read",
+        "why": "The ISR can overwrite the value task_orchid just wrote at line 31 before the task reads it at line 63."
+      },
+      {
+        "variable": "v_tundra",
+        "a1_line": 31,
+        "a1_kind": "write",
+        "b_line": 73,
+        "b_kind": "write",
+        "a2_line": 24,
+        "a2_kind": "read",
+        "why": "The ISR can overwrite the value written at line 31 before the task reads it at line 24."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_tundra\",\"a1_line\":24,\"a1_kind\":\"read\",\"b_line\":73,\"b_kind\":\"write\",\"a2_line\":26,\"a2_kind\":\"read\",\"why\":\"The ISR can change v_tundra between the >=16 check and its use as an argument, so the checked value differs from the used value.\"},{\"variable\":\"v_tundra\",\"a1_line\":26,\"a1_kind\":\"read\",\"b_line\":73,\"b_kind\":\"write\",\"a2_line\":48,\"a2_kind\":\"read\",\"why\":\"The ISR can change v_tundra between the read passed to fn_walnut and the re-read in fn_dune, giving inconsistent values.\"},{\"variable\":\"v_tundra\",\"a1_line\":31,\"a1_kind\":\"write\",\"b_line\":73,\"b_kind\":\"write\",\"a2_line\":63,\"a2_kind\":\"read\",\"why\":\"The ISR can overwrite the value task_orchid just wrote at line 31 before the task reads it at line 63.\"},{\"variable\":\"v_tundra\",\"a1_line\":31,\"a1_kind\":\"write\",\"b_line\":73,\"b_kind\":\"write\",\"a2_line\":24,\"a2_kind\":\"read\",\"why\":\"The ISR can overwrite the value written at line 31 before the task reads it at line 24.\"}]}",
+  "wall_s": 8.676827192306519,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 914,
+    "cache_read": 2281,
+    "cache_write": 488,
+    "latency_s": 8.67664350400446
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

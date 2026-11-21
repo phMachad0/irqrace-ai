@@ -1,0 +1,48 @@
+{
+  "case": "program_07",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_pylon",
+        "a1_line": 21,
+        "a1_kind": "read",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 23,
+        "a2_kind": "read",
+        "why": "The ISR can increment v_pylon between the task's two reads, so the two accesses use different indices."
+      },
+      {
+        "variable": "v_vessel[2]",
+        "a1_line": 27,
+        "a1_kind": "write",
+        "b_line": 9,
+        "b_kind": "write",
+        "a2_line": 31,
+        "a2_kind": "read",
+        "why": "When i==2 the task writes v_vessel[2], the ISR can overwrite it, and the task then reads back the ISR's value."
+      },
+      {
+        "variable": "v_vessel[2]",
+        "a1_line": 29,
+        "a1_kind": "write",
+        "b_line": 9,
+        "b_kind": "write",
+        "a2_line": 31,
+        "a2_kind": "read",
+        "why": "The else branch can also write v_vessel[2], since i is unconstrained and may equal 2 by assumption of rand. The ISR can overwrite it before the read at line 31."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_pylon\",\"a1_line\":21,\"a1_kind\":\"read\",\"b_line\":11,\"b_kind\":\"write\",\"a2_line\":23,\"a2_kind\":\"read\",\"why\":\"The ISR can increment v_pylon between the task's two reads, so the two accesses use different indices.\"},{\"variable\":\"v_vessel[2]\",\"a1_line\":27,\"a1_kind\":\"write\",\"b_line\":9,\"b_kind\":\"write\",\"a2_line\":31,\"a2_kind\":\"read\",\"why\":\"When i==2 the task writes v_vessel[2], the ISR can overwrite it, and the task then reads back the ISR's value.\"},{\"variable\":\"v_vessel[2]\",\"a1_line\":29,\"a1_kind\":\"write\",\"b_line\":9,\"b_kind\":\"write\",\"a2_line\":31,\"a2_kind\":\"read\",\"why\":\"The else branch can also write v_vessel[2], since i is unconstrained and may equal 2 by assumption of rand. The ISR can overwrite it before the read at line 31.\"}]}",
+  "wall_s": 9.692787170410156,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1078,
+    "cache_read": 975,
+    "cache_write": 1320,
+    "latency_s": 9.692607884993777
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

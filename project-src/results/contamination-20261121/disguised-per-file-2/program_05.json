@@ -1,0 +1,38 @@
+{
+  "case": "program_05",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_quartz",
+        "a1_line": 19,
+        "a1_kind": "write",
+        "b_line": 10,
+        "b_kind": "read",
+        "a2_line": 20,
+        "a2_kind": "write",
+        "why": "The ISR can preempt between the task's two writes to v_quartz and read the intermediate value 0x01, which is an intermediate state."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 22,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "read",
+        "a2_line": 24,
+        "a2_kind": "write",
+        "why": "The ISR can preempt between the task's two writes to the v_vessel pointer and read the intermediate pointer value (&v_upland) before it is repointed to &v_hazel."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_quartz\",\"a1_line\":19,\"a1_kind\":\"write\",\"b_line\":10,\"b_kind\":\"read\",\"a2_line\":20,\"a2_kind\":\"write\",\"why\":\"The ISR can preempt between the task's two writes to v_quartz and read the intermediate value 0x01, which is an intermediate state.\"},{\"variable\":\"v_vessel\",\"a1_line\":22,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"read\",\"a2_line\":24,\"a2_kind\":\"write\",\"why\":\"The ISR can preempt between the task's two writes to the v_vessel pointer and read the intermediate pointer value (&v_upland) before it is repointed to &v_hazel.\"}]}",
+  "wall_s": 7.388778924942017,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 732,
+    "cache_read": 1754,
+    "cache_write": 488,
+    "latency_s": 7.388609783985885
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

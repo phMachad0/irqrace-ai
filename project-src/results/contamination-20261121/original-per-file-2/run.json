@@ -1,0 +1,7 @@
+{
+  "mode": "per-file",
+  "backend": "claude-cli:sonnet@low",
+  "workers": 4,
+  "suite": "original",
+  "wall_s": 58.56694722175598
+}

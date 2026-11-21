@@ -1,0 +1,48 @@
+{
+  "case": "program_11",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_umber",
+        "a1_line": 12,
+        "a1_kind": "read",
+        "b_line": 36,
+        "b_kind": "write",
+        "a2_line": 13,
+        "a2_kind": "write",
+        "why": "After enable_isr(1), irq_orchid can run between the task's check and reset, and its increment is overwritten by the reset."
+      },
+      {
+        "variable": "v_umber",
+        "a1_line": 12,
+        "a1_kind": "read",
+        "b_line": 24,
+        "b_kind": "write",
+        "a2_line": 13,
+        "a2_kind": "write",
+        "why": "Once orchid has enabled interrupt 2, irq_pylon can preempt the task between the check and the write and increment v_umber."
+      },
+      {
+        "variable": "v_umber",
+        "a1_line": 36,
+        "a1_kind": "read",
+        "b_line": 24,
+        "b_kind": "write",
+        "a2_line": 36,
+        "a2_kind": "write",
+        "why": "On a later orchid run, irq_pylon (enabled, higher priority) can preempt the read-modify-write in addData, so its update is lost."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_umber\",\"a1_line\":12,\"a1_kind\":\"read\",\"b_line\":36,\"b_kind\":\"write\",\"a2_line\":13,\"a2_kind\":\"write\",\"why\":\"After enable_isr(1), irq_orchid can run between the task's check and reset, and its increment is overwritten by the reset.\"},{\"variable\":\"v_umber\",\"a1_line\":12,\"a1_kind\":\"read\",\"b_line\":24,\"b_kind\":\"write\",\"a2_line\":13,\"a2_kind\":\"write\",\"why\":\"Once orchid has enabled interrupt 2, irq_pylon can preempt the task between the check and the write and increment v_umber.\"},{\"variable\":\"v_umber\",\"a1_line\":36,\"a1_kind\":\"read\",\"b_line\":24,\"b_kind\":\"write\",\"a2_line\":36,\"a2_kind\":\"write\",\"why\":\"On a later orchid run, irq_pylon (enabled, higher priority) can preempt the read-modify-write in addData, so its update is lost.\"}]}",
+  "wall_s": 12.43651556968689,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1276,
+    "cache_read": 975,
+    "cache_write": 1391,
+    "latency_s": 12.436333769990597
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

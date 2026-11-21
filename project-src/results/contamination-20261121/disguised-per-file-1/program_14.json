@@ -1,0 +1,58 @@
+{
+  "case": "program_14",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_velvet",
+        "a1_line": 48,
+        "a1_kind": "read",
+        "b_line": 40,
+        "b_kind": "write",
+        "a2_line": 49,
+        "a2_kind": "write",
+        "why": "The ISR can update v_velvet after the task's check at line 48 and before the task writes 0 at line 49. The task then clears a value that no longer matches its check."
+      },
+      {
+        "variable": "v_velvet",
+        "a1_line": 49,
+        "a1_kind": "write",
+        "b_line": 40,
+        "b_kind": "write",
+        "a2_line": 26,
+        "a2_kind": "read",
+        "why": "The task writes 0 at line 49, the ISR overwrites it at line 40, and the task later reads the ISR's value at line 26 instead of the 0 it wrote."
+      },
+      {
+        "variable": "v_velvet",
+        "a1_line": 59,
+        "a1_kind": "write",
+        "b_line": 40,
+        "b_kind": "write",
+        "a2_line": 48,
+        "a2_kind": "read",
+        "why": "The task initialises v_velvet at line 59, and the ISR can overwrite it at line 40 before the task reads it at line 48."
+      },
+      {
+        "variable": "v_velvet",
+        "a1_line": 59,
+        "a1_kind": "write",
+        "b_line": 40,
+        "b_kind": "write",
+        "a2_line": 26,
+        "a2_kind": "read",
+        "why": "The task initialises v_velvet at line 59, and the ISR can overwrite it at line 40 before the task reads it at line 26."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_velvet\",\"a1_line\":48,\"a1_kind\":\"read\",\"b_line\":40,\"b_kind\":\"write\",\"a2_line\":49,\"a2_kind\":\"write\",\"why\":\"The ISR can update v_velvet after the task's check at line 48 and before the task writes 0 at line 49. The task then clears a value that no longer matches its check.\"},{\"variable\":\"v_velvet\",\"a1_line\":49,\"a1_kind\":\"write\",\"b_line\":40,\"b_kind\":\"write\",\"a2_line\":26,\"a2_kind\":\"read\",\"why\":\"The task writes 0 at line 49, the ISR overwrites it at line 40, and the task later reads the ISR's value at line 26 instead of the 0 it wrote.\"},{\"variable\":\"v_velvet\",\"a1_line\":59,\"a1_kind\":\"write\",\"b_line\":40,\"b_kind\":\"write\",\"a2_line\":48,\"a2_kind\":\"read\",\"why\":\"The task initialises v_velvet at line 59, and the ISR can overwrite it at line 40 before the task reads it at line 48.\"},{\"variable\":\"v_velvet\",\"a1_line\":59,\"a1_kind\":\"write\",\"b_line\":40,\"b_kind\":\"write\",\"a2_line\":26,\"a2_kind\":\"read\",\"why\":\"The task initialises v_velvet at line 59, and the ISR can overwrite it at line 40 before the task reads it at line 26.\"}]}",
+  "wall_s": 16.4438259601593,
+  "usage": {
+    "input_tokens": 4,
+    "output_tokens": 1578,
+    "cache_read": 3650,
+    "cache_write": 2817,
+    "latency_s": 16.44364721700549
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,28 @@
+{
+  "case": "program_13",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_umber",
+        "a1_line": 14,
+        "a1_kind": "write",
+        "b_line": 7,
+        "b_kind": "read",
+        "a2_line": 16,
+        "a2_kind": "write",
+        "why": "The ISR can preempt the task between its write at line 14 and its write through alias p at line 16, so it reads the intermediate value 0x01 that the task did not mean to expose."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_umber\",\"a1_line\":14,\"a1_kind\":\"write\",\"b_line\":7,\"b_kind\":\"read\",\"a2_line\":16,\"a2_kind\":\"write\",\"why\":\"The ISR can preempt the task between its write at line 14 and its write through alias p at line 16, so it reads the intermediate value 0x01 that the task did not mean to expose.\"}]}",
+  "wall_s": 4.2097296714782715,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 273,
+    "cache_read": 1625,
+    "cache_write": 481,
+    "latency_s": 4.209410898009082
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

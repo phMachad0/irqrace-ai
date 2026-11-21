@@ -1,0 +1,28 @@
+{
+  "case": "svp_simple_005_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_005_001_global_var",
+        "a1_line": 32,
+        "a1_kind": "write",
+        "b_line": 46,
+        "b_kind": "read",
+        "a2_line": 40,
+        "a2_kind": "write",
+        "why": "The ISR can preempt main between the write at line 32 and the write at line 40 and read the intermediate value 0x01, which main later overwrites with 0x05. Line 38 is unreachable because nothing sets the condition to 1."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_005_001_global_var\",\"a1_line\":32,\"a1_kind\":\"write\",\"b_line\":46,\"b_kind\":\"read\",\"a2_line\":40,\"a2_kind\":\"write\",\"why\":\"The ISR can preempt main between the write at line 32 and the write at line 40 and read the intermediate value 0x01, which main later overwrites with 0x05. Line 38 is unreachable because nothing sets the condition to 1.\"}]}",
+  "wall_s": 5.842004299163818,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 453,
+    "cache_read": 2267,
+    "cache_write": 486,
+    "latency_s": 5.841864670015639
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

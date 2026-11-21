@@ -1967,3 +1967,17 @@ New page [[Triage Cost and Speed 2026-11-21]]; data in `project-src/results/spee
 - Lucas's two completed T3 runs scored: `+effectfree` 53/53, 1 trap, score 103; `+rubric` 100.
 - Pedro's direction: continue with Sonnet at low effort; a free non-Anthropic model
   (`gpt-oss-120b` through Groq) later.
+
+## [2026-11-21] result | contamination test: the LLM-only scan on a disguised Racebench
+`scripts/racebench-disguise.py` (seed 2026) writes a copy of the 31 cases without comments or
+header, with neutral identifiers, `program_NN` names and reordered functions; all 258 annotated
+lines move and are mapped back for scoring. n = 3 per arm, Sonnet at low effort, same prompt as the
+scan (`project-src/results/contamination-20261121/`).
+- Per file: bug points 50–51/53 disguised against 49–51 original; traps 6–8 against 1–4; NASAC
+  76–84 against 86–99. One prompt: 44–49 against 48–51, traps 2–6 against 0–1.
+- A by-name recall probe, no source: 31 of 31 answers empty.
+- Reading: the scan's recall does not depend on recognising the suite; its precision does, through
+  memory or meaningful names (not separated). The earlier reading that its misses were exactly the
+  relabel's bug points was one draw, and is corrected in `scan-measure-20261121/NOTES.md`.
+- Not yet like for like with irqrace, whose triage also read the original names. Updated
+  [[Triage Cost and Speed 2026-11-21]] and [[Open Questions]].

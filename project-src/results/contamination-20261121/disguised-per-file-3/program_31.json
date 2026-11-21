@@ -1,0 +1,48 @@
+{
+  "case": "program_31",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_basalt",
+        "a1_line": 17,
+        "a1_kind": "read",
+        "b_line": 10,
+        "b_kind": "write",
+        "a2_line": 18,
+        "a2_kind": "write",
+        "why": "Only interrupt 1 is masked, so irq_kestrel can decrement v_basalt between the task's check and its reset. The reset is then based on a stale value."
+      },
+      {
+        "variable": "v_basalt",
+        "a1_line": 26,
+        "a1_kind": "write",
+        "b_line": 10,
+        "b_kind": "write",
+        "a2_line": 17,
+        "a2_kind": "read",
+        "why": "Interrupts are enabled after the write in fn_tundra, so irq_kestrel can modify v_basalt before the task reads it at line 17."
+      },
+      {
+        "variable": "v_basalt",
+        "a1_line": 26,
+        "a1_kind": "write",
+        "b_line": 6,
+        "b_kind": "write",
+        "a2_line": 17,
+        "a2_kind": "read",
+        "why": "irq_willow is not yet masked between line 26 and disable_isr(1), including during init(). It can change v_basalt before the task reads it at line 17."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_basalt\",\"a1_line\":17,\"a1_kind\":\"read\",\"b_line\":10,\"b_kind\":\"write\",\"a2_line\":18,\"a2_kind\":\"write\",\"why\":\"Only interrupt 1 is masked, so irq_kestrel can decrement v_basalt between the task's check and its reset. The reset is then based on a stale value.\"},{\"variable\":\"v_basalt\",\"a1_line\":26,\"a1_kind\":\"write\",\"b_line\":10,\"b_kind\":\"write\",\"a2_line\":17,\"a2_kind\":\"read\",\"why\":\"Interrupts are enabled after the write in fn_tundra, so irq_kestrel can modify v_basalt before the task reads it at line 17.\"},{\"variable\":\"v_basalt\",\"a1_line\":26,\"a1_kind\":\"write\",\"b_line\":6,\"b_kind\":\"write\",\"a2_line\":17,\"a2_kind\":\"read\",\"why\":\"irq_willow is not yet masked between line 26 and disable_isr(1), including during init(). It can change v_basalt before the task reads it at line 17.\"}]}",
+  "wall_s": 14.47739052772522,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1057,
+    "cache_read": 1739,
+    "cache_write": 484,
+    "latency_s": 14.477200744993752
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

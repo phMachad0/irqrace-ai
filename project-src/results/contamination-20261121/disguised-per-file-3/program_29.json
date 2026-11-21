@@ -1,0 +1,38 @@
+{
+  "case": "program_29",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_garnet",
+        "a1_line": 34,
+        "a1_kind": "read",
+        "b_line": 24,
+        "b_kind": "write",
+        "a2_line": 35,
+        "a2_kind": "write",
+        "why": "irq_kestrel is enabled at line 33 and can preempt between the main task's check and reset, so the reset at line 35 overwrites the ISR's increment, which was based on a stale check."
+      },
+      {
+        "variable": "v_garnet",
+        "a1_line": 34,
+        "a1_kind": "read",
+        "b_line": 8,
+        "b_kind": "write",
+        "a2_line": 35,
+        "a2_kind": "write",
+        "why": "Once irq_kestrel has run and enabled interrupt 2, irq_willow can preempt between lines 34 and 35 and increment v_garnet. The main task then overwrites it with 0 based on the stale read."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_garnet\",\"a1_line\":34,\"a1_kind\":\"read\",\"b_line\":24,\"b_kind\":\"write\",\"a2_line\":35,\"a2_kind\":\"write\",\"why\":\"irq_kestrel is enabled at line 33 and can preempt between the main task's check and reset, so the reset at line 35 overwrites the ISR's increment, which was based on a stale check.\"},{\"variable\":\"v_garnet\",\"a1_line\":34,\"a1_kind\":\"read\",\"b_line\":8,\"b_kind\":\"write\",\"a2_line\":35,\"a2_kind\":\"write\",\"why\":\"Once irq_kestrel has run and enabled interrupt 2, irq_willow can preempt between lines 34 and 35 and increment v_garnet. The main task then overwrites it with 0 based on the stale read.\"}]}",
+  "wall_s": 11.062629461288452,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1185,
+    "cache_read": 1855,
+    "cache_write": 484,
+    "latency_s": 11.062483599002007
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

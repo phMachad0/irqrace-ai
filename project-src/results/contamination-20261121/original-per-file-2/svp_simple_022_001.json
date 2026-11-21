@@ -1,0 +1,78 @@
+{
+  "case": "svp_simple_022_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_022_001_global_var1",
+        "a1_line": 32,
+        "a1_kind": "write",
+        "b_line": 66,
+        "b_kind": "write",
+        "a2_line": 55,
+        "a2_kind": "read",
+        "why": "The ISR can reset var1 to 0 between main's write and its check, so the branch sees a value main didn't write."
+      },
+      {
+        "variable": "svp_simple_022_001_global_var1",
+        "a1_line": 55,
+        "a1_kind": "read",
+        "b_line": 66,
+        "b_kind": "write",
+        "a2_line": 56,
+        "a2_kind": "write",
+        "why": "The ISR can write 0 after the check, and main then overwrites it with 12 based on the stale read."
+      },
+      {
+        "variable": "svp_simple_022_001_global_var1",
+        "a1_line": 55,
+        "a1_kind": "read",
+        "b_line": 66,
+        "b_kind": "write",
+        "a2_line": 58,
+        "a2_kind": "write",
+        "why": "The ISR can write var1 between the check and the else-branch write, so the write rests on a stale read."
+      },
+      {
+        "variable": "svp_simple_022_001_global_var1",
+        "a1_line": 56,
+        "a1_kind": "write",
+        "b_line": 66,
+        "b_kind": "write",
+        "a2_line": 63,
+        "a2_kind": "read",
+        "why": "The ISR can overwrite main's 12 before func_4 reads var1, so main reads 0 instead of 12."
+      },
+      {
+        "variable": "svp_simple_022_001_global_var1",
+        "a1_line": 58,
+        "a1_kind": "write",
+        "b_line": 66,
+        "b_kind": "write",
+        "a2_line": 63,
+        "a2_kind": "read",
+        "why": "The ISR write between main's write and its later read breaks the assumption that var1 still holds main's value."
+      },
+      {
+        "variable": "svp_simple_022_001_global_var1",
+        "a1_line": 63,
+        "a1_kind": "read",
+        "b_line": 66,
+        "b_kind": "write",
+        "a2_line": 39,
+        "a2_kind": "read",
+        "why": "The ISR can change var1 between the two reads, so var3 gets inconsistent copies of var1."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_022_001_global_var1\",\"a1_line\":32,\"a1_kind\":\"write\",\"b_line\":66,\"b_kind\":\"write\",\"a2_line\":55,\"a2_kind\":\"read\",\"why\":\"The ISR can reset var1 to 0 between main's write and its check, so the branch sees a value main didn't write.\"},{\"variable\":\"svp_simple_022_001_global_var1\",\"a1_line\":55,\"a1_kind\":\"read\",\"b_line\":66,\"b_kind\":\"write\",\"a2_line\":56,\"a2_kind\":\"write\",\"why\":\"The ISR can write 0 after the check, and main then overwrites it with 12 based on the stale read.\"},{\"variable\":\"svp_simple_022_001_global_var1\",\"a1_line\":55,\"a1_kind\":\"read\",\"b_line\":66,\"b_kind\":\"write\",\"a2_line\":58,\"a2_kind\":\"write\",\"why\":\"The ISR can write var1 between the check and the else-branch write, so the write rests on a stale read.\"},{\"variable\":\"svp_simple_022_001_global_var1\",\"a1_line\":56,\"a1_kind\":\"write\",\"b_line\":66,\"b_kind\":\"write\",\"a2_line\":63,\"a2_kind\":\"read\",\"why\":\"The ISR can overwrite main's 12 before func_4 reads var1, so main reads 0 instead of 12.\"},{\"variable\":\"svp_simple_022_001_global_var1\",\"a1_line\":58,\"a1_kind\":\"write\",\"b_line\":66,\"b_kind\":\"write\",\"a2_line\":63,\"a2_kind\":\"read\",\"why\":\"The ISR write between main's write and its later read breaks the assumption that var1 still holds main's value.\"},{\"variable\":\"svp_simple_022_001_global_var1\",\"a1_line\":63,\"a1_kind\":\"read\",\"b_line\":66,\"b_kind\":\"write\",\"a2_line\":39,\"a2_kind\":\"read\",\"why\":\"The ISR can change var1 between the two reads, so var3 gets inconsistent copies of var1.\"}]}",
+  "wall_s": 10.953964471817017,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1246,
+    "cache_read": 2954,
+    "cache_write": 489,
+    "latency_s": 10.953747232997557
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,28 @@
+{
+  "case": "svp_simple_001_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_001_001_global_array[TRIGGER]",
+        "a1_line": 32,
+        "a1_kind": "write",
+        "b_line": 55,
+        "b_kind": "read",
+        "a2_line": 35,
+        "a2_kind": "write",
+        "why": "After isr_1 sets flag=1 and enables isr_2, isr_2 can preempt main between its zero-initialisation of array[9999] (line 32) and the write of 1 (line 35). isr_2 then reads the intermediate value."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_001_001_global_array[TRIGGER]\",\"a1_line\":32,\"a1_kind\":\"write\",\"b_line\":55,\"b_kind\":\"read\",\"a2_line\":35,\"a2_kind\":\"write\",\"why\":\"After isr_1 sets flag=1 and enables isr_2, isr_2 can preempt main between its zero-initialisation of array[9999] (line 32) and the write of 1 (line 35). isr_2 then reads the intermediate value.\"}]}",
+  "wall_s": 8.767600536346436,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 801,
+    "cache_read": 2500,
+    "cache_write": 485,
+    "latency_s": 8.767421044991352
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

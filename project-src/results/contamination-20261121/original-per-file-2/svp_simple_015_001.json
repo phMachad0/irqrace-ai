@@ -1,0 +1,28 @@
+{
+  "case": "svp_simple_015_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_015_001_global_var1",
+        "a1_line": 30,
+        "a1_kind": "read",
+        "b_line": 39,
+        "b_kind": "write",
+        "a2_line": 31,
+        "a2_kind": "read",
+        "why": "The ISR can preempt main between the two reads of var1 in the condition and change it, so the range check x < var1 < y may see inconsistent values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_015_001_global_var1\",\"a1_line\":30,\"a1_kind\":\"read\",\"b_line\":39,\"b_kind\":\"write\",\"a2_line\":31,\"a2_kind\":\"read\",\"why\":\"The ISR can preempt main between the two reads of var1 in the condition and change it, so the range check x < var1 < y may see inconsistent values.\"}]}",
+  "wall_s": 4.550526142120361,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 299,
+    "cache_read": 2183,
+    "cache_write": 488,
+    "latency_s": 4.5503453809942584
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

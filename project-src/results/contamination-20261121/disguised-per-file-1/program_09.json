@@ -1,0 +1,28 @@
+{
+  "case": "program_09",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_raptor",
+        "a1_line": 32,
+        "a1_kind": "read",
+        "b_line": 52,
+        "b_kind": "write",
+        "a2_line": 37,
+        "a2_kind": "read",
+        "why": "After enable_isr(1), irq_basalt can preempt the task between its two reads of v_raptor and write 999 (v_timber is 1, so line 52 is reachable), so the reads can see different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_raptor\",\"a1_line\":32,\"a1_kind\":\"read\",\"b_line\":52,\"b_kind\":\"write\",\"a2_line\":37,\"a2_kind\":\"read\",\"why\":\"After enable_isr(1), irq_basalt can preempt the task between its two reads of v_raptor and write 999 (v_timber is 1, so line 52 is reachable), so the reads can see different values.\"}]}",
+  "wall_s": 8.30000376701355,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 765,
+    "cache_read": 975,
+    "cache_write": 1620,
+    "latency_s": 8.299784825008828
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

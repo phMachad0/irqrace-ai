@@ -1,0 +1,28 @@
+{
+  "case": "svp_simple_025_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_025_001_global_var",
+        "a1_line": 35,
+        "a1_kind": "read",
+        "b_line": 38,
+        "b_kind": "write",
+        "a2_line": 35,
+        "a2_kind": "write",
+        "why": "Main reads the variable in *ptr_var + 1, ISR 1 can preempt and write 0, then main writes back the stale value + 1, overwriting the ISR's write."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_025_001_global_var\",\"a1_line\":35,\"a1_kind\":\"read\",\"b_line\":38,\"b_kind\":\"write\",\"a2_line\":35,\"a2_kind\":\"write\",\"why\":\"Main reads the variable in *ptr_var + 1, ISR 1 can preempt and write 0, then main writes back the stale value + 1, overwriting the ISR's write.\"}]}",
+  "wall_s": 3.5128016471862793,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 183,
+    "cache_read": 2245,
+    "cache_write": 490,
+    "latency_s": 3.5125906169996597
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

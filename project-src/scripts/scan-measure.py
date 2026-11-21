@@ -3,6 +3,7 @@
 
     python scripts/scan-measure.py per-file --out DIR [--backend claude-cli:sonnet@low] [--workers 4]
     python scripts/scan-measure.py one-prompt --out DIR [--backend ...]
+    python scripts/scan-measure.py recall --out DIR [--backend ...]
     python scripts/scan-measure.py score DIR [--labels 53/33|48/38]
 
 No static analysis is involved. The model gets, per case, the C source with line
@@ -69,12 +70,35 @@ ONE_PROMPT_SCHEMA = {
         "properties": {"case": {"type": "string"}, "violations": {"type": "array", "items": FINDING}}}}}}
 
 
+#: Set by --suite: a disguised copy made by racebench-disguise.py, or None for the original.
+DISGUISED: Path | None = None
+
+
 def cases() -> list[str]:
+    """The names the model sees: case names, or ``program_NN`` in a disguised copy."""
+    if DISGUISED is not None:
+        return sorted(json.loads((DISGUISED / "index.json").read_text())["programs"])
     return sorted(p.stem for p in CONFIGS.glob("svp_simple_*.yaml"))
+
+
+def _meta(name: str) -> dict:
+    return json.loads((DISGUISED / f"{name}.json").read_text())
+
+
+def original(name: str, line: int) -> tuple[str, int]:
+    """The original case and line a name and line of the prompt stand for."""
+    if DISGUISED is None:
+        return name, line
+    m = _meta(name)
+    return m["case"], m["line_map"].get(str(line), -line)
 
 
 def source_of(case: str) -> str:
     """The case's C file, numbered, without the trailing annotation block."""
+    if DISGUISED is not None:
+        lines = (DISGUISED / f"{case}.c").read_text(encoding="utf-8").splitlines()
+        width = len(str(len(lines)))
+        return "\n".join(f"{i:>{width}}  {l}" for i, l in enumerate(lines, 1))
     path = SUITE / case.rsplit("_", 1)[0] / f"{case}.c"
     lines = path.read_text(encoding="utf-8").splitlines()
     cut = next((i for i, l in enumerate(lines) if l.strip().startswith("//bug")), len(lines))
@@ -84,9 +108,9 @@ def source_of(case: str) -> str:
 
 
 def flows_of(case: str) -> str:
-    cfg = yaml.safe_load((CONFIGS / f"{case}.yaml").read_text())
+    flows = _meta(case)["flows"] if DISGUISED is not None else yaml.safe_load((CONFIGS / f"{case}.yaml").read_text())["flows"]
     rows = []
-    for f in cfg["flows"]:
+    for f in flows:
         kind = "ISR" if f["kind"] == "isr" else "task"
         irq = f", interrupt {f['irq']}" if f.get("irq") is not None else ""
         rows.append(f"- {f['entry']}: {kind}, priority {f['priority']}{irq}")
@@ -94,7 +118,7 @@ def flows_of(case: str) -> str:
 
 
 def header() -> str:
-    return (SUITE / "common.h").read_text(encoding="utf-8")
+    return ((DISGUISED or SUITE) / "common.h").read_text(encoding="utf-8")
 
 
 def case_block(case: str) -> str:
@@ -102,9 +126,9 @@ def case_block(case: str) -> str:
             f'<source file="{case}.c">\n{source_of(case)}\n</source>\n</case>')
 
 
-def ask(backend, prompt: str, schema: dict, name: str) -> dict:
+def ask(backend, prompt: str, schema: dict, name: str, system: str = SYSTEM) -> dict:
     t0 = time.time()
-    resp = backend.chat(ChatRequest(system=SYSTEM, messages=[{"role": "user", "content": prompt}],
+    resp = backend.chat(ChatRequest(system=system, messages=[{"role": "user", "content": prompt}],
                                     schema=schema, schema_name=name))
     u = resp.usage
     return {"parsed": resp.parsed, "text": resp.text, "wall_s": time.time() - t0,
@@ -133,6 +157,7 @@ def cmd_per_file(args) -> int:
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         list(pool.map(one, cases()))
     (out / "run.json").write_text(json.dumps({"mode": "per-file", "backend": args.backend, "workers": args.workers,
+                                              "suite": str(DISGUISED) if DISGUISED else "original",
                                               "wall_s": time.time() - t0}, indent=2))
     return 0
 
@@ -152,8 +177,42 @@ def cmd_one_prompt(args) -> int:
         res = {"error": str(e)}
     (out / "all.json").write_text(json.dumps(res, indent=2, ensure_ascii=False))
     (out / "run.json").write_text(json.dumps({"mode": "one-prompt", "backend": args.backend,
+                                              "suite": str(DISGUISED) if DISGUISED else "original",
                                               "wall_s": time.time() - t0}, indent=2))
     print("error" if "error" in res else f"{sum(len(c['violations']) for c in res['parsed']['cases'])} findings")
+    return 0
+
+
+RECALL_SYSTEM = (
+    "You answer questions about published software benchmarks from memory. If you do not remember "
+    "something, return an empty list rather than guessing."
+)
+
+
+def cmd_recall(args) -> int:
+    """No source at all: ask for a case's annotated bug points by its name alone."""
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=False)
+    backend = from_spec(args.backend)
+
+    def one(case: str) -> None:
+        prompt = (f"Racebench (github.com/chenruibuaa/racebench) is an interrupt-race benchmark. Its "
+                  f"2.1_remarks version annotates each program with its bug points (bug点) and false "
+                  f"positives (误报点) as line triples. Without the source in front of you: what are the "
+                  f"annotated bug points of {case}.c? Give each as the three line numbers A1, B, A2 with "
+                  f"access kinds and the variable. Empty list if you do not remember this case.")
+        try:
+            res = ask(backend, prompt, PER_FILE_SCHEMA, "violations", system=RECALL_SYSTEM)
+        except Exception as e:
+            res = {"error": str(e)}
+        (out / f"{case}.json").write_text(json.dumps({"case": case, **res}, indent=2, ensure_ascii=False))
+        print(f"{case}: {'error' if 'error' in res else len(res['parsed']['violations'])}", flush=True)
+
+    t0 = time.time()
+    with ThreadPoolExecutor(max_workers=args.workers) as pool:
+        list(pool.map(one, cases()))
+    (out / "run.json").write_text(json.dumps({"mode": "per-file", "probe": "recall", "backend": args.backend,
+                                              "suite": "original", "wall_s": time.time() - t0}, indent=2))
     return 0
 
 
@@ -162,7 +221,7 @@ def findings_by_case(out: Path) -> tuple[dict[str, list[dict]], list[dict], dict
     calls: list[dict] = []
     by_case: dict[str, list[dict]] = {}
     if run["mode"] == "per-file":
-        for f in sorted(out.glob("svp_simple_*.json")):
+        for f in sorted(p for p in out.glob("*.json") if p.stem.startswith(("svp_simple_", "program_"))):
             d = json.loads(f.read_text())
             calls.append(d)
             by_case[d["case"]] = [] if "error" in d else d["parsed"]["violations"]
@@ -179,13 +238,26 @@ def cmd_score(args) -> int:
     from irqrace.bench_metrics import label_set
     from irqrace.evaluation import match_subject
 
+    global DISGUISED
     out = Path(args.dir)
-    by_case, calls, run = findings_by_case(out)
+    by_name, calls, run = findings_by_case(out)
+    DISGUISED = Path(run["suite"]) if run.get("suite", "original") != "original" else None
+    by_case: dict[str, list[dict]] = {}
+    for name, found in by_name.items():
+        if DISGUISED is not None and not (DISGUISED / f"{name}.json").exists():
+            continue  # a name the model invented
+        for v in found:
+            case, _ = original(name, 0)
+            w = dict(v)
+            for k in ("a1_line", "b_line", "a2_line"):
+                w[k] = original(name, v[k])[1]
+            by_case.setdefault(case, []).append(w)
     labels = label_set(args.labels)
-    gt = {case: labels.ground_truth(case) for case in cases()}
+    names = sorted(p.stem for p in CONFIGS.glob("svp_simple_*.yaml"))
+    gt = {case: labels.ground_truth(case) for case in names}
     rows = []
     tot = {"bugs": 0, "bugs_found": 0, "traps": 0, "traps_found": 0, "findings": 0, "unmatched": 0}
-    for case in cases():
+    for case in names:
         g = gt[case]
         cands = []
         for i, v in enumerate(by_case.get(case, [])):
@@ -227,16 +299,21 @@ def cmd_score(args) -> int:
 def main() -> int:
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name in ("per-file", "one-prompt"):
+    for name in ("per-file", "one-prompt", "recall"):
         p = sub.add_parser(name)
         p.add_argument("--out", required=True)
         p.add_argument("--backend", default="claude-cli:sonnet@low")
         p.add_argument("--workers", type=int, default=4)
+    for name in ("per-file", "one-prompt"):
+        sub.choices[name].add_argument("--suite", help="a disguised copy (racebench-disguise.py)")
     s = sub.add_parser("score")
     s.add_argument("dir")
     s.add_argument("--labels", default="53/33", help="53/33 (default) or 48/38")
     args = ap.parse_args()
-    return {"per-file": cmd_per_file, "one-prompt": cmd_one_prompt, "score": cmd_score}[args.cmd](args)
+    global DISGUISED
+    if getattr(args, "suite", None):
+        DISGUISED = Path(args.suite).resolve()
+    return {"recall": cmd_recall, "per-file": cmd_per_file, "one-prompt": cmd_one_prompt, "score": cmd_score}[args.cmd](args)
 
 
 if __name__ == "__main__":

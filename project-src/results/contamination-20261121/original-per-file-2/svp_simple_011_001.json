@@ -1,0 +1,38 @@
+{
+  "case": "svp_simple_011_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_011_001_global_var1",
+        "a1_line": 30,
+        "a1_kind": "write",
+        "b_line": 42,
+        "b_kind": "read",
+        "a2_line": 31,
+        "a2_kind": "write",
+        "why": "The ISR can preempt main between the two writes and read an intermediate value (0x01) that main then overwrites with 0x02."
+      },
+      {
+        "variable": "svp_simple_011_001_u",
+        "a1_line": 33,
+        "a1_kind": "write",
+        "b_line": 43,
+        "b_kind": "read",
+        "a2_line": 35,
+        "a2_kind": "write",
+        "why": "The ISR can preempt main between the two writes to the pointer u and read it while it is only partly updated. It then dereferences whichever target is current, not a consistent one."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_011_001_global_var1\",\"a1_line\":30,\"a1_kind\":\"write\",\"b_line\":42,\"b_kind\":\"read\",\"a2_line\":31,\"a2_kind\":\"write\",\"why\":\"The ISR can preempt main between the two writes and read an intermediate value (0x01) that main then overwrites with 0x02.\"},{\"variable\":\"svp_simple_011_001_u\",\"a1_line\":33,\"a1_kind\":\"write\",\"b_line\":43,\"b_kind\":\"read\",\"a2_line\":35,\"a2_kind\":\"write\",\"why\":\"The ISR can preempt main between the two writes to the pointer u and read it while it is only partly updated. It then dereferences whichever target is current, not a consistent one.\"}]}",
+  "wall_s": 6.609858274459839,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 589,
+    "cache_read": 2272,
+    "cache_write": 488,
+    "latency_s": 6.609682113979943
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

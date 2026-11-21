@@ -1,0 +1,28 @@
+{
+  "case": "program_10",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_amber",
+        "a1_line": 15,
+        "a1_kind": "read",
+        "b_line": 25,
+        "b_kind": "write",
+        "a2_line": 17,
+        "a2_kind": "read",
+        "why": "irq_upland masks vessel, but higher-priority irq_nimbus preempts it and calls enable_isr(3) (global mask). irq_vessel can then run and write v_amber between upland's two reads, after v_jasper is already 1."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_amber\",\"a1_line\":15,\"a1_kind\":\"read\",\"b_line\":25,\"b_kind\":\"write\",\"a2_line\":17,\"a2_kind\":\"read\",\"why\":\"irq_upland masks vessel, but higher-priority irq_nimbus preempts it and calls enable_isr(3) (global mask). irq_vessel can then run and write v_amber between upland's two reads, after v_jasper is already 1.\"}]}",
+  "wall_s": 9.666975736618042,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 958,
+    "cache_read": 1959,
+    "cache_write": 481,
+    "latency_s": 9.666822002007393
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

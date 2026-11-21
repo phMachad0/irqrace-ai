@@ -1,0 +1,48 @@
+{
+  "case": "svp_simple_009_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_009_001_m",
+        "a1_line": 35,
+        "a1_kind": "write",
+        "b_line": 46,
+        "b_kind": "write",
+        "a2_line": 37,
+        "a2_kind": "read",
+        "why": "The ISR can preempt main between assigning m and dereferencing it. It repoints m to the ISR's local, so main's store at line 37 goes to the wrong object."
+      },
+      {
+        "variable": "svp_simple_009_001_m",
+        "a1_line": 37,
+        "a1_kind": "read",
+        "b_line": 46,
+        "b_kind": "write",
+        "a2_line": 38,
+        "a2_kind": "read",
+        "why": "The ISR can repoint m between main's two dereferences, so line 38 uses a different target than line 37."
+      },
+      {
+        "variable": "svp_simple_009_001_local_var1",
+        "a1_line": 32,
+        "a1_kind": "write",
+        "b_line": 44,
+        "b_kind": "read",
+        "a2_line": 33,
+        "a2_kind": "write",
+        "why": "The ISR can read local_var1 through p between main's two writes. It sees the intermediate value 2 rather than the final value 3."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_009_001_m\",\"a1_line\":35,\"a1_kind\":\"write\",\"b_line\":46,\"b_kind\":\"write\",\"a2_line\":37,\"a2_kind\":\"read\",\"why\":\"The ISR can preempt main between assigning m and dereferencing it. It repoints m to the ISR's local, so main's store at line 37 goes to the wrong object.\"},{\"variable\":\"svp_simple_009_001_m\",\"a1_line\":37,\"a1_kind\":\"read\",\"b_line\":46,\"b_kind\":\"write\",\"a2_line\":38,\"a2_kind\":\"read\",\"why\":\"The ISR can repoint m between main's two dereferences, so line 38 uses a different target than line 37.\"},{\"variable\":\"svp_simple_009_001_local_var1\",\"a1_line\":32,\"a1_kind\":\"write\",\"b_line\":44,\"b_kind\":\"read\",\"a2_line\":33,\"a2_kind\":\"write\",\"why\":\"The ISR can read local_var1 through p between main's two writes. It sees the intermediate value 2 rather than the final value 3.\"}]}",
+  "wall_s": 9.35281229019165,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1028,
+    "cache_read": 2367,
+    "cache_write": 485,
+    "latency_s": 9.352642430982087
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

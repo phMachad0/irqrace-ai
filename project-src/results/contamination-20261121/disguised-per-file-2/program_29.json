@@ -1,0 +1,28 @@
+{
+  "case": "program_29",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_garnet",
+        "a1_line": 34,
+        "a1_kind": "read",
+        "b_line": 24,
+        "b_kind": "write",
+        "a2_line": 35,
+        "a2_kind": "write",
+        "why": "After enable_isr(1), irq_kestrel can preempt the task between the check of v_garnet and the reset, and its increment is overwritten or makes the check stale."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_garnet\",\"a1_line\":34,\"a1_kind\":\"read\",\"b_line\":24,\"b_kind\":\"write\",\"a2_line\":35,\"a2_kind\":\"write\",\"why\":\"After enable_isr(1), irq_kestrel can preempt the task between the check of v_garnet and the reset, and its increment is overwritten or makes the check stale.\"}]}",
+  "wall_s": 13.885040998458862,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1441,
+    "cache_read": 1855,
+    "cache_write": 487,
+    "latency_s": 13.884830166003667
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,28 @@
+{
+  "case": "svp_simple_024_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_024_001_global_array[1]",
+        "a1_line": 56,
+        "a1_kind": "read",
+        "b_line": 63,
+        "b_kind": "write",
+        "a2_line": 57,
+        "a2_kind": "read",
+        "why": "Main reads array[1] at line 56 (call with index 0) and again at line 57 (call with index 1). The ISR can preempt between those reads and zero the array, so the two reads can return inconsistent values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_024_001_global_array[1]\",\"a1_line\":56,\"a1_kind\":\"read\",\"b_line\":63,\"b_kind\":\"write\",\"a2_line\":57,\"a2_kind\":\"read\",\"why\":\"Main reads array[1] at line 56 (call with index 0) and again at line 57 (call with index 1). The ISR can preempt between those reads and zero the array, so the two reads can return inconsistent values.\"}]}",
+  "wall_s": 5.990385055541992,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 506,
+    "cache_read": 2736,
+    "cache_write": 483,
+    "latency_s": 5.990206059999764
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

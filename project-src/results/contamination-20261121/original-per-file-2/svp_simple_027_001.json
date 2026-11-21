@@ -1,0 +1,38 @@
+{
+  "case": "svp_simple_027_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_027_001_gloable_var",
+        "a1_line": 27,
+        "a1_kind": "read",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 28,
+        "a2_kind": "write",
+        "why": "ISR1 is enabled and can preempt main between the check and the reset, so the reset overwrites ISR1's increment."
+      },
+      {
+        "variable": "svp_simple_027_001_gloable_var",
+        "a1_line": 27,
+        "a1_kind": "read",
+        "b_line": 45,
+        "b_kind": "write",
+        "a2_line": 28,
+        "a2_kind": "write",
+        "why": "ISR1 enables ISR2 on its first run. After that, ISR2 can preempt main between lines 27 and 28 and change the variable."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_027_001_gloable_var\",\"a1_line\":27,\"a1_kind\":\"read\",\"b_line\":41,\"b_kind\":\"write\",\"a2_line\":28,\"a2_kind\":\"write\",\"why\":\"ISR1 is enabled and can preempt main between the check and the reset, so the reset overwrites ISR1's increment.\"},{\"variable\":\"svp_simple_027_001_gloable_var\",\"a1_line\":27,\"a1_kind\":\"read\",\"b_line\":45,\"b_kind\":\"write\",\"a2_line\":28,\"a2_kind\":\"write\",\"why\":\"ISR1 enables ISR2 on its first run. After that, ISR2 can preempt main between lines 27 and 28 and change the variable.\"}]}",
+  "wall_s": 7.240783452987671,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 697,
+    "cache_read": 2508,
+    "cache_write": 490,
+    "latency_s": 7.240619399002753
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

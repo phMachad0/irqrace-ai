@@ -1,0 +1,48 @@
+{
+  "case": "program_26",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_glacier",
+        "a1_line": 19,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "read",
+        "a2_line": 25,
+        "a2_kind": "write",
+        "why": "The ISR can preempt the task between the write at line 19 and the write at line 25 (when v_meadow==1). It reads the intermediate value 1, which is then overwritten."
+      },
+      {
+        "variable": "v_glacier",
+        "a1_line": 19,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "read",
+        "a2_line": 27,
+        "a2_kind": "write",
+        "why": "The ISR can preempt the task between the write at line 19 and the write at line 27. It reads the intermediate value 1, which is then overwritten."
+      },
+      {
+        "variable": "v_glacier",
+        "a1_line": 25,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "read",
+        "a2_line": 27,
+        "a2_kind": "write",
+        "why": "The ISR can preempt the task between the write at line 25 and the write at line 27. It reads the intermediate value 9, which is then overwritten."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_glacier\",\"a1_line\":19,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"read\",\"a2_line\":25,\"a2_kind\":\"write\",\"why\":\"The ISR can preempt the task between the write at line 19 and the write at line 25 (when v_meadow==1). It reads the intermediate value 1, which is then overwritten.\"},{\"variable\":\"v_glacier\",\"a1_line\":19,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"read\",\"a2_line\":27,\"a2_kind\":\"write\",\"why\":\"The ISR can preempt the task between the write at line 19 and the write at line 27. It reads the intermediate value 1, which is then overwritten.\"},{\"variable\":\"v_glacier\",\"a1_line\":25,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"read\",\"a2_line\":27,\"a2_kind\":\"write\",\"why\":\"The ISR can preempt the task between the write at line 25 and the write at line 27. It reads the intermediate value 9, which is then overwritten.\"}]}",
+  "wall_s": 9.851728916168213,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 711,
+    "cache_read": 1798,
+    "cache_write": 485,
+    "latency_s": 9.85156481800368
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

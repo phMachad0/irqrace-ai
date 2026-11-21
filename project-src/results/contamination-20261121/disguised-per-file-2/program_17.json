@@ -1,0 +1,38 @@
+{
+  "case": "program_17",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_quiver",
+        "a1_line": 47,
+        "a1_kind": "read",
+        "b_line": 43,
+        "b_kind": "write",
+        "a2_line": 43,
+        "a2_kind": "write",
+        "why": "Task reads v_quiver[36] via v_pylon, then the ISR writes v_quiver[36] through v_ember (v_summit), and the task then writes v_quiver[36] via v_ember with a value derived from the stale read."
+      },
+      {
+        "variable": "v_quiver",
+        "a1_line": 35,
+        "a1_kind": "write",
+        "b_line": 43,
+        "b_kind": "write",
+        "a2_line": 47,
+        "a2_kind": "read",
+        "why": "Task initializes v_quiver[36] in the loop, the ISR overwrites it, and the task later reads it via v_pylon, getting the ISR's value rather than its own."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_quiver\",\"a1_line\":47,\"a1_kind\":\"read\",\"b_line\":43,\"b_kind\":\"write\",\"a2_line\":43,\"a2_kind\":\"write\",\"why\":\"Task reads v_quiver[36] via v_pylon, then the ISR writes v_quiver[36] through v_ember (v_summit), and the task then writes v_quiver[36] via v_ember with a value derived from the stale read.\"},{\"variable\":\"v_quiver\",\"a1_line\":35,\"a1_kind\":\"write\",\"b_line\":43,\"b_kind\":\"write\",\"a2_line\":47,\"a2_kind\":\"read\",\"why\":\"Task initializes v_quiver[36] in the loop, the ISR overwrites it, and the task later reads it via v_pylon, getting the ISR's value rather than its own.\"}]}",
+  "wall_s": 11.136498928070068,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1163,
+    "cache_read": 2525,
+    "cache_write": 488,
+    "latency_s": 11.136324341001455
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

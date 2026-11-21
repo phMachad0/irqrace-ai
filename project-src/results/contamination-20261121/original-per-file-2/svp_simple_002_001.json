@@ -1,0 +1,28 @@
+{
+  "case": "svp_simple_002_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_002_001_global_array[TRIGGER]",
+        "a1_line": 33,
+        "a1_kind": "write",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 37,
+        "a2_kind": "read",
+        "why": "ISR_2 (higher priority) can preempt ISR_1 between its write of 1 at line 33 and its read at line 37, overwriting the element with 999, so ISR_1 reads a value it did not write."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_002_001_global_array[TRIGGER]\",\"a1_line\":33,\"a1_kind\":\"write\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":37,\"a2_kind\":\"read\",\"why\":\"ISR_2 (higher priority) can preempt ISR_1 between its write of 1 at line 33 and its read at line 37, overwriting the element with 999, so ISR_1 reads a value it did not write.\"}]}",
+  "wall_s": 5.465842008590698,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 411,
+    "cache_read": 2342,
+    "cache_write": 491,
+    "latency_s": 5.4655593690113164
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

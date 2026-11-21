@@ -1,0 +1,48 @@
+{
+  "case": "program_26",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_glacier",
+        "a1_line": 25,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "read",
+        "a2_line": 27,
+        "a2_kind": "write",
+        "why": "The ISR can fire between the task's writes of 0x09 and 0x05 and read the intermediate value 0x09."
+      },
+      {
+        "variable": "v_glacier",
+        "a1_line": 19,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "read",
+        "a2_line": 27,
+        "a2_kind": "write",
+        "why": "The ISR can read v_glacier after the write of 1 at line 19 and before the final write at line 27, so it sees an intermediate value."
+      },
+      {
+        "variable": "v_glacier",
+        "a1_line": 19,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "read",
+        "a2_line": 25,
+        "a2_kind": "write",
+        "why": "If v_meadow==1, the ISR can read between the write at line 19 and the write at line 25."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_glacier\",\"a1_line\":25,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"read\",\"a2_line\":27,\"a2_kind\":\"write\",\"why\":\"The ISR can fire between the task's writes of 0x09 and 0x05 and read the intermediate value 0x09.\"},{\"variable\":\"v_glacier\",\"a1_line\":19,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"read\",\"a2_line\":27,\"a2_kind\":\"write\",\"why\":\"The ISR can read v_glacier after the write of 1 at line 19 and before the final write at line 27, so it sees an intermediate value.\"},{\"variable\":\"v_glacier\",\"a1_line\":19,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"read\",\"a2_line\":25,\"a2_kind\":\"write\",\"why\":\"If v_meadow==1, the ISR can read between the write at line 19 and the write at line 25.\"}]}",
+  "wall_s": 6.020340442657471,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 593,
+    "cache_read": 1798,
+    "cache_write": 483,
+    "latency_s": 6.020178324979497
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

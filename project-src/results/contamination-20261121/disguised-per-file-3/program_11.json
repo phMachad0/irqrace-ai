@@ -1,0 +1,48 @@
+{
+  "case": "program_11",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_umber",
+        "a1_line": 12,
+        "a1_kind": "read",
+        "b_line": 36,
+        "b_kind": "write",
+        "a2_line": 13,
+        "a2_kind": "write",
+        "why": "Orchid is enabled by enable_isr(1) and can preempt the task between the check and the reset, so the reset can overwrite the increment."
+      },
+      {
+        "variable": "v_umber",
+        "a1_line": 12,
+        "a1_kind": "read",
+        "b_line": 24,
+        "b_kind": "write",
+        "a2_line": 13,
+        "a2_kind": "write",
+        "why": "Once orchid has run, it enables pylon with enable_isr(2). Pylon can then preempt the task between the check and the reset and update v_umber."
+      },
+      {
+        "variable": "v_umber",
+        "a1_line": 36,
+        "a1_kind": "read",
+        "b_line": 24,
+        "b_kind": "write",
+        "a2_line": 36,
+        "a2_kind": "write",
+        "why": "After the first orchid run, pylon is enabled and has higher priority. It can preempt a later orchid run in the middle of the v_umber++ read-modify-write, and its update is lost."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_umber\",\"a1_line\":12,\"a1_kind\":\"read\",\"b_line\":36,\"b_kind\":\"write\",\"a2_line\":13,\"a2_kind\":\"write\",\"why\":\"Orchid is enabled by enable_isr(1) and can preempt the task between the check and the reset, so the reset can overwrite the increment.\"},{\"variable\":\"v_umber\",\"a1_line\":12,\"a1_kind\":\"read\",\"b_line\":24,\"b_kind\":\"write\",\"a2_line\":13,\"a2_kind\":\"write\",\"why\":\"Once orchid has run, it enables pylon with enable_isr(2). Pylon can then preempt the task between the check and the reset and update v_umber.\"},{\"variable\":\"v_umber\",\"a1_line\":36,\"a1_kind\":\"read\",\"b_line\":24,\"b_kind\":\"write\",\"a2_line\":36,\"a2_kind\":\"write\",\"why\":\"After the first orchid run, pylon is enabled and has higher priority. It can preempt a later orchid run in the middle of the v_umber++ read-modify-write, and its update is lost.\"}]}",
+  "wall_s": 11.98669695854187,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1335,
+    "cache_read": 1878,
+    "cache_write": 487,
+    "latency_s": 11.986532871989766
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

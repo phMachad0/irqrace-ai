@@ -1,0 +1,28 @@
+{
+  "case": "program_20",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_beacon",
+        "a1_line": 46,
+        "a1_kind": "read",
+        "b_line": 20,
+        "b_kind": "write",
+        "a2_line": 47,
+        "a2_kind": "read",
+        "why": "The task reads v_beacon elements in two separate reads (line 46, then line 47), and the same element is read again across the two v_glacier calls. The higher-priority ISR can zero the array between those reads, so the task combines values from before and after the clear."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_beacon\",\"a1_line\":46,\"a1_kind\":\"read\",\"b_line\":20,\"b_kind\":\"write\",\"a2_line\":47,\"a2_kind\":\"read\",\"why\":\"The task reads v_beacon elements in two separate reads (line 46, then line 47), and the same element is read again across the two v_glacier calls. The higher-priority ISR can zero the array between those reads, so the task combines values from before and after the clear.\"}]}",
+  "wall_s": 5.997373819351196,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 475,
+    "cache_read": 2050,
+    "cache_write": 492,
+    "latency_s": 5.9972018109983765
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

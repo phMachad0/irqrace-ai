@@ -1,0 +1,38 @@
+{
+  "case": "svp_simple_026_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_026_001_gloable_var",
+        "a1_line": 26,
+        "a1_kind": "read",
+        "b_line": 43,
+        "b_kind": "write",
+        "a2_line": 27,
+        "a2_kind": "write",
+        "why": "Main masks only interrupt 1, so ISR 2 can preempt between the check and the reset and change the value, which main then overwrites."
+      },
+      {
+        "variable": "svp_simple_026_001_gloable_var",
+        "a1_line": 40,
+        "a1_kind": "read",
+        "b_line": 43,
+        "b_kind": "write",
+        "a2_line": 40,
+        "a2_kind": "write",
+        "why": "ISR 2 has higher priority than ISR 1 and can preempt the non-atomic ++ between its read and write, so its decrement is lost."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_026_001_gloable_var\",\"a1_line\":26,\"a1_kind\":\"read\",\"b_line\":43,\"b_kind\":\"write\",\"a2_line\":27,\"a2_kind\":\"write\",\"why\":\"Main masks only interrupt 1, so ISR 2 can preempt between the check and the reset and change the value, which main then overwrites.\"},{\"variable\":\"svp_simple_026_001_gloable_var\",\"a1_line\":40,\"a1_kind\":\"read\",\"b_line\":43,\"b_kind\":\"write\",\"a2_line\":40,\"a2_kind\":\"write\",\"why\":\"ISR 2 has higher priority than ISR 1 and can preempt the non-atomic ++ between its read and write, so its decrement is lost.\"}]}",
+  "wall_s": 13.109396696090698,
+  "usage": {
+    "input_tokens": 4,
+    "output_tokens": 1016,
+    "cache_read": 5199,
+    "cache_write": 1431,
+    "latency_s": 13.109178585000336
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,38 @@
+{
+  "case": "program_08",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_amber",
+        "a1_line": 8,
+        "a1_kind": "write",
+        "b_line": 23,
+        "b_kind": "write",
+        "a2_line": 19,
+        "a2_kind": "read",
+        "why": "The ISR can preempt the task after it writes v_amber at line 8 and before it reads it at line 19. The ISR's write of 0 means the task reads a value it did not just write."
+      },
+      {
+        "variable": "v_amber",
+        "a1_line": 19,
+        "a1_kind": "read",
+        "b_line": 23,
+        "b_kind": "write",
+        "a2_line": 19,
+        "a2_kind": "write",
+        "why": "The increment at line 19 is a non-atomic read-modify-write. The ISR can write 0 between the read and the write-back, and the task then overwrites that 0 with a stale value plus one."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_amber\",\"a1_line\":8,\"a1_kind\":\"write\",\"b_line\":23,\"b_kind\":\"write\",\"a2_line\":19,\"a2_kind\":\"read\",\"why\":\"The ISR can preempt the task after it writes v_amber at line 8 and before it reads it at line 19. The ISR's write of 0 means the task reads a value it did not just write.\"},{\"variable\":\"v_amber\",\"a1_line\":19,\"a1_kind\":\"read\",\"b_line\":23,\"b_kind\":\"write\",\"a2_line\":19,\"a2_kind\":\"write\",\"why\":\"The increment at line 19 is a non-atomic read-modify-write. The ISR can write 0 between the read and the write-back, and the task then overwrites that 0 with a stale value plus one.\"}]}",
+  "wall_s": 6.030714988708496,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 527,
+    "cache_read": 1713,
+    "cache_write": 488,
+    "latency_s": 6.030401500000153
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

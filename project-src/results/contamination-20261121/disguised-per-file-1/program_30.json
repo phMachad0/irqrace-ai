@@ -1,0 +1,28 @@
+{
+  "case": "program_30",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_quartz[9999]",
+        "a1_line": 42,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "read",
+        "a2_line": 45,
+        "a2_kind": "write",
+        "why": "Zenith can preempt the task after line 38 and unmask interrupt 2 (line 30) and set v_willow=1. Indigo then reads v_quartz[9999] between the task's zeroing at line 42 and its write of 1 at line 45."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_quartz[9999]\",\"a1_line\":42,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"read\",\"a2_line\":45,\"a2_kind\":\"write\",\"why\":\"Zenith can preempt the task after line 38 and unmask interrupt 2 (line 30) and set v_willow=1. Indigo then reads v_quartz[9999] between the task's zeroing at line 42 and its write of 1 at line 45.\"}]}",
+  "wall_s": 9.009487628936768,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 868,
+    "cache_read": 975,
+    "cache_write": 1460,
+    "latency_s": 9.009305940999184
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

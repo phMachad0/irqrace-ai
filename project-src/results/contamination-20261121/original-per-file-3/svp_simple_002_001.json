@@ -1,0 +1,28 @@
+{
+  "case": "svp_simple_002_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_002_001_global_array[TRIGGER]",
+        "a1_line": 33,
+        "a1_kind": "write",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 37,
+        "a2_kind": "read",
+        "why": "ISR_1 writes the element to 1 and later reads it back. Higher-priority ISR_2 can preempt in between and write 999, so ISR_1 reads a value it did not write (write-write-read)."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_002_001_global_array[TRIGGER]\",\"a1_line\":33,\"a1_kind\":\"write\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":37,\"a2_kind\":\"read\",\"why\":\"ISR_1 writes the element to 1 and later reads it back. Higher-priority ISR_2 can preempt in between and write 999, so ISR_1 reads a value it did not write (write-write-read).\"}]}",
+  "wall_s": 6.466477155685425,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 437,
+    "cache_read": 2342,
+    "cache_write": 487,
+    "latency_s": 6.46630111100967
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

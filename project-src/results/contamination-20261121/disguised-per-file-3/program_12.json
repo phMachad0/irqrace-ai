@@ -1,0 +1,28 @@
+{
+  "case": "program_12",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_ridge",
+        "a1_line": 30,
+        "a1_kind": "write",
+        "b_line": 17,
+        "b_kind": "read",
+        "a2_line": 31,
+        "a2_kind": "write",
+        "why": "v_ridge is a union, so header and data share storage. The ISR can read the header between the task's two writes and see a half-updated value that the data write then overwrites."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_ridge\",\"a1_line\":30,\"a1_kind\":\"write\",\"b_line\":17,\"b_kind\":\"read\",\"a2_line\":31,\"a2_kind\":\"write\",\"why\":\"v_ridge is a union, so header and data share storage. The ISR can read the header between the task's two writes and see a half-updated value that the data write then overwrites.\"}]}",
+  "wall_s": 5.573262691497803,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 435,
+    "cache_read": 1856,
+    "cache_write": 487,
+    "latency_s": 5.5730568089929875
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

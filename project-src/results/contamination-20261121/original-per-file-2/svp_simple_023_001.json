@@ -1,0 +1,38 @@
+{
+  "case": "svp_simple_023_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_023_001_global_var",
+        "a1_line": 25,
+        "a1_kind": "read",
+        "b_line": 39,
+        "b_kind": "write",
+        "a2_line": 35,
+        "a2_kind": "read",
+        "why": "Main reads the global at line 25 to pass it as an argument, and the ISR can write 0 before main re-reads it at line 35. The range check was made on a stale value."
+      },
+      {
+        "variable": "svp_simple_023_001_global_var",
+        "a1_line": 35,
+        "a1_kind": "read",
+        "b_line": 39,
+        "b_kind": "write",
+        "a2_line": 35,
+        "a2_kind": "write",
+        "why": "The increment at line 35 is a non-atomic read-modify-write. The ISR can write 0 between its read and its write, and the write-back then overwrites the ISR's value with the stale value plus 1."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_023_001_global_var\",\"a1_line\":25,\"a1_kind\":\"read\",\"b_line\":39,\"b_kind\":\"write\",\"a2_line\":35,\"a2_kind\":\"read\",\"why\":\"Main reads the global at line 25 to pass it as an argument, and the ISR can write 0 before main re-reads it at line 35. The range check was made on a stale value.\"},{\"variable\":\"svp_simple_023_001_global_var\",\"a1_line\":35,\"a1_kind\":\"read\",\"b_line\":39,\"b_kind\":\"write\",\"a2_line\":35,\"a2_kind\":\"write\",\"why\":\"The increment at line 35 is a non-atomic read-modify-write. The ISR can write 0 between its read and its write, and the write-back then overwrites the ISR's value with the stale value plus 1.\"}]}",
+  "wall_s": 5.471362352371216,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 431,
+    "cache_read": 2292,
+    "cache_write": 488,
+    "latency_s": 5.471152700018138
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

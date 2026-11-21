@@ -1,0 +1,48 @@
+{
+  "case": "program_23",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_tundra",
+        "a1_line": 26,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 28,
+        "a2_kind": "read",
+        "why": "The ISR can preempt between the task's assignment of v_tundra and its dereference, repointing v_tundra to the ISR's stack variable, so the task writes through the wrong pointer."
+      },
+      {
+        "variable": "v_tundra",
+        "a1_line": 28,
+        "a1_kind": "read",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "read",
+        "why": "The ISR can change v_tundra between the task's two dereferences, so the two accesses may target different locations."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 23,
+        "a1_kind": "write",
+        "b_line": 9,
+        "b_kind": "read",
+        "a2_line": 24,
+        "a2_kind": "write",
+        "why": "The ISR can read v_vessel through v_timber between the task's two writes, so it sees the intermediate value 2 rather than a consistent state."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_tundra\",\"a1_line\":26,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"write\",\"a2_line\":28,\"a2_kind\":\"read\",\"why\":\"The ISR can preempt between the task's assignment of v_tundra and its dereference, repointing v_tundra to the ISR's stack variable, so the task writes through the wrong pointer.\"},{\"variable\":\"v_tundra\",\"a1_line\":28,\"a1_kind\":\"read\",\"b_line\":11,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"read\",\"why\":\"The ISR can change v_tundra between the task's two dereferences, so the two accesses may target different locations.\"},{\"variable\":\"v_vessel\",\"a1_line\":23,\"a1_kind\":\"write\",\"b_line\":9,\"b_kind\":\"read\",\"a2_line\":24,\"a2_kind\":\"write\",\"why\":\"The ISR can read v_vessel through v_timber between the task's two writes, so it sees the intermediate value 2 rather than a consistent state.\"}]}",
+  "wall_s": 10.719676971435547,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1198,
+    "cache_read": 1811,
+    "cache_write": 489,
+    "latency_s": 10.719504025997594
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,28 @@
+{
+  "case": "program_02",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_ember",
+        "a1_line": 20,
+        "a1_kind": "read",
+        "b_line": 30,
+        "b_kind": "write",
+        "a2_line": 22,
+        "a2_kind": "read",
+        "why": "After irq_ridge enables yarrow, yarrow sets v_cedar=1 and enables hazel, so hazel can preempt the task between its two reads of v_ember and write it. The two reads can then return different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_ember\",\"a1_line\":20,\"a1_kind\":\"read\",\"b_line\":30,\"b_kind\":\"write\",\"a2_line\":22,\"a2_kind\":\"read\",\"why\":\"After irq_ridge enables yarrow, yarrow sets v_cedar=1 and enables hazel, so hazel can preempt the task between its two reads of v_ember and write it. The two reads can then return different values.\"}]}",
+  "wall_s": 9.363312721252441,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 796,
+    "cache_read": 975,
+    "cache_write": 1513,
+    "latency_s": 9.363059416995384
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,78 @@
+{
+  "case": "program_21",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_lantern",
+        "a1_line": 18,
+        "a1_kind": "read",
+        "b_line": 32,
+        "b_kind": "write",
+        "a2_line": 19,
+        "a2_kind": "write",
+        "why": "Only irq_meadow is enabled after line 17. It can fire between the check at 18 and the reset at 19, so the reset acts on a stale value."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 18,
+        "a1_kind": "read",
+        "b_line": 10,
+        "b_kind": "write",
+        "a2_line": 19,
+        "a2_kind": "write",
+        "why": "irq_meadow enables interrupt 2 at line 33. irq_vessel can then fire between 18 and 19 and modify the value, which line 19 then overwrites."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 26,
+        "a1_kind": "write",
+        "b_line": 6,
+        "b_kind": "write",
+        "a2_line": 18,
+        "a2_kind": "read",
+        "why": "Interrupts are enabled between line 26 and the disable at line 16 (during init()). irq_nectar can change the value, so the read at 18 does not see what line 26 wrote."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 26,
+        "a1_kind": "write",
+        "b_line": 10,
+        "b_kind": "write",
+        "a2_line": 18,
+        "a2_kind": "read",
+        "why": "irq_vessel can run after the write at 26 and before the read at 18, while interrupts are still enabled."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 26,
+        "a1_kind": "write",
+        "b_line": 32,
+        "b_kind": "write",
+        "a2_line": 18,
+        "a2_kind": "read",
+        "why": "irq_meadow can run after the write at 26 and before the read at 18, while interrupts are still enabled."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 32,
+        "a1_kind": "read",
+        "b_line": 10,
+        "b_kind": "write",
+        "a2_line": 32,
+        "a2_kind": "write",
+        "why": "Once interrupt 2 is enabled at line 33, a later irq_meadow run can be preempted by the higher-priority irq_vessel between the read and write of v_lantern++. The vessel's update is then lost."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_lantern\",\"a1_line\":18,\"a1_kind\":\"read\",\"b_line\":32,\"b_kind\":\"write\",\"a2_line\":19,\"a2_kind\":\"write\",\"why\":\"Only irq_meadow is enabled after line 17. It can fire between the check at 18 and the reset at 19, so the reset acts on a stale value.\"},{\"variable\":\"v_lantern\",\"a1_line\":18,\"a1_kind\":\"read\",\"b_line\":10,\"b_kind\":\"write\",\"a2_line\":19,\"a2_kind\":\"write\",\"why\":\"irq_meadow enables interrupt 2 at line 33. irq_vessel can then fire between 18 and 19 and modify the value, which line 19 then overwrites.\"},{\"variable\":\"v_lantern\",\"a1_line\":26,\"a1_kind\":\"write\",\"b_line\":6,\"b_kind\":\"write\",\"a2_line\":18,\"a2_kind\":\"read\",\"why\":\"Interrupts are enabled between line 26 and the disable at line 16 (during init()). irq_nectar can change the value, so the read at 18 does not see what line 26 wrote.\"},{\"variable\":\"v_lantern\",\"a1_line\":26,\"a1_kind\":\"write\",\"b_line\":10,\"b_kind\":\"write\",\"a2_line\":18,\"a2_kind\":\"read\",\"why\":\"irq_vessel can run after the write at 26 and before the read at 18, while interrupts are still enabled.\"},{\"variable\":\"v_lantern\",\"a1_line\":26,\"a1_kind\":\"write\",\"b_line\":32,\"b_kind\":\"write\",\"a2_line\":18,\"a2_kind\":\"read\",\"why\":\"irq_meadow can run after the write at 26 and before the read at 18, while interrupts are still enabled.\"},{\"variable\":\"v_lantern\",\"a1_line\":32,\"a1_kind\":\"read\",\"b_line\":10,\"b_kind\":\"write\",\"a2_line\":32,\"a2_kind\":\"write\",\"why\":\"Once interrupt 2 is enabled at line 33, a later irq_meadow run can be preempted by the higher-priority irq_vessel between the read and write of v_lantern++. The vessel's update is then lost.\"}]}",
+  "wall_s": 15.595364570617676,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1846,
+    "cache_read": 1808,
+    "cache_write": 489,
+    "latency_s": 15.595146912004566
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

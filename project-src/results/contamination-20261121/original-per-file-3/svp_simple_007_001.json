@@ -1,0 +1,38 @@
+{
+  "case": "svp_simple_007_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_007_001_global_var",
+        "a1_line": 32,
+        "a1_kind": "read",
+        "b_line": 49,
+        "b_kind": "write",
+        "a2_line": 34,
+        "a2_kind": "read",
+        "why": "The ISR can increment global_var between main's two reads used as the array index, so the write at line 32 and the read at line 34 use different indices."
+      },
+      {
+        "variable": "svp_simple_007_001_global_array[2]",
+        "a1_line": 38,
+        "a1_kind": "write",
+        "b_line": 47,
+        "b_kind": "write",
+        "a2_line": 42,
+        "a2_kind": "read",
+        "why": "When i==2, main writes array[2] at line 38. The ISR can then overwrite it at line 47 before main reads it at line 42, so main reads the ISR's value rather than the one it wrote."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_007_001_global_var\",\"a1_line\":32,\"a1_kind\":\"read\",\"b_line\":49,\"b_kind\":\"write\",\"a2_line\":34,\"a2_kind\":\"read\",\"why\":\"The ISR can increment global_var between main's two reads used as the array index, so the write at line 32 and the read at line 34 use different indices.\"},{\"variable\":\"svp_simple_007_001_global_array[2]\",\"a1_line\":38,\"a1_kind\":\"write\",\"b_line\":47,\"b_kind\":\"write\",\"a2_line\":42,\"a2_kind\":\"read\",\"why\":\"When i==2, main writes array[2] at line 38. The ISR can then overwrite it at line 47 before main reads it at line 42, so main reads the ISR's value rather than the one it wrote.\"}]}",
+  "wall_s": 8.082046508789062,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 837,
+    "cache_read": 2321,
+    "cache_write": 485,
+    "latency_s": 8.081846853980096
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

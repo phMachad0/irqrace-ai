@@ -61,6 +61,11 @@ Traps reported (53/33): per file `022` trap#2 `RWW(55,66,56)`; one prompt `019` 
   A model that has seen the suite can recall planted bugs instead of finding them. That would also
   explain why the misses are exactly the triples whose label this project changed: the scan agrees
   with the *published* labels. Not tested here; a renamed and reordered copy of the suite would test it.
+
+  **Tested the same day (`results/contamination-20261121/`, n = 3): the reading above does not
+  hold.** Over three runs the original arm also misses `008` bug#1 and `009` bug#1, and on a
+  disguised copy recall is unchanged (50–51/53). What the disguise changes is precision: 6–8 traps
+  per run instead of 1–4.
 - **The cases are tiny and planted.** 60 k characters for 31 programs, one or two interrupt handlers
   each. Nothing here says how a scan behaves on a driver with thousands of lines.
 - **No guarantee and nothing to check against.** The scan's 50/53 is a sample; there is no proof

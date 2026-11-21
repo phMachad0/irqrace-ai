@@ -1,0 +1,38 @@
+{
+  "case": "program_05",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_quartz",
+        "a1_line": 19,
+        "a1_kind": "write",
+        "b_line": 10,
+        "b_kind": "read",
+        "a2_line": 20,
+        "a2_kind": "write",
+        "why": "The ISR can preempt the task between its two writes to v_quartz and read the intermediate value 0x01."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 22,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "read",
+        "a2_line": 24,
+        "a2_kind": "write",
+        "why": "The ISR can read the v_vessel pointer between the task's two writes to it, so it sees the intermediate target &v_upland."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_quartz\",\"a1_line\":19,\"a1_kind\":\"write\",\"b_line\":10,\"b_kind\":\"read\",\"a2_line\":20,\"a2_kind\":\"write\",\"why\":\"The ISR can preempt the task between its two writes to v_quartz and read the intermediate value 0x01.\"},{\"variable\":\"v_vessel\",\"a1_line\":22,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"read\",\"a2_line\":24,\"a2_kind\":\"write\",\"why\":\"The ISR can read the v_vessel pointer between the task's two writes to it, so it sees the intermediate target &v_upland.\"}]}",
+  "wall_s": 6.690202951431274,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 628,
+    "cache_read": 975,
+    "cache_write": 1266,
+    "latency_s": 6.690054027014412
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

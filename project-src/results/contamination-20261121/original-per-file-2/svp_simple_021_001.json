@@ -1,0 +1,48 @@
+{
+  "case": "svp_simple_021_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_021_001_tc_block_rcvd_bytes_ch1",
+        "a1_line": 44,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 45,
+        "a2_kind": "write",
+        "why": "ISR may overwrite ch1 between the check at line 44 and the reset at line 45, so the reset acts on a stale condition."
+      },
+      {
+        "variable": "svp_simple_021_001_tc_block_rcvd_bytes_ch1",
+        "a1_line": 45,
+        "a1_kind": "write",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 65,
+        "a2_kind": "read",
+        "why": "Main writes 0 at line 45, the ISR overwrites it, and main then reads a value at line 65 that is not the 0 it wrote."
+      },
+      {
+        "variable": "svp_simple_021_001_tc_block_rcvd_bytes_ch1",
+        "a1_line": 44,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 65,
+        "a2_kind": "read",
+        "why": "The ISR can change ch1 between the read at line 44 and the read at line 65, so the two reads see inconsistent values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_021_001_tc_block_rcvd_bytes_ch1\",\"a1_line\":44,\"a1_kind\":\"read\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":45,\"a2_kind\":\"write\",\"why\":\"ISR may overwrite ch1 between the check at line 44 and the reset at line 45, so the reset acts on a stale condition.\"},{\"variable\":\"svp_simple_021_001_tc_block_rcvd_bytes_ch1\",\"a1_line\":45,\"a1_kind\":\"write\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":65,\"a2_kind\":\"read\",\"why\":\"Main writes 0 at line 45, the ISR overwrites it, and main then reads a value at line 65 that is not the 0 it wrote.\"},{\"variable\":\"svp_simple_021_001_tc_block_rcvd_bytes_ch1\",\"a1_line\":44,\"a1_kind\":\"read\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":65,\"a2_kind\":\"read\",\"why\":\"The ISR can change ch1 between the read at line 44 and the read at line 65, so the two reads see inconsistent values.\"}]}",
+  "wall_s": 4.970173358917236,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 441,
+    "cache_read": 3280,
+    "cache_write": 487,
+    "latency_s": 4.969935834989883
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

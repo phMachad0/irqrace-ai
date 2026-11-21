@@ -1,0 +1,28 @@
+{
+  "case": "svp_simple_029_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_029_001_tm_blocks[36]",
+        "a1_line": 80,
+        "a1_kind": "read",
+        "b_line": 83,
+        "b_kind": "write",
+        "a2_line": 83,
+        "a2_kind": "write",
+        "why": "Main reads tm_blocks[36] via GetTmData (called from line 73) and later writes it via SetTmData (called from line 77). ISR 1 can preempt in between and write tm_blocks[36], so main's write is based on a stale value and overwrites the ISR's update."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_029_001_tm_blocks[36]\",\"a1_line\":80,\"a1_kind\":\"read\",\"b_line\":83,\"b_kind\":\"write\",\"a2_line\":83,\"a2_kind\":\"write\",\"why\":\"Main reads tm_blocks[36] via GetTmData (called from line 73) and later writes it via SetTmData (called from line 77). ISR 1 can preempt in between and write tm_blocks[36], so main's write is based on a stale value and overwrites the ISR's update.\"}]}",
+  "wall_s": 5.508825063705444,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 441,
+    "cache_read": 3661,
+    "cache_write": 486,
+    "latency_s": 5.508674179989612
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

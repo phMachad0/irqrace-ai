@@ -1,0 +1,28 @@
+{
+  "case": "svp_simple_010_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_010_001_global_union",
+        "a1_line": 40,
+        "a1_kind": "write",
+        "b_line": 51,
+        "b_kind": "read",
+        "a2_line": 41,
+        "a2_kind": "write",
+        "why": "The union's header and data share storage. The ISR can preempt main between the header write (line 40) and the data write (line 41). It then reads a header value that the data write immediately overwrites, so it sees an intermediate state."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_010_001_global_union\",\"a1_line\":40,\"a1_kind\":\"write\",\"b_line\":51,\"b_kind\":\"read\",\"a2_line\":41,\"a2_kind\":\"write\",\"why\":\"The union's header and data share storage. The ISR can preempt main between the header write (line 40) and the data write (line 41). It then reads a header value that the data write immediately overwrites, so it sees an intermediate state.\"}]}",
+  "wall_s": 5.801888704299927,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 486,
+    "cache_read": 2437,
+    "cache_write": 485,
+    "latency_s": 5.801724795019254
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

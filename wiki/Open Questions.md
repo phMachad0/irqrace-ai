@@ -317,7 +317,11 @@ with the date.
   LLM call, full triage is ~$90 per program. [[AdaTaint (paper)]]'s embedding-plus-static-features
   scorer ranks without dropping. Measure whether it puts the real defects near the top.
 
-- [ ] **Has the model memorised Racebench?** A plain "read the file and list the violations" scan
+- [x] **Has the model memorised Racebench?** *Tested 2026-11-21, n = 3: on a disguised copy the
+  scan keeps its recall (50–51/53) and loses its precision (6–8 traps per run instead of 1–4); a
+  by-name recall probe returned nothing. Names, comments and order changed together, so memory and
+  meaningful identifiers are not separated ([[Triage Cost and Speed 2026-11-21]]). Next: irqrace's
+  full pipeline on the same disguised copy.* Original question: A plain "read the file and list the violations" scan
   with Sonnet at low effort found 50/53 bug points with 1 trap at 99 k input tokens, against the
   triage's 2.0–3.5 M, and **48/48 on the published labels**: its only misses are the bug points this
   project created in the relabel ([[Triage Cost and Speed 2026-11-21]]). The suite has been public

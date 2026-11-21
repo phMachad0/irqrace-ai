@@ -1,0 +1,48 @@
+{
+  "case": "program_25",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_amber",
+        "a1_line": 12,
+        "a1_kind": "write",
+        "b_line": 6,
+        "b_kind": "write",
+        "a2_line": 13,
+        "a2_kind": "read",
+        "why": "The ISR can overwrite v_amber between the task's write and its read-back, so the task reads 0x09 instead of the 0x01 it wrote."
+      },
+      {
+        "variable": "v_amber",
+        "a1_line": 13,
+        "a1_kind": "read",
+        "b_line": 6,
+        "b_kind": "write",
+        "a2_line": 14,
+        "a2_kind": "read",
+        "why": "The ISR can change v_amber between the first and second reads, so the two reads in the same expression see different values."
+      },
+      {
+        "variable": "v_amber",
+        "a1_line": 14,
+        "a1_kind": "read",
+        "b_line": 6,
+        "b_kind": "write",
+        "a2_line": 15,
+        "a2_kind": "read",
+        "why": "The ISR can change v_amber between the second and third reads, so the two reads see different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_amber\",\"a1_line\":12,\"a1_kind\":\"write\",\"b_line\":6,\"b_kind\":\"write\",\"a2_line\":13,\"a2_kind\":\"read\",\"why\":\"The ISR can overwrite v_amber between the task's write and its read-back, so the task reads 0x09 instead of the 0x01 it wrote.\"},{\"variable\":\"v_amber\",\"a1_line\":13,\"a1_kind\":\"read\",\"b_line\":6,\"b_kind\":\"write\",\"a2_line\":14,\"a2_kind\":\"read\",\"why\":\"The ISR can change v_amber between the first and second reads, so the two reads in the same expression see different values.\"},{\"variable\":\"v_amber\",\"a1_line\":14,\"a1_kind\":\"read\",\"b_line\":6,\"b_kind\":\"write\",\"a2_line\":15,\"a2_kind\":\"read\",\"why\":\"The ISR can change v_amber between the second and third reads, so the two reads see different values.\"}]}",
+  "wall_s": 6.326594114303589,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 602,
+    "cache_read": 1624,
+    "cache_write": 486,
+    "latency_s": 6.326426318002632
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

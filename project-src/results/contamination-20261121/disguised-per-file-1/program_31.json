@@ -1,0 +1,48 @@
+{
+  "case": "program_31",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_basalt",
+        "a1_line": 17,
+        "a1_kind": "read",
+        "b_line": 10,
+        "b_kind": "write",
+        "a2_line": 18,
+        "a2_kind": "write",
+        "why": "Only interrupt 1 is masked in the critical section. Higher-priority irq_kestrel can still decrement v_basalt between the check and the reset, so the reset is based on a stale value."
+      },
+      {
+        "variable": "v_basalt",
+        "a1_line": 26,
+        "a1_kind": "write",
+        "b_line": 6,
+        "b_kind": "write",
+        "a2_line": 17,
+        "a2_kind": "read",
+        "why": "Interrupts are not masked between the write at line 26 and the read at line 17, so irq_willow can increment v_basalt in that window. The check then sees a value other than the one the task stored."
+      },
+      {
+        "variable": "v_basalt",
+        "a1_line": 26,
+        "a1_kind": "write",
+        "b_line": 10,
+        "b_kind": "write",
+        "a2_line": 17,
+        "a2_kind": "read",
+        "why": "Interrupts are not masked between the write at line 26 and the read at line 17, so irq_kestrel can decrement v_basalt in that window. The check then sees a value other than the one the task stored."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_basalt\",\"a1_line\":17,\"a1_kind\":\"read\",\"b_line\":10,\"b_kind\":\"write\",\"a2_line\":18,\"a2_kind\":\"write\",\"why\":\"Only interrupt 1 is masked in the critical section. Higher-priority irq_kestrel can still decrement v_basalt between the check and the reset, so the reset is based on a stale value.\"},{\"variable\":\"v_basalt\",\"a1_line\":26,\"a1_kind\":\"write\",\"b_line\":6,\"b_kind\":\"write\",\"a2_line\":17,\"a2_kind\":\"read\",\"why\":\"Interrupts are not masked between the write at line 26 and the read at line 17, so irq_willow can increment v_basalt in that window. The check then sees a value other than the one the task stored.\"},{\"variable\":\"v_basalt\",\"a1_line\":26,\"a1_kind\":\"write\",\"b_line\":10,\"b_kind\":\"write\",\"a2_line\":17,\"a2_kind\":\"read\",\"why\":\"Interrupts are not masked between the write at line 26 and the read at line 17, so irq_kestrel can decrement v_basalt in that window. The check then sees a value other than the one the task stored.\"}]}",
+  "wall_s": 12.56014084815979,
+  "usage": {
+    "input_tokens": 4,
+    "output_tokens": 1414,
+    "cache_read": 3199,
+    "cache_write": 2279,
+    "latency_s": 12.559836729982635
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,48 @@
+{
+  "case": "svp_simple_031_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_031_001_tc_block_rcvd_bytes_ch1",
+        "a1_line": 46,
+        "a1_kind": "read",
+        "b_line": 90,
+        "b_kind": "write",
+        "a2_line": 83,
+        "a2_kind": "read",
+        "why": "ISR can overwrite ch1 between main's read at 46 and its re-read at 83 (the ISR is never masked), so the two reads can see different values."
+      },
+      {
+        "variable": "svp_simple_031_001_tc_block_rcvd_bytes_ch1",
+        "a1_line": 83,
+        "a1_kind": "read",
+        "b_line": 90,
+        "b_kind": "write",
+        "a2_line": 85,
+        "a2_kind": "read",
+        "why": "The check at 83 (>=16) can be invalidated by the ISR write before the value is re-read at 85 as an argument."
+      },
+      {
+        "variable": "svp_simple_031_001_tc_block_rcvd_bytes_ch1",
+        "a1_line": 85,
+        "a1_kind": "read",
+        "b_line": 90,
+        "b_kind": "write",
+        "a2_line": 65,
+        "a2_kind": "read",
+        "why": "The ISR can change ch1 between the read at 85 and the read in func_2 at line 65, so the two reads can be inconsistent."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_031_001_tc_block_rcvd_bytes_ch1\",\"a1_line\":46,\"a1_kind\":\"read\",\"b_line\":90,\"b_kind\":\"write\",\"a2_line\":83,\"a2_kind\":\"read\",\"why\":\"ISR can overwrite ch1 between main's read at 46 and its re-read at 83 (the ISR is never masked), so the two reads can see different values.\"},{\"variable\":\"svp_simple_031_001_tc_block_rcvd_bytes_ch1\",\"a1_line\":83,\"a1_kind\":\"read\",\"b_line\":90,\"b_kind\":\"write\",\"a2_line\":85,\"a2_kind\":\"read\",\"why\":\"The check at 83 (>=16) can be invalidated by the ISR write before the value is re-read at 85 as an argument.\"},{\"variable\":\"svp_simple_031_001_tc_block_rcvd_bytes_ch1\",\"a1_line\":85,\"a1_kind\":\"read\",\"b_line\":90,\"b_kind\":\"write\",\"a2_line\":65,\"a2_kind\":\"read\",\"why\":\"The ISR can change ch1 between the read at 85 and the read in func_2 at line 65, so the two reads can be inconsistent.\"}]}",
+  "wall_s": 4.939916372299194,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 445,
+    "cache_read": 3370,
+    "cache_write": 488,
+    "latency_s": 4.939623557002051
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

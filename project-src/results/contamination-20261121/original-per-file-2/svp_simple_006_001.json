@@ -1,0 +1,28 @@
+{
+  "case": "svp_simple_006_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_006_001_global_var1",
+        "a1_line": 33,
+        "a1_kind": "read",
+        "b_line": 52,
+        "b_kind": "write",
+        "a2_line": 35,
+        "a2_kind": "read",
+        "why": "Main reads var1 at line 33 (i=j=0) and again at line 35 (i=j=4). The ISR can preempt between them and write 0, so the two reads can see different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_006_001_global_var1\",\"a1_line\":33,\"a1_kind\":\"read\",\"b_line\":52,\"b_kind\":\"write\",\"a2_line\":35,\"a2_kind\":\"read\",\"why\":\"Main reads var1 at line 33 (i=j=0) and again at line 35 (i=j=4). The ISR can preempt between them and write 0, so the two reads can see different values.\"}]}",
+  "wall_s": 5.384964227676392,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 437,
+    "cache_read": 2368,
+    "cache_write": 491,
+    "latency_s": 5.384827200992731
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,78 @@
+{
+  "case": "program_11",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_umber",
+        "a1_line": 12,
+        "a1_kind": "read",
+        "b_line": 36,
+        "b_kind": "write",
+        "a2_line": 13,
+        "a2_kind": "write",
+        "why": "Orchid is enabled at line 11 and can preempt the task between the check and the reset, so the reset can overwrite its increment."
+      },
+      {
+        "variable": "v_umber",
+        "a1_line": 12,
+        "a1_kind": "read",
+        "b_line": 24,
+        "b_kind": "write",
+        "a2_line": 13,
+        "a2_kind": "write",
+        "why": "Once orchid has enabled pylon, pylon can preempt the task between the check and the reset and increment v_umber."
+      },
+      {
+        "variable": "v_umber",
+        "a1_line": 29,
+        "a1_kind": "write",
+        "b_line": 19,
+        "b_kind": "write",
+        "a2_line": 12,
+        "a2_kind": "read",
+        "why": "Interrupts are still enabled while fn_cobalt and init run, so quiver can modify v_umber after the task's write and before the later read."
+      },
+      {
+        "variable": "v_umber",
+        "a1_line": 36,
+        "a1_kind": "read",
+        "b_line": 19,
+        "b_kind": "write",
+        "a2_line": 36,
+        "a2_kind": "write",
+        "why": "The increment in addData is not atomic, and quiver (priority 3) can preempt orchid between the read and the write when it is enabled."
+      },
+      {
+        "variable": "v_umber",
+        "a1_line": 36,
+        "a1_kind": "read",
+        "b_line": 24,
+        "b_kind": "write",
+        "a2_line": 36,
+        "a2_kind": "write",
+        "why": "Pylon (priority 2) can preempt orchid between the read and the write of the increment, once it has been enabled by an earlier orchid run."
+      },
+      {
+        "variable": "v_umber",
+        "a1_line": 24,
+        "a1_kind": "read",
+        "b_line": 19,
+        "b_kind": "write",
+        "a2_line": 24,
+        "a2_kind": "write",
+        "why": "Quiver (priority 3) can preempt pylon in the middle of its increment, and the increment is then lost."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_umber\",\"a1_line\":12,\"a1_kind\":\"read\",\"b_line\":36,\"b_kind\":\"write\",\"a2_line\":13,\"a2_kind\":\"write\",\"why\":\"Orchid is enabled at line 11 and can preempt the task between the check and the reset, so the reset can overwrite its increment.\"},{\"variable\":\"v_umber\",\"a1_line\":12,\"a1_kind\":\"read\",\"b_line\":24,\"b_kind\":\"write\",\"a2_line\":13,\"a2_kind\":\"write\",\"why\":\"Once orchid has enabled pylon, pylon can preempt the task between the check and the reset and increment v_umber.\"},{\"variable\":\"v_umber\",\"a1_line\":29,\"a1_kind\":\"write\",\"b_line\":19,\"b_kind\":\"write\",\"a2_line\":12,\"a2_kind\":\"read\",\"why\":\"Interrupts are still enabled while fn_cobalt and init run, so quiver can modify v_umber after the task's write and before the later read.\"},{\"variable\":\"v_umber\",\"a1_line\":36,\"a1_kind\":\"read\",\"b_line\":19,\"b_kind\":\"write\",\"a2_line\":36,\"a2_kind\":\"write\",\"why\":\"The increment in addData is not atomic, and quiver (priority 3) can preempt orchid between the read and the write when it is enabled.\"},{\"variable\":\"v_umber\",\"a1_line\":36,\"a1_kind\":\"read\",\"b_line\":24,\"b_kind\":\"write\",\"a2_line\":36,\"a2_kind\":\"write\",\"why\":\"Pylon (priority 2) can preempt orchid between the read and the write of the increment, once it has been enabled by an earlier orchid run.\"},{\"variable\":\"v_umber\",\"a1_line\":24,\"a1_kind\":\"read\",\"b_line\":19,\"b_kind\":\"write\",\"a2_line\":24,\"a2_kind\":\"write\",\"why\":\"Quiver (priority 3) can preempt pylon in the middle of its increment, and the increment is then lost.\"}]}",
+  "wall_s": 15.32222867012024,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1803,
+    "cache_read": 1878,
+    "cache_write": 485,
+    "latency_s": 15.322007326001767
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,28 @@
+{
+  "case": "program_12",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_ridge",
+        "a1_line": 30,
+        "a1_kind": "write",
+        "b_line": 17,
+        "b_kind": "read",
+        "a2_line": 31,
+        "a2_kind": "write",
+        "why": "v_ridge is a union, so header and data share storage. The ISR can preempt the task between the two writes and read the header after the task's first write (line 30). The second write (line 31) then overwrites that value."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_ridge\",\"a1_line\":30,\"a1_kind\":\"write\",\"b_line\":17,\"b_kind\":\"read\",\"a2_line\":31,\"a2_kind\":\"write\",\"why\":\"v_ridge is a union, so header and data share storage. The ISR can preempt the task between the two writes and read the header after the task's first write (line 30). The second write (line 31) then overwrites that value.\"}]}",
+  "wall_s": 5.896242618560791,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 462,
+    "cache_read": 1856,
+    "cache_write": 488,
+    "latency_s": 5.896002063003834
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

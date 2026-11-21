@@ -1,0 +1,78 @@
+{
+  "case": "program_18",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_vessel",
+        "a1_line": 15,
+        "a1_kind": "write",
+        "b_line": 34,
+        "b_kind": "write",
+        "a2_line": 26,
+        "a2_kind": "read",
+        "why": "ISR can overwrite v_vessel between the task's write of 0 and the read in fn_iris."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 26,
+        "a1_kind": "read",
+        "b_line": 34,
+        "b_kind": "write",
+        "a2_line": 27,
+        "a2_kind": "write",
+        "why": "The ISR can write 0 after the task's compare, then the task writes 12 based on a stale value."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 26,
+        "a1_kind": "read",
+        "b_line": 34,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "write",
+        "why": "The ISR can write 0 after the task's compare, then the task writes based on a stale value."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 27,
+        "a1_kind": "write",
+        "b_line": 34,
+        "b_kind": "write",
+        "a2_line": 50,
+        "a2_kind": "read",
+        "why": "The ISR can reset v_vessel to 0 between the task's write of 12 and its later read in fn_raptor."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 29,
+        "a1_kind": "write",
+        "b_line": 34,
+        "b_kind": "write",
+        "a2_line": 50,
+        "a2_kind": "read",
+        "why": "The ISR can write v_vessel between the task's write and its later read in fn_raptor."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 50,
+        "a1_kind": "read",
+        "b_line": 34,
+        "b_kind": "write",
+        "a2_line": 22,
+        "a2_kind": "read",
+        "why": "The ISR can change v_vessel between the two task reads, so v_basalt is assigned from different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_vessel\",\"a1_line\":15,\"a1_kind\":\"write\",\"b_line\":34,\"b_kind\":\"write\",\"a2_line\":26,\"a2_kind\":\"read\",\"why\":\"ISR can overwrite v_vessel between the task's write of 0 and the read in fn_iris.\"},{\"variable\":\"v_vessel\",\"a1_line\":26,\"a1_kind\":\"read\",\"b_line\":34,\"b_kind\":\"write\",\"a2_line\":27,\"a2_kind\":\"write\",\"why\":\"The ISR can write 0 after the task's compare, then the task writes 12 based on a stale value.\"},{\"variable\":\"v_vessel\",\"a1_line\":26,\"a1_kind\":\"read\",\"b_line\":34,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"write\",\"why\":\"The ISR can write 0 after the task's compare, then the task writes based on a stale value.\"},{\"variable\":\"v_vessel\",\"a1_line\":27,\"a1_kind\":\"write\",\"b_line\":34,\"b_kind\":\"write\",\"a2_line\":50,\"a2_kind\":\"read\",\"why\":\"The ISR can reset v_vessel to 0 between the task's write of 12 and its later read in fn_raptor.\"},{\"variable\":\"v_vessel\",\"a1_line\":29,\"a1_kind\":\"write\",\"b_line\":34,\"b_kind\":\"write\",\"a2_line\":50,\"a2_kind\":\"read\",\"why\":\"The ISR can write v_vessel between the task's write and its later read in fn_raptor.\"},{\"variable\":\"v_vessel\",\"a1_line\":50,\"a1_kind\":\"read\",\"b_line\":34,\"b_kind\":\"write\",\"a2_line\":22,\"a2_kind\":\"read\",\"why\":\"The ISR can change v_vessel between the two task reads, so v_basalt is assigned from different values.\"}]}",
+  "wall_s": 11.070512533187866,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1281,
+    "cache_read": 1974,
+    "cache_write": 488,
+    "latency_s": 11.070332003000658
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

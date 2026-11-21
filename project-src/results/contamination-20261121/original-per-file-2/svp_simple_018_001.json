@@ -1,0 +1,48 @@
+{
+  "case": "svp_simple_018_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_018_001_para1",
+        "a1_line": 40,
+        "a1_kind": "read",
+        "b_line": 59,
+        "b_kind": "write",
+        "a2_line": 47,
+        "a2_kind": "read",
+        "why": "Main reads para1 in func1 and again in func2; isr_1 can preempt in between and write para1, so the two computations see inconsistent values."
+      },
+      {
+        "variable": "svp_simple_018_001_para2",
+        "a1_line": 41,
+        "a1_kind": "read",
+        "b_line": 54,
+        "b_kind": "write",
+        "a2_line": 48,
+        "a2_kind": "read",
+        "why": "Main reads para2 in func1 and again in func2; isr_2 can preempt in between and write para2, so the two reads can differ."
+      },
+      {
+        "variable": "svp_simple_018_001_para2",
+        "a1_line": 48,
+        "a1_kind": "read",
+        "b_line": 54,
+        "b_kind": "write",
+        "a2_line": 49,
+        "a2_kind": "read",
+        "why": "The area expression reads para2 twice (lines 48 and 49); isr_2 can preempt between the reads and change para2, so the two reads can differ."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_018_001_para1\",\"a1_line\":40,\"a1_kind\":\"read\",\"b_line\":59,\"b_kind\":\"write\",\"a2_line\":47,\"a2_kind\":\"read\",\"why\":\"Main reads para1 in func1 and again in func2; isr_1 can preempt in between and write para1, so the two computations see inconsistent values.\"},{\"variable\":\"svp_simple_018_001_para2\",\"a1_line\":41,\"a1_kind\":\"read\",\"b_line\":54,\"b_kind\":\"write\",\"a2_line\":48,\"a2_kind\":\"read\",\"why\":\"Main reads para2 in func1 and again in func2; isr_2 can preempt in between and write para2, so the two reads can differ.\"},{\"variable\":\"svp_simple_018_001_para2\",\"a1_line\":48,\"a1_kind\":\"read\",\"b_line\":54,\"b_kind\":\"write\",\"a2_line\":49,\"a2_kind\":\"read\",\"why\":\"The area expression reads para2 twice (lines 48 and 49); isr_2 can preempt between the reads and change para2, so the two reads can differ.\"}]}",
+  "wall_s": 7.657091856002808,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 830,
+    "cache_read": 2529,
+    "cache_write": 488,
+    "latency_s": 7.656905139010632
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

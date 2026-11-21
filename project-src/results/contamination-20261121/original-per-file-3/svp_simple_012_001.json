@@ -1,0 +1,28 @@
+{
+  "case": "svp_simple_012_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_012_001_global_var",
+        "a1_line": 27,
+        "a1_kind": "write",
+        "b_line": 34,
+        "b_kind": "read",
+        "a2_line": 29,
+        "a2_kind": "write",
+        "why": "The ISR can preempt main between its two writes (line 29 writes through p, which aliases the global). The ISR then reads the intermediate value 0x01."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_012_001_global_var\",\"a1_line\":27,\"a1_kind\":\"write\",\"b_line\":34,\"b_kind\":\"read\",\"a2_line\":29,\"a2_kind\":\"write\",\"why\":\"The ISR can preempt main between its two writes (line 29 writes through p, which aliases the global). The ISR then reads the intermediate value 0x01.\"}]}",
+  "wall_s": 7.76015567779541,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 315,
+    "cache_read": 2079,
+    "cache_write": 483,
+    "latency_s": 7.7599949989817105
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

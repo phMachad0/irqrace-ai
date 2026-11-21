@@ -1,0 +1,58 @@
+{
+  "case": "program_22",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_quiver",
+        "a1_line": 31,
+        "a1_kind": "read",
+        "b_line": 14,
+        "b_kind": "write",
+        "a2_line": 33,
+        "a2_kind": "read",
+        "why": "ISR is unmasked between the two task reads and can write v_quiver, so the reads can see different values."
+      },
+      {
+        "variable": "v_willow",
+        "a1_line": 36,
+        "a1_kind": "read",
+        "b_line": 18,
+        "b_kind": "write",
+        "a2_line": 50,
+        "a2_kind": "read",
+        "why": "ISR can run before disable_isr at line 38, set v_amber=0 and v_willow, and the task then reaches line 50 and reads a changed value."
+      },
+      {
+        "variable": "v_willow",
+        "a1_line": 42,
+        "a1_kind": "read",
+        "b_line": 18,
+        "b_kind": "write",
+        "a2_line": 50,
+        "a2_kind": "read",
+        "why": "ISR was enabled at line 41 and can run after the read at 42, set v_amber=0 and v_willow, and the task then passes the check at 47 and reads v_willow at 50."
+      },
+      {
+        "variable": "v_amber",
+        "a1_line": 39,
+        "a1_kind": "read",
+        "b_line": 16,
+        "b_kind": "write",
+        "a2_line": 47,
+        "a2_kind": "read",
+        "why": "After enable_isr at line 41 the ISR can set v_amber=0 before the task reads it at line 47."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_quiver\",\"a1_line\":31,\"a1_kind\":\"read\",\"b_line\":14,\"b_kind\":\"write\",\"a2_line\":33,\"a2_kind\":\"read\",\"why\":\"ISR is unmasked between the two task reads and can write v_quiver, so the reads can see different values.\"},{\"variable\":\"v_willow\",\"a1_line\":36,\"a1_kind\":\"read\",\"b_line\":18,\"b_kind\":\"write\",\"a2_line\":50,\"a2_kind\":\"read\",\"why\":\"ISR can run before disable_isr at line 38, set v_amber=0 and v_willow, and the task then reaches line 50 and reads a changed value.\"},{\"variable\":\"v_willow\",\"a1_line\":42,\"a1_kind\":\"read\",\"b_line\":18,\"b_kind\":\"write\",\"a2_line\":50,\"a2_kind\":\"read\",\"why\":\"ISR was enabled at line 41 and can run after the read at 42, set v_amber=0 and v_willow, and the task then passes the check at 47 and reads v_willow at 50.\"},{\"variable\":\"v_amber\",\"a1_line\":39,\"a1_kind\":\"read\",\"b_line\":16,\"b_kind\":\"write\",\"a2_line\":47,\"a2_kind\":\"read\",\"why\":\"After enable_isr at line 41 the ISR can set v_amber=0 before the task reads it at line 47.\"}]}",
+  "wall_s": 13.559351205825806,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1474,
+    "cache_read": 2059,
+    "cache_write": 488,
+    "latency_s": 13.559009994001826
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

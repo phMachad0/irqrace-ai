@@ -1,0 +1,28 @@
+{
+  "case": "program_12",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_ridge",
+        "a1_line": 30,
+        "a1_kind": "write",
+        "b_line": 17,
+        "b_kind": "read",
+        "a2_line": 31,
+        "a2_kind": "write",
+        "why": "v_ridge is a union, so header overlaps the low byte of data. The ISR can preempt the task between the two writes and read header, which sees an intermediate state (write-read-write). v_saffron is a struct with separate fields, so it has no such overlap."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_ridge\",\"a1_line\":30,\"a1_kind\":\"write\",\"b_line\":17,\"b_kind\":\"read\",\"a2_line\":31,\"a2_kind\":\"write\",\"why\":\"v_ridge is a union, so header overlaps the low byte of data. The ISR can preempt the task between the two writes and read header, which sees an intermediate state (write-read-write). v_saffron is a struct with separate fields, so it has no such overlap.\"}]}",
+  "wall_s": 6.093091011047363,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 467,
+    "cache_read": 975,
+    "cache_write": 1369,
+    "latency_s": 6.092880418000277
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

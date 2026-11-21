@@ -1,0 +1,48 @@
+{
+  "case": "program_22",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_willow",
+        "a1_line": 36,
+        "a1_kind": "read",
+        "b_line": 18,
+        "b_kind": "write",
+        "a2_line": 50,
+        "a2_kind": "read",
+        "why": "ISR can run between line 36 and disable_isr at 38, setting v_willow and v_amber=0; the task then passes the check at 47 and reads v_willow at 50, getting a different value than at 36."
+      },
+      {
+        "variable": "v_willow",
+        "a1_line": 42,
+        "a1_kind": "read",
+        "b_line": 18,
+        "b_kind": "write",
+        "a2_line": 50,
+        "a2_kind": "read",
+        "why": "After enable_isr(1) at 41 the ISR can run between the reads at 42 and 50, changing v_willow."
+      },
+      {
+        "variable": "v_amber",
+        "a1_line": 39,
+        "a1_kind": "read",
+        "b_line": 16,
+        "b_kind": "write",
+        "a2_line": 47,
+        "a2_kind": "read",
+        "why": "After enable_isr(1) at 41 the ISR can write v_amber=0 before the task re-reads it at 47."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_willow\",\"a1_line\":36,\"a1_kind\":\"read\",\"b_line\":18,\"b_kind\":\"write\",\"a2_line\":50,\"a2_kind\":\"read\",\"why\":\"ISR can run between line 36 and disable_isr at 38, setting v_willow and v_amber=0; the task then passes the check at 47 and reads v_willow at 50, getting a different value than at 36.\"},{\"variable\":\"v_willow\",\"a1_line\":42,\"a1_kind\":\"read\",\"b_line\":18,\"b_kind\":\"write\",\"a2_line\":50,\"a2_kind\":\"read\",\"why\":\"After enable_isr(1) at 41 the ISR can run between the reads at 42 and 50, changing v_willow.\"},{\"variable\":\"v_amber\",\"a1_line\":39,\"a1_kind\":\"read\",\"b_line\":16,\"b_kind\":\"write\",\"a2_line\":47,\"a2_kind\":\"read\",\"why\":\"After enable_isr(1) at 41 the ISR can write v_amber=0 before the task re-reads it at 47.\"}]}",
+  "wall_s": 15.972768545150757,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1722,
+    "cache_read": 2059,
+    "cache_write": 489,
+    "latency_s": 15.972592060978059
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

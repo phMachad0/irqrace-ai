@@ -1,0 +1,28 @@
+{
+  "case": "program_06",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_meadow",
+        "a1_line": 24,
+        "a1_kind": "read",
+        "b_line": 12,
+        "b_kind": "write",
+        "a2_line": 26,
+        "a2_kind": "read",
+        "why": "The task reads v_meadow at line 24 (i=0,j=0) and again at line 26 (i=4,j=4) with no interrupt masking. irq_iris can preempt in between and write v_meadow at line 12, so the two reads can see different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_meadow\",\"a1_line\":24,\"a1_kind\":\"read\",\"b_line\":12,\"b_kind\":\"write\",\"a2_line\":26,\"a2_kind\":\"read\",\"why\":\"The task reads v_meadow at line 24 (i=0,j=0) and again at line 26 (i=4,j=4) with no interrupt masking. irq_iris can preempt in between and write v_meadow at line 12, so the two reads can see different values.\"}]}",
+  "wall_s": 6.168293476104736,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 520,
+    "cache_read": 975,
+    "cache_write": 1392,
+    "latency_s": 6.168087059020763
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}
