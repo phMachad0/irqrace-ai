@@ -52,7 +52,7 @@ Report every atomicity violation you find, each as the three source line numbers
 
 SYSTEM_REALWORLD = SYSTEM.replace(
     "An ISR can preempt the main task, or an ISR of strictly lower priority, whenever its interrupt is enabled; larger priority numbers are higher.",
-    "An ISR can preempt the main task, or another ISR of lower or equal priority, whenever its interrupt is enabled; larger priority numbers are higher. The initial masking state is unknown.")
+    "An ISR can preempt the main task, or an ISR of lower priority, whenever its interrupt is enabled; larger priority numbers are higher. Whether ISRs of equal priority can preempt each other is stated with each program's flows. The initial masking state is unknown.")
 assert SYSTEM_REALWORLD != SYSTEM
 
 FINDING = {
@@ -136,7 +136,9 @@ def source_of(case: str) -> str:
 
 def flows_of(case: str) -> str:
     if REALWORLD:
-        flows = yaml.safe_load((RW_CONFIGS / f"{case}.yaml").read_text())["flows"]
+        cfg = yaml.safe_load((RW_CONFIGS / f"{case}.yaml").read_text())
+        flows = cfg["flows"]
+        equal = cfg["semantics"]["equal_priority_preemption"]
     else:
         flows = _meta(case)["flows"] if DISGUISED is not None else yaml.safe_load((CONFIGS / f"{case}.yaml").read_text())["flows"]
     rows = []
@@ -144,6 +146,8 @@ def flows_of(case: str) -> str:
         kind = "ISR" if f["kind"] == "isr" else "task"
         irq = f", interrupt {f['irq']}" if f.get("irq") is not None else ""
         rows.append(f"- {f['entry']}: {kind}, priority {f['priority']}{irq}")
+    if REALWORLD:
+        rows.append("ISRs of equal priority " + ("may" if equal else "never") + " preempt each other.")
     return "\n".join(rows)
 
 
