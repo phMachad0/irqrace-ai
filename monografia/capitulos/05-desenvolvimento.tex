@@ -90,8 +90,8 @@ repositório inteiro.
 
 \subsection{Estágio 1, derivação de candidatos}
 
-O primeiro estágio segue o desenho de \citeonline{intrace} e ignora de
-propósito condições de desvio e estado das interrupções, para não perder nada.
+O primeiro estágio segue o desenho de \citeonline{intrace} e ignora
+deliberadamente condições de desvio e estado das interrupções, para não perder nenhum defeito.
 Ele identifica os fluxos a partir da configuração, tratando cada ponto de
 entrada como raiz de uma análise de alcançabilidade; identifica as posições
 compartilhadas por análise \textit{may}, sem se restringir a variáveis globais,
@@ -105,9 +105,9 @@ $A_2$ no fluxo interrompido, nessa ordem, e $B$ num fluxo capaz de interrompê-l
 entre os dois. A ordem entre $A_1$ e $A_2$ vem do grafo de fluxo de controle da
 função que os contém.
 
-Um detalhe sobre laços é decisivo para o recall. Um único acesso no
-código-fonte, dentro de um laço que pode repetir, corresponde a vários acessos
-em execução, e por isso a mesma instrução pode ocupar as posições $A_1$ e $A_2$
+O tratamento de laços tem consequência direta sobre o recall, pois um único
+acesso no código-fonte, dentro de um laço que pode repetir, corresponde a
+vários acessos em execução. Por isso a mesma instrução pode ocupar as posições $A_1$ e $A_2$
 de uma tripla. O mesmo vale para uma função chamada duas vezes pelo mesmo
 fluxo. O Racebench anota defeitos exatamente com essa forma, de modo que uma
 implementação que tratasse cada instrução como um acesso único perderia
@@ -127,7 +127,7 @@ cada ponto do programa, quais interrupções estão desabilitadas. Uma interrup�
 só conta como mascarada durante o intervalo $[A_1, A_2]$ se estiver mascarada
 em todo ponto de todo caminho de $A_1$ a $A_2$ no fluxo local e se nenhum fluxo
 capaz de executar dentro desse intervalo puder reabilitá-la. A segunda condição
-é o que evita perder o defeito do caso \texttt{svp\_simple\_001\_001} descrito
+evita a perda do defeito do caso \texttt{svp\_simple\_001\_001} descrito
 na Seção~\ref{sec:interrupcoes}. Escritas em registradores que a configuração
 não reconheça nunca contam como mascaramento.
 
@@ -148,7 +148,7 @@ A posição desse estágio antes da triagem é fixa, por três motivos. Ele é u
 filtro correto, que só descarta com prova. Reduz fortemente o volume, e os
 números do IntRace dão a ordem de grandeza, com cerca de 208 candidatos por
 programa caindo para cerca de 95 após o segundo estágio e para algo em torno de
-13 após o terceiro \cite{intrace}, redução que é o que torna a triagem por \llm\
+13 após o terceiro \cite{intrace}, redução que torna a triagem por \llm\
 economicamente viável. E reproduz a arquitetura do LLift, em que o modelo
 recebe apenas os casos que a execução simbólica não conseguiu decidir
 \cite{llift}.
@@ -159,7 +159,7 @@ Para cada candidato sobrevivente a ferramenta emite um registro de contexto,
 que é um documento estruturado com as evidências necessárias para julgá-lo.
 \citeonline{llift} atribuem 5 de seus 13 falsos positivos a lacunas no
 relatório entregue pelo analisador ao modelo, o que justifica tratar esse
-registro como produto de primeira classe da análise, e não como subproduto. O
+registro como produto de primeira classe da análise. O
 Quadro~\ref{quadro:registro} resume seus campos.
 
 \begin{quadro}[htb]
@@ -236,7 +236,7 @@ leitura, e é essa ordem que o \textit{Inspection Ratio} avalia.
 O desenho segue os quatro componentes de \citeonline{llift}, adaptados ao
 domínio. O primeiro é o ensino de regras do domínio por exemplos. O
 conhecimento prévio do modelo vem sobretudo de \textit{threads} e o leva a
-procurar travas e relações \textit{happens-before}, então o \textit{prompt}
+procurar travas e relações \textit{happens-before}, e por isso o \textit{prompt}
 ensina uma tabela de padrões de interrupção com seus veredictos, cobrindo a
 seção crítica que abrange todo o intervalo, as duas seções separadas que deixam
 uma lacuna no meio, a prioridade estritamente menor que impede a preempção, a
@@ -299,7 +299,7 @@ não mero detalhe de desempenho.
 A avaliação responde a seis perguntas de pesquisa (QP). A proposta do trabalho
 previa quatro, sobre o recall estático, a triagem, a ablação das técnicas de
 \textit{prompt} e o reparo. A integração das duas etapas acrescentou três
-frentes, a comparação com as ferramentas publicadas (QP3), a extensão do
+temas, a comparação com as ferramentas publicadas (QP3), a extensão do
 gabarito com os defeitos não anotados (QP5) e a comparação de variantes de
 \textit{prompt}, que estende a ablação dentro da QP4.
 
@@ -463,10 +463,11 @@ conjunto de triagem.
 \subsection{Métricas}
 
 O portão de recall exige que todos os defeitos anotados cheguem ao relatório e
-que nenhum caia no grupo de menor prioridade de leitura. Uma falha aqui é
-defeito de projeto, não parâmetro a ajustar. A rejeição de armadilhas mede a
-fração das armadilhas classificadas nos grupos baixos, e é a medida de precisão
-da triagem que, ao contrário da precisão, não melhora descartando candidatos. O
+que nenhum caia no grupo de menor prioridade de leitura. Uma falha nesse portão
+indica defeito de projeto e não se resolve com ajuste de parâmetros. A rejeição
+de armadilhas mede a fração das armadilhas classificadas nos grupos baixos, e
+funciona como medida de precisão da triagem que, diferentemente da precisão,
+não melhora quando candidatos são descartados. O
 \textit{Inspection Ratio} mede a fração da lista ordenada que um revisor
 precisa ler até encontrar todos os defeitos \cite{reducing-fp}, com empates
 resolvidos pelo pior caso, colocando o defeito real por último. A consistência
@@ -581,7 +582,7 @@ cada ferramenta publicada, S1 e S2 são restritos ao subconjunto de casos que o
 artigo usou, ao gabarito conforme distribuído e às exclusões que o artigo fez,
 e a comparação se dá ali, numa tabela por artigo. Uma linha como ``S2 contra
 BMC4AV nos 25 casos de BMC4AV, sem o padrão $(R,W,W)$, com o gabarito
-48/38'' compara iguais. Os sistemas S1 e S2 aparecem ainda numa tabela própria,
+48/38'' compara grandezas equivalentes. Os sistemas S1 e S2 aparecem ainda numa tabela própria,
 sobre os 31 casos e o gabarito reetiquetado.
 
 \begin{quadro}[htb]
@@ -608,10 +609,10 @@ sobre os 31 casos e o gabarito reetiquetado.
   \citeonline{racebench}.}
 \end{quadro}
 
-Cada linha de S0 registra ainda se o número foi medido pelo próprio artigo ou
-copiado de outro, já que as três ferramentas comparam-se com linhas de base
-cujos binários não estavam disponíveis, e o equipamento em que foi medido,
-diferente em cada artigo e diferente do usado aqui. Um número de S0 só é
+Cada linha de S0 registra ainda o equipamento em que o número foi medido,
+diferente em cada artigo e diferente do usado aqui, e se ele foi medido pelo
+próprio artigo ou copiado de outro, já que as três ferramentas comparam-se com
+linhas de base cujos binários não estavam disponíveis. Um número de S0 só é
 recalculado contra as anotações quando o artigo ou seu artefato traz o
 resultado caso a caso. É o que ocorre com o BMC4AV, cujo arquivo de resultados
 permite verificar que seu recall de 38 em 38 corresponde a 38 dos 48 defeitos
@@ -625,7 +626,7 @@ gabarito, métrica, valor, origem e equipamento, e não apenas no texto.
 
 A comparação de \textit{prompts} parte das duas linhas de avaliação,
 \texttt{+racebench} e \texttt{+racebench+c4}, que diferem apenas pelos pedidos
-progressivos de contexto. Cada variante altera uma única coisa em relação a
+progressivos de contexto. Cada variante altera um único elemento em relação a
 \texttt{+racebench}, como exigir uma testemunha concreta para o veredicto
 ``possível'' ou exigir que o índice ou o ponteiro de $B$ seja avaliado
 explicitamente dentro da intercalação julgada, de modo que cada diferença tenha
@@ -638,7 +639,7 @@ veredicto da variante ao lado do veredicto da linha de base, e toda mudança de
 grupo é listada pelo nome do item. Uma variante só é considerada melhor que a
 linha de base se a diferença superar a variação entre as execuções da própria
 linha de base, ou se eliminar um erro identificado pelo nome sem perder nenhum
-defeito. Sobre esse critério vale um veto de recall: uma variante que leve
+defeito. Sobre esse critério vale um veto de recall. Uma variante que leve
 qualquer defeito anotado ao grupo provavelmente inviável tem essa perda
 reportada pelo nome, qualquer que seja sua pontuação. A ablação e a comparação
 de variantes são lidas juntas, pois respondem à mesma pergunta, QP4.
@@ -691,8 +692,8 @@ limpo que o das armadilhas plantadas.
 \subsection{Resultados}
 \label{sec:resultados}
 
-Cada pergunta de pesquisa tem uma subseção, na mesma ordem: a configuração
-(\textit{commit}, modelo, linha de \textit{prompt}, número de execuções,
+Cada pergunta de pesquisa tem uma subseção, organizada sempre na mesma ordem,
+com a configuração (\textit{commit}, modelo, linha de \textit{prompt}, número de execuções,
 versão do gabarito e diretório de execução), o resultado, numa tabela e em ao
 menos uma figura, e sua leitura. As figuras são geradas por um
 \textit{script} a partir dos dados versionados de cada execução, e a fonte de
@@ -710,14 +711,14 @@ equipamento é um AMD Ryzen~5 3600X com 16~GB, com a etapa estática no WSL.
 
 \subsubsection{QP1, recall estático}
 
-A etapa estática encontra todos os defeitos anotados nos dois gabaritos: 53 de
+A etapa estática encontra todos os defeitos anotados nos dois gabaritos, 53 de
 53 sobre o gabarito reetiquetado e 48 de 48 sobre o gabarito conforme
-distribuído. O resultado vale também em cada padrão de acesso: 27 de 27 em
+distribuído. O resultado vale também em cada padrão de acesso, com 27 de 27 em
 $(R,W,R)$, 8 de 8 em $(W,W,R)$, 7 de 7 em $(W,R,W)$ e 11 de 11 em $(R,W,W)$.
 A Figura~\ref{fig:f2} mostra o funil. O estágio~1 gera 316 candidatos, o
 estágio~2 descarta os que a prioridade e o mascaramento tornam impossíveis e
 deixa 202, e o estágio~3, com o Z3, refuta os de caminho insatisfatível e
-deixa 166 para a triagem. Nenhum estágio descarta um defeito anotado: os 53
+deixa 166 para a triagem. Nenhum estágio descarta um defeito anotado, e os 53
 chegam à triagem. O que os estágios descartam são armadilhas (de 30 para 25 e
 depois para 11) e candidatos não anotados (de 233 para 124 e depois para 102).
 
@@ -748,7 +749,7 @@ execuções.
 
 \subsubsection{QP2, triagem}
 
-A triagem não custa recall: em nenhuma das três execuções o modelo chamou de
+A triagem não custa recall. Em nenhuma das três execuções o modelo chamou de
 inviável um defeito anotado, e os 53 continuam no grupo provavelmente real. O
 ganho está nas armadilhas. Das onze que chegam à triagem, nove vão para o grupo
 provavelmente inviável, e as duas restantes são as mesmas nas três execuções,
@@ -780,10 +781,9 @@ O esforço de revisão melhora pouco. O \textit{Inspection Ratio} médio cai de
 0,71, na ordem dos registros, para 0,69, na ordem da triagem
 (Figura~\ref{fig:f9}). Dos 102 candidatos não anotados que chegam à triagem,
 82 a 83 continuam no grupo provavelmente real. Esses candidatos não são falsos
-positivos pelo critério deste trabalho, e a QP5 trata deles. É a presença
-deles no topo da ordem que impede uma queda maior do \textit{Inspection
-Ratio}. O ganho da triagem, portanto, está em rejeitar armadilhas, e não em
-reordenar a revisão.
+positivos pelo critério deste trabalho, e a QP5 trata deles. Sua presença no
+topo da ordem impede uma queda maior do \textit{Inspection Ratio}. O ganho da
+triagem, portanto, está em rejeitar armadilhas, e não em reordenar a revisão.
 
 \begin{figure}[htb]
   \centering
@@ -829,9 +829,8 @@ execução não é comparado.
   resultados. S1 e S2: \texttt{results/m2}, $n = 3$, desvio zero.}
 \end{table}
 
-A Tabela~\ref{tab:qp3-bmc4av} pede três leituras.
-
-A primeira é que 37 contra 38 não é um defeito perdido. A errata deste trabalho
+A Tabela~\ref{tab:qp3-bmc4av} admite três leituras. A primeira é que 37
+contra 38 não indica um defeito perdido. A errata deste trabalho
 corrige o tipo de acesso do defeito~2 do caso 022, que está anotado como
 $(R,W,R)$ e passa a $(R,W,W)$. O BMC4AV o conta como $(R,W,R)$, dentro dos seus
 38. Ao excluir $(R,W,W)$ pela classificação corrigida, ele sai do recorte. S1 e
@@ -883,8 +882,8 @@ O IntRace não recebe tabela. Ele detecta condições de corrida, outra classe d
 defeito, sobre 30 casos com um caso excluído que o artigo não identifica, e
 relata taxa de detecção de 90,7\% com 5 falsos positivos \cite{intrace}.
 
-A Figura~\ref{fig:f1} resume a comparação: o recall contra as armadilhas
-reportadas, com o marcador indicando o gabarito em que cada ponto foi medido.
+A Figura~\ref{fig:f1} resume a comparação ao cruzar o recall com as armadilhas
+reportadas, e o marcador indica o gabarito em que cada ponto foi medido.
 O NIChecker coincide com S2 sobre 53/33 (2 armadilhas, 100\%) e aparece como um
 anel em volta dele. A Figura~\ref{fig:f4} mostra o recall por padrão. O BMC4AV
 exclui $(R,W,W)$, enquanto S1 e S2 detectam os 11 defeitos desse padrão.
@@ -909,7 +908,7 @@ exclui $(R,W,W)$, enquanto S1 e S2 detectam os 11 defeitos desse padrão.
   \citeonline{bmc4av}, 25 casos, gabarito do artigo.}
 \end{figure}
 
-Em resumo, nos termos de qualquer um dos artigos, a etapa estática detecta
+Nos termos de qualquer um dos artigos, portanto, a etapa estática detecta
 todos os defeitos anotados, inclusive os do padrão $(R,W,W)$, que o BMC4AV
 exclui, e a triagem reduz as armadilhas reportadas sem perder nenhum defeito.
 O trabalho não sustenta, por outro lado, que S2 supere o NIChecker, cujo
@@ -989,6 +988,6 @@ modelo passa a receber apenas o que o solucionador não decidiu, que são os
 casos mais difíceis, de modo que os números obtidos sobre os registros montados
 à mão não se transferem automaticamente. E todos os programas avaliados são de
 arquivo único, o que deixa a entrada com vários arquivos como capacidade
-exercida fora do gabarito. Por fim, a exclusão de reentrância da
-Seção~\ref{sec:premissas} é uma perda potencial de recall registrada, não
-medida.
+exercida fora do gabarito. A exclusão de reentrância da
+Seção~\ref{sec:premissas}, por sua vez, é uma perda potencial de recall
+registrada, mas não medida.
