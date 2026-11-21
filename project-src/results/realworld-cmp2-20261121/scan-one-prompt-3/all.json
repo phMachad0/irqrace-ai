@@ -1,0 +1,587 @@
+{
+  "parsed": {
+    "cases": [
+      {
+        "case": "blink1",
+        "violations": [
+          {
+            "variable": "timerCount",
+            "a1_line": 95,
+            "a1_kind": "write",
+            "b_line": 120,
+            "b_kind": "write",
+            "a2_line": 96,
+            "a2_kind": "read",
+            "why": "Timer_Force (prio 3) can preempt Timer_A between the increment and the check, so the check sees the forced value."
+          },
+          {
+            "variable": "timerCount",
+            "a1_line": 108,
+            "a1_kind": "write",
+            "b_line": 121,
+            "b_kind": "write",
+            "a2_line": 109,
+            "a2_kind": "read",
+            "why": "Timer_Force can preempt Timer_B between its write and the check, so the check no longer sees 1."
+          },
+          {
+            "variable": "timerCount",
+            "a1_line": 95,
+            "a1_kind": "read",
+            "b_line": 120,
+            "b_kind": "write",
+            "a2_line": 95,
+            "a2_kind": "write",
+            "why": "The increment is a read-modify-write that the higher-priority Force ISR can interrupt, so the Force write is lost."
+          }
+        ]
+      },
+      {
+        "case": "blink2",
+        "violations": [
+          {
+            "variable": "timerCount",
+            "a1_line": 93,
+            "a1_kind": "write",
+            "b_line": 119,
+            "b_kind": "write",
+            "a2_line": 95,
+            "a2_kind": "read",
+            "why": "Timer_C (prio 4) can preempt Timer_A between the increment and the check."
+          },
+          {
+            "variable": "timerCount",
+            "a1_line": 93,
+            "a1_kind": "read",
+            "b_line": 119,
+            "b_kind": "write",
+            "a2_line": 93,
+            "a2_kind": "write",
+            "why": "The increment in Timer_A is a non-atomic read-modify-write that Timer_C can interrupt."
+          },
+          {
+            "variable": "timerCount",
+            "a1_line": 106,
+            "a1_kind": "write",
+            "b_line": 93,
+            "b_kind": "write",
+            "a2_line": 108,
+            "a2_kind": "read",
+            "why": "Timer_A (prio 3) can preempt Timer_B (prio 2) between its write and the check."
+          }
+        ]
+      },
+      {
+        "case": "blink3",
+        "violations": [
+          {
+            "variable": "timerCount",
+            "a1_line": 95,
+            "a1_kind": "write",
+            "b_line": 146,
+            "b_kind": "write",
+            "a2_line": 97,
+            "a2_kind": "read",
+            "why": "Timer_Reset (prio 5) can preempt Timer_A between the increment and the check."
+          },
+          {
+            "variable": "timerCount",
+            "a1_line": 109,
+            "a1_kind": "write",
+            "b_line": 146,
+            "b_kind": "write",
+            "a2_line": 111,
+            "a2_kind": "read",
+            "why": "Timer_Reset can preempt Timer_B between its write and the check."
+          },
+          {
+            "variable": "timerCount",
+            "a1_line": 95,
+            "a1_kind": "read",
+            "b_line": 136,
+            "b_kind": "write",
+            "a2_line": 95,
+            "a2_kind": "write",
+            "why": "Timer_Force (prio 3) can preempt Timer_A's read-modify-write, so its update is lost."
+          }
+        ]
+      },
+      {
+        "case": "brake1",
+        "violations": [
+          {
+            "variable": "test_global_var1",
+            "a1_line": 284,
+            "a1_kind": "read",
+            "b_line": 348,
+            "b_kind": "write",
+            "a2_line": 285,
+            "a2_kind": "read",
+            "why": "task_compute_isr can preempt main's JudgeCondi between its two reads of the variable."
+          },
+          {
+            "variable": "test_global_var2",
+            "a1_line": 287,
+            "a1_kind": "read",
+            "b_line": 349,
+            "b_kind": "write",
+            "a2_line": 288,
+            "a2_kind": "read",
+            "why": "task_compute_isr can preempt main's JudgeCondi between its two reads of the variable."
+          },
+          {
+            "variable": "test_global_array",
+            "a1_line": 387,
+            "a1_kind": "write",
+            "b_line": 347,
+            "b_kind": "write",
+            "a2_line": 390,
+            "a2_kind": "read",
+            "why": "task_compute_isr (prio 6) can preempt task_RR_Wheel_isr between its write and its read of the array element."
+          }
+        ]
+      },
+      {
+        "case": "brake2",
+        "violations": [
+          {
+            "variable": "test_global_var1",
+            "a1_line": 459,
+            "a1_kind": "write",
+            "b_line": 285,
+            "b_kind": "write",
+            "a2_line": 460,
+            "a2_kind": "read",
+            "why": "task_compute_isr (prio 6) can preempt task_RR_Wheel_isr between its write and its read."
+          },
+          {
+            "variable": "test_global_var1",
+            "a1_line": 460,
+            "a1_kind": "read",
+            "b_line": 285,
+            "b_kind": "write",
+            "a2_line": 461,
+            "a2_kind": "read",
+            "why": "task_compute_isr can preempt task_RR_Wheel_isr between its two reads."
+          }
+        ]
+      },
+      {
+        "case": "brake3",
+        "violations": [
+          {
+            "variable": "test_global_var1",
+            "a1_line": 289,
+            "a1_kind": "read",
+            "b_line": 355,
+            "b_kind": "write",
+            "a2_line": 290,
+            "a2_kind": "read",
+            "why": "task_compute_isr (prio 6) can preempt JudgeCondi, called from task_RR_Wheel_isr, between its two reads."
+          },
+          {
+            "variable": "test_global_var2",
+            "a1_line": 292,
+            "a1_kind": "read",
+            "b_line": 356,
+            "b_kind": "write",
+            "a2_line": 293,
+            "a2_kind": "read",
+            "why": "task_compute_isr can preempt JudgeCondi between its two reads."
+          },
+          {
+            "variable": "test_global_array",
+            "a1_line": 589,
+            "a1_kind": "write",
+            "b_line": 354,
+            "b_kind": "write",
+            "a2_line": 592,
+            "a2_kind": "read",
+            "why": "task_compute_isr can preempt task_FL_Wheel_isr between its write and its read of the array element."
+          }
+        ]
+      },
+      {
+        "case": "i2c_pca_isa_1",
+        "violations": [
+          {
+            "variable": "test_global_var1",
+            "a1_line": 291,
+            "a1_kind": "read",
+            "b_line": 342,
+            "b_kind": "write",
+            "a2_line": 292,
+            "a2_kind": "read",
+            "why": "req4_isr can preempt main's JudgeCondi between its two reads."
+          },
+          {
+            "variable": "test_global_var2",
+            "a1_line": 294,
+            "a1_kind": "read",
+            "b_line": 328,
+            "b_kind": "write",
+            "a2_line": 295,
+            "a2_kind": "read",
+            "why": "req3_isr can preempt main's JudgeCondi between its two reads."
+          }
+        ]
+      },
+      {
+        "case": "i2c_pca_isa_2",
+        "violations": [
+          {
+            "variable": "test_global_var1",
+            "a1_line": 289,
+            "a1_kind": "read",
+            "b_line": 354,
+            "b_kind": "write",
+            "a2_line": 290,
+            "a2_kind": "read",
+            "why": "req5_isr (prio 6) can preempt req6_isr's JudgeCondi between its two reads."
+          },
+          {
+            "variable": "test_global_var2",
+            "a1_line": 294,
+            "a1_kind": "read",
+            "b_line": 338,
+            "b_kind": "write",
+            "a2_line": 295,
+            "a2_kind": "read",
+            "why": "req4_isr (prio 5) can preempt req6_isr's JudgeCondi between its two reads."
+          },
+          {
+            "variable": "irq",
+            "a1_line": 308,
+            "a1_kind": "write",
+            "b_line": 321,
+            "b_kind": "write",
+            "a2_line": 313,
+            "a2_kind": "read",
+            "why": "req3_isr (prio 4) can preempt req2_isr between its write of irq and its check."
+          }
+        ]
+      },
+      {
+        "case": "i2c_pca_isa_3",
+        "violations": [
+          {
+            "variable": "test_global_var1",
+            "a1_line": 293,
+            "a1_kind": "read",
+            "b_line": 332,
+            "b_kind": "write",
+            "a2_line": 294,
+            "a2_kind": "read",
+            "why": "req3_isr (prio 3) can preempt req1_isr's JudgeCondi between its two reads."
+          },
+          {
+            "variable": "test_global_var2",
+            "a1_line": 296,
+            "a1_kind": "read",
+            "b_line": 334,
+            "b_kind": "write",
+            "a2_line": 297,
+            "a2_kind": "read",
+            "why": "req3_isr can preempt req1_isr's JudgeCondi between its two reads."
+          },
+          {
+            "variable": "test_global_array",
+            "a1_line": 382,
+            "a1_kind": "write",
+            "b_line": 398,
+            "b_kind": "write",
+            "a2_line": 385,
+            "a2_kind": "read",
+            "why": "req8_isr (prio 6) can preempt req7_isr between its write and its read of the array element."
+          }
+        ]
+      },
+      {
+        "case": "i8xx_tco_1",
+        "violations": [
+          {
+            "variable": "test_global_var1",
+            "a1_line": 747,
+            "a1_kind": "read",
+            "b_line": 771,
+            "b_kind": "write",
+            "a2_line": 748,
+            "a2_kind": "read",
+            "why": "closer1_isr (prio 4) can preempt JudgeCondi, called from closer2_isr, between its two reads."
+          },
+          {
+            "variable": "test_global_var2",
+            "a1_line": 750,
+            "a1_kind": "read",
+            "b_line": 773,
+            "b_kind": "write",
+            "a2_line": 751,
+            "a2_kind": "read",
+            "why": "closer1_isr can preempt JudgeCondi between its two reads."
+          }
+        ]
+      },
+      {
+        "case": "i8xx_tco_2",
+        "violations": [
+          {
+            "variable": "test_global_var1",
+            "a1_line": 744,
+            "a1_kind": "read",
+            "b_line": 771,
+            "b_kind": "write",
+            "a2_line": 745,
+            "a2_kind": "read",
+            "why": "closer2_isr can preempt main's JudgeCondi between its two reads."
+          },
+          {
+            "variable": "test_global_var2",
+            "a1_line": 747,
+            "a1_kind": "read",
+            "b_line": 787,
+            "b_kind": "write",
+            "a2_line": 748,
+            "a2_kind": "read",
+            "why": "writer2_isr can preempt main's JudgeCondi between its two reads."
+          }
+        ]
+      },
+      {
+        "case": "i8xx_tco_3",
+        "violations": [
+          {
+            "variable": "test_global_var1",
+            "a1_line": 741,
+            "a1_kind": "read",
+            "b_line": 791,
+            "b_kind": "write",
+            "a2_line": 742,
+            "a2_kind": "read",
+            "why": "writer1_isr (prio 3) can preempt JudgeCondi, called from closer2_isr, between its two reads."
+          },
+          {
+            "variable": "test_global_var2",
+            "a1_line": 744,
+            "a1_kind": "read",
+            "b_line": 801,
+            "b_kind": "write",
+            "a2_line": 745,
+            "a2_kind": "read",
+            "why": "writer2_isr (prio 4) can preempt JudgeCondi between its two reads."
+          },
+          {
+            "variable": "test_global_var3",
+            "a1_line": 779,
+            "a1_kind": "read",
+            "b_line": 810,
+            "b_kind": "write",
+            "a2_line": 779,
+            "a2_kind": "write",
+            "why": "writer3_isr (prio 5) can preempt closer3_isr's increment, so its write is lost."
+          }
+        ]
+      },
+      {
+        "case": "logger1",
+        "violations": [
+          {
+            "variable": "tickCounter",
+            "a1_line": 76,
+            "a1_kind": "write",
+            "b_line": 136,
+            "b_kind": "write",
+            "a2_line": 77,
+            "a2_kind": "read",
+            "why": "task_communicate_isr (prio 5) can preempt task_measure_isr between its write and its read of tickCounter."
+          },
+          {
+            "variable": "numberOfRecords",
+            "a1_line": 83,
+            "a1_kind": "read",
+            "b_line": 137,
+            "b_kind": "write",
+            "a2_line": 85,
+            "a2_kind": "write",
+            "why": "task_communicate_isr can reset numberOfRecords between the index read and the increment."
+          }
+        ]
+      },
+      {
+        "case": "logger2",
+        "violations": [
+          {
+            "variable": "tickCounter",
+            "a1_line": 81,
+            "a1_kind": "write",
+            "b_line": 100,
+            "b_kind": "write",
+            "a2_line": 82,
+            "a2_kind": "read",
+            "why": "task_measure2_isr (prio 3) can preempt task_measure1_isr between its write and its read."
+          },
+          {
+            "variable": "numberOfRecords",
+            "a1_line": 90,
+            "a1_kind": "read",
+            "b_line": 159,
+            "b_kind": "write",
+            "a2_line": 92,
+            "a2_kind": "write",
+            "why": "task_communicate_isr (prio 5) can reset numberOfRecords between the index read and the increment."
+          }
+        ]
+      },
+      {
+        "case": "logger3",
+        "violations": [
+          {
+            "variable": "tickCounter",
+            "a1_line": 99,
+            "a1_kind": "write",
+            "b_line": 109,
+            "b_kind": "write",
+            "a2_line": 100,
+            "a2_kind": "read",
+            "why": "task_measure3_isr (prio 6) can preempt task_measure2_isr between its write and its read."
+          },
+          {
+            "variable": "numberOfRecords",
+            "a1_line": 89,
+            "a1_kind": "read",
+            "b_line": 110,
+            "b_kind": "write",
+            "a2_line": 91,
+            "a2_kind": "write",
+            "why": "task_measure3_isr can preempt task_measure1_isr between the index read and the increment."
+          }
+        ]
+      },
+      {
+        "case": "wdt_pci_1",
+        "violations": [
+          {
+            "variable": "test_global_var1",
+            "a1_line": 990,
+            "a1_kind": "read",
+            "b_line": 1084,
+            "b_kind": "write",
+            "a2_line": 991,
+            "a2_kind": "read",
+            "why": "writer1_isr (prio 4) can preempt JudgeCondi, called from closer1_isr, between its two reads."
+          },
+          {
+            "variable": "test_global_var2",
+            "a1_line": 993,
+            "a1_kind": "read",
+            "b_line": 1107,
+            "b_kind": "write",
+            "a2_line": 994,
+            "a2_kind": "read",
+            "why": "writer2_isr can preempt JudgeCondi between its two reads."
+          },
+          {
+            "variable": "test_global_var3",
+            "a1_line": 1049,
+            "a1_kind": "read",
+            "b_line": 1108,
+            "b_kind": "write",
+            "a2_line": 1050,
+            "a2_kind": "read",
+            "why": "writer2_isr can preempt closer2_isr between its two reads."
+          },
+          {
+            "variable": "expect_close",
+            "a1_line": 1002,
+            "a1_kind": "write",
+            "b_line": 1071,
+            "b_kind": "write",
+            "a2_line": 1018,
+            "a2_kind": "read",
+            "why": "A writer ISR (prio 4) can preempt closer1_isr and reset expect_close before its check."
+          }
+        ]
+      },
+      {
+        "case": "wdt_pci_2",
+        "violations": [
+          {
+            "variable": "test_global_var1",
+            "a1_line": 990,
+            "a1_kind": "read",
+            "b_line": 1106,
+            "b_kind": "write",
+            "a2_line": 991,
+            "a2_kind": "read",
+            "why": "writer1_isr (prio 4) can preempt JudgeCondi, called from closer1_isr, between its two reads."
+          },
+          {
+            "variable": "test_global_var2",
+            "a1_line": 993,
+            "a1_kind": "read",
+            "b_line": 1107,
+            "b_kind": "write",
+            "a2_line": 994,
+            "a2_kind": "read",
+            "why": "writer1_isr can preempt JudgeCondi between its two reads."
+          },
+          {
+            "variable": "expect_close",
+            "a1_line": 1000,
+            "a1_kind": "write",
+            "b_line": 1092,
+            "b_kind": "write",
+            "a2_line": 1017,
+            "a2_kind": "read",
+            "why": "A writer ISR (prio 4) can preempt closer1_isr and reset expect_close before its check."
+          }
+        ]
+      },
+      {
+        "case": "wdt_pci_3",
+        "violations": [
+          {
+            "variable": "test_global_var1",
+            "a1_line": 1140,
+            "a1_kind": "write",
+            "b_line": 987,
+            "b_kind": "write",
+            "a2_line": 1141,
+            "a2_kind": "read",
+            "why": "closer1_isr (prio 5) can preempt writer1_isr between its write and its read."
+          },
+          {
+            "variable": "test_global_var1",
+            "a1_line": 1141,
+            "a1_kind": "read",
+            "b_line": 987,
+            "b_kind": "write",
+            "a2_line": 1142,
+            "a2_kind": "read",
+            "why": "closer1_isr can preempt writer1_isr between its two reads."
+          },
+          {
+            "variable": "test_global_var3",
+            "a1_line": 1164,
+            "a1_kind": "read",
+            "b_line": 1193,
+            "b_kind": "write",
+            "a2_line": 1164,
+            "a2_kind": "write",
+            "why": "writer4_isr (prio 4) can preempt writer2_isr's increment, so its write is lost."
+          }
+        ]
+      }
+    ]
+  },
+  "text": "{\"cases\":[{\"case\":\"blink1\",\"violations\":[{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":120,\"b_kind\":\"write\",\"a2_line\":96,\"a2_kind\":\"read\",\"why\":\"Timer_Force (prio 3) can preempt Timer_A between the increment and the check, so the check sees the forced value.\"},{\"variable\":\"timerCount\",\"a1_line\":108,\"a1_kind\":\"write\",\"b_line\":121,\"b_kind\":\"write\",\"a2_line\":109,\"a2_kind\":\"read\",\"why\":\"Timer_Force can preempt Timer_B between its write and the check, so the check no longer sees 1.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":120,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"The increment is a read-modify-write that the higher-priority Force ISR can interrupt, so the Force write is lost.\"}]},{\"case\":\"blink2\",\"violations\":[{\"variable\":\"timerCount\",\"a1_line\":93,\"a1_kind\":\"write\",\"b_line\":119,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"read\",\"why\":\"Timer_C (prio 4) can preempt Timer_A between the increment and the check.\"},{\"variable\":\"timerCount\",\"a1_line\":93,\"a1_kind\":\"read\",\"b_line\":119,\"b_kind\":\"write\",\"a2_line\":93,\"a2_kind\":\"write\",\"why\":\"The increment in Timer_A is a non-atomic read-modify-write that Timer_C can interrupt.\"},{\"variable\":\"timerCount\",\"a1_line\":106,\"a1_kind\":\"write\",\"b_line\":93,\"b_kind\":\"write\",\"a2_line\":108,\"a2_kind\":\"read\",\"why\":\"Timer_A (prio 3) can preempt Timer_B (prio 2) between its write and the check.\"}]},{\"case\":\"blink3\",\"violations\":[{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":97,\"a2_kind\":\"read\",\"why\":\"Timer_Reset (prio 5) can preempt Timer_A between the increment and the check.\"},{\"variable\":\"timerCount\",\"a1_line\":109,\"a1_kind\":\"write\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":111,\"a2_kind\":\"read\",\"why\":\"Timer_Reset can preempt Timer_B between its write and the check.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"Timer_Force (prio 3) can preempt Timer_A's read-modify-write, so its update is lost.\"}]},{\"case\":\"brake1\",\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":284,\"a1_kind\":\"read\",\"b_line\":348,\"b_kind\":\"write\",\"a2_line\":285,\"a2_kind\":\"read\",\"why\":\"task_compute_isr can preempt main's JudgeCondi between its two reads of the variable.\"},{\"variable\":\"test_global_var2\",\"a1_line\":287,\"a1_kind\":\"read\",\"b_line\":349,\"b_kind\":\"write\",\"a2_line\":288,\"a2_kind\":\"read\",\"why\":\"task_compute_isr can preempt main's JudgeCondi between its two reads of the variable.\"},{\"variable\":\"test_global_array\",\"a1_line\":387,\"a1_kind\":\"write\",\"b_line\":347,\"b_kind\":\"write\",\"a2_line\":390,\"a2_kind\":\"read\",\"why\":\"task_compute_isr (prio 6) can preempt task_RR_Wheel_isr between its write and its read of the array element.\"}]},{\"case\":\"brake2\",\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":459,\"a1_kind\":\"write\",\"b_line\":285,\"b_kind\":\"write\",\"a2_line\":460,\"a2_kind\":\"read\",\"why\":\"task_compute_isr (prio 6) can preempt task_RR_Wheel_isr between its write and its read.\"},{\"variable\":\"test_global_var1\",\"a1_line\":460,\"a1_kind\":\"read\",\"b_line\":285,\"b_kind\":\"write\",\"a2_line\":461,\"a2_kind\":\"read\",\"why\":\"task_compute_isr can preempt task_RR_Wheel_isr between its two reads.\"}]},{\"case\":\"brake3\",\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":289,\"a1_kind\":\"read\",\"b_line\":355,\"b_kind\":\"write\",\"a2_line\":290,\"a2_kind\":\"read\",\"why\":\"task_compute_isr (prio 6) can preempt JudgeCondi, called from task_RR_Wheel_isr, between its two reads.\"},{\"variable\":\"test_global_var2\",\"a1_line\":292,\"a1_kind\":\"read\",\"b_line\":356,\"b_kind\":\"write\",\"a2_line\":293,\"a2_kind\":\"read\",\"why\":\"task_compute_isr can preempt JudgeCondi between its two reads.\"},{\"variable\":\"test_global_array\",\"a1_line\":589,\"a1_kind\":\"write\",\"b_line\":354,\"b_kind\":\"write\",\"a2_line\":592,\"a2_kind\":\"read\",\"why\":\"task_compute_isr can preempt task_FL_Wheel_isr between its write and its read of the array element.\"}]},{\"case\":\"i2c_pca_isa_1\",\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":291,\"a1_kind\":\"read\",\"b_line\":342,\"b_kind\":\"write\",\"a2_line\":292,\"a2_kind\":\"read\",\"why\":\"req4_isr can preempt main's JudgeCondi between its two reads.\"},{\"variable\":\"test_global_var2\",\"a1_line\":294,\"a1_kind\":\"read\",\"b_line\":328,\"b_kind\":\"write\",\"a2_line\":295,\"a2_kind\":\"read\",\"why\":\"req3_isr can preempt main's JudgeCondi between its two reads.\"}]},{\"case\":\"i2c_pca_isa_2\",\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":289,\"a1_kind\":\"read\",\"b_line\":354,\"b_kind\":\"write\",\"a2_line\":290,\"a2_kind\":\"read\",\"why\":\"req5_isr (prio 6) can preempt req6_isr's JudgeCondi between its two reads.\"},{\"variable\":\"test_global_var2\",\"a1_line\":294,\"a1_kind\":\"read\",\"b_line\":338,\"b_kind\":\"write\",\"a2_line\":295,\"a2_kind\":\"read\",\"why\":\"req4_isr (prio 5) can preempt req6_isr's JudgeCondi between its two reads.\"},{\"variable\":\"irq\",\"a1_line\":308,\"a1_kind\":\"write\",\"b_line\":321,\"b_kind\":\"write\",\"a2_line\":313,\"a2_kind\":\"read\",\"why\":\"req3_isr (prio 4) can preempt req2_isr between its write of irq and its check.\"}]},{\"case\":\"i2c_pca_isa_3\",\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":293,\"a1_kind\":\"read\",\"b_line\":332,\"b_kind\":\"write\",\"a2_line\":294,\"a2_kind\":\"read\",\"why\":\"req3_isr (prio 3) can preempt req1_isr's JudgeCondi between its two reads.\"},{\"variable\":\"test_global_var2\",\"a1_line\":296,\"a1_kind\":\"read\",\"b_line\":334,\"b_kind\":\"write\",\"a2_line\":297,\"a2_kind\":\"read\",\"why\":\"req3_isr can preempt req1_isr's JudgeCondi between its two reads.\"},{\"variable\":\"test_global_array\",\"a1_line\":382,\"a1_kind\":\"write\",\"b_line\":398,\"b_kind\":\"write\",\"a2_line\":385,\"a2_kind\":\"read\",\"why\":\"req8_isr (prio 6) can preempt req7_isr between its write and its read of the array element.\"}]},{\"case\":\"i8xx_tco_1\",\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":747,\"a1_kind\":\"read\",\"b_line\":771,\"b_kind\":\"write\",\"a2_line\":748,\"a2_kind\":\"read\",\"why\":\"closer1_isr (prio 4) can preempt JudgeCondi, called from closer2_isr, between its two reads.\"},{\"variable\":\"test_global_var2\",\"a1_line\":750,\"a1_kind\":\"read\",\"b_line\":773,\"b_kind\":\"write\",\"a2_line\":751,\"a2_kind\":\"read\",\"why\":\"closer1_isr can preempt JudgeCondi between its two reads.\"}]},{\"case\":\"i8xx_tco_2\",\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":744,\"a1_kind\":\"read\",\"b_line\":771,\"b_kind\":\"write\",\"a2_line\":745,\"a2_kind\":\"read\",\"why\":\"closer2_isr can preempt main's JudgeCondi between its two reads.\"},{\"variable\":\"test_global_var2\",\"a1_line\":747,\"a1_kind\":\"read\",\"b_line\":787,\"b_kind\":\"write\",\"a2_line\":748,\"a2_kind\":\"read\",\"why\":\"writer2_isr can preempt main's JudgeCondi between its two reads.\"}]},{\"case\":\"i8xx_tco_3\",\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":741,\"a1_kind\":\"read\",\"b_line\":791,\"b_kind\":\"write\",\"a2_line\":742,\"a2_kind\":\"read\",\"why\":\"writer1_isr (prio 3) can preempt JudgeCondi, called from closer2_isr, between its two reads.\"},{\"variable\":\"test_global_var2\",\"a1_line\":744,\"a1_kind\":\"read\",\"b_line\":801,\"b_kind\":\"write\",\"a2_line\":745,\"a2_kind\":\"read\",\"why\":\"writer2_isr (prio 4) can preempt JudgeCondi between its two reads.\"},{\"variable\":\"test_global_var3\",\"a1_line\":779,\"a1_kind\":\"read\",\"b_line\":810,\"b_kind\":\"write\",\"a2_line\":779,\"a2_kind\":\"write\",\"why\":\"writer3_isr (prio 5) can preempt closer3_isr's increment, so its write is lost.\"}]},{\"case\":\"logger1\",\"violations\":[{\"variable\":\"tickCounter\",\"a1_line\":76,\"a1_kind\":\"write\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":77,\"a2_kind\":\"read\",\"why\":\"task_communicate_isr (prio 5) can preempt task_measure_isr between its write and its read of tickCounter.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":83,\"a1_kind\":\"read\",\"b_line\":137,\"b_kind\":\"write\",\"a2_line\":85,\"a2_kind\":\"write\",\"why\":\"task_communicate_isr can reset numberOfRecords between the index read and the increment.\"}]},{\"case\":\"logger2\",\"violations\":[{\"variable\":\"tickCounter\",\"a1_line\":81,\"a1_kind\":\"write\",\"b_line\":100,\"b_kind\":\"write\",\"a2_line\":82,\"a2_kind\":\"read\",\"why\":\"task_measure2_isr (prio 3) can preempt task_measure1_isr between its write and its read.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":90,\"a1_kind\":\"read\",\"b_line\":159,\"b_kind\":\"write\",\"a2_line\":92,\"a2_kind\":\"write\",\"why\":\"task_communicate_isr (prio 5) can reset numberOfRecords between the index read and the increment.\"}]},{\"case\":\"logger3\",\"violations\":[{\"variable\":\"tickCounter\",\"a1_line\":99,\"a1_kind\":\"write\",\"b_line\":109,\"b_kind\":\"write\",\"a2_line\":100,\"a2_kind\":\"read\",\"why\":\"task_measure3_isr (prio 6) can preempt task_measure2_isr between its write and its read.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":89,\"a1_kind\":\"read\",\"b_line\":110,\"b_kind\":\"write\",\"a2_line\":91,\"a2_kind\":\"write\",\"why\":\"task_measure3_isr can preempt task_measure1_isr between the index read and the increment.\"}]},{\"case\":\"wdt_pci_1\",\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":990,\"a1_kind\":\"read\",\"b_line\":1084,\"b_kind\":\"write\",\"a2_line\":991,\"a2_kind\":\"read\",\"why\":\"writer1_isr (prio 4) can preempt JudgeCondi, called from closer1_isr, between its two reads.\"},{\"variable\":\"test_global_var2\",\"a1_line\":993,\"a1_kind\":\"read\",\"b_line\":1107,\"b_kind\":\"write\",\"a2_line\":994,\"a2_kind\":\"read\",\"why\":\"writer2_isr can preempt JudgeCondi between its two reads.\"},{\"variable\":\"test_global_var3\",\"a1_line\":1049,\"a1_kind\":\"read\",\"b_line\":1108,\"b_kind\":\"write\",\"a2_line\":1050,\"a2_kind\":\"read\",\"why\":\"writer2_isr can preempt closer2_isr between its two reads.\"},{\"variable\":\"expect_close\",\"a1_line\":1002,\"a1_kind\":\"write\",\"b_line\":1071,\"b_kind\":\"write\",\"a2_line\":1018,\"a2_kind\":\"read\",\"why\":\"A writer ISR (prio 4) can preempt closer1_isr and reset expect_close before its check.\"}]},{\"case\":\"wdt_pci_2\",\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":990,\"a1_kind\":\"read\",\"b_line\":1106,\"b_kind\":\"write\",\"a2_line\":991,\"a2_kind\":\"read\",\"why\":\"writer1_isr (prio 4) can preempt JudgeCondi, called from closer1_isr, between its two reads.\"},{\"variable\":\"test_global_var2\",\"a1_line\":993,\"a1_kind\":\"read\",\"b_line\":1107,\"b_kind\":\"write\",\"a2_line\":994,\"a2_kind\":\"read\",\"why\":\"writer1_isr can preempt JudgeCondi between its two reads.\"},{\"variable\":\"expect_close\",\"a1_line\":1000,\"a1_kind\":\"write\",\"b_line\":1092,\"b_kind\":\"write\",\"a2_line\":1017,\"a2_kind\":\"read\",\"why\":\"A writer ISR (prio 4) can preempt closer1_isr and reset expect_close before its check.\"}]},{\"case\":\"wdt_pci_3\",\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":1140,\"a1_kind\":\"write\",\"b_line\":987,\"b_kind\":\"write\",\"a2_line\":1141,\"a2_kind\":\"read\",\"why\":\"closer1_isr (prio 5) can preempt writer1_isr between its write and its read.\"},{\"variable\":\"test_global_var1\",\"a1_line\":1141,\"a1_kind\":\"read\",\"b_line\":987,\"b_kind\":\"write\",\"a2_line\":1142,\"a2_kind\":\"read\",\"why\":\"closer1_isr can preempt writer1_isr between its two reads.\"},{\"variable\":\"test_global_var3\",\"a1_line\":1164,\"a1_kind\":\"read\",\"b_line\":1193,\"b_kind\":\"write\",\"a2_line\":1164,\"a2_kind\":\"write\",\"why\":\"writer4_isr (prio 4) can preempt writer2_isr's increment, so its write is lost.\"}]}]}",
+  "wall_s": 43.630258321762085,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 7443,
+    "cache_read": 172528,
+    "cache_write": 486,
+    "latency_s": 43.62988496100297
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,88 @@
+{
+  "case": "wdt_pci_2",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_var1",
+        "a1_line": 990,
+        "a1_kind": "read",
+        "b_line": 1106,
+        "b_kind": "write",
+        "a2_line": 991,
+        "a2_kind": "read",
+        "why": "writer1_isr (prio 4) can preempt closer1_isr (prio 2) between the two reads in JudgeCondi."
+      },
+      {
+        "variable": "test_global_array",
+        "a1_line": 1150,
+        "a1_kind": "write",
+        "b_line": 1085,
+        "b_kind": "write",
+        "a2_line": 1153,
+        "a2_kind": "read",
+        "why": "closer3_isr (prio 4) preempts writer3_isr (prio 1) after it writes array[TRIGGER] and overwrites it before the read."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1000,
+        "a1_kind": "write",
+        "b_line": 1092,
+        "b_kind": "write",
+        "a2_line": 1017,
+        "a2_kind": "read",
+        "why": "writer1_isr preempts closer1_isr and resets expect_close, so the check at 1017 sees 0 rather than 42."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1031,
+        "a1_kind": "write",
+        "b_line": 1092,
+        "b_kind": "write",
+        "a2_line": 1047,
+        "a2_kind": "read",
+        "why": "writer1_isr preempts closer2_isr and overwrites expect_close before it is read."
+      },
+      {
+        "variable": "count",
+        "a1_line": 1001,
+        "a1_kind": "write",
+        "b_line": 1091,
+        "b_kind": "write",
+        "a2_line": 1003,
+        "a2_kind": "read",
+        "why": "writer1_isr sets count=0 between closer1_isr's write of 1 and its read."
+      },
+      {
+        "variable": "count",
+        "a1_line": 1032,
+        "a1_kind": "write",
+        "b_line": 1091,
+        "b_kind": "write",
+        "a2_line": 1034,
+        "a2_kind": "read",
+        "why": "writer1_isr preempts closer2_isr between its write and read of count."
+      },
+      {
+        "variable": "count",
+        "a1_line": 1133,
+        "a1_kind": "write",
+        "b_line": 1001,
+        "b_kind": "write",
+        "a2_line": 1136,
+        "a2_kind": "read",
+        "why": "closer1_isr (prio 2) preempts writer3_isr (prio 1) and sets count=1 before writer3_isr reads it."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":990,\"a1_kind\":\"read\",\"b_line\":1106,\"b_kind\":\"write\",\"a2_line\":991,\"a2_kind\":\"read\",\"why\":\"writer1_isr (prio 4) can preempt closer1_isr (prio 2) between the two reads in JudgeCondi.\"},{\"variable\":\"test_global_array\",\"a1_line\":1150,\"a1_kind\":\"write\",\"b_line\":1085,\"b_kind\":\"write\",\"a2_line\":1153,\"a2_kind\":\"read\",\"why\":\"closer3_isr (prio 4) preempts writer3_isr (prio 1) after it writes array[TRIGGER] and overwrites it before the read.\"},{\"variable\":\"expect_close\",\"a1_line\":1000,\"a1_kind\":\"write\",\"b_line\":1092,\"b_kind\":\"write\",\"a2_line\":1017,\"a2_kind\":\"read\",\"why\":\"writer1_isr preempts closer1_isr and resets expect_close, so the check at 1017 sees 0 rather than 42.\"},{\"variable\":\"expect_close\",\"a1_line\":1031,\"a1_kind\":\"write\",\"b_line\":1092,\"b_kind\":\"write\",\"a2_line\":1047,\"a2_kind\":\"read\",\"why\":\"writer1_isr preempts closer2_isr and overwrites expect_close before it is read.\"},{\"variable\":\"count\",\"a1_line\":1001,\"a1_kind\":\"write\",\"b_line\":1091,\"b_kind\":\"write\",\"a2_line\":1003,\"a2_kind\":\"read\",\"why\":\"writer1_isr sets count=0 between closer1_isr's write of 1 and its read.\"},{\"variable\":\"count\",\"a1_line\":1032,\"a1_kind\":\"write\",\"b_line\":1091,\"b_kind\":\"write\",\"a2_line\":1034,\"a2_kind\":\"read\",\"why\":\"writer1_isr preempts closer2_isr between its write and read of count.\"},{\"variable\":\"count\",\"a1_line\":1133,\"a1_kind\":\"write\",\"b_line\":1001,\"b_kind\":\"write\",\"a2_line\":1136,\"a2_kind\":\"read\",\"why\":\"closer1_isr (prio 2) preempts writer3_isr (prio 1) and sets count=1 before writer3_isr reads it.\"}]}",
+  "wall_s": 17.233866930007935,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 2119,
+    "cache_read": 1011,
+    "cache_write": 19072,
+    "latency_s": 17.233597868005745
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

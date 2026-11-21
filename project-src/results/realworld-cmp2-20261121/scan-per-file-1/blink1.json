@@ -1,0 +1,78 @@
+{
+  "case": "blink1",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 120,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "write",
+        "why": "Force ISR (prio 3) preempts Timer_A between read and write of timerCount++, losing its update."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 121,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "write",
+        "why": "Force ISR can preempt between the read and write of timerCount++ and write 0."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "write",
+        "b_line": 120,
+        "b_kind": "write",
+        "a2_line": 96,
+        "a2_kind": "read",
+        "why": "Force ISR can overwrite timerCount between the increment and the check in Timer_A."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "write",
+        "b_line": 121,
+        "b_kind": "write",
+        "a2_line": 96,
+        "a2_kind": "read",
+        "why": "Force ISR sets timerCount to 0 between the increment and the check, so the check sees a different value."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 108,
+        "a1_kind": "write",
+        "b_line": 121,
+        "b_kind": "write",
+        "a2_line": 109,
+        "a2_kind": "read",
+        "why": "Force ISR sets timerCount to 0 between Timer_B's write of 1 and its check, so the check sees 0."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 121,
+        "b_kind": "write",
+        "a2_line": 96,
+        "a2_kind": "read",
+        "why": "Force ISR changes timerCount between Timer_A's two reads."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":120,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"Force ISR (prio 3) preempts Timer_A between read and write of timerCount++, losing its update.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":121,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"Force ISR can preempt between the read and write of timerCount++ and write 0.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":120,\"b_kind\":\"write\",\"a2_line\":96,\"a2_kind\":\"read\",\"why\":\"Force ISR can overwrite timerCount between the increment and the check in Timer_A.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":121,\"b_kind\":\"write\",\"a2_line\":96,\"a2_kind\":\"read\",\"why\":\"Force ISR sets timerCount to 0 between the increment and the check, so the check sees a different value.\"},{\"variable\":\"timerCount\",\"a1_line\":108,\"a1_kind\":\"write\",\"b_line\":121,\"b_kind\":\"write\",\"a2_line\":109,\"a2_kind\":\"read\",\"why\":\"Force ISR sets timerCount to 0 between Timer_B's write of 1 and its check, so the check sees 0.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":121,\"b_kind\":\"write\",\"a2_line\":96,\"a2_kind\":\"read\",\"why\":\"Force ISR changes timerCount between Timer_A's two reads.\"}]}",
+  "wall_s": 9.70490837097168,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1098,
+    "cache_read": 0,
+    "cache_write": 3963,
+    "latency_s": 9.699453175999224
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

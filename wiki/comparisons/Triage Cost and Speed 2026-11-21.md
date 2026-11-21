@@ -168,6 +168,21 @@ contradicts these configs); scans n = 3, files not disguised, answer comments cu
   names; the one-prompt scan degrades (one run stopped after 19 findings).
 - One irqrace run costs 13.1 M input tokens here, 6.5× the Racebench run.
 
+**Second comparison, same day** (`results/realworld-cmp2-20261121/`): equal-priority preemption
+off except `i8xx_tco_1` (errata `semantics`; 972 → 484 candidates, gate 45/45) and the generic
+`+interleaving` row (the Racebench defect notion, the record's execution model).
+
+| | irqrace `likely_real` | scan per file (n = 3) | scan one prompt (n = 3) |
+| --- | --- | --- | --- |
+| Entries found (of 45) | **45** | 44–45 | 12–34 |
+| False violations (of 14) | 6 | 5–7 | 0–9 |
+| Input tokens | 6.43 M | 204–221 k | 173 k |
+| Wall time | 496 s | 72–81 s | 29–106 s |
+
+The 24 entries the production row called benign are all on top with `+interleaving`, at the cost
+of 4 more false violations (`test_global_var2` near-misses), and halving the static set halved the
+triage's cost. irqrace and the per-file scan now meet on recall here; the scan reads 30× less.
+
 ## Lucas's T3 runs, scored here
 
 Two of the five T3 variants ran on 2026-11-17 and were never scored (`results/m3/`, n = 1):

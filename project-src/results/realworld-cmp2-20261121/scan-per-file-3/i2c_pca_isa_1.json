@@ -1,0 +1,28 @@
+{
+  "case": "i2c_pca_isa_1",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_var1",
+        "a1_line": 291,
+        "a1_kind": "read",
+        "b_line": 342,
+        "b_kind": "write",
+        "a2_line": 292,
+        "a2_kind": "read",
+        "why": "req4_isr can preempt main between its two reads of test_global_var1 in JudgeCondi, because condition3 is already 1 and interrupts are enabled. The two reads can then see different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":291,\"a1_kind\":\"read\",\"b_line\":342,\"b_kind\":\"write\",\"a2_line\":292,\"a2_kind\":\"read\",\"why\":\"req4_isr can preempt main between its two reads of test_global_var1 in JudgeCondi, because condition3 is already 1 and interrupts are enabled. The two reads can then see different values.\"}]}",
+  "wall_s": 7.575553894042969,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 681,
+    "cache_read": 6352,
+    "cache_write": 485,
+    "latency_s": 7.575356424000347
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

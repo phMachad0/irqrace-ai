@@ -1,0 +1,78 @@
+{
+  "case": "brake1",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_var1",
+        "a1_line": 284,
+        "a1_kind": "read",
+        "b_line": 348,
+        "b_kind": "write",
+        "a2_line": 285,
+        "a2_kind": "read",
+        "why": "The compute ISR (priority 6) can preempt main between the two reads in JudgeCondi. Condition3 is 1, so the ISR writes var1 and the two reads can see different values."
+      },
+      {
+        "variable": "test_global_array",
+        "a1_line": 387,
+        "a1_kind": "write",
+        "b_line": 347,
+        "b_kind": "write",
+        "a2_line": 390,
+        "a2_kind": "read",
+        "why": "The compute ISR can preempt the RR ISR after it writes array[TRIGGER]. It overwrites that element with 999, so the RR ISR's later read at 390 sees the wrong value."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT_h",
+        "a1_line": 409,
+        "a1_kind": "write",
+        "b_line": 299,
+        "b_kind": "write",
+        "a2_line": 460,
+        "a2_kind": "read",
+        "why": "The higher-priority compute ISR can overwrite RT_h after the RR ISR writes it at 409. The RR ISR then reads the clobbered value at 460."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT_h",
+        "a1_line": 409,
+        "a1_kind": "write",
+        "b_line": 299,
+        "b_kind": "write",
+        "a2_line": 466,
+        "a2_kind": "read",
+        "why": "The compute ISR can overwrite RT_h between the RR ISR's write at 409 and its read at 466."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+        "a1_line": 411,
+        "a1_kind": "write",
+        "b_line": 302,
+        "b_kind": "write",
+        "a2_line": 418,
+        "a2_kind": "read",
+        "why": "The compute ISR can overwrite RT4 after the RR ISR writes it at 411. The RR ISR then reads the clobbered value at 418."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+        "a1_line": 411,
+        "a1_kind": "write",
+        "b_line": 302,
+        "b_kind": "write",
+        "a2_line": 451,
+        "a2_kind": "read",
+        "why": "The compute ISR can overwrite RT4 between the RR ISR's write at 411 and its read at 451."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":284,\"a1_kind\":\"read\",\"b_line\":348,\"b_kind\":\"write\",\"a2_line\":285,\"a2_kind\":\"read\",\"why\":\"The compute ISR (priority 6) can preempt main between the two reads in JudgeCondi. Condition3 is 1, so the ISR writes var1 and the two reads can see different values.\"},{\"variable\":\"test_global_array\",\"a1_line\":387,\"a1_kind\":\"write\",\"b_line\":347,\"b_kind\":\"write\",\"a2_line\":390,\"a2_kind\":\"read\",\"why\":\"The compute ISR can preempt the RR ISR after it writes array[TRIGGER]. It overwrites that element with 999, so the RR ISR's later read at 390 sees the wrong value.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT_h\",\"a1_line\":409,\"a1_kind\":\"write\",\"b_line\":299,\"b_kind\":\"write\",\"a2_line\":460,\"a2_kind\":\"read\",\"why\":\"The higher-priority compute ISR can overwrite RT_h after the RR ISR writes it at 409. The RR ISR then reads the clobbered value at 460.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT_h\",\"a1_line\":409,\"a1_kind\":\"write\",\"b_line\":299,\"b_kind\":\"write\",\"a2_line\":466,\"a2_kind\":\"read\",\"why\":\"The compute ISR can overwrite RT_h between the RR ISR's write at 409 and its read at 466.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":411,\"a1_kind\":\"write\",\"b_line\":302,\"b_kind\":\"write\",\"a2_line\":418,\"a2_kind\":\"read\",\"why\":\"The compute ISR can overwrite RT4 after the RR ISR writes it at 411. The RR ISR then reads the clobbered value at 418.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":411,\"a1_kind\":\"write\",\"b_line\":302,\"b_kind\":\"write\",\"a2_line\":451,\"a2_kind\":\"read\",\"why\":\"The compute ISR can overwrite RT4 between the RR ISR's write at 411 and its read at 451.\"}]}",
+  "wall_s": 15.394595861434937,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1883,
+    "cache_read": 12318,
+    "cache_write": 485,
+    "latency_s": 15.393999781983439
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

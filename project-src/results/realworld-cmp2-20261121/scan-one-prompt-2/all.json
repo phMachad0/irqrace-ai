@@ -1,0 +1,1087 @@
+{
+  "parsed": {
+    "cases": [
+      {
+        "case": "blink1",
+        "violations": [
+          {
+            "variable": "timerCount",
+            "a1_line": 95,
+            "a1_kind": "write",
+            "b_line": 120,
+            "b_kind": "write",
+            "a2_line": 96,
+            "a2_kind": "read",
+            "why": "Higher-priority Force ISR preempts Timer_A between the increment and the compare."
+          },
+          {
+            "variable": "timerCount",
+            "a1_line": 95,
+            "a1_kind": "read",
+            "b_line": 120,
+            "b_kind": "write",
+            "a2_line": 95,
+            "a2_kind": "write",
+            "why": "Force ISR can write between the read and write of the increment."
+          },
+          {
+            "variable": "timerCount",
+            "a1_line": 108,
+            "a1_kind": "write",
+            "b_line": 120,
+            "b_kind": "write",
+            "a2_line": 109,
+            "a2_kind": "read",
+            "why": "Force preempts Timer_B between its write and check."
+          }
+        ]
+      },
+      {
+        "case": "blink2",
+        "violations": [
+          {
+            "variable": "timerCount",
+            "a1_line": 93,
+            "a1_kind": "read",
+            "b_line": 119,
+            "b_kind": "write",
+            "a2_line": 93,
+            "a2_kind": "write",
+            "why": "Timer_C (higher) preempts the read-modify-write in Timer_A."
+          },
+          {
+            "variable": "timerCount",
+            "a1_line": 93,
+            "a1_kind": "write",
+            "b_line": 119,
+            "b_kind": "write",
+            "a2_line": 95,
+            "a2_kind": "read",
+            "why": "Timer_C writes between A's write and check."
+          },
+          {
+            "variable": "timerCount",
+            "a1_line": 106,
+            "a1_kind": "write",
+            "b_line": 119,
+            "b_kind": "write",
+            "a2_line": 108,
+            "a2_kind": "read",
+            "why": "Timer_C preempts Timer_B."
+          },
+          {
+            "variable": "timerCount",
+            "a1_line": 106,
+            "a1_kind": "write",
+            "b_line": 132,
+            "b_kind": "write",
+            "a2_line": 108,
+            "a2_kind": "read",
+            "why": "Force (prio 3) preempts Timer_B (prio 2)."
+          },
+          {
+            "variable": "timerCount",
+            "a1_line": 106,
+            "a1_kind": "write",
+            "b_line": 93,
+            "b_kind": "write",
+            "a2_line": 108,
+            "a2_kind": "read",
+            "why": "Timer_A (prio 3) preempts Timer_B."
+          }
+        ]
+      },
+      {
+        "case": "blink3",
+        "violations": [
+          {
+            "variable": "timerCount",
+            "a1_line": 95,
+            "a1_kind": "read",
+            "b_line": 146,
+            "b_kind": "write",
+            "a2_line": 95,
+            "a2_kind": "write",
+            "why": "Reset ISR (and Force/C) can write inside A's increment."
+          },
+          {
+            "variable": "timerCount",
+            "a1_line": 95,
+            "a1_kind": "write",
+            "b_line": 146,
+            "b_kind": "write",
+            "a2_line": 97,
+            "a2_kind": "read",
+            "why": "Higher ISRs write between A's write and check."
+          },
+          {
+            "variable": "timerCount",
+            "a1_line": 109,
+            "a1_kind": "write",
+            "b_line": 146,
+            "b_kind": "write",
+            "a2_line": 111,
+            "a2_kind": "read",
+            "why": "Reset/Force/C preempt Timer_B between write and check."
+          },
+          {
+            "variable": "timerCount",
+            "a1_line": 136,
+            "a1_kind": "read",
+            "b_line": 146,
+            "b_kind": "write",
+            "a2_line": 136,
+            "a2_kind": "write",
+            "why": "Reset (or C) preempts Force's increment."
+          },
+          {
+            "variable": "timerCount",
+            "a1_line": 123,
+            "a1_kind": "write",
+            "b_line": 146,
+            "b_kind": "write",
+            "a2_line": 125,
+            "a2_kind": "read",
+            "why": "Reset preempts Timer_C."
+          }
+        ]
+      },
+      {
+        "case": "brake1",
+        "violations": [
+          {
+            "variable": "brake_acc_nodiv_ctrl_B_local_RT_h",
+            "a1_line": 409,
+            "a1_kind": "write",
+            "b_line": 299,
+            "b_kind": "write",
+            "a2_line": 460,
+            "a2_kind": "read",
+            "why": "compute ISR preempts RR wheel between write and read."
+          },
+          {
+            "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+            "a1_line": 411,
+            "a1_kind": "write",
+            "b_line": 302,
+            "b_kind": "write",
+            "a2_line": 418,
+            "a2_kind": "read",
+            "why": "compute ISR overwrites RT4 between RR's write and use."
+          },
+          {
+            "variable": "test_global_array",
+            "a1_line": 387,
+            "a1_kind": "write",
+            "b_line": 347,
+            "b_kind": "write",
+            "a2_line": 390,
+            "a2_kind": "read",
+            "why": "compute ISR writes element between RR's write and read."
+          },
+          {
+            "variable": "test_global_var1",
+            "a1_line": 284,
+            "a1_kind": "read",
+            "b_line": 348,
+            "b_kind": "write",
+            "a2_line": 285,
+            "a2_kind": "read",
+            "why": "Main's JudgeCondi reads var1 twice; compute ISR can write between."
+          },
+          {
+            "variable": "test_global_var2",
+            "a1_line": 287,
+            "a1_kind": "read",
+            "b_line": 349,
+            "b_kind": "write",
+            "a2_line": 288,
+            "a2_kind": "read",
+            "why": "Same for var2."
+          }
+        ]
+      },
+      {
+        "case": "brake2",
+        "violations": [
+          {
+            "variable": "test_global_var1",
+            "a1_line": 459,
+            "a1_kind": "write",
+            "b_line": 285,
+            "b_kind": "write",
+            "a2_line": 460,
+            "a2_kind": "read",
+            "why": "compute ISR writes var1 between RR's write and reads."
+          },
+          {
+            "variable": "test_global_var1",
+            "a1_line": 460,
+            "a1_kind": "read",
+            "b_line": 285,
+            "b_kind": "write",
+            "a2_line": 461,
+            "a2_kind": "read",
+            "why": "Two reads of var1 split by compute ISR write."
+          },
+          {
+            "variable": "brake_acc_nodiv_ctrl_B_local_RT_h",
+            "a1_line": 384,
+            "a1_kind": "write",
+            "b_line": 293,
+            "b_kind": "write",
+            "a2_line": 435,
+            "a2_kind": "read",
+            "why": "compute preempts RR."
+          },
+          {
+            "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+            "a1_line": 386,
+            "a1_kind": "write",
+            "b_line": 296,
+            "b_kind": "write",
+            "a2_line": 393,
+            "a2_kind": "read",
+            "why": "compute preempts RR."
+          },
+          {
+            "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+            "a1_line": 488,
+            "a1_kind": "write",
+            "b_line": 296,
+            "b_kind": "write",
+            "a2_line": 505,
+            "a2_kind": "read",
+            "why": "compute preempts FL."
+          },
+          {
+            "variable": "brake_acc_nodiv_ctrl_B_local_RT3",
+            "a1_line": 478,
+            "a1_kind": "write",
+            "b_line": 305,
+            "b_kind": "write",
+            "a2_line": 549,
+            "a2_kind": "read",
+            "why": "compute preempts FL."
+          }
+        ]
+      },
+      {
+        "case": "brake3",
+        "violations": [
+          {
+            "variable": "test_global_var1",
+            "a1_line": 289,
+            "a1_kind": "read",
+            "b_line": 355,
+            "b_kind": "write",
+            "a2_line": 290,
+            "a2_kind": "read",
+            "why": "JudgeCondi (RR ISR/main) reads var1 twice; compute ISR writes between."
+          },
+          {
+            "variable": "test_global_var2",
+            "a1_line": 292,
+            "a1_kind": "read",
+            "b_line": 356,
+            "b_kind": "write",
+            "a2_line": 293,
+            "a2_kind": "read",
+            "why": "Same for var2."
+          },
+          {
+            "variable": "brake_acc_nodiv_ctrl_B_local_RT_h",
+            "a1_line": 410,
+            "a1_kind": "write",
+            "b_line": 305,
+            "b_kind": "write",
+            "a2_line": 463,
+            "a2_kind": "read",
+            "why": "compute preempts RR."
+          },
+          {
+            "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+            "a1_line": 412,
+            "a1_kind": "write",
+            "b_line": 308,
+            "b_kind": "write",
+            "a2_line": 419,
+            "a2_kind": "read",
+            "why": "compute preempts RR."
+          },
+          {
+            "variable": "brake_acc_nodiv_ctrl_B_local_RT3",
+            "a1_line": 505,
+            "a1_kind": "write",
+            "b_line": 317,
+            "b_kind": "write",
+            "a2_line": 575,
+            "a2_kind": "read",
+            "why": "compute preempts FL."
+          },
+          {
+            "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+            "a1_line": 515,
+            "a1_kind": "write",
+            "b_line": 308,
+            "b_kind": "write",
+            "a2_line": 531,
+            "a2_kind": "read",
+            "why": "compute preempts FL."
+          },
+          {
+            "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+            "a1_line": 651,
+            "a1_kind": "write",
+            "b_line": 308,
+            "b_kind": "write",
+            "a2_line": 670,
+            "a2_kind": "read",
+            "why": "compute preempts FR."
+          },
+          {
+            "variable": "brake_acc_nodiv_ctrl_B_local_RT2",
+            "a1_line": 645,
+            "a1_kind": "write",
+            "b_line": 314,
+            "b_kind": "write",
+            "a2_line": 714,
+            "a2_kind": "read",
+            "why": "compute preempts FR."
+          },
+          {
+            "variable": "test_global_array",
+            "a1_line": 589,
+            "a1_kind": "write",
+            "b_line": 354,
+            "b_kind": "write",
+            "a2_line": 592,
+            "a2_kind": "read",
+            "why": "compute preempts FL."
+          }
+        ]
+      },
+      {
+        "case": "i2c_pca_isa_1",
+        "violations": [
+          {
+            "variable": "test_global_var1",
+            "a1_line": 291,
+            "a1_kind": "read",
+            "b_line": 342,
+            "b_kind": "write",
+            "a2_line": 292,
+            "a2_kind": "read",
+            "why": "Main's JudgeCondi can be preempted by req4_isr."
+          },
+          {
+            "variable": "test_global_var2",
+            "a1_line": 294,
+            "a1_kind": "read",
+            "b_line": 328,
+            "b_kind": "write",
+            "a2_line": 295,
+            "a2_kind": "read",
+            "why": "Main's JudgeCondi can be preempted by req3_isr."
+          }
+        ]
+      },
+      {
+        "case": "i2c_pca_isa_2",
+        "violations": [
+          {
+            "variable": "irq",
+            "a1_line": 314,
+            "a1_kind": "write",
+            "b_line": 321,
+            "b_kind": "write",
+            "a2_line": 313,
+            "a2_kind": "read",
+            "why": "Higher ISR req3 changes irq between req2's write and check (lines 308/313 in source numbering)."
+          },
+          {
+            "variable": "irq",
+            "a1_line": 308,
+            "a1_kind": "write",
+            "b_line": 321,
+            "b_kind": "write",
+            "a2_line": 313,
+            "a2_kind": "read",
+            "why": "req3/req4/req5 preempt req2."
+          },
+          {
+            "variable": "irq",
+            "a1_line": 308,
+            "a1_kind": "write",
+            "b_line": 331,
+            "b_kind": "write",
+            "a2_line": 313,
+            "a2_kind": "read",
+            "why": "req4 preempts req2."
+          },
+          {
+            "variable": "irq",
+            "a1_line": 331,
+            "a1_kind": "write",
+            "b_line": 347,
+            "b_kind": "write",
+            "a2_line": 336,
+            "a2_kind": "read",
+            "why": "req5 preempts req4."
+          },
+          {
+            "variable": "test_global_var1",
+            "a1_line": 289,
+            "a1_kind": "read",
+            "b_line": 354,
+            "b_kind": "write",
+            "a2_line": 290,
+            "a2_kind": "read",
+            "why": "req5 preempts req6's JudgeCondi."
+          },
+          {
+            "variable": "test_global_var2",
+            "a1_line": 292,
+            "a1_kind": "read",
+            "b_line": 338,
+            "b_kind": "write",
+            "a2_line": 293,
+            "a2_kind": "read",
+            "why": "req4 preempts req6's JudgeCondi."
+          }
+        ]
+      },
+      {
+        "case": "i2c_pca_isa_3",
+        "violations": [
+          {
+            "variable": "irq",
+            "a1_line": 303,
+            "a1_kind": "write",
+            "b_line": 326,
+            "b_kind": "write",
+            "a2_line": 308,
+            "a2_kind": "read",
+            "why": "Higher ISRs set irq between req1's write and check."
+          },
+          {
+            "variable": "irq",
+            "a1_line": 363,
+            "a1_kind": "write",
+            "b_line": 352,
+            "b_kind": "write",
+            "a2_line": 364,
+            "a2_kind": "read",
+            "why": "req5/7/8 preempt req6."
+          },
+          {
+            "variable": "global_id",
+            "a1_line": 239,
+            "a1_kind": "write",
+            "b_line": 234,
+            "b_kind": "write",
+            "a2_line": 331,
+            "a2_kind": "read",
+            "why": "Higher ISR init changes global_id after req3's exit and before its check."
+          },
+          {
+            "variable": "test_global_var1",
+            "a1_line": 293,
+            "a1_kind": "read",
+            "b_line": 332,
+            "b_kind": "write",
+            "a2_line": 294,
+            "a2_kind": "read",
+            "why": "req3 preempts req1's JudgeCondi."
+          },
+          {
+            "variable": "test_global_var2",
+            "a1_line": 296,
+            "a1_kind": "read",
+            "b_line": 334,
+            "b_kind": "write",
+            "a2_line": 297,
+            "a2_kind": "read",
+            "why": "req3 preempts req1's JudgeCondi."
+          },
+          {
+            "variable": "test_global_array",
+            "a1_line": 382,
+            "a1_kind": "write",
+            "b_line": 398,
+            "b_kind": "write",
+            "a2_line": 385,
+            "a2_kind": "read",
+            "why": "req8 preempts req7."
+          }
+        ]
+      },
+      {
+        "case": "i8xx_tco_1",
+        "violations": [
+          {
+            "variable": "tco_write_buf",
+            "a1_line": 757,
+            "a1_kind": "write",
+            "b_line": 775,
+            "b_kind": "write",
+            "a2_line": 429,
+            "a2_kind": "read",
+            "why": "closer1 (same priority, may preempt) overwrites buf."
+          },
+          {
+            "variable": "tco_expect_close",
+            "a1_line": 759,
+            "a1_kind": "write",
+            "b_line": 777,
+            "b_kind": "write",
+            "a2_line": 760,
+            "a2_kind": "read",
+            "why": "closer1 preempts closer2 between write and check."
+          },
+          {
+            "variable": "test_global_var1",
+            "a1_line": 747,
+            "a1_kind": "read",
+            "b_line": 771,
+            "b_kind": "write",
+            "a2_line": 748,
+            "a2_kind": "read",
+            "why": "closer1 preempts JudgeCondi in closer2."
+          },
+          {
+            "variable": "test_global_var2",
+            "a1_line": 750,
+            "a1_kind": "read",
+            "b_line": 773,
+            "b_kind": "write",
+            "a2_line": 751,
+            "a2_kind": "read",
+            "why": "closer1 preempts JudgeCondi."
+          },
+          {
+            "variable": "test_global_array",
+            "a1_line": 791,
+            "a1_kind": "write",
+            "b_line": 780,
+            "b_kind": "write",
+            "a2_line": 794,
+            "a2_kind": "read",
+            "why": "closer1 preempts writer1."
+          }
+        ]
+      },
+      {
+        "case": "i8xx_tco_2",
+        "violations": [
+          {
+            "variable": "tco_expect_close",
+            "a1_line": 755,
+            "a1_kind": "write",
+            "b_line": 768,
+            "b_kind": "write",
+            "a2_line": 756,
+            "a2_kind": "read",
+            "why": "closer2 (higher) preempts closer1."
+          },
+          {
+            "variable": "tco_write_buf",
+            "a1_line": 753,
+            "a1_kind": "write",
+            "b_line": 766,
+            "b_kind": "write",
+            "a2_line": 425,
+            "a2_kind": "read",
+            "why": "closer2 overwrites buf before closer1 reads it."
+          }
+        ]
+      },
+      {
+        "case": "i8xx_tco_3",
+        "violations": [
+          {
+            "variable": "test_global_var1",
+            "a1_line": 741,
+            "a1_kind": "read",
+            "b_line": 791,
+            "b_kind": "write",
+            "a2_line": 742,
+            "a2_kind": "read",
+            "why": "writer1 preempts closer2's JudgeCondi."
+          },
+          {
+            "variable": "test_global_var2",
+            "a1_line": 744,
+            "a1_kind": "read",
+            "b_line": 801,
+            "b_kind": "write",
+            "a2_line": 745,
+            "a2_kind": "read",
+            "why": "writer2 preempts JudgeCondi."
+          },
+          {
+            "variable": "test_global_var3",
+            "a1_line": 779,
+            "a1_kind": "read",
+            "b_line": 810,
+            "b_kind": "write",
+            "a2_line": 779,
+            "a2_kind": "write",
+            "why": "writer3 preempts the ++ in closer3."
+          }
+        ]
+      },
+      {
+        "case": "logger1",
+        "violations": [
+          {
+            "variable": "tickCounter",
+            "a1_line": 76,
+            "a1_kind": "write",
+            "b_line": 136,
+            "b_kind": "write",
+            "a2_line": 77,
+            "a2_kind": "read",
+            "why": "communicate preempts measure."
+          },
+          {
+            "variable": "tickCounter",
+            "a1_line": 76,
+            "a1_kind": "read",
+            "b_line": 136,
+            "b_kind": "write",
+            "a2_line": 76,
+            "a2_kind": "write",
+            "why": "communicate preempts the increment."
+          },
+          {
+            "variable": "intervalCounter",
+            "a1_line": 82,
+            "a1_kind": "read",
+            "b_line": 135,
+            "b_kind": "write",
+            "a2_line": 82,
+            "a2_kind": "write",
+            "why": "communicate preempts the increment."
+          },
+          {
+            "variable": "numberOfRecords",
+            "a1_line": 83,
+            "a1_kind": "read",
+            "b_line": 137,
+            "b_kind": "write",
+            "a2_line": 85,
+            "a2_kind": "read",
+            "why": "index read then count reset by communicate."
+          },
+          {
+            "variable": "numberOfRecords",
+            "a1_line": 85,
+            "a1_kind": "read",
+            "b_line": 137,
+            "b_kind": "write",
+            "a2_line": 85,
+            "a2_kind": "write",
+            "why": "communicate preempts the increment."
+          }
+        ]
+      },
+      {
+        "case": "logger2",
+        "violations": [
+          {
+            "variable": "tickCounter",
+            "a1_line": 100,
+            "a1_kind": "write",
+            "b_line": 86,
+            "b_kind": "write",
+            "a2_line": 101,
+            "a2_kind": "read",
+            "why": "measure1 preempts measure2."
+          },
+          {
+            "variable": "tickCounter",
+            "a1_line": 100,
+            "a1_kind": "write",
+            "b_line": 158,
+            "b_kind": "write",
+            "a2_line": 101,
+            "a2_kind": "read",
+            "why": "communicate preempts measure2."
+          },
+          {
+            "variable": "numberOfRecords",
+            "a1_line": 153,
+            "a1_kind": "read",
+            "b_line": 92,
+            "b_kind": "write",
+            "a2_line": 159,
+            "a2_kind": "write",
+            "why": "measure1 increments between communicate's read and reset."
+          }
+        ]
+      },
+      {
+        "case": "logger3",
+        "violations": [
+          {
+            "variable": "tickCounter",
+            "a1_line": 99,
+            "a1_kind": "write",
+            "b_line": 109,
+            "b_kind": "write",
+            "a2_line": 100,
+            "a2_kind": "read",
+            "why": "measure3/communicate preempt measure2."
+          },
+          {
+            "variable": "tickCounter",
+            "a1_line": 99,
+            "a1_kind": "write",
+            "b_line": 164,
+            "b_kind": "write",
+            "a2_line": 100,
+            "a2_kind": "read",
+            "why": "communicate preempts measure2."
+          },
+          {
+            "variable": "numberOfRecords",
+            "a1_line": 159,
+            "a1_kind": "read",
+            "b_line": 91,
+            "b_kind": "write",
+            "a2_line": 165,
+            "a2_kind": "write",
+            "why": "measure1 changes the count between communicate's read and reset."
+          },
+          {
+            "variable": "numberOfRecords",
+            "a1_line": 159,
+            "a1_kind": "read",
+            "b_line": 110,
+            "b_kind": "write",
+            "a2_line": 165,
+            "a2_kind": "write",
+            "why": "measure3 does too."
+          },
+          {
+            "variable": "numberOfRecords",
+            "a1_line": 89,
+            "a1_kind": "read",
+            "b_line": 110,
+            "b_kind": "write",
+            "a2_line": 91,
+            "a2_kind": "read",
+            "why": "measure3 preempts measure1."
+          }
+        ]
+      },
+      {
+        "case": "wdt_pci_1",
+        "violations": [
+          {
+            "variable": "count",
+            "a1_line": 1003,
+            "a1_kind": "write",
+            "b_line": 1070,
+            "b_kind": "write",
+            "a2_line": 1005,
+            "a2_kind": "read",
+            "why": "writer ISR preempts closer1."
+          },
+          {
+            "variable": "expect_close",
+            "a1_line": 1002,
+            "a1_kind": "write",
+            "b_line": 1071,
+            "b_kind": "write",
+            "a2_line": 1018,
+            "a2_kind": "read",
+            "why": "writer resets expect_close under closer1."
+          },
+          {
+            "variable": "count",
+            "a1_line": 1037,
+            "a1_kind": "write",
+            "b_line": 1070,
+            "b_kind": "write",
+            "a2_line": 1039,
+            "a2_kind": "read",
+            "why": "writer preempts closer2."
+          },
+          {
+            "variable": "expect_close",
+            "a1_line": 1036,
+            "a1_kind": "write",
+            "b_line": 1071,
+            "b_kind": "write",
+            "a2_line": 1054,
+            "a2_kind": "read",
+            "why": "writer preempts closer2."
+          },
+          {
+            "variable": "test_global_var1",
+            "a1_line": 989,
+            "a1_kind": "read",
+            "b_line": 1084,
+            "b_kind": "write",
+            "a2_line": 990,
+            "a2_kind": "read",
+            "why": "writer1 preempts JudgeCondi."
+          },
+          {
+            "variable": "test_global_var2",
+            "a1_line": 993,
+            "a1_kind": "read",
+            "b_line": 1107,
+            "b_kind": "write",
+            "a2_line": 994,
+            "a2_kind": "read",
+            "why": "writer2 preempts JudgeCondi."
+          },
+          {
+            "variable": "test_global_var3",
+            "a1_line": 1049,
+            "a1_kind": "read",
+            "b_line": 1108,
+            "b_kind": "write",
+            "a2_line": 1050,
+            "a2_kind": "read",
+            "why": "writer2 preempts closer2."
+          }
+        ]
+      },
+      {
+        "case": "wdt_pci_2",
+        "violations": [
+          {
+            "variable": "wdtpci_write_buf",
+            "a1_line": 999,
+            "a1_kind": "write",
+            "b_line": 1060,
+            "b_kind": "write",
+            "a2_line": 1009,
+            "a2_kind": "read",
+            "why": "closer3 preempts closer1."
+          },
+          {
+            "variable": "count",
+            "a1_line": 1001,
+            "a1_kind": "write",
+            "b_line": 1091,
+            "b_kind": "write",
+            "a2_line": 1003,
+            "a2_kind": "read",
+            "why": "writer preempts closer1."
+          },
+          {
+            "variable": "expect_close",
+            "a1_line": 1000,
+            "a1_kind": "write",
+            "b_line": 1092,
+            "b_kind": "write",
+            "a2_line": 1017,
+            "a2_kind": "read",
+            "why": "writer preempts closer1."
+          },
+          {
+            "variable": "count",
+            "a1_line": 1032,
+            "a1_kind": "write",
+            "b_line": 1091,
+            "b_kind": "write",
+            "a2_line": 1034,
+            "a2_kind": "read",
+            "why": "writer preempts closer2."
+          },
+          {
+            "variable": "expect_close",
+            "a1_line": 1031,
+            "a1_kind": "write",
+            "b_line": 1092,
+            "b_kind": "write",
+            "a2_line": 1047,
+            "a2_kind": "read",
+            "why": "writer preempts closer2."
+          },
+          {
+            "variable": "test_global_var1",
+            "a1_line": 990,
+            "a1_kind": "read",
+            "b_line": 1106,
+            "b_kind": "write",
+            "a2_line": 991,
+            "a2_kind": "read",
+            "why": "writer1 preempts JudgeCondi."
+          },
+          {
+            "variable": "test_global_var2",
+            "a1_line": 993,
+            "a1_kind": "read",
+            "b_line": 1107,
+            "b_kind": "write",
+            "a2_line": 994,
+            "a2_kind": "read",
+            "why": "writer1 preempts JudgeCondi."
+          },
+          {
+            "variable": "test_global_array",
+            "a1_line": 1150,
+            "a1_kind": "write",
+            "b_line": 1085,
+            "b_kind": "write",
+            "a2_line": 1153,
+            "a2_kind": "read",
+            "why": "closer3 preempts writer3."
+          },
+          {
+            "variable": "count",
+            "a1_line": 1133,
+            "a1_kind": "write",
+            "b_line": 1091,
+            "b_kind": "write",
+            "a2_line": 1136,
+            "a2_kind": "read",
+            "why": "writer1 preempts writer3."
+          }
+        ]
+      },
+      {
+        "case": "wdt_pci_3",
+        "violations": [
+          {
+            "variable": "count",
+            "a1_line": 1023,
+            "a1_kind": "write",
+            "b_line": 1194,
+            "b_kind": "write",
+            "a2_line": 1025,
+            "a2_kind": "read",
+            "why": "writer4 preempts closer2."
+          },
+          {
+            "variable": "expect_close",
+            "a1_line": 1022,
+            "a1_kind": "write",
+            "b_line": 1195,
+            "b_kind": "write",
+            "a2_line": 1038,
+            "a2_kind": "read",
+            "why": "writer4 preempts closer2."
+          },
+          {
+            "variable": "count",
+            "a1_line": 1059,
+            "a1_kind": "write",
+            "b_line": 1172,
+            "b_kind": "write",
+            "a2_line": 1061,
+            "a2_kind": "read",
+            "why": "higher ISR preempts closer3."
+          },
+          {
+            "variable": "expect_close",
+            "a1_line": 1058,
+            "a1_kind": "write",
+            "b_line": 1173,
+            "b_kind": "write",
+            "a2_line": 1074,
+            "a2_kind": "read",
+            "why": "higher ISR preempts closer3."
+          },
+          {
+            "variable": "count",
+            "a1_line": 1091,
+            "a1_kind": "write",
+            "b_line": 1194,
+            "b_kind": "write",
+            "a2_line": 1093,
+            "a2_kind": "read",
+            "why": "closer4 preempted by writer4."
+          },
+          {
+            "variable": "expect_close",
+            "a1_line": 1090,
+            "a1_kind": "write",
+            "b_line": 1195,
+            "b_kind": "write",
+            "a2_line": 1106,
+            "a2_kind": "read",
+            "why": "closer4 preempted."
+          },
+          {
+            "variable": "wdtpci_write_buf",
+            "a1_line": 1089,
+            "a1_kind": "write",
+            "b_line": 1021,
+            "b_kind": "write",
+            "a2_line": 1099,
+            "a2_kind": "read",
+            "why": "closer2 overwrites buf under closer4."
+          },
+          {
+            "variable": "test_global_var1",
+            "a1_line": 1140,
+            "a1_kind": "write",
+            "b_line": 987,
+            "b_kind": "write",
+            "a2_line": 1141,
+            "a2_kind": "read",
+            "why": "closer1 preempts writer1."
+          },
+          {
+            "variable": "test_global_var1",
+            "a1_line": 1141,
+            "a1_kind": "read",
+            "b_line": 987,
+            "b_kind": "write",
+            "a2_line": 1142,
+            "a2_kind": "read",
+            "why": "closer1 preempts writer1."
+          },
+          {
+            "variable": "count",
+            "a1_line": 1123,
+            "a1_kind": "write",
+            "b_line": 1172,
+            "b_kind": "write",
+            "a2_line": 1125,
+            "a2_kind": "read",
+            "why": "writer3 preempts writer1."
+          },
+          {
+            "variable": "test_global_var3",
+            "a1_line": 1164,
+            "a1_kind": "read",
+            "b_line": 1193,
+            "b_kind": "write",
+            "a2_line": 1164,
+            "a2_kind": "write",
+            "why": "writer4 preempts writer2's increment."
+          },
+          {
+            "variable": "count",
+            "a1_line": 1194,
+            "a1_kind": "write",
+            "b_line": 990,
+            "b_kind": "write",
+            "a2_line": 1197,
+            "a2_kind": "read",
+            "why": "closer1 preempts writer4."
+          }
+        ]
+      }
+    ]
+  },
+  "text": "{\"cases\":[{\"case\":\"blink1\",\"violations\":[{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":120,\"b_kind\":\"write\",\"a2_line\":96,\"a2_kind\":\"read\",\"why\":\"Higher-priority Force ISR preempts Timer_A between the increment and the compare.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":120,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"Force ISR can write between the read and write of the increment.\"},{\"variable\":\"timerCount\",\"a1_line\":108,\"a1_kind\":\"write\",\"b_line\":120,\"b_kind\":\"write\",\"a2_line\":109,\"a2_kind\":\"read\",\"why\":\"Force preempts Timer_B between its write and check.\"}]},{\"case\":\"blink2\",\"violations\":[{\"variable\":\"timerCount\",\"a1_line\":93,\"a1_kind\":\"read\",\"b_line\":119,\"b_kind\":\"write\",\"a2_line\":93,\"a2_kind\":\"write\",\"why\":\"Timer_C (higher) preempts the read-modify-write in Timer_A.\"},{\"variable\":\"timerCount\",\"a1_line\":93,\"a1_kind\":\"write\",\"b_line\":119,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"read\",\"why\":\"Timer_C writes between A's write and check.\"},{\"variable\":\"timerCount\",\"a1_line\":106,\"a1_kind\":\"write\",\"b_line\":119,\"b_kind\":\"write\",\"a2_line\":108,\"a2_kind\":\"read\",\"why\":\"Timer_C preempts Timer_B.\"},{\"variable\":\"timerCount\",\"a1_line\":106,\"a1_kind\":\"write\",\"b_line\":132,\"b_kind\":\"write\",\"a2_line\":108,\"a2_kind\":\"read\",\"why\":\"Force (prio 3) preempts Timer_B (prio 2).\"},{\"variable\":\"timerCount\",\"a1_line\":106,\"a1_kind\":\"write\",\"b_line\":93,\"b_kind\":\"write\",\"a2_line\":108,\"a2_kind\":\"read\",\"why\":\"Timer_A (prio 3) preempts Timer_B.\"}]},{\"case\":\"blink3\",\"violations\":[{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"Reset ISR (and Force/C) can write inside A's increment.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":97,\"a2_kind\":\"read\",\"why\":\"Higher ISRs write between A's write and check.\"},{\"variable\":\"timerCount\",\"a1_line\":109,\"a1_kind\":\"write\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":111,\"a2_kind\":\"read\",\"why\":\"Reset/Force/C preempt Timer_B between write and check.\"},{\"variable\":\"timerCount\",\"a1_line\":136,\"a1_kind\":\"read\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":136,\"a2_kind\":\"write\",\"why\":\"Reset (or C) preempts Force's increment.\"},{\"variable\":\"timerCount\",\"a1_line\":123,\"a1_kind\":\"write\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":125,\"a2_kind\":\"read\",\"why\":\"Reset preempts Timer_C.\"}]},{\"case\":\"brake1\",\"violations\":[{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT_h\",\"a1_line\":409,\"a1_kind\":\"write\",\"b_line\":299,\"b_kind\":\"write\",\"a2_line\":460,\"a2_kind\":\"read\",\"why\":\"compute ISR preempts RR wheel between write and read.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":411,\"a1_kind\":\"write\",\"b_line\":302,\"b_kind\":\"write\",\"a2_line\":418,\"a2_kind\":\"read\",\"why\":\"compute ISR overwrites RT4 between RR's write and use.\"},{\"variable\":\"test_global_array\",\"a1_line\":387,\"a1_kind\":\"write\",\"b_line\":347,\"b_kind\":\"write\",\"a2_line\":390,\"a2_kind\":\"read\",\"why\":\"compute ISR writes element between RR's write and read.\"},{\"variable\":\"test_global_var1\",\"a1_line\":284,\"a1_kind\":\"read\",\"b_line\":348,\"b_kind\":\"write\",\"a2_line\":285,\"a2_kind\":\"read\",\"why\":\"Main's JudgeCondi reads var1 twice; compute ISR can write between.\"},{\"variable\":\"test_global_var2\",\"a1_line\":287,\"a1_kind\":\"read\",\"b_line\":349,\"b_kind\":\"write\",\"a2_line\":288,\"a2_kind\":\"read\",\"why\":\"Same for var2.\"}]},{\"case\":\"brake2\",\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":459,\"a1_kind\":\"write\",\"b_line\":285,\"b_kind\":\"write\",\"a2_line\":460,\"a2_kind\":\"read\",\"why\":\"compute ISR writes var1 between RR's write and reads.\"},{\"variable\":\"test_global_var1\",\"a1_line\":460,\"a1_kind\":\"read\",\"b_line\":285,\"b_kind\":\"write\",\"a2_line\":461,\"a2_kind\":\"read\",\"why\":\"Two reads of var1 split by compute ISR write.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT_h\",\"a1_line\":384,\"a1_kind\":\"write\",\"b_line\":293,\"b_kind\":\"write\",\"a2_line\":435,\"a2_kind\":\"read\",\"why\":\"compute preempts RR.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":386,\"a1_kind\":\"write\",\"b_line\":296,\"b_kind\":\"write\",\"a2_line\":393,\"a2_kind\":\"read\",\"why\":\"compute preempts RR.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":488,\"a1_kind\":\"write\",\"b_line\":296,\"b_kind\":\"write\",\"a2_line\":505,\"a2_kind\":\"read\",\"why\":\"compute preempts FL.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT3\",\"a1_line\":478,\"a1_kind\":\"write\",\"b_line\":305,\"b_kind\":\"write\",\"a2_line\":549,\"a2_kind\":\"read\",\"why\":\"compute preempts FL.\"}]},{\"case\":\"brake3\",\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":289,\"a1_kind\":\"read\",\"b_line\":355,\"b_kind\":\"write\",\"a2_line\":290,\"a2_kind\":\"read\",\"why\":\"JudgeCondi (RR ISR/main) reads var1 twice; compute ISR writes between.\"},{\"variable\":\"test_global_var2\",\"a1_line\":292,\"a1_kind\":\"read\",\"b_line\":356,\"b_kind\":\"write\",\"a2_line\":293,\"a2_kind\":\"read\",\"why\":\"Same for var2.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT_h\",\"a1_line\":410,\"a1_kind\":\"write\",\"b_line\":305,\"b_kind\":\"write\",\"a2_line\":463,\"a2_kind\":\"read\",\"why\":\"compute preempts RR.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":412,\"a1_kind\":\"write\",\"b_line\":308,\"b_kind\":\"write\",\"a2_line\":419,\"a2_kind\":\"read\",\"why\":\"compute preempts RR.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT3\",\"a1_line\":505,\"a1_kind\":\"write\",\"b_line\":317,\"b_kind\":\"write\",\"a2_line\":575,\"a2_kind\":\"read\",\"why\":\"compute preempts FL.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":515,\"a1_kind\":\"write\",\"b_line\":308,\"b_kind\":\"write\",\"a2_line\":531,\"a2_kind\":\"read\",\"why\":\"compute preempts FL.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":651,\"a1_kind\":\"write\",\"b_line\":308,\"b_kind\":\"write\",\"a2_line\":670,\"a2_kind\":\"read\",\"why\":\"compute preempts FR.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT2\",\"a1_line\":645,\"a1_kind\":\"write\",\"b_line\":314,\"b_kind\":\"write\",\"a2_line\":714,\"a2_kind\":\"read\",\"why\":\"compute preempts FR.\"},{\"variable\":\"test_global_array\",\"a1_line\":589,\"a1_kind\":\"write\",\"b_line\":354,\"b_kind\":\"write\",\"a2_line\":592,\"a2_kind\":\"read\",\"why\":\"compute preempts FL.\"}]},{\"case\":\"i2c_pca_isa_1\",\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":291,\"a1_kind\":\"read\",\"b_line\":342,\"b_kind\":\"write\",\"a2_line\":292,\"a2_kind\":\"read\",\"why\":\"Main's JudgeCondi can be preempted by req4_isr.\"},{\"variable\":\"test_global_var2\",\"a1_line\":294,\"a1_kind\":\"read\",\"b_line\":328,\"b_kind\":\"write\",\"a2_line\":295,\"a2_kind\":\"read\",\"why\":\"Main's JudgeCondi can be preempted by req3_isr.\"}]},{\"case\":\"i2c_pca_isa_2\",\"violations\":[{\"variable\":\"irq\",\"a1_line\":314,\"a1_kind\":\"write\",\"b_line\":321,\"b_kind\":\"write\",\"a2_line\":313,\"a2_kind\":\"read\",\"why\":\"Higher ISR req3 changes irq between req2's write and check (lines 308/313 in source numbering).\"},{\"variable\":\"irq\",\"a1_line\":308,\"a1_kind\":\"write\",\"b_line\":321,\"b_kind\":\"write\",\"a2_line\":313,\"a2_kind\":\"read\",\"why\":\"req3/req4/req5 preempt req2.\"},{\"variable\":\"irq\",\"a1_line\":308,\"a1_kind\":\"write\",\"b_line\":331,\"b_kind\":\"write\",\"a2_line\":313,\"a2_kind\":\"read\",\"why\":\"req4 preempts req2.\"},{\"variable\":\"irq\",\"a1_line\":331,\"a1_kind\":\"write\",\"b_line\":347,\"b_kind\":\"write\",\"a2_line\":336,\"a2_kind\":\"read\",\"why\":\"req5 preempts req4.\"},{\"variable\":\"test_global_var1\",\"a1_line\":289,\"a1_kind\":\"read\",\"b_line\":354,\"b_kind\":\"write\",\"a2_line\":290,\"a2_kind\":\"read\",\"why\":\"req5 preempts req6's JudgeCondi.\"},{\"variable\":\"test_global_var2\",\"a1_line\":292,\"a1_kind\":\"read\",\"b_line\":338,\"b_kind\":\"write\",\"a2_line\":293,\"a2_kind\":\"read\",\"why\":\"req4 preempts req6's JudgeCondi.\"}]},{\"case\":\"i2c_pca_isa_3\",\"violations\":[{\"variable\":\"irq\",\"a1_line\":303,\"a1_kind\":\"write\",\"b_line\":326,\"b_kind\":\"write\",\"a2_line\":308,\"a2_kind\":\"read\",\"why\":\"Higher ISRs set irq between req1's write and check.\"},{\"variable\":\"irq\",\"a1_line\":363,\"a1_kind\":\"write\",\"b_line\":352,\"b_kind\":\"write\",\"a2_line\":364,\"a2_kind\":\"read\",\"why\":\"req5/7/8 preempt req6.\"},{\"variable\":\"global_id\",\"a1_line\":239,\"a1_kind\":\"write\",\"b_line\":234,\"b_kind\":\"write\",\"a2_line\":331,\"a2_kind\":\"read\",\"why\":\"Higher ISR init changes global_id after req3's exit and before its check.\"},{\"variable\":\"test_global_var1\",\"a1_line\":293,\"a1_kind\":\"read\",\"b_line\":332,\"b_kind\":\"write\",\"a2_line\":294,\"a2_kind\":\"read\",\"why\":\"req3 preempts req1's JudgeCondi.\"},{\"variable\":\"test_global_var2\",\"a1_line\":296,\"a1_kind\":\"read\",\"b_line\":334,\"b_kind\":\"write\",\"a2_line\":297,\"a2_kind\":\"read\",\"why\":\"req3 preempts req1's JudgeCondi.\"},{\"variable\":\"test_global_array\",\"a1_line\":382,\"a1_kind\":\"write\",\"b_line\":398,\"b_kind\":\"write\",\"a2_line\":385,\"a2_kind\":\"read\",\"why\":\"req8 preempts req7.\"}]},{\"case\":\"i8xx_tco_1\",\"violations\":[{\"variable\":\"tco_write_buf\",\"a1_line\":757,\"a1_kind\":\"write\",\"b_line\":775,\"b_kind\":\"write\",\"a2_line\":429,\"a2_kind\":\"read\",\"why\":\"closer1 (same priority, may preempt) overwrites buf.\"},{\"variable\":\"tco_expect_close\",\"a1_line\":759,\"a1_kind\":\"write\",\"b_line\":777,\"b_kind\":\"write\",\"a2_line\":760,\"a2_kind\":\"read\",\"why\":\"closer1 preempts closer2 between write and check.\"},{\"variable\":\"test_global_var1\",\"a1_line\":747,\"a1_kind\":\"read\",\"b_line\":771,\"b_kind\":\"write\",\"a2_line\":748,\"a2_kind\":\"read\",\"why\":\"closer1 preempts JudgeCondi in closer2.\"},{\"variable\":\"test_global_var2\",\"a1_line\":750,\"a1_kind\":\"read\",\"b_line\":773,\"b_kind\":\"write\",\"a2_line\":751,\"a2_kind\":\"read\",\"why\":\"closer1 preempts JudgeCondi.\"},{\"variable\":\"test_global_array\",\"a1_line\":791,\"a1_kind\":\"write\",\"b_line\":780,\"b_kind\":\"write\",\"a2_line\":794,\"a2_kind\":\"read\",\"why\":\"closer1 preempts writer1.\"}]},{\"case\":\"i8xx_tco_2\",\"violations\":[{\"variable\":\"tco_expect_close\",\"a1_line\":755,\"a1_kind\":\"write\",\"b_line\":768,\"b_kind\":\"write\",\"a2_line\":756,\"a2_kind\":\"read\",\"why\":\"closer2 (higher) preempts closer1.\"},{\"variable\":\"tco_write_buf\",\"a1_line\":753,\"a1_kind\":\"write\",\"b_line\":766,\"b_kind\":\"write\",\"a2_line\":425,\"a2_kind\":\"read\",\"why\":\"closer2 overwrites buf before closer1 reads it.\"}]},{\"case\":\"i8xx_tco_3\",\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":741,\"a1_kind\":\"read\",\"b_line\":791,\"b_kind\":\"write\",\"a2_line\":742,\"a2_kind\":\"read\",\"why\":\"writer1 preempts closer2's JudgeCondi.\"},{\"variable\":\"test_global_var2\",\"a1_line\":744,\"a1_kind\":\"read\",\"b_line\":801,\"b_kind\":\"write\",\"a2_line\":745,\"a2_kind\":\"read\",\"why\":\"writer2 preempts JudgeCondi.\"},{\"variable\":\"test_global_var3\",\"a1_line\":779,\"a1_kind\":\"read\",\"b_line\":810,\"b_kind\":\"write\",\"a2_line\":779,\"a2_kind\":\"write\",\"why\":\"writer3 preempts the ++ in closer3.\"}]},{\"case\":\"logger1\",\"violations\":[{\"variable\":\"tickCounter\",\"a1_line\":76,\"a1_kind\":\"write\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":77,\"a2_kind\":\"read\",\"why\":\"communicate preempts measure.\"},{\"variable\":\"tickCounter\",\"a1_line\":76,\"a1_kind\":\"read\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":76,\"a2_kind\":\"write\",\"why\":\"communicate preempts the increment.\"},{\"variable\":\"intervalCounter\",\"a1_line\":82,\"a1_kind\":\"read\",\"b_line\":135,\"b_kind\":\"write\",\"a2_line\":82,\"a2_kind\":\"write\",\"why\":\"communicate preempts the increment.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":83,\"a1_kind\":\"read\",\"b_line\":137,\"b_kind\":\"write\",\"a2_line\":85,\"a2_kind\":\"read\",\"why\":\"index read then count reset by communicate.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":85,\"a1_kind\":\"read\",\"b_line\":137,\"b_kind\":\"write\",\"a2_line\":85,\"a2_kind\":\"write\",\"why\":\"communicate preempts the increment.\"}]},{\"case\":\"logger2\",\"violations\":[{\"variable\":\"tickCounter\",\"a1_line\":100,\"a1_kind\":\"write\",\"b_line\":86,\"b_kind\":\"write\",\"a2_line\":101,\"a2_kind\":\"read\",\"why\":\"measure1 preempts measure2.\"},{\"variable\":\"tickCounter\",\"a1_line\":100,\"a1_kind\":\"write\",\"b_line\":158,\"b_kind\":\"write\",\"a2_line\":101,\"a2_kind\":\"read\",\"why\":\"communicate preempts measure2.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":153,\"a1_kind\":\"read\",\"b_line\":92,\"b_kind\":\"write\",\"a2_line\":159,\"a2_kind\":\"write\",\"why\":\"measure1 increments between communicate's read and reset.\"}]},{\"case\":\"logger3\",\"violations\":[{\"variable\":\"tickCounter\",\"a1_line\":99,\"a1_kind\":\"write\",\"b_line\":109,\"b_kind\":\"write\",\"a2_line\":100,\"a2_kind\":\"read\",\"why\":\"measure3/communicate preempt measure2.\"},{\"variable\":\"tickCounter\",\"a1_line\":99,\"a1_kind\":\"write\",\"b_line\":164,\"b_kind\":\"write\",\"a2_line\":100,\"a2_kind\":\"read\",\"why\":\"communicate preempts measure2.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":159,\"a1_kind\":\"read\",\"b_line\":91,\"b_kind\":\"write\",\"a2_line\":165,\"a2_kind\":\"write\",\"why\":\"measure1 changes the count between communicate's read and reset.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":159,\"a1_kind\":\"read\",\"b_line\":110,\"b_kind\":\"write\",\"a2_line\":165,\"a2_kind\":\"write\",\"why\":\"measure3 does too.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":89,\"a1_kind\":\"read\",\"b_line\":110,\"b_kind\":\"write\",\"a2_line\":91,\"a2_kind\":\"read\",\"why\":\"measure3 preempts measure1.\"}]},{\"case\":\"wdt_pci_1\",\"violations\":[{\"variable\":\"count\",\"a1_line\":1003,\"a1_kind\":\"write\",\"b_line\":1070,\"b_kind\":\"write\",\"a2_line\":1005,\"a2_kind\":\"read\",\"why\":\"writer ISR preempts closer1.\"},{\"variable\":\"expect_close\",\"a1_line\":1002,\"a1_kind\":\"write\",\"b_line\":1071,\"b_kind\":\"write\",\"a2_line\":1018,\"a2_kind\":\"read\",\"why\":\"writer resets expect_close under closer1.\"},{\"variable\":\"count\",\"a1_line\":1037,\"a1_kind\":\"write\",\"b_line\":1070,\"b_kind\":\"write\",\"a2_line\":1039,\"a2_kind\":\"read\",\"why\":\"writer preempts closer2.\"},{\"variable\":\"expect_close\",\"a1_line\":1036,\"a1_kind\":\"write\",\"b_line\":1071,\"b_kind\":\"write\",\"a2_line\":1054,\"a2_kind\":\"read\",\"why\":\"writer preempts closer2.\"},{\"variable\":\"test_global_var1\",\"a1_line\":989,\"a1_kind\":\"read\",\"b_line\":1084,\"b_kind\":\"write\",\"a2_line\":990,\"a2_kind\":\"read\",\"why\":\"writer1 preempts JudgeCondi.\"},{\"variable\":\"test_global_var2\",\"a1_line\":993,\"a1_kind\":\"read\",\"b_line\":1107,\"b_kind\":\"write\",\"a2_line\":994,\"a2_kind\":\"read\",\"why\":\"writer2 preempts JudgeCondi.\"},{\"variable\":\"test_global_var3\",\"a1_line\":1049,\"a1_kind\":\"read\",\"b_line\":1108,\"b_kind\":\"write\",\"a2_line\":1050,\"a2_kind\":\"read\",\"why\":\"writer2 preempts closer2.\"}]},{\"case\":\"wdt_pci_2\",\"violations\":[{\"variable\":\"wdtpci_write_buf\",\"a1_line\":999,\"a1_kind\":\"write\",\"b_line\":1060,\"b_kind\":\"write\",\"a2_line\":1009,\"a2_kind\":\"read\",\"why\":\"closer3 preempts closer1.\"},{\"variable\":\"count\",\"a1_line\":1001,\"a1_kind\":\"write\",\"b_line\":1091,\"b_kind\":\"write\",\"a2_line\":1003,\"a2_kind\":\"read\",\"why\":\"writer preempts closer1.\"},{\"variable\":\"expect_close\",\"a1_line\":1000,\"a1_kind\":\"write\",\"b_line\":1092,\"b_kind\":\"write\",\"a2_line\":1017,\"a2_kind\":\"read\",\"why\":\"writer preempts closer1.\"},{\"variable\":\"count\",\"a1_line\":1032,\"a1_kind\":\"write\",\"b_line\":1091,\"b_kind\":\"write\",\"a2_line\":1034,\"a2_kind\":\"read\",\"why\":\"writer preempts closer2.\"},{\"variable\":\"expect_close\",\"a1_line\":1031,\"a1_kind\":\"write\",\"b_line\":1092,\"b_kind\":\"write\",\"a2_line\":1047,\"a2_kind\":\"read\",\"why\":\"writer preempts closer2.\"},{\"variable\":\"test_global_var1\",\"a1_line\":990,\"a1_kind\":\"read\",\"b_line\":1106,\"b_kind\":\"write\",\"a2_line\":991,\"a2_kind\":\"read\",\"why\":\"writer1 preempts JudgeCondi.\"},{\"variable\":\"test_global_var2\",\"a1_line\":993,\"a1_kind\":\"read\",\"b_line\":1107,\"b_kind\":\"write\",\"a2_line\":994,\"a2_kind\":\"read\",\"why\":\"writer1 preempts JudgeCondi.\"},{\"variable\":\"test_global_array\",\"a1_line\":1150,\"a1_kind\":\"write\",\"b_line\":1085,\"b_kind\":\"write\",\"a2_line\":1153,\"a2_kind\":\"read\",\"why\":\"closer3 preempts writer3.\"},{\"variable\":\"count\",\"a1_line\":1133,\"a1_kind\":\"write\",\"b_line\":1091,\"b_kind\":\"write\",\"a2_line\":1136,\"a2_kind\":\"read\",\"why\":\"writer1 preempts writer3.\"}]},{\"case\":\"wdt_pci_3\",\"violations\":[{\"variable\":\"count\",\"a1_line\":1023,\"a1_kind\":\"write\",\"b_line\":1194,\"b_kind\":\"write\",\"a2_line\":1025,\"a2_kind\":\"read\",\"why\":\"writer4 preempts closer2.\"},{\"variable\":\"expect_close\",\"a1_line\":1022,\"a1_kind\":\"write\",\"b_line\":1195,\"b_kind\":\"write\",\"a2_line\":1038,\"a2_kind\":\"read\",\"why\":\"writer4 preempts closer2.\"},{\"variable\":\"count\",\"a1_line\":1059,\"a1_kind\":\"write\",\"b_line\":1172,\"b_kind\":\"write\",\"a2_line\":1061,\"a2_kind\":\"read\",\"why\":\"higher ISR preempts closer3.\"},{\"variable\":\"expect_close\",\"a1_line\":1058,\"a1_kind\":\"write\",\"b_line\":1173,\"b_kind\":\"write\",\"a2_line\":1074,\"a2_kind\":\"read\",\"why\":\"higher ISR preempts closer3.\"},{\"variable\":\"count\",\"a1_line\":1091,\"a1_kind\":\"write\",\"b_line\":1194,\"b_kind\":\"write\",\"a2_line\":1093,\"a2_kind\":\"read\",\"why\":\"closer4 preempted by writer4.\"},{\"variable\":\"expect_close\",\"a1_line\":1090,\"a1_kind\":\"write\",\"b_line\":1195,\"b_kind\":\"write\",\"a2_line\":1106,\"a2_kind\":\"read\",\"why\":\"closer4 preempted.\"},{\"variable\":\"wdtpci_write_buf\",\"a1_line\":1089,\"a1_kind\":\"write\",\"b_line\":1021,\"b_kind\":\"write\",\"a2_line\":1099,\"a2_kind\":\"read\",\"why\":\"closer2 overwrites buf under closer4.\"},{\"variable\":\"test_global_var1\",\"a1_line\":1140,\"a1_kind\":\"write\",\"b_line\":987,\"b_kind\":\"write\",\"a2_line\":1141,\"a2_kind\":\"read\",\"why\":\"closer1 preempts writer1.\"},{\"variable\":\"test_global_var1\",\"a1_line\":1141,\"a1_kind\":\"read\",\"b_line\":987,\"b_kind\":\"write\",\"a2_line\":1142,\"a2_kind\":\"read\",\"why\":\"closer1 preempts writer1.\"},{\"variable\":\"count\",\"a1_line\":1123,\"a1_kind\":\"write\",\"b_line\":1172,\"b_kind\":\"write\",\"a2_line\":1125,\"a2_kind\":\"read\",\"why\":\"writer3 preempts writer1.\"},{\"variable\":\"test_global_var3\",\"a1_line\":1164,\"a1_kind\":\"read\",\"b_line\":1193,\"b_kind\":\"write\",\"a2_line\":1164,\"a2_kind\":\"write\",\"why\":\"writer4 preempts writer2's increment.\"},{\"variable\":\"count\",\"a1_line\":1194,\"a1_kind\":\"write\",\"b_line\":990,\"b_kind\":\"write\",\"a2_line\":1197,\"a2_kind\":\"read\",\"why\":\"closer1 preempts writer4.\"}]}]}",
+  "wall_s": 105.77699089050293,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 16680,
+    "cache_read": 172528,
+    "cache_write": 487,
+    "latency_s": 105.7766604339995
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -2023,3 +2023,15 @@ entries need (`i8xx_tco_1`); off everywhere gives 496 candidates and 43/45. 972 
 distinct line triples (handlers sharing code); about 60 are covered by an adjacent triple. All
 three together, keeping `i8xx_tco_1`'s equal priority: 448 candidates, 45/45. Decision pending
 (Pedro); added to [[Open Questions]].
+
+## [2026-11-21] direction + result | real-world: equal priority off but i8xx_tco_1; the +interleaving row
+Pedro's direction: a generic prompt in the Racebench model, not tied to the real-world programs, and
+equal-priority preemption off on that suite except `i8xx_tco_1`.
+- New row `+interleaving` (`prompts/interleaving_semantics.md`): the Racebench defect notion, the
+  execution model read from the record, a typedef-hides-a-union rule; a test checks it names no
+  suite, program, variable or line.
+- New errata section `semantics` (`bench/realworld-errata.yaml`): default false, exception
+  `i8xx_tco_1`; `--raw` unchanged. Static: 1980 → 587 → 484, gate 45/45.
+- irqrace (pool + by variable, Sonnet low, n = 1): 45/45 in `likely_real`, 6 false violations,
+  6.43 M input tokens, 496 s (`results/realworld-cmp2-20261121/`). Scan per file (n = 3): 44–45,
+  5–7; one prompt 12–34. [[Open Questions]] updated.

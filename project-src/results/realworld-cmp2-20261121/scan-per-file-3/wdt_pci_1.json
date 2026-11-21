@@ -1,0 +1,88 @@
+{
+  "case": "wdt_pci_1",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "expect_close",
+        "a1_line": 1002,
+        "a1_kind": "write",
+        "b_line": 1071,
+        "b_kind": "write",
+        "a2_line": 1018,
+        "a2_kind": "read",
+        "why": "writer1_isr (priority 4) can preempt closer1_isr between its write and its read of expect_close, so the read no longer sees 42."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1018,
+        "a1_kind": "read",
+        "b_line": 1071,
+        "b_kind": "write",
+        "a2_line": 1025,
+        "a2_kind": "write",
+        "why": "writer1_isr can preempt between closer1's check of expect_close and its later write, so the check goes stale."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1035,
+        "a1_kind": "write",
+        "b_line": 1093,
+        "b_kind": "write",
+        "a2_line": 1054,
+        "a2_kind": "read",
+        "why": "This is a bug in the code as written. It uses 1036 as the first write, not 1035."
+      },
+      {
+        "variable": "count",
+        "a1_line": 1003,
+        "a1_kind": "write",
+        "b_line": 1070,
+        "b_kind": "write",
+        "a2_line": 1005,
+        "a2_kind": "read",
+        "why": "writer1_isr can preempt closer1 between its write of count=1 and its read, so the read sees 0."
+      },
+      {
+        "variable": "count",
+        "a1_line": 1037,
+        "a1_kind": "write",
+        "b_line": 1092,
+        "b_kind": "write",
+        "a2_line": 1039,
+        "a2_kind": "read",
+        "why": "writer2_isr can preempt closer2 between its write of count=1 and its read, so the read sees 0."
+      },
+      {
+        "variable": "test_global_var1",
+        "a1_line": 989,
+        "a1_kind": "read",
+        "b_line": 1084,
+        "b_kind": "write",
+        "a2_line": 990,
+        "a2_kind": "read",
+        "why": "writer1_isr can preempt closer1's JudgeCondi between its two reads of test_global_var1, so the reads can see different values."
+      },
+      {
+        "variable": "test_global_var3",
+        "a1_line": 1049,
+        "a1_kind": "read",
+        "b_line": 1108,
+        "b_kind": "write",
+        "a2_line": 1050,
+        "a2_kind": "read",
+        "why": "writer2_isr can preempt closer2 between its two reads of test_global_var3, so the reads can see different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"expect_close\",\"a1_line\":1002,\"a1_kind\":\"write\",\"b_line\":1071,\"b_kind\":\"write\",\"a2_line\":1018,\"a2_kind\":\"read\",\"why\":\"writer1_isr (priority 4) can preempt closer1_isr between its write and its read of expect_close, so the read no longer sees 42.\"},{\"variable\":\"expect_close\",\"a1_line\":1018,\"a1_kind\":\"read\",\"b_line\":1071,\"b_kind\":\"write\",\"a2_line\":1025,\"a2_kind\":\"write\",\"why\":\"writer1_isr can preempt between closer1's check of expect_close and its later write, so the check goes stale.\"},{\"variable\":\"expect_close\",\"a1_line\":1035,\"a1_kind\":\"write\",\"b_line\":1093,\"b_kind\":\"write\",\"a2_line\":1054,\"a2_kind\":\"read\",\"why\":\"This is a bug in the code as written. It uses 1036 as the first write, not 1035.\"},{\"variable\":\"count\",\"a1_line\":1003,\"a1_kind\":\"write\",\"b_line\":1070,\"b_kind\":\"write\",\"a2_line\":1005,\"a2_kind\":\"read\",\"why\":\"writer1_isr can preempt closer1 between its write of count=1 and its read, so the read sees 0.\"},{\"variable\":\"count\",\"a1_line\":1037,\"a1_kind\":\"write\",\"b_line\":1092,\"b_kind\":\"write\",\"a2_line\":1039,\"a2_kind\":\"read\",\"why\":\"writer2_isr can preempt closer2 between its write of count=1 and its read, so the read sees 0.\"},{\"variable\":\"test_global_var1\",\"a1_line\":989,\"a1_kind\":\"read\",\"b_line\":1084,\"b_kind\":\"write\",\"a2_line\":990,\"a2_kind\":\"read\",\"why\":\"writer1_isr can preempt closer1's JudgeCondi between its two reads of test_global_var1, so the reads can see different values.\"},{\"variable\":\"test_global_var3\",\"a1_line\":1049,\"a1_kind\":\"read\",\"b_line\":1108,\"b_kind\":\"write\",\"a2_line\":1050,\"a2_kind\":\"read\",\"why\":\"writer2_isr can preempt closer2 between its two reads of test_global_var3, so the reads can see different values.\"}]}",
+  "wall_s": 11.929575681686401,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1536,
+    "cache_read": 20177,
+    "cache_write": 488,
+    "latency_s": 11.929396445979364
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,78 @@
+{
+  "case": "logger3",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 89,
+        "a1_kind": "read",
+        "b_line": 110,
+        "b_kind": "write",
+        "a2_line": 91,
+        "a2_kind": "read",
+        "why": "Higher-priority measure3 ISR can preempt measure1 between the index read and the increment, changing the count."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 89,
+        "a1_kind": "read",
+        "b_line": 110,
+        "b_kind": "write",
+        "a2_line": 91,
+        "a2_kind": "write",
+        "why": "measure3 increments between measure1's read and its write-back of numberOfRecords, so an update is lost."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 159,
+        "a1_kind": "read",
+        "b_line": 110,
+        "b_kind": "write",
+        "a2_line": 165,
+        "a2_kind": "write",
+        "why": "measure3 can preempt communicate between the read and the reset, so the checked value is stale."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 159,
+        "a1_kind": "read",
+        "b_line": 91,
+        "b_kind": "write",
+        "a2_line": 165,
+        "a2_kind": "write",
+        "why": "measure1 can preempt communicate between the read and the reset, so the checked value is stale."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 99,
+        "a1_kind": "write",
+        "b_line": 109,
+        "b_kind": "write",
+        "a2_line": 100,
+        "a2_kind": "read",
+        "why": "measure3 preempts measure2 after it writes 0 and before it reads, so the check sees a nonzero value."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 99,
+        "a1_kind": "write",
+        "b_line": 164,
+        "b_kind": "write",
+        "a2_line": 100,
+        "a2_kind": "read",
+        "why": "Communicate ISR has higher priority than measure2 and can write tickCounter between its write and its read."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"numberOfRecords\",\"a1_line\":89,\"a1_kind\":\"read\",\"b_line\":110,\"b_kind\":\"write\",\"a2_line\":91,\"a2_kind\":\"read\",\"why\":\"Higher-priority measure3 ISR can preempt measure1 between the index read and the increment, changing the count.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":89,\"a1_kind\":\"read\",\"b_line\":110,\"b_kind\":\"write\",\"a2_line\":91,\"a2_kind\":\"write\",\"why\":\"measure3 increments between measure1's read and its write-back of numberOfRecords, so an update is lost.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":159,\"a1_kind\":\"read\",\"b_line\":110,\"b_kind\":\"write\",\"a2_line\":165,\"a2_kind\":\"write\",\"why\":\"measure3 can preempt communicate between the read and the reset, so the checked value is stale.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":159,\"a1_kind\":\"read\",\"b_line\":91,\"b_kind\":\"write\",\"a2_line\":165,\"a2_kind\":\"write\",\"why\":\"measure1 can preempt communicate between the read and the reset, so the checked value is stale.\"},{\"variable\":\"tickCounter\",\"a1_line\":99,\"a1_kind\":\"write\",\"b_line\":109,\"b_kind\":\"write\",\"a2_line\":100,\"a2_kind\":\"read\",\"why\":\"measure3 preempts measure2 after it writes 0 and before it reads, so the check sees a nonzero value.\"},{\"variable\":\"tickCounter\",\"a1_line\":99,\"a1_kind\":\"write\",\"b_line\":164,\"b_kind\":\"write\",\"a2_line\":100,\"a2_kind\":\"read\",\"why\":\"Communicate ISR has higher priority than measure2 and can write tickCounter between its write and its read.\"}]}",
+  "wall_s": 12.416848182678223,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1487,
+    "cache_read": 3722,
+    "cache_write": 488,
+    "latency_s": 12.41654856398236
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

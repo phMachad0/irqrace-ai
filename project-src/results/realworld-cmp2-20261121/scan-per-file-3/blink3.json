@@ -1,0 +1,138 @@
+{
+  "case": "blink3",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 123,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "write",
+        "why": "timerCount++ is non-atomic; Timer_C (higher priority) can preempt between the read and the write and its update is lost."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 136,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "write",
+        "why": "Timer_Force can preempt Timer_A between the increment's read and write, so its update is lost."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 146,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "write",
+        "why": "Timer_Reset can preempt between the read and write of the increment, so the reset is lost."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "write",
+        "b_line": 123,
+        "b_kind": "write",
+        "a2_line": 97,
+        "a2_kind": "read",
+        "why": "Timer_C can overwrite timerCount between the increment and the check at line 97."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "write",
+        "b_line": 136,
+        "b_kind": "write",
+        "a2_line": 97,
+        "a2_kind": "read",
+        "why": "Timer_Force can increment between the write at 95 and the check at 97."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "write",
+        "b_line": 146,
+        "b_kind": "write",
+        "a2_line": 97,
+        "a2_kind": "read",
+        "why": "Timer_Reset can zero timerCount between the increment and the check at 97."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 109,
+        "a1_kind": "write",
+        "b_line": 123,
+        "b_kind": "write",
+        "a2_line": 111,
+        "a2_kind": "read",
+        "why": "Timer_C can change timerCount between the write at 109 and the check at 111. The write is also 1, so only a different value would be seen."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 109,
+        "a1_kind": "write",
+        "b_line": 136,
+        "b_kind": "write",
+        "a2_line": 111,
+        "a2_kind": "read",
+        "why": "Timer_Force can increment timerCount between the write at 109 and the check at 111."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 109,
+        "a1_kind": "write",
+        "b_line": 146,
+        "b_kind": "write",
+        "a2_line": 111,
+        "a2_kind": "read",
+        "why": "Timer_Reset can zero timerCount between the write at 109 and the check at 111."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 123,
+        "a1_kind": "write",
+        "b_line": 146,
+        "b_kind": "write",
+        "a2_line": 125,
+        "a2_kind": "read",
+        "why": "Timer_Reset (priority 5) can preempt Timer_C and zero timerCount before the check at 125."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 136,
+        "a1_kind": "read",
+        "b_line": 123,
+        "b_kind": "write",
+        "a2_line": 136,
+        "a2_kind": "write",
+        "why": "Timer_C (priority 4) can preempt Timer_Force's increment, and its write is lost."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 136,
+        "a1_kind": "read",
+        "b_line": 146,
+        "b_kind": "write",
+        "a2_line": 136,
+        "a2_kind": "write",
+        "why": "Timer_Reset can preempt Timer_Force's increment, and the reset is lost."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":123,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"timerCount++ is non-atomic; Timer_C (higher priority) can preempt between the read and the write and its update is lost.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"Timer_Force can preempt Timer_A between the increment's read and write, so its update is lost.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"Timer_Reset can preempt between the read and write of the increment, so the reset is lost.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":123,\"b_kind\":\"write\",\"a2_line\":97,\"a2_kind\":\"read\",\"why\":\"Timer_C can overwrite timerCount between the increment and the check at line 97.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":97,\"a2_kind\":\"read\",\"why\":\"Timer_Force can increment between the write at 95 and the check at 97.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":97,\"a2_kind\":\"read\",\"why\":\"Timer_Reset can zero timerCount between the increment and the check at 97.\"},{\"variable\":\"timerCount\",\"a1_line\":109,\"a1_kind\":\"write\",\"b_line\":123,\"b_kind\":\"write\",\"a2_line\":111,\"a2_kind\":\"read\",\"why\":\"Timer_C can change timerCount between the write at 109 and the check at 111. The write is also 1, so only a different value would be seen.\"},{\"variable\":\"timerCount\",\"a1_line\":109,\"a1_kind\":\"write\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":111,\"a2_kind\":\"read\",\"why\":\"Timer_Force can increment timerCount between the write at 109 and the check at 111.\"},{\"variable\":\"timerCount\",\"a1_line\":109,\"a1_kind\":\"write\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":111,\"a2_kind\":\"read\",\"why\":\"Timer_Reset can zero timerCount between the write at 109 and the check at 111.\"},{\"variable\":\"timerCount\",\"a1_line\":123,\"a1_kind\":\"write\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":125,\"a2_kind\":\"read\",\"why\":\"Timer_Reset (priority 5) can preempt Timer_C and zero timerCount before the check at 125.\"},{\"variable\":\"timerCount\",\"a1_line\":136,\"a1_kind\":\"read\",\"b_line\":123,\"b_kind\":\"write\",\"a2_line\":136,\"a2_kind\":\"write\",\"why\":\"Timer_C (priority 4) can preempt Timer_Force's increment, and its write is lost.\"},{\"variable\":\"timerCount\",\"a1_line\":136,\"a1_kind\":\"read\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":136,\"a2_kind\":\"write\",\"why\":\"Timer_Reset can preempt Timer_Force's increment, and the reset is lost.\"}]}",
+  "wall_s": 16.50222873687744,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 2126,
+    "cache_read": 3801,
+    "cache_write": 488,
+    "latency_s": 16.50191873498261
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

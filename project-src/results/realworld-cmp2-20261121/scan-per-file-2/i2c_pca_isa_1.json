@@ -1,0 +1,38 @@
+{
+  "case": "i2c_pca_isa_1",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_var2",
+        "a1_line": 294,
+        "a1_kind": "read",
+        "b_line": 328,
+        "b_kind": "write",
+        "a2_line": 295,
+        "a2_kind": "read",
+        "why": "req3_isr can preempt main between its two reads of test_global_var2 and write 0x22, so the two reads can return different values."
+      },
+      {
+        "variable": "test_global_var1",
+        "a1_line": 291,
+        "a1_kind": "read",
+        "b_line": 342,
+        "b_kind": "write",
+        "a2_line": 292,
+        "a2_kind": "read",
+        "why": "Both conditions are 1 after main enables interrupts. req4_isr can write test_global_var1 between the two reads in JudgeCondi, so the reads can see different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_var2\",\"a1_line\":294,\"a1_kind\":\"read\",\"b_line\":328,\"b_kind\":\"write\",\"a2_line\":295,\"a2_kind\":\"read\",\"why\":\"req3_isr can preempt main between its two reads of test_global_var2 and write 0x22, so the two reads can return different values.\"},{\"variable\":\"test_global_var1\",\"a1_line\":291,\"a1_kind\":\"read\",\"b_line\":342,\"b_kind\":\"write\",\"a2_line\":292,\"a2_kind\":\"read\",\"why\":\"Both conditions are 1 after main enables interrupts. req4_isr can write test_global_var1 between the two reads in JudgeCondi, so the reads can see different values.\"}]}",
+  "wall_s": 6.636286973953247,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 675,
+    "cache_read": 6352,
+    "cache_write": 483,
+    "latency_s": 6.625148557999637
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

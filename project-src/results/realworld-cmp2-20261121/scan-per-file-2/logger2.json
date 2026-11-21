@@ -1,0 +1,68 @@
+{
+  "case": "logger2",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "tickCounter",
+        "a1_line": 81,
+        "a1_kind": "write",
+        "b_line": 100,
+        "b_kind": "write",
+        "a2_line": 82,
+        "a2_kind": "read",
+        "why": "measure2 (prio 3) can preempt measure1 between the increment and the read, resetting tickCounter, so tmp_tickCounter is wrong."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 81,
+        "a1_kind": "write",
+        "b_line": 158,
+        "b_kind": "write",
+        "a2_line": 82,
+        "a2_kind": "read",
+        "why": "communicate (prio 5) can preempt measure1 and reset tickCounter between the write and the read."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 82,
+        "a1_kind": "read",
+        "b_line": 100,
+        "b_kind": "write",
+        "a2_line": 86,
+        "a2_kind": "write",
+        "why": "measure2 can write tickCounter between measure1's read and its later write."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 100,
+        "a1_kind": "write",
+        "b_line": 158,
+        "b_kind": "write",
+        "a2_line": 101,
+        "a2_kind": "read",
+        "why": "communicate can preempt measure2 between the write and the check and change tickCounter."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 90,
+        "a1_kind": "read",
+        "b_line": 159,
+        "b_kind": "write",
+        "a2_line": 92,
+        "a2_kind": "write",
+        "why": "communicate can reset numberOfRecords between measure1 using it as the index and incrementing it, so the record and count become inconsistent."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"tickCounter\",\"a1_line\":81,\"a1_kind\":\"write\",\"b_line\":100,\"b_kind\":\"write\",\"a2_line\":82,\"a2_kind\":\"read\",\"why\":\"measure2 (prio 3) can preempt measure1 between the increment and the read, resetting tickCounter, so tmp_tickCounter is wrong.\"},{\"variable\":\"tickCounter\",\"a1_line\":81,\"a1_kind\":\"write\",\"b_line\":158,\"b_kind\":\"write\",\"a2_line\":82,\"a2_kind\":\"read\",\"why\":\"communicate (prio 5) can preempt measure1 and reset tickCounter between the write and the read.\"},{\"variable\":\"tickCounter\",\"a1_line\":82,\"a1_kind\":\"read\",\"b_line\":100,\"b_kind\":\"write\",\"a2_line\":86,\"a2_kind\":\"write\",\"why\":\"measure2 can write tickCounter between measure1's read and its later write.\"},{\"variable\":\"tickCounter\",\"a1_line\":100,\"a1_kind\":\"write\",\"b_line\":158,\"b_kind\":\"write\",\"a2_line\":101,\"a2_kind\":\"read\",\"why\":\"communicate can preempt measure2 between the write and the check and change tickCounter.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":90,\"a1_kind\":\"read\",\"b_line\":159,\"b_kind\":\"write\",\"a2_line\":92,\"a2_kind\":\"write\",\"why\":\"communicate can reset numberOfRecords between measure1 using it as the index and incrementing it, so the record and count become inconsistent.\"}]}",
+  "wall_s": 12.055217981338501,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1433,
+    "cache_read": 3636,
+    "cache_write": 484,
+    "latency_s": 12.055056932003936
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

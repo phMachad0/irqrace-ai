@@ -1,0 +1,78 @@
+{
+  "case": "i2c_pca_isa_2",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "irq",
+        "a1_line": 308,
+        "a1_kind": "write",
+        "b_line": 321,
+        "b_kind": "write",
+        "a2_line": 313,
+        "a2_kind": "read",
+        "why": "req3_isr (prio 4) can preempt req2_isr (prio 3) between its write of irq and the check, so the check sees 3 rather than 2."
+      },
+      {
+        "variable": "irq",
+        "a1_line": 308,
+        "a1_kind": "write",
+        "b_line": 331,
+        "b_kind": "write",
+        "a2_line": 313,
+        "a2_kind": "read",
+        "why": "req4_isr (prio 5) can preempt req2_isr between its write of irq and the check, and it overwrites irq with 0."
+      },
+      {
+        "variable": "irq",
+        "a1_line": 308,
+        "a1_kind": "write",
+        "b_line": 347,
+        "b_kind": "write",
+        "a2_line": 313,
+        "a2_kind": "read",
+        "why": "req5_isr (prio 6) can preempt req2_isr between its write of irq and the check, and it overwrites irq with 0."
+      },
+      {
+        "variable": "irq",
+        "a1_line": 331,
+        "a1_kind": "write",
+        "b_line": 347,
+        "b_kind": "write",
+        "a2_line": 336,
+        "a2_kind": "read",
+        "why": "req5_isr (prio 6) can preempt req4_isr (prio 5) between its write of irq and the check, and it overwrites irq with 0."
+      },
+      {
+        "variable": "test_global_var2",
+        "a1_line": 292,
+        "a1_kind": "read",
+        "b_line": 338,
+        "b_kind": "write",
+        "a2_line": 293,
+        "a2_kind": "read",
+        "why": "req4_isr (prio 5) can preempt req6_isr (prio 2) between the two reads in JudgeCondi, so the reads can return different values."
+      },
+      {
+        "variable": "test_global_var1",
+        "a1_line": 289,
+        "a1_kind": "read",
+        "b_line": 354,
+        "b_kind": "write",
+        "a2_line": 290,
+        "a2_kind": "read",
+        "why": "req5_isr (prio 6) can preempt req6_isr (prio 2) between the two reads of test_global_var1 in JudgeCondi. Main sets both conditions to 1, so both reads happen."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"irq\",\"a1_line\":308,\"a1_kind\":\"write\",\"b_line\":321,\"b_kind\":\"write\",\"a2_line\":313,\"a2_kind\":\"read\",\"why\":\"req3_isr (prio 4) can preempt req2_isr (prio 3) between its write of irq and the check, so the check sees 3 rather than 2.\"},{\"variable\":\"irq\",\"a1_line\":308,\"a1_kind\":\"write\",\"b_line\":331,\"b_kind\":\"write\",\"a2_line\":313,\"a2_kind\":\"read\",\"why\":\"req4_isr (prio 5) can preempt req2_isr between its write of irq and the check, and it overwrites irq with 0.\"},{\"variable\":\"irq\",\"a1_line\":308,\"a1_kind\":\"write\",\"b_line\":347,\"b_kind\":\"write\",\"a2_line\":313,\"a2_kind\":\"read\",\"why\":\"req5_isr (prio 6) can preempt req2_isr between its write of irq and the check, and it overwrites irq with 0.\"},{\"variable\":\"irq\",\"a1_line\":331,\"a1_kind\":\"write\",\"b_line\":347,\"b_kind\":\"write\",\"a2_line\":336,\"a2_kind\":\"read\",\"why\":\"req5_isr (prio 6) can preempt req4_isr (prio 5) between its write of irq and the check, and it overwrites irq with 0.\"},{\"variable\":\"test_global_var2\",\"a1_line\":292,\"a1_kind\":\"read\",\"b_line\":338,\"b_kind\":\"write\",\"a2_line\":293,\"a2_kind\":\"read\",\"why\":\"req4_isr (prio 5) can preempt req6_isr (prio 2) between the two reads in JudgeCondi, so the reads can return different values.\"},{\"variable\":\"test_global_var1\",\"a1_line\":289,\"a1_kind\":\"read\",\"b_line\":354,\"b_kind\":\"write\",\"a2_line\":290,\"a2_kind\":\"read\",\"why\":\"req5_isr (prio 6) can preempt req6_isr (prio 2) between the two reads of test_global_var1 in JudgeCondi. Main sets both conditions to 1, so both reads happen.\"}]}",
+  "wall_s": 13.630713939666748,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1682,
+    "cache_read": 1011,
+    "cache_write": 6069,
+    "latency_s": 13.630497492005816
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

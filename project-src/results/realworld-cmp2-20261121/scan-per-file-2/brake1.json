@@ -1,0 +1,68 @@
+{
+  "case": "brake1",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_var1",
+        "a1_line": 284,
+        "a1_kind": "read",
+        "b_line": 348,
+        "b_kind": "write",
+        "a2_line": 285,
+        "a2_kind": "read",
+        "why": "Main reads var1 twice; the priority-6 compute ISR can preempt between them and write it, so the two reads may see different values."
+      },
+      {
+        "variable": "test_global_var2",
+        "a1_line": 287,
+        "a1_kind": "read",
+        "b_line": 349,
+        "b_kind": "write",
+        "a2_line": 288,
+        "a2_kind": "read",
+        "why": "Main reads var2 twice; the compute ISR can preempt between the reads and write var2."
+      },
+      {
+        "variable": "test_global_array[TRIGGER]",
+        "a1_line": 387,
+        "a1_kind": "write",
+        "b_line": 347,
+        "b_kind": "write",
+        "a2_line": 390,
+        "a2_kind": "read",
+        "why": "The RR ISR writes the element and later reads it. The higher-priority compute ISR can preempt between those accesses and overwrite it."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT_h",
+        "a1_line": 409,
+        "a1_kind": "write",
+        "b_line": 299,
+        "b_kind": "write",
+        "a2_line": 460,
+        "a2_kind": "read",
+        "why": "The compute ISR can preempt the RR ISR after it writes RT_h and overwrite it, so the later read sees the wrong value."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+        "a1_line": 411,
+        "a1_kind": "write",
+        "b_line": 302,
+        "b_kind": "write",
+        "a2_line": 418,
+        "a2_kind": "read",
+        "why": "The compute ISR can preempt the RR ISR between its write and read of RT4 and overwrite the value."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":284,\"a1_kind\":\"read\",\"b_line\":348,\"b_kind\":\"write\",\"a2_line\":285,\"a2_kind\":\"read\",\"why\":\"Main reads var1 twice; the priority-6 compute ISR can preempt between them and write it, so the two reads may see different values.\"},{\"variable\":\"test_global_var2\",\"a1_line\":287,\"a1_kind\":\"read\",\"b_line\":349,\"b_kind\":\"write\",\"a2_line\":288,\"a2_kind\":\"read\",\"why\":\"Main reads var2 twice; the compute ISR can preempt between the reads and write var2.\"},{\"variable\":\"test_global_array[TRIGGER]\",\"a1_line\":387,\"a1_kind\":\"write\",\"b_line\":347,\"b_kind\":\"write\",\"a2_line\":390,\"a2_kind\":\"read\",\"why\":\"The RR ISR writes the element and later reads it. The higher-priority compute ISR can preempt between those accesses and overwrite it.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT_h\",\"a1_line\":409,\"a1_kind\":\"write\",\"b_line\":299,\"b_kind\":\"write\",\"a2_line\":460,\"a2_kind\":\"read\",\"why\":\"The compute ISR can preempt the RR ISR after it writes RT_h and overwrite it, so the later read sees the wrong value.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":411,\"a1_kind\":\"write\",\"b_line\":302,\"b_kind\":\"write\",\"a2_line\":418,\"a2_kind\":\"read\",\"why\":\"The compute ISR can preempt the RR ISR between its write and read of RT4 and overwrite the value.\"}]}",
+  "wall_s": 12.920498132705688,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1526,
+    "cache_read": 12318,
+    "cache_write": 479,
+    "latency_s": 12.920309491018998
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,88 @@
+{
+  "case": "i2c_pca_isa_3",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "irq",
+        "a1_line": 303,
+        "a1_kind": "write",
+        "b_line": 363,
+        "b_kind": "write",
+        "a2_line": 308,
+        "a2_kind": "read",
+        "why": "req6_isr (priority 3) can preempt req1_isr (priority 2) between its write of irq and the check, so irq can be -1."
+      },
+      {
+        "variable": "irq",
+        "a1_line": 363,
+        "a1_kind": "write",
+        "b_line": 352,
+        "b_kind": "write",
+        "a2_line": 364,
+        "a2_kind": "read",
+        "why": "Higher-priority req5, req7 or req8 can write irq=0 between req6's write and its check."
+      },
+      {
+        "variable": "test_global_var1",
+        "a1_line": 293,
+        "a1_kind": "read",
+        "b_line": 332,
+        "b_kind": "write",
+        "a2_line": 294,
+        "a2_kind": "read",
+        "why": "req3_isr (priority 3) can preempt req1's JudgeCondi between the two reads and change the value."
+      },
+      {
+        "variable": "test_global_var2",
+        "a1_line": 296,
+        "a1_kind": "read",
+        "b_line": 334,
+        "b_kind": "write",
+        "a2_line": 297,
+        "a2_kind": "read",
+        "why": "req3_isr can write between the two reads in req1's JudgeCondi."
+      },
+      {
+        "variable": "global_id",
+        "a1_line": 239,
+        "a1_kind": "write",
+        "b_line": 234,
+        "b_kind": "write",
+        "a2_line": 331,
+        "a2_kind": "read",
+        "why": "Higher-priority req5, req7 or req8 can run init and overwrite global_id between req3's exit write and its check."
+      },
+      {
+        "variable": "global_id",
+        "a1_line": 234,
+        "a1_kind": "write",
+        "b_line": 331,
+        "b_kind": "read",
+        "a2_line": 239,
+        "a2_kind": "write",
+        "why": "req3_isr can preempt req1 between its init and exit writes and see a transient global_id."
+      },
+      {
+        "variable": "test_global_array",
+        "a1_line": 382,
+        "a1_kind": "write",
+        "b_line": 398,
+        "b_kind": "write",
+        "a2_line": 385,
+        "a2_kind": "read",
+        "why": "req8_isr (priority 6) can preempt req7_isr between its write to array[9000] and the read, changing the value."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"irq\",\"a1_line\":303,\"a1_kind\":\"write\",\"b_line\":363,\"b_kind\":\"write\",\"a2_line\":308,\"a2_kind\":\"read\",\"why\":\"req6_isr (priority 3) can preempt req1_isr (priority 2) between its write of irq and the check, so irq can be -1.\"},{\"variable\":\"irq\",\"a1_line\":363,\"a1_kind\":\"write\",\"b_line\":352,\"b_kind\":\"write\",\"a2_line\":364,\"a2_kind\":\"read\",\"why\":\"Higher-priority req5, req7 or req8 can write irq=0 between req6's write and its check.\"},{\"variable\":\"test_global_var1\",\"a1_line\":293,\"a1_kind\":\"read\",\"b_line\":332,\"b_kind\":\"write\",\"a2_line\":294,\"a2_kind\":\"read\",\"why\":\"req3_isr (priority 3) can preempt req1's JudgeCondi between the two reads and change the value.\"},{\"variable\":\"test_global_var2\",\"a1_line\":296,\"a1_kind\":\"read\",\"b_line\":334,\"b_kind\":\"write\",\"a2_line\":297,\"a2_kind\":\"read\",\"why\":\"req3_isr can write between the two reads in req1's JudgeCondi.\"},{\"variable\":\"global_id\",\"a1_line\":239,\"a1_kind\":\"write\",\"b_line\":234,\"b_kind\":\"write\",\"a2_line\":331,\"a2_kind\":\"read\",\"why\":\"Higher-priority req5, req7 or req8 can run init and overwrite global_id between req3's exit write and its check.\"},{\"variable\":\"global_id\",\"a1_line\":234,\"a1_kind\":\"write\",\"b_line\":331,\"b_kind\":\"read\",\"a2_line\":239,\"a2_kind\":\"write\",\"why\":\"req3_isr can preempt req1 between its init and exit writes and see a transient global_id.\"},{\"variable\":\"test_global_array\",\"a1_line\":382,\"a1_kind\":\"write\",\"b_line\":398,\"b_kind\":\"write\",\"a2_line\":385,\"a2_kind\":\"read\",\"why\":\"req8_isr (priority 6) can preempt req7_isr between its write to array[9000] and the read, changing the value.\"}]}",
+  "wall_s": 15.285849809646606,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1831,
+    "cache_read": 1011,
+    "cache_write": 6590,
+    "latency_s": 15.28557538500172
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

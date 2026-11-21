@@ -1,0 +1,48 @@
+{
+  "case": "i8xx_tco_3",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_var1",
+        "a1_line": 741,
+        "a1_kind": "read",
+        "b_line": 791,
+        "b_kind": "write",
+        "a2_line": 742,
+        "a2_kind": "read",
+        "why": "writer1_isr (priority 3) can preempt closer2_isr (priority 2) between the two reads in JudgeCondi and change the value, so the reads can differ."
+      },
+      {
+        "variable": "test_global_var2",
+        "a1_line": 744,
+        "a1_kind": "read",
+        "b_line": 801,
+        "b_kind": "write",
+        "a2_line": 745,
+        "a2_kind": "read",
+        "why": "writer2_isr (priority 4) can preempt closer2_isr between the two reads in JudgeCondi, so the second read can see a different value."
+      },
+      {
+        "variable": "test_global_var3",
+        "a1_line": 779,
+        "a1_kind": "read",
+        "b_line": 810,
+        "b_kind": "write",
+        "a2_line": 779,
+        "a2_kind": "write",
+        "why": "closer3_isr's var3++ is a read followed by a write. writer3_isr (priority 5) can preempt between them, and its write at line 810 is then overwritten (lost update)."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":741,\"a1_kind\":\"read\",\"b_line\":791,\"b_kind\":\"write\",\"a2_line\":742,\"a2_kind\":\"read\",\"why\":\"writer1_isr (priority 3) can preempt closer2_isr (priority 2) between the two reads in JudgeCondi and change the value, so the reads can differ.\"},{\"variable\":\"test_global_var2\",\"a1_line\":744,\"a1_kind\":\"read\",\"b_line\":801,\"b_kind\":\"write\",\"a2_line\":745,\"a2_kind\":\"read\",\"why\":\"writer2_isr (priority 4) can preempt closer2_isr between the two reads in JudgeCondi, so the second read can see a different value.\"},{\"variable\":\"test_global_var3\",\"a1_line\":779,\"a1_kind\":\"read\",\"b_line\":810,\"b_kind\":\"write\",\"a2_line\":779,\"a2_kind\":\"write\",\"why\":\"closer3_isr's var3++ is a read followed by a write. writer3_isr (priority 5) can preempt between them, and its write at line 810 is then overwritten (lost update).\"}]}",
+  "wall_s": 10.796289205551147,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1232,
+    "cache_read": 15577,
+    "cache_write": 488,
+    "latency_s": 10.796010168007342
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

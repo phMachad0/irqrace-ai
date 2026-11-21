@@ -1,0 +1,68 @@
+{
+  "case": "logger1",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "tickCounter",
+        "a1_line": 76,
+        "a1_kind": "write",
+        "b_line": 136,
+        "b_kind": "write",
+        "a2_line": 77,
+        "a2_kind": "read",
+        "why": "The higher-priority communicate ISR can preempt measure between its increment and its read-back, so the measure ISR reads a reset value."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 77,
+        "a1_kind": "read",
+        "b_line": 136,
+        "b_kind": "write",
+        "a2_line": 81,
+        "a2_kind": "write",
+        "why": "The communicate ISR can reset tickCounter after measure has read it and before measure overwrites it, so the read value is stale."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 83,
+        "a1_kind": "read",
+        "b_line": 137,
+        "b_kind": "write",
+        "a2_line": 85,
+        "a2_kind": "read",
+        "why": "The communicate ISR can reset numberOfRecords between measure's index read and its increment. The record is stored at the old index, but the counter is then based on the reset value."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 83,
+        "a1_kind": "read",
+        "b_line": 137,
+        "b_kind": "write",
+        "a2_line": 85,
+        "a2_kind": "write",
+        "why": "The reset can land between measure's read and its write-back of numberOfRecords. The increment then overwrites the reset value, which is a lost update."
+      },
+      {
+        "variable": "intervalCounter",
+        "a1_line": 82,
+        "a1_kind": "read",
+        "b_line": 135,
+        "b_kind": "write",
+        "a2_line": 82,
+        "a2_kind": "write",
+        "why": "The increment of intervalCounter in measure is non-atomic. The communicate ISR's reset can fall between the read and the write, and the write then overwrites it."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"tickCounter\",\"a1_line\":76,\"a1_kind\":\"write\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":77,\"a2_kind\":\"read\",\"why\":\"The higher-priority communicate ISR can preempt measure between its increment and its read-back, so the measure ISR reads a reset value.\"},{\"variable\":\"tickCounter\",\"a1_line\":77,\"a1_kind\":\"read\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":81,\"a2_kind\":\"write\",\"why\":\"The communicate ISR can reset tickCounter after measure has read it and before measure overwrites it, so the read value is stale.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":83,\"a1_kind\":\"read\",\"b_line\":137,\"b_kind\":\"write\",\"a2_line\":85,\"a2_kind\":\"read\",\"why\":\"The communicate ISR can reset numberOfRecords between measure's index read and its increment. The record is stored at the old index, but the counter is then based on the reset value.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":83,\"a1_kind\":\"read\",\"b_line\":137,\"b_kind\":\"write\",\"a2_line\":85,\"a2_kind\":\"write\",\"why\":\"The reset can land between measure's read and its write-back of numberOfRecords. The increment then overwrites the reset value, which is a lost update.\"},{\"variable\":\"intervalCounter\",\"a1_line\":82,\"a1_kind\":\"read\",\"b_line\":135,\"b_kind\":\"write\",\"a2_line\":82,\"a2_kind\":\"write\",\"why\":\"The increment of intervalCounter in measure is non-atomic. The communicate ISR's reset can fall between the read and the write, and the write then overwrites it.\"}]}",
+  "wall_s": 10.321253776550293,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1248,
+    "cache_read": 1011,
+    "cache_write": 2819,
+    "latency_s": 10.32103792700218
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

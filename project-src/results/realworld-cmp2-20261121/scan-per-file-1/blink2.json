@@ -1,0 +1,78 @@
+{
+  "case": "blink2",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "timerCount",
+        "a1_line": 93,
+        "a1_kind": "read",
+        "b_line": 119,
+        "b_kind": "write",
+        "a2_line": 93,
+        "a2_kind": "write",
+        "why": "Timer_C (prio 4) can preempt Timer_A between its read and write of timerCount, so the increment is lost."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 93,
+        "a1_kind": "write",
+        "b_line": 119,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "read",
+        "why": "Timer_C can preempt Timer_A after its write and reset timerCount, so the check at line 95 reads a different value."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 93,
+        "a1_kind": "read",
+        "b_line": 119,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "read",
+        "why": "Timer_C can write timerCount between Timer_A's read at line 93 and its read at line 95, so the two reads disagree."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 106,
+        "a1_kind": "write",
+        "b_line": 93,
+        "b_kind": "write",
+        "a2_line": 108,
+        "a2_kind": "read",
+        "why": "Timer_A (prio 3) can preempt Timer_B between its write and its check and change timerCount."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 106,
+        "a1_kind": "write",
+        "b_line": 119,
+        "b_kind": "write",
+        "a2_line": 108,
+        "a2_kind": "read",
+        "why": "Timer_C can preempt Timer_B between its write and its check and overwrite timerCount."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 106,
+        "a1_kind": "write",
+        "b_line": 132,
+        "b_kind": "write",
+        "a2_line": 108,
+        "a2_kind": "read",
+        "why": "Timer_Force (prio 3) can preempt Timer_B between its write and its check and set timerCount to 1."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"timerCount\",\"a1_line\":93,\"a1_kind\":\"read\",\"b_line\":119,\"b_kind\":\"write\",\"a2_line\":93,\"a2_kind\":\"write\",\"why\":\"Timer_C (prio 4) can preempt Timer_A between its read and write of timerCount, so the increment is lost.\"},{\"variable\":\"timerCount\",\"a1_line\":93,\"a1_kind\":\"write\",\"b_line\":119,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"read\",\"why\":\"Timer_C can preempt Timer_A after its write and reset timerCount, so the check at line 95 reads a different value.\"},{\"variable\":\"timerCount\",\"a1_line\":93,\"a1_kind\":\"read\",\"b_line\":119,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"read\",\"why\":\"Timer_C can write timerCount between Timer_A's read at line 93 and its read at line 95, so the two reads disagree.\"},{\"variable\":\"timerCount\",\"a1_line\":106,\"a1_kind\":\"write\",\"b_line\":93,\"b_kind\":\"write\",\"a2_line\":108,\"a2_kind\":\"read\",\"why\":\"Timer_A (prio 3) can preempt Timer_B between its write and its check and change timerCount.\"},{\"variable\":\"timerCount\",\"a1_line\":106,\"a1_kind\":\"write\",\"b_line\":119,\"b_kind\":\"write\",\"a2_line\":108,\"a2_kind\":\"read\",\"why\":\"Timer_C can preempt Timer_B between its write and its check and overwrite timerCount.\"},{\"variable\":\"timerCount\",\"a1_line\":106,\"a1_kind\":\"write\",\"b_line\":132,\"b_kind\":\"write\",\"a2_line\":108,\"a2_kind\":\"read\",\"why\":\"Timer_Force (prio 3) can preempt Timer_B between its write and its check and set timerCount to 1.\"}]}",
+  "wall_s": 12.369087934494019,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1397,
+    "cache_read": 0,
+    "cache_write": 4121,
+    "latency_s": 12.36428818499553
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

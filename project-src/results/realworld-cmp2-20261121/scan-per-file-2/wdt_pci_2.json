@@ -1,0 +1,128 @@
+{
+  "case": "wdt_pci_2",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_var1",
+        "a1_line": 990,
+        "a1_kind": "read",
+        "b_line": 1106,
+        "b_kind": "write",
+        "a2_line": 991,
+        "a2_kind": "read",
+        "why": "writer1_isr (prio 4) can preempt closer1_isr (prio 2) in JudgeCondi between its two reads of var1, so they see different values."
+      },
+      {
+        "variable": "test_global_array",
+        "a1_line": 1150,
+        "a1_kind": "write",
+        "b_line": 1085,
+        "b_kind": "write",
+        "a2_line": 1153,
+        "a2_kind": "read",
+        "why": "closer3_isr (prio 4) can preempt writer3_isr (prio 1) after it writes array[TRIGGER] and overwrite it, so the later read sees 999 instead of 1."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1000,
+        "a1_kind": "write",
+        "b_line": 1092,
+        "b_kind": "write",
+        "a2_line": 1017,
+        "a2_kind": "read",
+        "why": "writer1_isr preempts closer1_isr and resets expect_close to 0, so the check at 1017 no longer sees the 42 that closer1_isr wrote."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1000,
+        "a1_kind": "write",
+        "b_line": 1114,
+        "b_kind": "write",
+        "a2_line": 1017,
+        "a2_kind": "read",
+        "why": "writer2_isr preempts closer1_isr and resets expect_close to 0 before the check at 1017."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1030,
+        "a1_kind": "write",
+        "b_line": 1092,
+        "b_kind": "write",
+        "a2_line": 1047,
+        "a2_kind": "read",
+        "why": "writer1_isr preempts closer2_isr and resets expect_close before the check at 1047."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1030,
+        "a1_kind": "write",
+        "b_line": 1114,
+        "b_kind": "write",
+        "a2_line": 1047,
+        "a2_kind": "read",
+        "why": "writer2_isr preempts closer2_isr and resets expect_close before the check at 1047."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1017,
+        "a1_kind": "read",
+        "b_line": 1061,
+        "b_kind": "write",
+        "a2_line": 1022,
+        "a2_kind": "write",
+        "why": "closer3_isr (prio 4) preempts closer1_isr between its check and its final reset, so the final write overwrites closer3_isr's update."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1047,
+        "a1_kind": "read",
+        "b_line": 1061,
+        "b_kind": "write",
+        "a2_line": 1052,
+        "a2_kind": "write",
+        "why": "closer3_isr (prio 4) preempts closer2_isr between its check and its final reset, so the final write overwrites closer3_isr's update."
+      },
+      {
+        "variable": "count",
+        "a1_line": 1001,
+        "a1_kind": "write",
+        "b_line": 1091,
+        "b_kind": "write",
+        "a2_line": 1003,
+        "a2_kind": "read",
+        "why": "writer1_isr preempts closer1_isr and sets count to 0, so the if(count) check at 1003 sees the wrong value."
+      },
+      {
+        "variable": "count",
+        "a1_line": 1031,
+        "a1_kind": "write",
+        "b_line": 1112,
+        "b_kind": "write",
+        "a2_line": 1034,
+        "a2_kind": "read",
+        "why": "writer2_isr preempts closer2_isr and sets count to 0, so the if(count) check at 1034 sees the wrong value."
+      },
+      {
+        "variable": "count",
+        "a1_line": 1133,
+        "a1_kind": "write",
+        "b_line": 1001,
+        "b_kind": "write",
+        "a2_line": 1136,
+        "a2_kind": "read",
+        "why": "closer1_isr (prio 2) preempts writer3_isr (prio 1) and sets count to 1, so the check at 1136 sees 1 instead of 0."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":990,\"a1_kind\":\"read\",\"b_line\":1106,\"b_kind\":\"write\",\"a2_line\":991,\"a2_kind\":\"read\",\"why\":\"writer1_isr (prio 4) can preempt closer1_isr (prio 2) in JudgeCondi between its two reads of var1, so they see different values.\"},{\"variable\":\"test_global_array\",\"a1_line\":1150,\"a1_kind\":\"write\",\"b_line\":1085,\"b_kind\":\"write\",\"a2_line\":1153,\"a2_kind\":\"read\",\"why\":\"closer3_isr (prio 4) can preempt writer3_isr (prio 1) after it writes array[TRIGGER] and overwrite it, so the later read sees 999 instead of 1.\"},{\"variable\":\"expect_close\",\"a1_line\":1000,\"a1_kind\":\"write\",\"b_line\":1092,\"b_kind\":\"write\",\"a2_line\":1017,\"a2_kind\":\"read\",\"why\":\"writer1_isr preempts closer1_isr and resets expect_close to 0, so the check at 1017 no longer sees the 42 that closer1_isr wrote.\"},{\"variable\":\"expect_close\",\"a1_line\":1000,\"a1_kind\":\"write\",\"b_line\":1114,\"b_kind\":\"write\",\"a2_line\":1017,\"a2_kind\":\"read\",\"why\":\"writer2_isr preempts closer1_isr and resets expect_close to 0 before the check at 1017.\"},{\"variable\":\"expect_close\",\"a1_line\":1030,\"a1_kind\":\"write\",\"b_line\":1092,\"b_kind\":\"write\",\"a2_line\":1047,\"a2_kind\":\"read\",\"why\":\"writer1_isr preempts closer2_isr and resets expect_close before the check at 1047.\"},{\"variable\":\"expect_close\",\"a1_line\":1030,\"a1_kind\":\"write\",\"b_line\":1114,\"b_kind\":\"write\",\"a2_line\":1047,\"a2_kind\":\"read\",\"why\":\"writer2_isr preempts closer2_isr and resets expect_close before the check at 1047.\"},{\"variable\":\"expect_close\",\"a1_line\":1017,\"a1_kind\":\"read\",\"b_line\":1061,\"b_kind\":\"write\",\"a2_line\":1022,\"a2_kind\":\"write\",\"why\":\"closer3_isr (prio 4) preempts closer1_isr between its check and its final reset, so the final write overwrites closer3_isr's update.\"},{\"variable\":\"expect_close\",\"a1_line\":1047,\"a1_kind\":\"read\",\"b_line\":1061,\"b_kind\":\"write\",\"a2_line\":1052,\"a2_kind\":\"write\",\"why\":\"closer3_isr (prio 4) preempts closer2_isr between its check and its final reset, so the final write overwrites closer3_isr's update.\"},{\"variable\":\"count\",\"a1_line\":1001,\"a1_kind\":\"write\",\"b_line\":1091,\"b_kind\":\"write\",\"a2_line\":1003,\"a2_kind\":\"read\",\"why\":\"writer1_isr preempts closer1_isr and sets count to 0, so the if(count) check at 1003 sees the wrong value.\"},{\"variable\":\"count\",\"a1_line\":1031,\"a1_kind\":\"write\",\"b_line\":1112,\"b_kind\":\"write\",\"a2_line\":1034,\"a2_kind\":\"read\",\"why\":\"writer2_isr preempts closer2_isr and sets count to 0, so the if(count) check at 1034 sees the wrong value.\"},{\"variable\":\"count\",\"a1_line\":1133,\"a1_kind\":\"write\",\"b_line\":1001,\"b_kind\":\"write\",\"a2_line\":1136,\"a2_kind\":\"read\",\"why\":\"closer1_isr (prio 2) preempts writer3_isr (prio 1) and sets count to 1, so the check at 1136 sees 1 instead of 0.\"}]}",
+  "wall_s": 16.99459743499756,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 2461,
+    "cache_read": 19596,
+    "cache_write": 489,
+    "latency_s": 16.99436068799696
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}
