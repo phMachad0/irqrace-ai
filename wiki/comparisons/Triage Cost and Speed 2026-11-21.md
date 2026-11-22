@@ -183,6 +183,23 @@ The 24 entries the production row called benign are all on top with `+interleavi
 of 4 more false violations (`test_global_var2` near-misses), and halving the static set halved the
 triage's cost. irqrace and the per-file scan now meet on recall here; the scan reads 30× less.
 
+## One generic row for both suites (2026-11-22)
+
+`+interleaving` on Racebench, n = 3 per arm, pool + by variable, Sonnet low
+(`results/interleaving-racebench-20261122/`):
+
+| | `+racebench` original | `+interleaving` original | `+racebench` disguised | `+interleaving` disguised |
+| --- | --- | --- | --- | --- |
+| Bug points on top (53/33) | 52–53 | 49–53 | 51–52 | 51–52 |
+| Bug points called infeasible | 0 | 0 | 1 | **0** |
+| Traps on top | 3–4 | 0–3 | 3–4 | 2–3 |
+| NASAC score /106 | 94–97 | 97–98 | 90–95 | 95–98 |
+| Input tokens | ≈2.0 M | ≈2.0 M | ≈1.7 M | ≈1.8 M |
+
+The generic row matches the Racebench-specific one, removes the union recall-veto event on the
+disguised copy (`010` bug#1 goes `uncertain`, not infeasible), and on the real-world suite puts all
+45 entries on top. One run of the original arm left case 022 `uncertain` at 0.6 (49/53).
+
 ## Lucas's T3 runs, scored here
 
 Two of the five T3 variants ran on 2026-11-17 and were never scored (`results/m3/`, n = 1):

@@ -1,0 +1,13 @@
+run_id,labels,case_subset,view,pattern,bug_points_total,bug_points_detected
++interleaving/1,48/38,all,likely_real,RWR,23,22
++interleaving/1,48/38,all,likely_real,WWR,8,6
++interleaving/1,48/38,all,likely_real,WRW,6,6
++interleaving/1,48/38,all,likely_real,RWW,11,10
++interleaving/1,48/38,all,not_infeasible,RWR,23,23
++interleaving/1,48/38,all,not_infeasible,WWR,8,8
++interleaving/1,48/38,all,not_infeasible,WRW,6,6
++interleaving/1,48/38,all,not_infeasible,RWW,11,11
++interleaving/1,48/38,all,static_only,RWR,23,23
++interleaving/1,48/38,all,static_only,WWR,8,8
++interleaving/1,48/38,all,static_only,WRW,6,6
++interleaving/1,48/38,all,static_only,RWW,11,11

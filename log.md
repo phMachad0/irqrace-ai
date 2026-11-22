@@ -2035,3 +2035,12 @@ equal-priority preemption off on that suite except `i8xx_tco_1`.
 - irqrace (pool + by variable, Sonnet low, n = 1): 45/45 in `likely_real`, 6 false violations,
   6.43 M input tokens, 496 s (`results/realworld-cmp2-20261121/`). Scan per file (n = 3): 44–45,
   5–7; one prompt 12–34. [[Open Questions]] updated.
+
+## [2026-11-22] result | +interleaving on Racebench: one generic row for both suites
+n = 3 per arm, original and disguised, pool + by variable, Sonnet low
+(`project-src/results/interleaving-racebench-20261122/`). Original: 49–53 bug points on top, 0–3
+traps, score 97–98 (`+racebench`: 52–53, 3–4, 94–97). Disguised: 51–52, 2–3, 95–98, and **no bug
+point called infeasible** (`+racebench`: `010` bug#1 infeasible in 3 of 3; now `uncertain`). Same
+cost (≈2 M input tokens, ≈255 s). The main checkout's venv broke mid-session (python3 linked to a
+removed PlatformIO interpreter); measurements now use `../worktrees/.venv-irqrace`. Run 1 of both
+arms was re-run after `claude -p` timeouts.
