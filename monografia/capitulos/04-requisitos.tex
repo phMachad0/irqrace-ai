@@ -21,8 +21,9 @@ políticas no mesmo ponto de integração, e os filtros que descartam candidatos
 perdem de 6 a 25 pontos de recall \cite{reducing-fp,adataint}, ao passo que a
 política conservadora do LLift alcança recall de 1,00 \cite{llift}. Dela decorre
 também a escolha das métricas, uma vez que a precisão deixa de ser a medida
-principal e cede lugar ao recall, que precisa ser de 100\%, acompanhado do
-\textit{Inspection Ratio} (Seção~\ref{sec:soundness}).
+principal e cede lugar ao recall, que precisa ser de 100\%, acompanhado de
+medidas que não melhoram com o descarte de candidatos, como as armadilhas que
+chegam ao topo da fila de leitura (Seção~\ref{sec:soundness}).
 
 \section{Requisitos funcionais}
 \label{sec:rf}
@@ -75,8 +76,8 @@ carregando a informação de até onde o solucionador chegou.
 
 O RF9 fixa o papel do modelo de linguagem, que ordena e explica sem alterar a
 composição do relatório. Nisso reside a diferença entre reduzir o esforço de
-revisão e reduzir o recall, e é também o que permite à avaliação adotar o
-\textit{Inspection Ratio} como medida de custo.
+revisão e reduzir o recall, e é também o que permite à avaliação medir o
+esforço de revisão pelo que chega ao topo da fila, com o recall inalterado.
 
 O RF12, comumente tratado como acessório em trabalhos acadêmicos, é aqui parte
 da contribuição. A comparação do Quadro~\ref{quadro:capacidades} mostra que a

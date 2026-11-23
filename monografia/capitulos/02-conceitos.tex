@@ -83,12 +83,41 @@ Dois cuidados decidem se uma análise de mascaramento perde defeitos. O primeiro
 mascarada em todos os caminhos que chegam àquele ponto, pois ``mascarada em
 algum caminho'' não oferece proteção alguma. O segundo é menos evidente e aparece no
 próprio \textit{benchmark}. O mascaramento feito por um fluxo pode ser desfeito
-por outro. No caso \texttt{svp\_simple\_001\_001} do Racebench, o fluxo
-principal mantém a interrupção 2 mascarada durante todo o intervalo de um
-defeito anotado, e o defeito ainda assim é real, porque a interrupção 1
-continua habilitada, interrompe esse intervalo e reabilita a interrupção 2 por
-dentro. Uma análise que considerasse apenas o fluxo local
+por outro. No Código~\ref{cod:mascaramento}, adaptado de um caso do Racebench,
+o fluxo principal mascara a interrupção 2 antes das duas escritas no vetor, e a
+leitura feita pela rotina da interrupção 2 parece não ter como cair entre elas.
+O defeito anotado, porém, é real. A interrupção 1 continua habilitada, pode
+interromper o fluxo principal entre as duas escritas e reabilitar a
+interrupção 2, que então interrompe a rotina 1 ou o fluxo principal e lê o
+valor intermediário. Uma análise que considerasse apenas o fluxo local
 descartaria um defeito verdadeiro sem qualquer indício de erro.
+
+\begin{figure}[htb]
+\begin{lstlisting}[caption={Mascaramento desfeito por outro fluxo}, label={cod:mascaramento}]
+volatile int flag = 0;
+volatile int vetor[10000];
+
+void principal(void) {          /* prioridade 0 */
+  init();                       /* habilita todas as interrupções */
+  disable_isr(2);               /* mascara a interrupção 2 */
+  for (int i = 0; i < 10000; i++) vetor[i] = 0;    /* A1 */
+  for (int i = 0; i < 10000; i++)
+    if (i == TRIGGER) vetor[i] = 1;                /* A2 */
+}
+
+void isr_1(void) {              /* prioridade 1 */
+  flag = 1;
+  enable_isr(2);                /* reabilita a interrupção 2 */
+}
+
+void isr_2(void) {              /* prioridade 2 */
+  int leitura;
+  if (flag == 1)
+    leitura = vetor[TRIGGER];                      /* B */
+}
+\end{lstlisting}
+\fonte{Adaptado de \citeonline{racebench}, com nomes simplificados.}
+\end{figure}
 
 \section{O defeito de concorrência tratado neste trabalho}
 \label{sec:defeitos}
