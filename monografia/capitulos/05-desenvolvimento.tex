@@ -438,9 +438,9 @@ A etapa estática é executada uma única vez sobre cada suíte, e todas as
 execuções da triagem partem dos mesmos registros de contexto. A triagem usa o
 modelo Claude Sonnet 5.5 com esforço de raciocínio baixo, acessado por
 assinatura, e é repetida em três execuções independentes no Racebench. As
-tabelas trazem a melhor das três execuções de cada sistema, escolhida pelo
-maior número de defeitos no topo e, em empate, pela pontuação; o texto dá a
-faixa das três. Na suíte de programas reais, a triagem foi executada uma vez.
+tabelas trazem a execução mediana de cada sistema, isto é, a segunda das três
+quando ordenadas pela pontuação, ou pelas violações encontradas na suíte de
+programas reais, que não tem pontuação. O texto dá a faixa das três. Na suíte de programas reais, a triagem foi executada uma vez.
 As medições foram feitas num computador com processador Intel Core i3-1115G4,
 de quatro núcleos, e 19~GB de memória. Nas tabelas e figuras, S1 designa a
 etapa estática sozinha, cujo relatório é tudo o que chega ao modelo, e S2 a
@@ -518,7 +518,7 @@ terceiros, de modo que o tempo de execução não é comparado.
   \end{tabular}
   \fonte{Elaborada pelos autores. BMC4AV: \citeonline{bmc4av}, medido pelo
   próprio artigo; a última linha foi recalculada a partir do arquivo de
-  resultados publicado com a ferramenta. S1 e S2: melhor de três execuções.}
+  resultados publicado com a ferramenta. S1 e S2: execução mediana de três.}
 \end{table}
 
 A Tabela~\ref{tab:qp3-bmc4av} pede três leituras. A primeira é que 37 contra
@@ -559,7 +559,7 @@ S2 detectam os onze defeitos desse padrão (Figura~\ref{fig:f4}).
     \hline
   \end{tabular}
   \fonte{Elaborada pelos autores. NIChecker: \citeonline{nichecker}, medido
-  pelo próprio artigo. S1 e S2: melhor de três execuções. As linhas não estão
+  pelo próprio artigo. S1 e S2: execução mediana de três. As linhas não estão
   alinhadas, porque o gabarito de 54 não corresponde a nenhum dos dois conjuntos
   de anotações.}
 \end{table}
@@ -658,8 +658,8 @@ triagem.
 \subsubsection{QP2, triagem}
 
 A triagem não custa recall. Em nenhuma das execuções, nas duas suítes, o
-modelo classificou como inviável um defeito anotado. No Racebench, a melhor
-execução mantém os 53 defeitos no grupo provavelmente real e reduz as
+modelo classificou como inviável um defeito anotado. No Racebench, a execução
+mediana mantém os 53 defeitos no grupo provavelmente real e reduz as
 armadilhas de onze para três. Das onze, sete vão para o grupo provavelmente
 inviável e uma para o incerto. A pontuação NASAC passa de 73 para 97 de 106 no
 gabarito reetiquetado e de 48 para 72 de 96 no distribuído
@@ -711,18 +711,18 @@ entrada cresce com ele.
     Sistema & Defeitos & Armadilhas & Pontuação & Entrada \\
     \hline
     S2 & 53/53 & 3 & 97/106 & 2,0 milhões \\
-    leitura por arquivo & 52/53 & 6 & 86/106 & 79 mil \\
-    leitura única & 52/53 & 3 & 95/106 & 19 mil \\
+    leitura por arquivo & 48/53 & 6 & 78/106 & 75 mil \\
+    leitura única & 46/53 & 3 & 83/106 & 19 mil \\
     \hline
   \end{tabular}
-  \fonte{Elaborada pelos autores. Gabarito reetiquetado (53/33); melhor de três
-  execuções de cada sistema. Entrada em \textit{tokens}. Na leitura por arquivo,
+  \fonte{Elaborada pelos autores. Gabarito reetiquetado (53/33); execução
+  mediana de três, para cada sistema. Entrada em \textit{tokens}. Na leitura por arquivo,
   cada chamada recebe um arquivo, e na leitura única, todos.}
 \end{table}
 
-No Racebench, a leitura direta chega perto da ferramenta em defeitos e custa
-uma fração mínima dela (Tabela~\ref{tab:qp3-racebench}). A diferença está na
-estabilidade e nas armadilhas. Nas três execuções, a leitura arquivo a arquivo
+No Racebench, a leitura direta custa uma fração mínima da ferramenta, mas
+encontra menos defeitos e pontua menos (Tabela~\ref{tab:qp3-racebench}), e
+seus resultados variam mais entre execuções. Nas três execuções, a leitura arquivo a arquivo
 encontrou entre 48 e 52 defeitos e reportou entre seis e dez armadilhas, com
 pontuação entre 70 e 86. A leitura única encontrou entre 46 e 52 defeitos, com
 três ou quatro armadilhas e pontuação entre 80 e 95. S2 manteve entre 49 e 53
@@ -745,12 +745,12 @@ a leitura única, entre um e sete.
     Sistema & Violações & Falsas & Itens reportados & Entrada \\
     \hline
     S2 & 45/45 & 6/14 & 354 & 6,4 milhões \\
-    leitura por arquivo & 45/45 & 5/14 & 144 & 204 mil \\
-    leitura única & 34/45 & 9/14 & 98 & 173 mil \\
+    leitura por arquivo & 45/45 & 6/14 & 136 & 204 mil \\
+    leitura única & 29/45 & 8/14 & 48 & 173 mil \\
     \hline
   \end{tabular}
-  \fonte{Elaborada pelos autores. S2: uma execução. Leituras: melhor de três
-  execuções. Entrada em \textit{tokens}.}
+  \fonte{Elaborada pelos autores. S2: uma execução. Leituras: execução mediana
+  de três, pelas violações encontradas. Entrada em \textit{tokens}.}
 \end{table}
 
 Na suíte de programas reais, S2 e a leitura arquivo a arquivo chegam ao mesmo
@@ -774,8 +774,7 @@ continuidade.}
 
 Três execuções por configuração permitem afirmar uma diferença maior que a
 variação observada, mas não estimar essa variação com precisão. As tabelas
-trazem a melhor execução, e o texto a faixa das três, que é o que deve ser
-usado ao comparar sistemas. Na suíte de programas reais, a triagem foi
+trazem a execução mediana, e o texto a faixa das três. Na suíte de programas reais, a triagem foi
 executada uma única vez.
 
 A semântica de defeito acrescentada ao \textit{prompt} não nomeia casos,
