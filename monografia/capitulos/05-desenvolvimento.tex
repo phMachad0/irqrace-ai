@@ -628,12 +628,14 @@ com suas prioridades, as primitivas de mascaramento e uma instrução curta com 
 definição dos quatro padrões, e responde com as triplas de linhas que
 considera defeitos, pontuadas pela mesma regra de casamento. A leitura é feita
 de duas formas, um arquivo por chamada e todos os arquivos numa única chamada,
-cada uma em três execuções. Como o Racebench é público desde 2019, com as
-respostas nos comentários do código, os arquivos entregues à leitura direta
-têm os comentários removidos, os identificadores trocados por nomes neutros e
-as funções reordenadas, para que o modelo analise o código em vez de
-reconhecê-lo. Sobre esses mesmos arquivos, a etapa estática e a triagem chegam
-praticamente ao mesmo resultado que sobre os originais.
+cada uma em três execuções. Como os dois \textit{benchmarks} são públicos, e o
+Racebench traz as respostas nos comentários do código, os arquivos entregues à
+leitura direta têm os comentários e o código inativo removidos e os nomes de
+variáveis, funções, macros e tipos de cada programa trocados por nomes
+neutros; no Racebench, as funções também são reordenadas. O objetivo é que o
+modelo analise o código em vez de reconhecê-lo. No Racebench, a etapa estática
+e a triagem chegam praticamente ao mesmo resultado sobre esses arquivos e
+sobre os originais.
 
 \ifparcial\else
 \subsection{Resultados}
@@ -777,8 +779,8 @@ a leitura única, entre um e sete.
     Sistema & Violações & Falsas & Reportados & Entrada & Tempo \\
     \hline
     S2 & 45/45 & 6/14 & 354 & 6,4 milhões & 8 min 16 s \\
-    leitura por arquivo & 45/45 & 6/14 & 136 & 204 mil & 75 s \\
-    leitura única & 29/45 & 8/14 & 48 & 173 mil & 44 s \\
+    leitura por arquivo & 44/45 & 6/14 & 136 & 78 mil & 73 s \\
+    leitura única & 33/45 & 9/14 & 80 & 47 mil & 88 s \\
     \hline
   \end{tabular}
   \fonte{Elaborada pelos autores. S2: uma execução. Leituras: execução mediana
@@ -787,13 +789,11 @@ a leitura única, entre um e sete.
   nos 18 programas.}
 \end{table}
 
-Na suíte de programas reais, S2 e a leitura arquivo a arquivo chegam ao mesmo
-recall, e a leitura reporta menos itens e lê trinta vezes menos
-(Tabela~\ref{tab:qp3-reais}). Nas três execuções, a leitura arquivo a arquivo
-encontrou 44 ou 45 violações, e a leitura única, entre 12 e 34, parando cedo
-em duas delas. Os programas dessa suíte foram lidos como distribuídos, com os
-nomes originais das variáveis, que em vários casos indicam por si sós onde a
-violação foi plantada.
+Na suíte de programas reais, a leitura arquivo a arquivo fica muito perto de
+S2, com 44 ou 45 violações e entre cinco e sete falsas nas três execuções, e
+reporta menos itens, lendo cerca de oitenta vezes menos
+(Tabela~\ref{tab:qp3-reais}). A leitura única encontrou entre 30 e 34
+violações.
 
 A comparação de custo favorece a leitura direta nas duas suítes por uma razão
 de tamanho. Os programas dos dois \textit{benchmarks} são pequenos, de algumas
@@ -805,9 +805,9 @@ triagem com o número de candidatos, que depende das variáveis compartilhadas
 com rotinas de interrupção e não do tamanho do repositório. Num repositório
 grande, em que a maior parte do código não toca essas variáveis, a leitura
 direta precisaria percorrer tudo, e a diferença de custo tende a diminuir. As
-duas suítes avaliadas não chegam a mostrar esse efeito, já que a diferença
-fica em torno de trinta vezes em ambas, e confirmá-lo exige um código de
-porte maior.
+duas suítes avaliadas não chegam a mostrar esse efeito, com diferenças de
+cerca de 27 vezes no Racebench e de 80 vezes nos programas reais, e
+confirmá-lo exige um código de porte maior.
 
 \subsubsection{QP4, ablação e reparo}
 
@@ -844,9 +844,9 @@ violações.
 
 Os tempos de S2 dependem de um modelo acessado por assinatura, cuja versão e
 cuja latência o experimento não controla. Na leitura direta, o reconhecimento
-do código pode inflar os resultados. No Racebench isso foi evitado com
-comentários removidos e nomes neutros, mas a suíte de programas reais foi lida
-como distribuída.
+do código pode inflar os resultados, e por isso os arquivos lidos têm
+comentários removidos e nomes neutros. Esse cuidado reduz o problema, mas não
+garante que o modelo não reconheça a estrutura de um programa público.
 
 Os dois casos complexos do Racebench ficam fora dos experimentos.
 \pendente{Confirmar se os casos complexos entram nos experimentos.} Todos os
