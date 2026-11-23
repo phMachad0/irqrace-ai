@@ -43,6 +43,9 @@ HARMFULNESS = "harmfulness.md"
 SELF_VALIDATION = "self_validation.md"
 HARM_VALIDATION = "harm_validation.md"
 CONTEXT_REQUESTS = "context_requests.md"
+#: Appended to the system prompt of a by-variable conversation
+#: (:mod:`irqrace.llm.checklist`), after the row's own assets.
+CHECKLIST = "checklist.md"
 
 #: The two questions of the decomposed rows. ``None`` is the combined turn of
 #: rows 1-2, which answers both and so gets every asset.
@@ -157,6 +160,17 @@ class PromptConfig:
 
 def _sha(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def checklist_prompt() -> str:
+    """The by-variable add-on. Not part of :meth:`PromptConfig.hash`: whether a
+    run used it is ``manifest.json["llm"]["by_variable"]``, and its contents are
+    hashed by :func:`checklist_hash`."""
+    return _read(CHECKLIST)
+
+
+def checklist_hash() -> str:
+    return _sha(_read(CHECKLIST))[:16]
 
 
 #: The active rows, cumulative, in the order they are reported. ``ABLATION[-1]``

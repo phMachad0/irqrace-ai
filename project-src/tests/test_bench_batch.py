@@ -201,3 +201,45 @@ def test_dry_run_prints_the_plan_and_touches_nothing(tmp_path, capsys):
     assert "6 pair(s)" in text and "+racebench+c4/3" in text and "--samples 1" in text
     assert mod.main(["triage", "--frozen", str(tmp_path / "nope"), "--out", str(out), "--rows", "r",
                      "--backend", "b", "--dry-run"]) == 2
+
+
+def test_the_triage_command_passes_the_grouping(tmp_path):
+    assert "--by-variable" not in bb.triage_command("py", tmp_path, "+r", "fake:m", 1)
+    assert bb.triage_command("py", tmp_path, "+r", "fake:m", 1, by_variable=True)[-1] == "--by-variable"
+
+
+def test_cases_in_parallel_start_largest_first_and_share_one_pool(tmp_path):
+    import threading
+    import time
+
+    frozen = _frozen(tmp_path / "frozen")
+    small = next(c for c in bb.frozen_cases(frozen) if bb.subject_of(c) == "svp_simple_001_001")
+    next((small / "context").glob("*.json")).unlink()  # so the later case is the larger one
+    sizes = {bb.subject_of(c): len(list((c / "context").glob("*.json"))) for c in bb.frozen_cases(frozen)}
+    assert sizes["svp_simple_017_001"] > sizes["svp_simple_001_001"]
+    lock, state = threading.Lock(), {"busy": 0, "most": 0}
+
+    class Slow(FakeTriage):
+        def __call__(self, cmd, **kw):
+            with lock:
+                state["busy"] += 1
+                state["most"] = max(state["most"], state["busy"])
+            time.sleep(0.2)
+            try:
+                return super().__call__(cmd, **kw)
+            finally:
+                with lock:
+                    state["busy"] -= 1
+
+    runner = Slow(fail={"svp_simple_017_001": "exit"})
+    pairs = bb.plan(tmp_path / "out", ["+racebench"], 1)
+    docs = bb.run_plan(pairs, frozen, backend="fake:m", workers=2, case_timeout=5, python="py",
+                       runner=runner, env={}, log=lambda _m: None, case_parallel=2, by_variable=True)
+    started = [bb.subject_of(Path(c[c.index("triage") + 1])) for c in runner.calls]
+    assert started == sorted(sizes, key=sizes.get, reverse=True)
+    assert state["most"] == 2
+    assert all("--by-variable" in c for c in runner.calls)
+    doc = docs[0]
+    assert (doc["case_parallel"], doc["by_variable"], doc["status"]) == (2, True, "failed")
+    assert [f["case"] for f in doc["failures"]] == ["svp_simple_017_001"]
+    assert len((pairs[0].dest / "timings.tsv").read_text().splitlines()) == 2

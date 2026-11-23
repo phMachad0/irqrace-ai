@@ -109,14 +109,16 @@ def cmd_triage(args: argparse.Namespace) -> int:
         print(f"error: {e}", file=sys.stderr)
         return 2
     print(bb.describe_plan(pairs, cases, backend=args.backend, workers=args.workers,
-                           case_timeout=args.case_timeout, python=args.python), flush=True)
+                           case_timeout=args.case_timeout, python=args.python,
+                           case_parallel=args.case_parallel, by_variable=args.by_variable), flush=True)
     if args.dry_run:
         return 0
     env = bb.child_env(keep_racebench_env=args.keep_racebench_env)
     try:
         docs = bb.run_plan(pairs, Path(args.frozen), backend=args.backend, workers=args.workers,
                            case_timeout=args.case_timeout, python=args.python, resume=args.resume,
-                           keep_going=args.keep_going, env=env, log=lambda m: print(m, flush=True))
+                           keep_going=args.keep_going, env=env, log=lambda m: print(m, flush=True),
+                           case_parallel=args.case_parallel, by_variable=args.by_variable)
     except bb.BatchError as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
@@ -148,6 +150,10 @@ def main(argv: list[str] | None = None) -> int:
     tr.add_argument("--samples", type=int, default=3, help="independent runs per row")
     tr.add_argument("--backend", required=True, help="provider:model, e.g. claude-cli:sonnet")
     tr.add_argument("--workers", type=int, default=4, help="conversations at a time inside one case")
+    tr.add_argument("--case-parallel", type=int, default=1,
+                    help="cases at a time, largest first; the pool is case-parallel x workers conversations")
+    tr.add_argument("--by-variable", action="store_true",
+                    help="llm triage --by-variable: one checklist conversation per shared variable")
     tr.add_argument("--resume", action="store_true", help="skip pairs whose batch.json says ok")
     tr.add_argument("--keep-going", action="store_true", help="continue after a failed pair")
     tr.set_defaults(func=cmd_triage, default_timeout=3600.0)

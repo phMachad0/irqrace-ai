@@ -81,3 +81,31 @@ false positives on inspection:
 Both patterns are candidates for sound static filters: call-site constant propagation into guards,
 and a WRW/RWR B that its own flow overwrites first on every path while no flow able to run there
 can write.
+
+## `tmp-combo.patch` integrated (2026-11-23)
+
+The triage that produced these numbers is now in the code, with tests
+(`tests/test_llm_checklist.py`, two new cases in `tests/test_bench_batch.py`):
+
+| patch | in the code |
+| --- | --- |
+| `irqrace/llm/checklist.py`, `prompts/checklist.md` | unchanged in what the model sees; the retry logic moved from `pipeline.py` into `checklist.triage_variable` |
+| `llm triage --by-variable` | same flag, now mutually exclusive with `--by-interval` |
+| pool across programs, `run_pair(case_parallel=)` | same, plus `freeze-and-triage.py triage --case-parallel N` |
+| `IRQRACE_TRIAGE_EXTRA="--by-variable"` (environment) | replaced by `freeze-and-triage.py triage --by-variable`; `batch.json` records `case_parallel` and `by_variable` |
+| `IRQRACE_CLAUDE_TIMEOUT` | same variable (`claude_cli_backend.TIMEOUT_ENV`) |
+| manifest `llm.by_variable` | same, plus `llm.checklist_sha256` (the asset is not in the row's prompt hash) |
+
+One defect fixed on the way. When the item a checklist left out was the group's **lead**, its
+own conversation rewrote `llm/<lead>/turns.jsonl` and the checklist's turns were lost; the
+fallback after a rejected answer did the same. Both now append to the transcript, tagged
+`"after": "checklist"`. Verdicts and token counts were never affected (tokens come from the
+`spend:` line). A scan of the measured runs found no lead transcript that is not a checklist among
+the groups with surviving members (260 groups in `runs-interleaving-rb-20261122`, 49 here, 70 in
+`runs-speed-20261121`), so the call counts read from transcripts stand.
+
+Reproducing this run's triage with the integrated code:
+
+    IRQRACE_CLAUDE_TIMEOUT=1200 python scripts/freeze-and-triage.py triage --frozen FROZEN \
+        --out OUT --rows +interleaving --samples 1 --backend claude-cli:sonnet@low \
+        --workers 2 --case-parallel 2 --by-variable

@@ -2058,3 +2058,12 @@ Figures F1–F5 and F9 regenerated from `project-src/results/thesis-interleaving
 Stale statements fixed: the response cache (removed 2026-10-30) in Tecnologias and RNF6, and
 equal-priority preemption as a fixed rule (now declared by the configuration). The abstract still
 calls the document partial; left for Pedro.
+
+## [2026-11-23] code | the measured triage integrated: by variable, pool across programs, omission retry
+`tmp-combo.patch` (the triage behind the final numbers) moved into the code with tests:
+`llm triage --by-variable` (`irqrace/llm/checklist.py`, asset `prompts/checklist.md`),
+`freeze-and-triage.py triage --case-parallel N --by-variable`, `IRQRACE_CLAUDE_TIMEOUT`, and
+`llm.checklist_sha256` in the manifest. The environment hook `IRQRACE_TRIAGE_EXTRA` is gone. Fixed:
+a retried lead (omitted item, or rejected answer) rewrote the checklist's `turns.jsonl`; it now
+appends. No measured run was affected (scan in `results/realworld-cmp2-20261121/NOTES.md`). Both
+groupings stay opt-in; whether `+interleaving` and `--by-variable` become the defaults is Pedro's call.

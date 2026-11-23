@@ -57,6 +57,10 @@ putting it in a cost column would be a claim this run did not incur.
 * ``claude-cli:<model>@<effort>`` (``sonnet@low``) passes ``--effort``; the
   suffix stays in :attr:`spec`, so the manifest says which effort answered.
   Without it the CLI's default applies, as in every run before 2026-11-19;
+* each call is killed after ``timeout_s`` (600 s by default, or
+  ``IRQRACE_CLAUDE_TIMEOUT`` seconds when that variable is set). A checklist
+  conversation (``llm triage --by-variable``) answers up to 20 candidates in one
+  call and can need more; the real-world runs of 2026-11-21 used 1,200 s;
 * a model alias (``sonnet``, ``opus``) resolves to whatever the CLI maps it to
   that day. :attr:`ClaudeCLIBackend.resolved_model` records what actually
   answered; prefer a full model id for any number that goes into the thesis.
@@ -87,6 +91,8 @@ from irqrace.llm.backends.base import (
 
 DEFAULT_EXECUTABLE = "claude"
 DEFAULT_TIMEOUT_S = 600.0
+#: Overrides :data:`DEFAULT_TIMEOUT_S` (seconds) when no ``timeout_s`` is given.
+TIMEOUT_ENV = "IRQRACE_CLAUDE_TIMEOUT"
 EFFORTS = ("low", "medium", "high", "xhigh", "max")
 
 #: Credentials that would make the CLI bill an API account instead of the plan.
@@ -119,7 +125,7 @@ class ClaudeCLIBackend(Backend):
         self.executable = (
             executable or os.environ.get("IRQRACE_CLAUDE_CLI") or DEFAULT_EXECUTABLE
         )
-        self.timeout_s = timeout_s or DEFAULT_TIMEOUT_S
+        self.timeout_s = timeout_s or float(os.environ.get(TIMEOUT_ENV) or DEFAULT_TIMEOUT_S)
         self.stop_checker = stop_checker
         self._runner = runner or _run
         #: The model the CLI reported answering with on the last call.

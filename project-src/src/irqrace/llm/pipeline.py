@@ -27,9 +27,10 @@ from typing import Any, Literal
 
 from irqrace import contracts
 from irqrace.llm.backends import Backend, BackendError, RefusalError, from_spec
+from irqrace.llm.checklist import group_variables, triage_variable
 from irqrace.llm.client import TriageClient
 from irqrace.llm.intervals import Budget, OverBudget, group_intervals, signal
-from irqrace.llm.prompts import FULL, PromptConfig
+from irqrace.llm.prompts import FULL, PromptConfig, checklist_hash
 from irqrace.llm.repair import Patch, RepairClient, witness_problems
 from irqrace.llm.resolver import (
     request_distribution,
@@ -117,6 +118,7 @@ def triage_records(
     run_dir: Path,
     workers: int = 1,
     by_interval: bool = False,
+    by_variable: bool = False,
     budget: Budget | None = None,
     should_stop: Callable[[], bool] = lambda: False,
     on_start: Callable[[dict[str, Any]], None] | None = None,
@@ -129,8 +131,17 @@ def triage_records(
     except under a budget, where calls in flight decide exactly where it stops.
     A candidate an interrupted run never reached has no entry. *on_done* runs on
     the calling thread, one conversation at a time; *on_start* on the worker.
+
+    *by_interval* and *by_variable* group several candidates into one
+    conversation (:mod:`irqrace.llm.intervals`, :mod:`irqrace.llm.checklist`);
+    every candidate still gets its own outcome.
     """
-    groups = group_intervals(records) if by_interval else [[r] for r in records]
+    if by_interval and by_variable:
+        raise ValueError("by_interval and by_variable are two groupings; pick one")
+    if by_variable:
+        groups = group_variables(records)
+    else:
+        groups = group_intervals(records) if by_interval else [[r] for r in records]
     if budget is not None:
         groups = sorted(groups, key=signal)  # the sort is stable: ties keep their order
     stop = threading.Event()
@@ -145,6 +156,8 @@ def triage_records(
             on_start(lead)
         interval = {"same_interval": group[1:]} if len(group) > 1 else {}
         try:
+            if by_variable and len(group) > 1:
+                return triage_variable(client, group, make_resolver=make_resolver, run_dir=run_dir)
             return client.triage(lead, resolver=make_resolver(lead), run_dir=run_dir, **interval)
         except InterruptedError:
             stop.set()
@@ -156,12 +169,14 @@ def triage_records(
 
     outcomes: dict[str, Triage | str] = {}
 
-    def settle(group: list[dict[str, Any]], result: Triage | str | None) -> None:
+    def settle(group: list[dict[str, Any]], result: Triage | str | dict[str, Triage | str] | None) -> None:
         if result is None:
             return
         settled: dict[str, Triage | str] = {}
         for member in group:
-            if isinstance(result, Triage) and len(group) > 1:
+            if isinstance(result, dict):
+                settled[member["id"]] = result.get(member["id"], "checklist: no outcome")
+            elif isinstance(result, Triage) and len(group) > 1:
                 settled[member["id"]] = result.model_copy(
                     update={
                         "candidate_id": member["id"],
@@ -186,7 +201,8 @@ def triage_records(
     return outcomes
 
 
-def triage_settings(workers: int, by_interval: bool, budget: Budget | None) -> dict[str, Any]:
+def triage_settings(workers: int, by_interval: bool, budget: Budget | None,
+                    by_variable: bool = False) -> dict[str, Any]:
     """What a run did beyond the prompt, for ``manifest.json["llm"]``.
 
     These change how much of the ranking a model looked at, so they travel with
@@ -195,6 +211,8 @@ def triage_settings(workers: int, by_interval: bool, budget: Budget | None) -> d
     return {
         "workers": workers,
         "by_interval": by_interval,
+        "by_variable": by_variable,
+        "checklist_sha256": checklist_hash() if by_variable else None,
         "budget": budget.as_manifest() if budget is not None else None,
     }
 
@@ -210,6 +228,7 @@ def triage_store(
     workers: int = 1,
     by_interval: bool = False,
     budget: Budget | None = None,
+    by_variable: bool = False,
 ) -> dict[str, Any]:
     """Run Track B triage over all candidates in ``store`` and write C3 outputs.
 
@@ -243,7 +262,7 @@ def triage_store(
         else datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d"),
         "votes": samples,
         "seed": None,
-        **triage_settings(workers, by_interval, budget),
+        **triage_settings(workers, by_interval, budget, by_variable),
     }
     store.write_manifest(manifest)
     store.set_stage("triage", "running", candidates_in=len(records))
@@ -262,6 +281,7 @@ def triage_store(
             run_dir=store.root,
             workers=workers,
             by_interval=by_interval,
+            by_variable=by_variable,
             budget=budget,
         )
         sample_triages = []

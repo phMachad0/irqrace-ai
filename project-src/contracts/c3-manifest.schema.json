@@ -81,6 +81,8 @@
         "seed": { "type": ["integer", "null"] },
         "workers": { "type": "integer", "minimum": 1, "description": "Conversations at a time." },
         "by_interval": { "type": "boolean", "description": "One conversation per (variable, A1, A2, pattern). Changes how much of the ranking a model looked at, so it travels with the numbers." },
+        "by_variable": { "type": "boolean", "description": "One checklist conversation per shared variable, at most 20 triples (irqrace.llm.checklist). Like by_interval, it travels with the numbers." },
+        "checklist_sha256": { "type": ["string", "null"], "description": "First 16 hex digits of the SHA-256 of prompts/checklist.md when by_variable is set; null otherwise." },
         "budget": {
           "type": ["object", "null"],
           "additionalProperties": false,

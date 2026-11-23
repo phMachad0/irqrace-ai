@@ -49,7 +49,7 @@ from irqrace import contracts
 from irqrace.llm import cost as _cost
 from irqrace.llm.backends import Backend, ChatRequest, from_spec
 from irqrace.llm.intervals import render_interval
-from irqrace.llm.prompts import FULL, PromptConfig
+from irqrace.llm.prompts import FULL, PromptConfig, checklist_prompt
 from irqrace.llm.resolver import RECALL_RULES, RecordBackedResolver, Resolver, render_reply
 from irqrace.llm.verdict import (
     CombinedAnswer,
@@ -78,9 +78,11 @@ class Conversation:
     #: Kept up to date turn by turn: a run being watched shows the conversation
     #: as it happens, and one that fails half way leaves what was said so far.
     live_path: Path | None = None
+    #: Merged into every turn this conversation adds (e.g. ``{"after": "checklist"}``).
+    tag: dict[str, Any] = dataclasses.field(default_factory=dict)
 
     def add(self, role: str, content: Any, **meta: Any) -> None:
-        self.turns.append({"role": role, "content": content, **meta})
+        self.turns.append({"role": role, "content": content, **self.tag, **meta})
         if self.live_path is not None:
             self._dump(self.live_path)
 
@@ -186,11 +188,16 @@ class TriageClient:
         resolver: Resolver | None = None,
         run_dir: Path | None = None,
         same_interval: list[dict[str, Any]] | None = None,
+        after: str | None = None,
     ) -> Triage:
         """Triage one candidate. Never returns ``None`` and never drops.
 
         :param same_interval: the other triples this answer stands for; see
             :mod:`irqrace.llm.intervals`.
+        :param after: this conversation follows an earlier one in the same
+            ``turns.jsonl`` (a checklist that left the candidate out, or whose
+            answer was rejected). Its turns are appended, tagged with
+            ``{"after": after}``, so the transcript keeps every call made.
         """
         contracts.validate("c2", record, what=f"candidate {record.get('id')}")
         with self._totals:
@@ -199,7 +206,11 @@ class TriageClient:
         convo = Conversation(
             candidate_id=record["id"],
             live_path=run_dir / "llm" / record["id"] / "turns.jsonl" if run_dir is not None else None,
+            tag={"after": after} if after else {},
         )
+        if after and convo.live_path is not None and convo.live_path.exists():
+            convo.turns = [json.loads(line) for line in
+                           convo.live_path.read_text(encoding="utf-8").splitlines() if line.strip()]
         rendered = render_record(record)
         if same_interval:
             rendered += "\n\n" + render_interval(record, same_interval)
@@ -281,8 +292,11 @@ class TriageClient:
         resolver: Resolver,
         convo: Conversation,
         stage: str,
+        checklist: bool = False,
     ) -> tuple[Any, Provenance]:
         system = self.config.system_prompt(stage if self.config.decomposition else None)
+        if checklist:
+            system += "\n\n---\n\n" + checklist_prompt()
         messages: list[dict[str, str]] = [
             {"role": "user", "content": f"{task}\n\n{rendered}"}
         ]

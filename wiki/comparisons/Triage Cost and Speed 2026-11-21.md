@@ -2,7 +2,7 @@
 type: comparison
 tags: [wiki, comparison, t3, cost]
 sources: ["[[Racebench Comparison 2026-11-16]]", "[[Racebench]]", "[[LLM Triage]]", "[[Lucas Tasks]]"]
-updated: 2026-11-21
+updated: 2026-11-23
 status: draft
 ---
 
@@ -64,7 +64,8 @@ transcribed before the loss. A low-effort baseline was re-run on 2026-11-21 (bel
 - **By variable.** One conversation per shared variable (at most 20 triples), with the shared
   fields and source bodies rendered once and one verdict per candidate id; feasibility and
   harmfulness stay separate calls (D#3). The prompt asset and the reasoning behind it are in
-  `tmp-var.patch` (`prompts/checklist.md`, `irqrace/llm/checklist.py`). Calls fell 72%, input 44%,
+  `tmp-var.patch` (`prompts/checklist.md`, `irqrace/llm/checklist.py`; integrated on 2026-11-23 as
+  `llm triage --by-variable`, see `results/realworld-cmp2-20261121/NOTES.md`). Calls fell 72%, input 44%,
   output 55%. Wall time fell only 20%, because cases still ran in series.
 - **Together, at low effort**: 4.1× faster than the baseline with recall intact.
 

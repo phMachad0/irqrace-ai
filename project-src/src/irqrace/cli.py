@@ -826,6 +826,7 @@ def cmd_llm_triage(args: argparse.Namespace) -> int:
                 workers=args.workers,
                 by_interval=args.by_interval,
                 budget=budget,
+                by_variable=args.by_variable,
             )
         except (BackendError, RefusalError) as e:
             return _err(str(e))
@@ -1101,8 +1102,12 @@ def build_parser() -> argparse.ArgumentParser:
     mt.add_argument("--samples", type=int, default=1)
     mt.add_argument("--resolver", choices=("mock", "source", "auto"), default="auto")
     mt.add_argument("--workers", type=int, default=1, help="conversations at a time")
-    mt.add_argument("--by-interval", action="store_true",
-                    help="one conversation per (variable, A1, A2, pattern); every triple stays in the report")
+    grouping = mt.add_mutually_exclusive_group()
+    grouping.add_argument("--by-interval", action="store_true",
+                          help="one conversation per (variable, A1, A2, pattern); every triple stays in the report")
+    grouping.add_argument("--by-variable", action="store_true",
+                          help="one checklist conversation per shared variable (<= 20 triples); "
+                               "an item it leaves out is asked again on its own")
     mt.add_argument("--max-requests", type=int, help="budget: what is left out stays uncertain, with the reason")
     mt.add_argument("--max-tokens", type=int, help="budget, in input plus output tokens")
     mt.add_argument("--max-usd", type=float, help="budget, in dollars; needs a backend that reports prices")
