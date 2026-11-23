@@ -35,7 +35,7 @@ não tem precedente em nenhuma das duas literaturas revisadas.
 \section{Perspectivas de Continuidade}
 \label{sec:continuidade}
 
-Quatro caminhos se abrem a partir do que está especificado aqui.
+O que está especificado aqui deixa quatro linhas de continuidade.
 
 O primeiro é a inferência automática do modelo de interrupções. O arquivo de
 configuração é hoje escrito à mão e é a maior ameaça declarada ao \textit{recall}, já
@@ -43,14 +43,14 @@ que um tratador não declarado é invisível para a análise. Inferir os pontos 
 entrada a partir da API de registro de interrupções da plataforma eliminaria
 essa dependência.
 
-O segundo é o tratamento de reentrância. A premissa de que uma \isr\ não
+Outra linha é o tratamento de reentrância. A premissa de que uma \isr\ não
 interrompe a si mesma é a única premissa não conservadora da lista, e removê-la
 exige decidir como limitar a profundidade de aninhamento sem perder defeitos.
 
-O terceiro é a avaliação sobre código de produção com vários arquivos. Os dois
+Falta ainda avaliar a ferramenta sobre código de produção com vários arquivos. Os dois
 \textit{benchmarks} disponíveis são de arquivo único, e a capacidade de ligar
 vários módulos existe sem que haja gabarito para exercitá-la.
 
-O quarto é estender a mesma arquitetura a outras classes de defeito de
-concorrência, como as que envolvem mais de duas variáveis compartilhadas, que
+Por último, a mesma arquitetura pode ser estendida a outras classes de
+defeito de concorrência, como as que envolvem mais de duas variáveis compartilhadas, que
 nenhuma das ferramentas revisadas trata.

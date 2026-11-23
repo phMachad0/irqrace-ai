@@ -93,8 +93,8 @@ repositório inteiro.
 
 \subsection{Estágio 1, derivação de candidatos}
 
-O primeiro estágio segue o desenho de \citeonline{intrace} e ignora de
-propósito condições de desvio e estado das interrupções, para não perder nada.
+O primeiro estágio segue o desenho de \citeonline{intrace} e ignora
+deliberadamente condições de desvio e estado das interrupções, para não perder nenhum defeito.
 Ele identifica os fluxos a partir da configuração, tratando cada ponto de
 entrada como raiz de uma análise de alcançabilidade; identifica as posições
 compartilhadas por análise \textit{may}, sem se restringir a variáveis globais,
@@ -108,9 +108,9 @@ $A_2$ no fluxo interrompido, nessa ordem, e $B$ num fluxo capaz de interrompê-l
 entre os dois. A ordem entre $A_1$ e $A_2$ vem do grafo de fluxo de controle da
 função que os contém.
 
-Um detalhe sobre laços é decisivo para o recall. Um único acesso no
-código-fonte, dentro de um laço que pode repetir, corresponde a vários acessos
-em execução, e por isso a mesma instrução pode ocupar as posições $A_1$ e $A_2$
+O tratamento de laços tem consequência direta sobre o recall, pois um único
+acesso no código-fonte, dentro de um laço que pode repetir, corresponde a
+vários acessos em execução. Por isso a mesma instrução pode ocupar as posições $A_1$ e $A_2$
 de uma tripla. O mesmo vale para uma função chamada duas vezes pelo mesmo
 fluxo. O Racebench anota defeitos exatamente com essa forma, de modo que uma
 implementação que tratasse cada instrução como um acesso único perderia
@@ -152,7 +152,7 @@ A posição desse estágio antes da triagem é fixa, por três motivos. Ele é u
 filtro correto, que só descarta com prova. Reduz fortemente o volume, e os
 números do IntRace dão a ordem de grandeza, com cerca de 208 candidatos por
 programa caindo para cerca de 95 após o segundo estágio e para algo em torno de
-13 após o terceiro \cite{intrace}, redução que é o que torna a triagem por \llm\
+13 após o terceiro \cite{intrace}, redução que torna a triagem por \llm\
 economicamente viável. E reproduz a arquitetura do LLift, em que o modelo
 recebe apenas os casos que a execução simbólica não conseguiu decidir
 \cite{llift}.
@@ -163,7 +163,7 @@ Para cada candidato sobrevivente a ferramenta emite um registro de contexto,
 que é um documento estruturado com as evidências necessárias para julgá-lo.
 \citeonline{llift} atribuem 5 de seus 13 falsos positivos a lacunas no
 relatório entregue pelo analisador ao modelo, o que justifica tratar esse
-registro como produto de primeira classe da análise, e não como subproduto. O
+registro como produto de primeira classe da análise. O
 Quadro~\ref{quadro:registro} resume seus campos.
 
 \begin{quadro}[htb]
@@ -259,7 +259,7 @@ termina.
 O desenho segue os quatro componentes de \citeonline{llift}, adaptados ao
 domínio. O primeiro é o ensino de regras do domínio por exemplos. O
 conhecimento prévio do modelo vem sobretudo de \textit{threads} e o leva a
-procurar travas e relações \textit{happens-before}, então o \textit{prompt}
+procurar travas e relações \textit{happens-before}, e por isso o \textit{prompt}
 ensina uma tabela de padrões de interrupção com seus veredictos, cobrindo a
 seção crítica que abrange todo o intervalo, as duas seções separadas que deixam
 uma lacuna no meio, a prioridade estritamente menor que impede a preempção, a

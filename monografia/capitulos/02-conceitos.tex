@@ -13,12 +13,12 @@ descreve as quatro ferramentas que formam o estado da arte. Os
 avaliação na Seção~\ref{sec:soundness} e o uso de modelos de linguagem em
 análise estática na Seção~\ref{sec:llm}.
 
-Uma advertência vale para todo o capítulo. Salvo indicação em contrário, os
-números citados são os relatados pelos próprios autores. Muitos foram medidos
-em hardware diferente, sobre contagens diferentes do mesmo \textit{benchmark},
-ou copiados de outros artigos porque as ferramentas de comparação não estavam
-disponíveis. Eles descrevem o que cada trabalho afirma, não um resultado
-comparável entre trabalhos.
+Em todo o capítulo, salvo indicação em contrário, os números citados são os
+relatados pelos próprios autores. Muitos foram medidos em hardware diferente,
+sobre contagens diferentes do mesmo \textit{benchmark}, ou copiados de outros
+artigos porque as ferramentas de comparação não estavam disponíveis. Eles
+descrevem o que cada trabalho afirma e não permitem comparação direta entre
+trabalhos.
 
 \section{Programas orientados a interrupções}
 \label{sec:interrupcoes}
@@ -38,7 +38,7 @@ A preempção entre esses fluxos é assimétrica. Uma \isr\ interrompe o fluxo
 principal, mas o fluxo principal nunca interrompe uma \isr; uma \isr\ de
 prioridade alta interrompe uma de prioridade baixa, e nunca o contrário. Entre
 \textit{threads}, a preempção é simétrica, e é dessa diferença que
-\citeonline{sdracer} tiram as três consequências que separam os dois mundos.
+\citeonline{sdracer} tiram as três consequências que distinguem os dois cenários.
 Uma \isr\ não pode bloquear, já que executa até o fim a menos que outra de
 prioridade maior a interrompa. A relação \textit{happens-before}, base dos
 detectores de corrida entre \textit{threads}, deixa de ser correta quando uma
@@ -68,8 +68,8 @@ modelo \cite{sdracer}.
 
 \subsection{Sincronização por mascaramento}
 
-Sem travas, o programador impede que a interrupção ocorra. Ele mascara a
-interrupção antes do trecho que precisa ser indivisível e a reabilita depois.
+Sem travas, o programador impede que a interrupção ocorra, mascarando-a antes
+do trecho que precisa ser indivisível e reabilitando-a depois.
 No Racebench isso é feito com \texttt{disable\_isr(n)} e
 \texttt{enable\_isr(n)}, em que \texttt{n = -1} designa todas as interrupções
 \cite{racebench}. Em código real, o mascaramento pode vir de APIs padronizadas,
@@ -174,7 +174,7 @@ $(R,W,W)$.
 Nem todo defeito tem consequência, e a literatura separa as duas perguntas.
 \citeonline{intrace} adotam o critério de que um defeito é nocivo quando a
 variável compartilhada alimenta uma condição de desvio ou serve de índice de
-vetor ou de ponteiro. Os mesmos autores relatam corridas deixadas sem proteção
+vetor ou de ponteiro. Os mesmos autores relatam corridas deixadas
 deliberadamente sem proteção, por razões de tempo real, como uma de suas duas
 fontes conhecidas de falsos positivos. Julgar a nocividade é julgar a intenção do programa, o que
 é distinto de decidir se a intercalação é possível, e as duas perguntas são
@@ -188,13 +188,14 @@ mantidas separadas ao longo de todo este trabalho.
 A análise estática raciocina sobre o código sem executá-lo, e três estruturas
 sustentam o que se faz aqui. O grafo de chamadas indica quais funções cada
 função pode chamar e, por extensão, tudo o que é alcançável a partir de cada
-fluxo. O grafo de fluxo de controle (\textit{Control-Flow Graph}, CFG) indica,
-dentro de uma função, em que ordem as instruções podem executar. A análise de
-ponteiros indica a que posições de memória cada ponteiro pode apontar. Ela é do
+fluxo. Já o grafo de fluxo de controle (\textit{Control-Flow Graph}, CFG)
+mostra, dentro de uma função, em que ordem as instruções podem executar, e a
+análise de ponteiros determina a que posições de memória cada ponteiro pode
+apontar. Ela é do
 tipo \textit{may} quando superaproxima as possibilidades e do tipo \textit{must}
 quando as subaproxima. Para não perder defeitos é preciso usar a forma
 \textit{may}, e uma posição é considerada compartilhada quando os conjuntos de
-posições que dois fluxos podem alcançar se interceptam.
+posições que dois fluxos podem alcançar se intersectam.
 
 Este trabalho faz a análise sobre a representação intermediária do compilador
 LLVM \cite{llvm} e usa a biblioteca SVF na análise de ponteiros \cite{svf}. Os
@@ -219,8 +220,7 @@ específico. \citeonline{intrace} constroem um resumo simbólico da \isr,
 inserem-no no ponto de preempção e entregam as restrições resultantes ao
 solucionador Z3 \cite{z3}. Quando o solucionador responde que as restrições são
 insatisfazíveis, a intercalação é impossível, e esse veredicto é uma prova.
-Essa propriedade ocupa um lugar central no projeto apresentado adiante, porque
-só uma prova de impossibilidade autoriza descartar um candidato.
+Essa propriedade é central no projeto apresentado adiante, porque só uma prova de impossibilidade autoriza descartar um candidato.
 
 \subsection{Verificação de modelos limitada}
 
@@ -253,8 +253,8 @@ em software embarcado. A ferramenta trabalha em quatro etapas. A análise
 estática emite os alertas iniciais. A execução simbólica gera entradas e
 intercalações que alcancem cada alerta e elimina os de condições de caminho
 conflitantes. A plataforma virtual Simics força as interrupções a ocorrer nos
-pontos suspeitos e mantém apenas os candidatos que de fato se intercalam. Por fim, a
-ferramenta sugere correções, e o vocabulário dessas correções é específico de
+pontos suspeitos e mantém apenas os candidatos que efetivamente se intercalam.
+Por fim, a ferramenta sugere correções, e o vocabulário dessas correções é específico de
 interrupção, incluindo desabilitar e reabilitar a interrupção em volta do
 acesso, inserir travas, estender uma seção crítica existente ou fundir seções
 adjacentes.
@@ -275,7 +275,8 @@ simular.
 estágios de custo e precisão crescentes. O primeiro constrói o CFG a partir do
 Clang e de uma passagem LLVM, identifica os recursos compartilhados por análise
 de ponteiros interprocedural e casa acessos, ignorando deliberadamente
-condições de desvio e estado das interrupções para não perder nada. O segundo
+condições de desvio e estado das interrupções para não descartar nenhum
+candidato. O segundo
 descarta candidatos cujos fluxos não podem se sobrepor, seja por prioridade,
 seja por mascaramento. O terceiro verifica a viabilidade de cada candidato
 restante com o Z3.
@@ -318,8 +319,8 @@ estendem o grafo guiados por essas relações até confirmar ou descartar a
 violação. É a única das quatro ferramentas revisadas cujo código-fonte está
 disponível.
 
-Sua contribuição mais relevante para este trabalho não é o resultado que
-reporta, e sim a crítica que dirige ao NIChecker, segundo a qual uma ferramenta
+Para este trabalho, sua contribuição mais relevante é a crítica que dirige ao
+NIChecker, segundo a qual uma ferramenta
 com precisão de 100\% encontraria menos de 40\% das violações existentes na
 suíte de 18 programas reais. A crítica é aqui tomada como sintoma do problema
 de avaliação discutido na Seção~\ref{sec:soundness}, com duas ressalvas. O
@@ -402,9 +403,9 @@ trabalho, o que leva a contagem a 53 defeitos e 33 armadilhas
 (Seção~\ref{sec:reetiquetagem}). Os artigos usam outras contagens para os mesmos
 casos, todas anteriores a essa reetiquetagem, sendo 50 em \citeonline{intrace},
 54 em \citeonline{nichecker} e 38 sobre um subconjunto de 25 casos em
-\citeonline{bmc4av}. Parte da divergência tem explicação
-mecânica. As anotações usam ao menos quatro gramáticas incompatíveis e contêm
-erros de digitação, de modo que um leitor estrito encontra apenas 28 defeitos
+\citeonline{bmc4av}. Parte da divergência se explica mecanicamente, pois as
+anotações usam ao menos quatro gramáticas incompatíveis e contêm erros de
+digitação, de modo que um leitor estrito encontra apenas 28 defeitos
 sem acusar nenhum erro. A divergência tem consequência direta sobre qualquer
 taxa de recall publicada, uma vez que é o denominador dessa taxa que está em
 disputa. Por esse motivo, este trabalho fixa e publica sua unidade de contagem
@@ -430,8 +431,8 @@ ou correta, em relação a um conjunto de premissas quando não produz falsos
 negativos sob essas premissas. A ausência incondicional de falsos negativos não
 é alcançável para C com ponteiros, tabelas de vetores de interrupção e fluxo de
 controle dependente de hardware. O que se pode afirmar honestamente é a
-ausência relativa a uma lista explícita de premissas, e é essa a afirmação que
-este trabalho se propõe a sustentar.
+ausência relativa a uma lista explícita de premissas, afirmação que este
+trabalho se propõe a sustentar.
 
 O Quadro~\ref{quadro:metricas} resume as métricas usadas na literatura e aqui.
 
@@ -452,8 +453,8 @@ O Quadro~\ref{quadro:metricas} resume as métricas usadas na literatura e aqui.
   \fonte{Elaborado pelos autores a partir de \citeonline{reducing-fp}.}
 \end{quadro}
 
-A prioridade dada aqui ao recall tem uma razão concreta. A precisão, sozinha,
-pode ser melhorada descartando candidatos, e uma ferramenta pode exibir
+O recall recebe prioridade aqui porque a precisão, sozinha, pode ser melhorada
+descartando candidatos, e uma ferramenta pode exibir
 precisão perfeita examinando apenas o que o usuário já apontou, perdendo a
 maioria dos defeitos. O \textit{Inspection Ratio} não tem essa fragilidade,
 porque mede a fração do conjunto que um revisor precisa ler até encontrar todos
@@ -475,7 +476,7 @@ automaticamente.
 Três limitações importam aqui. Um \llm\ pode alucinar, afirmando com confiança
 fatos falsos sobre o código. Suas respostas variam entre execuções, de modo que
 a mesma pergunta pode receber veredictos diferentes. E seu uso tem custo,
-medido em \textit{tokens}, com \citeonline{llift} relatando cerca de 7.000
+medido em \textit{tokens}; \citeonline{llift} relatam cerca de 7.000
 \textit{tokens} e US\$~0,43 por candidato analisado, com o GPT-4 e os preços de
 2024. Qualquer desenho que dependa do julgamento do modelo como decisão final
 herda essas três limitações.
@@ -496,9 +497,10 @@ mais próxima deste trabalho, e seu formato de ablação é adotado aqui.
 \citeonline{chatgpt-static} avaliam modelos GPT na remoção de falsos positivos
 do analisador Infer e obtêm precisão de 93,88\% para desreferência de ponteiro
 nulo, mas apenas 63,33\% para vazamento de recursos, com os mesmos
-\textit{prompts} e o mesmo modelo. A lição é que a qualidade da triagem depende
-da classe de defeito e não se transfere por suposição, razão pela qual a
-aplicação a defeitos de concorrência precisa ser medida, e não presumida.
+\textit{prompts} e o mesmo modelo. O resultado indica que a qualidade da
+triagem depende da classe de defeito e não pode ser transferida de uma classe a
+outra por suposição, razão pela qual sua aplicação a defeitos de concorrência
+precisa ser medida.
 
 \citeonline{reducing-fp} filtram alertas do CppCheck com um modelo CodeBERT
 ajustado. No conjunto Big-Vul a precisão sobe de 5,88\% para 96,20\%, mas o
@@ -513,7 +515,7 @@ fontes e sumidouros de dados contaminados, alimentando com essas
 especificações o analisador CodeQL. Num conjunto de 120 vulnerabilidades reais
 em Java a detecção sobe de 27, com o CodeQL sozinho, para 55. A precisão
 continua baixa, com taxa média de falsas descobertas de 84,82\%, e a triagem
-por \llm\ só melhora a precisão com modelos grandes, piorando com modelos
+por \llm\ só melhora a precisão com modelos grandes, e chega a piorá-la com modelos
 pequenos.
 
 \citeonline{adataint} seguem a mesma ideia, combinando inferência de
@@ -555,6 +557,6 @@ progressivos de contexto, decomposição da tarefa em conversas separadas e
 autovalidação contra regras enviesadas para o lado seguro.
 
 Nenhum desses sete trabalhos toca em concorrência, e nenhuma das quatro
-ferramentas da Seção~\ref{sec:ferramentas} usa modelos de linguagem. A lacuna
-que este trabalho ocupa é a interseção vazia entre as duas literaturas, e as
-conclusões acima são o que se leva de uma para a outra.
+ferramentas da Seção~\ref{sec:ferramentas} usa modelos de linguagem. Este
+trabalho ocupa a interseção, até aqui vazia, entre as duas literaturas, e leva
+para a detecção de defeitos de concorrência as conclusões acima.
