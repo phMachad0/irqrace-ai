@@ -409,11 +409,12 @@ O gabarito da suíte de programas reais registra 45 violações verdadeiras e 14
 falsas, a maior parte por variável e padrão de acesso, e algumas por linhas. A
 unidade aqui é a entrada do gabarito, e uma entrada é encontrada quando algum
 candidato tem a variável e o padrão dela, além das linhas, se a entrada as
-especificar. Duas decisões de modelagem afetam esta suíte. Em três programas,
-as prioridades distribuídas tornam impossíveis violações que o próprio
-gabarito anota, sob a convenção de prioridade que o artigo do NIChecker declara,
-e foram substituídas pelas da cópia distribuída com o BMC4AV, que as torna
-alcançáveis. A segunda decisão trata da preempção entre fluxos de mesma
+especificar. Duas decisões de modelagem afetam esta suíte. A primeira diz
+respeito a três programas cujas prioridades distribuídas, sob a convenção de
+prioridade que o artigo do NIChecker declara, tornam impossíveis violações que
+o próprio gabarito anota. Nesses programas, as prioridades foram substituídas
+pelas da cópia distribuída com o BMC4AV, que torna essas violações alcançáveis.
+A segunda decisão trata da preempção entre fluxos de mesma
 prioridade. O artigo do NIChecker afirma que ela não ocorre, e a configuração
 segue essa semântica, com exceção de um programa em que duas violações anotadas
 exigem que duas rotinas de mesma prioridade se interrompam. Sem essa decisão,
@@ -431,8 +432,8 @@ declaram exaustivas. A pontuação da competição em que o Racebench nasceu, aq
 chamada de pontuação NASAC, soma 2 pontos por defeito detectado e subtrai 3 por
 armadilha reportada, sobre um máximo de duas vezes o número de defeitos.
 
-Como a triagem ordena e nunca descarta, ``reportado'' precisa de uma leitura.
-Neste capítulo, reportado é o que fica no grupo provavelmente real. Um defeito
+Como a triagem ordena e nunca descarta, é preciso definir o que conta como
+reportado, e neste capítulo é o que fica no grupo provavelmente real. Um defeito
 anotado que a triagem coloque no grupo provavelmente inviável é apontado como
 perda de recall da triagem, qualquer que seja a pontuação. A concordância entre
 execuções é medida pelo $\kappa$ de Cohen, $\kappa = (p_o - p_e)/(1 - p_e)$, em
@@ -668,8 +669,8 @@ violações, oito chegam à triagem.
 
 \subsubsection{QP2, triagem}
 
-A triagem não custa recall. Em nenhuma das execuções, nas duas suítes, o
-modelo classificou como inviável um defeito anotado. No Racebench, a execução
+A triagem não custa recall, já que em nenhuma das execuções, nas duas suítes,
+o modelo classificou como inviável um defeito anotado. No Racebench, a execução
 mediana mantém os 53 defeitos no grupo provavelmente real e reduz as
 armadilhas de onze para três. Das onze, sete vão para o grupo provavelmente
 inviável e uma para o incerto. A pontuação NASAC passa de 73 para 97 de 106 no
@@ -721,7 +722,7 @@ Uma execução da triagem sobre o Racebench faz 84 chamadas ao modelo, lê cerca
 de 2,0 milhões de \textit{tokens} de entrada, gera cerca de 110 mil de saída e
 leva pouco mais de quatro minutos. O agrupamento dos candidatos por variável e
 a divisão das chamadas entre os programas, descritos na
-Seção~\ref{sec:agrupamento}, respondem por quase toda essa marca. Com uma conversa
+Seção~\ref{sec:agrupamento}, respondem por quase toda essa economia. Com uma conversa
 por candidato e os programas tratados um após o outro, a mesma triagem fazia
 307 chamadas, lia 3,5 milhões de \textit{tokens} e levava cerca de 16 minutos
 no mesmo equipamento, sem ganho de recall. Na suíte de programas reais, a
@@ -754,7 +755,7 @@ entrada cresce com ele.
   cada chamada recebe um arquivo, e na leitura única, todos.}
 \end{table}
 
-No Racebench, a leitura direta custa uma fração mínima da ferramenta, mas
+No Racebench, a leitura direta custa uma fração mínima do que custa a ferramenta, mas
 encontra menos defeitos e pontua menos (Tabela~\ref{tab:qp3-racebench}), e
 seus resultados variam mais entre execuções. Nas três execuções, a leitura arquivo a arquivo
 encontrou entre 48 e 52 defeitos e reportou entre seis e dez armadilhas, com
@@ -762,8 +763,8 @@ pontuação entre 70 e 86. A leitura única encontrou entre 46 e 52 defeitos, co
 três ou quatro armadilhas e pontuação entre 80 e 95. S2 manteve entre 49 e 53
 defeitos no topo, com no máximo três armadilhas e pontuação entre 97 e 98.
 
-A leitura direta também não oferece a garantia que a etapa estática oferece.
-Um defeito que ela não aponta simplesmente não aparece, enquanto um defeito
+A leitura direta também não oferece a garantia que a etapa estática oferece,
+porque um defeito que ela não aponta simplesmente não aparece, enquanto um defeito
 que a triagem classifica mal continua no relatório, num grupo inferior. Nas
 três execuções, a leitura arquivo a arquivo perdeu entre um e cinco defeitos, e
 a leitura única, entre um e sete.
@@ -791,17 +792,17 @@ a leitura única, entre um e sete.
 
 Na suíte de programas reais, a leitura arquivo a arquivo fica muito perto de
 S2, com 44 ou 45 violações e entre cinco e sete falsas nas três execuções, e
-reporta menos itens, lendo cerca de oitenta vezes menos
+reporta menos itens, com uma entrada cerca de oitenta vezes menor
 (Tabela~\ref{tab:qp3-reais}). A leitura única encontrou entre 30 e 34
 violações.
 
-A comparação de custo favorece a leitura direta nas duas suítes por uma razão
-de tamanho. Os programas dos dois \textit{benchmarks} são pequenos, de algumas
-dezenas a pouco mais de mil linhas, e cabem inteiros numa chamada, enquanto a
-triagem envia a cada conversa o registro de contexto completo dos candidatos,
-com o código das funções envolvidas. Os dois custos crescem com grandezas
-diferentes. O da leitura direta cresce com o tamanho do código lido, e o da
-triagem com o número de candidatos, que depende das variáveis compartilhadas
+A comparação de custo favorece a leitura direta nas duas suítes porque os
+programas dos dois \textit{benchmarks} são pequenos, de algumas dezenas a pouco
+mais de mil linhas, e cabem inteiros numa chamada, enquanto a triagem envia a
+cada conversa o registro de contexto completo dos candidatos, com o código das
+funções envolvidas. Os dois custos crescem com grandezas diferentes, o da
+leitura direta com o tamanho do código lido e o da triagem com o número de
+candidatos, que depende das variáveis compartilhadas
 com rotinas de interrupção e não do tamanho do repositório. Num repositório
 grande, em que a maior parte do código não toca essas variáveis, a leitura
 direta precisaria percorrer tudo, e a diferença de custo tende a diminuir. As
