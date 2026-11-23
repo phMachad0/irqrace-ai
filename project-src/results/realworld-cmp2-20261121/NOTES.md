@@ -60,3 +60,24 @@ none `likely_benign`. False violations in `likely_real`: `blink3` #5, and `test_
   stopping early (4 k and 7 k output tokens).
 
 n = 1 for irqrace.
+
+## What S2 reports beyond the per-file scan (internal note, 2026-11-23; kept out of the monograph)
+
+S2's 354 `likely_real` candidates against the per-file scan's findings (136 in the median run),
+compared by (program, variable) over the scan's three runs. Of the 67 variables S2 puts on top, the
+scan names 62 in at least one run; the volume difference is S2 listing several triples per variable
+(other lines, other flow pairs). The five variables the scan never names hold 23 S2 candidates, all
+false positives on inspection:
+
+- `wdt_pci_1` `test_global_var2` (1): a `false violation` entry of the ground truth.
+- `i8xx_tco_3` `tco_expect_close` (8): B's writes are inside `i8xx_tco_write`, under `if (len)`, and
+  the flows playing B (`writer1`, `writer2`) call `i8xx_tco_write(0)`; the writes never run. Neither
+  the solver nor the model saw the constant argument.
+- `i2c_pca_isa_2` `global_dev`/`global_id` (8) and `i2c_pca_isa_3` `global_dev` (6): B is the read in
+  `pca_isa_probe` by the highest-priority request (`req5`, `req8`), which calls `pca_isa_init` first
+  and so reads its own write; nothing can preempt it in between, so it never sees A1's intermediate
+  value.
+
+Both patterns are candidates for sound static filters: call-site constant propagation into guards,
+and a WRW/RWR B that its own flow overwrites first on every path while no flow able to run there
+can write.
