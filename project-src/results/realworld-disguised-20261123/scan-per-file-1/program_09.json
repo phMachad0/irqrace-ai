@@ -1,0 +1,58 @@
+{
+  "case": "program_09",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_larch",
+        "a1_line": 150,
+        "a1_kind": "read",
+        "b_line": 170,
+        "b_kind": "write",
+        "a2_line": 151,
+        "a2_kind": "read",
+        "why": "irq_vine can preempt main between the two reads of v_larch in fn_delta and change the value."
+      },
+      {
+        "variable": "v_loom",
+        "a1_line": 152,
+        "a1_kind": "read",
+        "b_line": 180,
+        "b_kind": "write",
+        "a2_line": 153,
+        "a2_kind": "read",
+        "why": "irq_nectar (after irq_flint sets v_walnut to 0) can write v_loom between main's two reads."
+      },
+      {
+        "variable": "v_velvet",
+        "a1_line": 158,
+        "a1_kind": "write",
+        "b_line": 167,
+        "b_kind": "write",
+        "a2_line": 159,
+        "a2_kind": "read",
+        "why": "Higher-priority irq_vine can preempt irq_lantern after it writes 42 and overwrite v_velvet (it also writes it in fn_tide), so the check at line 159 can read a different value."
+      },
+      {
+        "variable": "v_knoll",
+        "a1_line": 156,
+        "a1_kind": "write",
+        "b_line": 165,
+        "b_kind": "write",
+        "a2_line": 128,
+        "a2_kind": "read",
+        "why": "irq_vine can preempt irq_lantern between its write of v_knoll and the read in fn_wharf. The write is the same value, so the preemption is weakly harmful, but it fits the write-write-read shape."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_larch\",\"a1_line\":150,\"a1_kind\":\"read\",\"b_line\":170,\"b_kind\":\"write\",\"a2_line\":151,\"a2_kind\":\"read\",\"why\":\"irq_vine can preempt main between the two reads of v_larch in fn_delta and change the value.\"},{\"variable\":\"v_loom\",\"a1_line\":152,\"a1_kind\":\"read\",\"b_line\":180,\"b_kind\":\"write\",\"a2_line\":153,\"a2_kind\":\"read\",\"why\":\"irq_nectar (after irq_flint sets v_walnut to 0) can write v_loom between main's two reads.\"},{\"variable\":\"v_velvet\",\"a1_line\":158,\"a1_kind\":\"write\",\"b_line\":167,\"b_kind\":\"write\",\"a2_line\":159,\"a2_kind\":\"read\",\"why\":\"Higher-priority irq_vine can preempt irq_lantern after it writes 42 and overwrite v_velvet (it also writes it in fn_tide), so the check at line 159 can read a different value.\"},{\"variable\":\"v_knoll\",\"a1_line\":156,\"a1_kind\":\"write\",\"b_line\":165,\"b_kind\":\"write\",\"a2_line\":128,\"a2_kind\":\"read\",\"why\":\"irq_vine can preempt irq_lantern between its write of v_knoll and the read in fn_wharf. The write is the same value, so the preemption is weakly harmful, but it fits the write-write-read shape.\"}]}",
+  "wall_s": 16.045536279678345,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1810,
+    "cache_read": 1011,
+    "cache_write": 4535,
+    "latency_s": 16.04534444998717
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

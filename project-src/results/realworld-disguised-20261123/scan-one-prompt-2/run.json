@@ -1,0 +1,7 @@
+{
+  "mode": "one-prompt",
+  "backend": "claude-cli:sonnet@low",
+  "suite": "realworld:/home/pedro/Documentos/tcc/worktrees/realworld-disguised",
+  "max_tokens": 16000,
+  "wall_s": 66.57148432731628
+}

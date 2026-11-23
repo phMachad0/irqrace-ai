@@ -1,0 +1,128 @@
+{
+  "case": "program_14",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_knoll",
+        "a1_line": 176,
+        "a1_kind": "write",
+        "b_line": 105,
+        "b_kind": "write",
+        "a2_line": 177,
+        "a2_kind": "read",
+        "why": "irq_wisp (higher priority) can preempt irq_raptor between its write and the read-back and set v_knoll=1."
+      },
+      {
+        "variable": "v_knoll",
+        "a1_line": 177,
+        "a1_kind": "read",
+        "b_line": 105,
+        "b_kind": "write",
+        "a2_line": 178,
+        "a2_kind": "read",
+        "why": "irq_wisp can preempt between the two reads, so they can return different values."
+      },
+      {
+        "variable": "v_urchin",
+        "a1_line": 242,
+        "a1_kind": "write",
+        "b_line": 107,
+        "b_kind": "read",
+        "a2_line": 243,
+        "a2_kind": "write",
+        "why": "irq_wisp can preempt irq_yew between its two writes and read an intermediate value of v_urchin."
+      },
+      {
+        "variable": "v_nectar",
+        "a1_line": 139,
+        "a1_kind": "write",
+        "b_line": 110,
+        "b_kind": "write",
+        "a2_line": 144,
+        "a2_kind": "read",
+        "why": "irq_wisp can overwrite v_nectar between irq_raptor's write and its use."
+      },
+      {
+        "variable": "v_nectar",
+        "a1_line": 144,
+        "a1_kind": "read",
+        "b_line": 110,
+        "b_kind": "write",
+        "a2_line": 164,
+        "a2_kind": "read",
+        "why": "irq_wisp can change v_nectar between irq_raptor's two reads, so the checks use inconsistent values."
+      },
+      {
+        "variable": "v_nectar",
+        "a1_line": 190,
+        "a1_kind": "write",
+        "b_line": 110,
+        "b_kind": "write",
+        "a2_line": 194,
+        "a2_kind": "read",
+        "why": "irq_wisp can overwrite v_nectar between irq_yew's write and its read."
+      },
+      {
+        "variable": "v_nectar",
+        "a1_line": 194,
+        "a1_kind": "read",
+        "b_line": 110,
+        "b_kind": "write",
+        "a2_line": 214,
+        "a2_kind": "read",
+        "why": "irq_wisp can change v_nectar between irq_yew's two reads."
+      },
+      {
+        "variable": "v_maple",
+        "a1_line": 138,
+        "a1_kind": "write",
+        "b_line": 109,
+        "b_kind": "write",
+        "a2_line": 168,
+        "a2_kind": "read",
+        "why": "irq_wisp can overwrite v_maple between irq_raptor's write and its later read."
+      },
+      {
+        "variable": "v_maple",
+        "a1_line": 138,
+        "a1_kind": "write",
+        "b_line": 109,
+        "b_kind": "write",
+        "a2_line": 171,
+        "a2_kind": "read",
+        "why": "irq_wisp can overwrite v_maple between irq_raptor's write and its later read."
+      },
+      {
+        "variable": "v_ember",
+        "a1_line": 186,
+        "a1_kind": "write",
+        "b_line": 113,
+        "b_kind": "write",
+        "a2_line": 218,
+        "a2_kind": "read",
+        "why": "irq_wisp can overwrite v_ember between irq_yew's write and its later read."
+      },
+      {
+        "variable": "v_ember",
+        "a1_line": 186,
+        "a1_kind": "write",
+        "b_line": 113,
+        "b_kind": "write",
+        "a2_line": 221,
+        "a2_kind": "read",
+        "why": "irq_wisp can overwrite v_ember between irq_yew's write and its later read."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_knoll\",\"a1_line\":176,\"a1_kind\":\"write\",\"b_line\":105,\"b_kind\":\"write\",\"a2_line\":177,\"a2_kind\":\"read\",\"why\":\"irq_wisp (higher priority) can preempt irq_raptor between its write and the read-back and set v_knoll=1.\"},{\"variable\":\"v_knoll\",\"a1_line\":177,\"a1_kind\":\"read\",\"b_line\":105,\"b_kind\":\"write\",\"a2_line\":178,\"a2_kind\":\"read\",\"why\":\"irq_wisp can preempt between the two reads, so they can return different values.\"},{\"variable\":\"v_urchin\",\"a1_line\":242,\"a1_kind\":\"write\",\"b_line\":107,\"b_kind\":\"read\",\"a2_line\":243,\"a2_kind\":\"write\",\"why\":\"irq_wisp can preempt irq_yew between its two writes and read an intermediate value of v_urchin.\"},{\"variable\":\"v_nectar\",\"a1_line\":139,\"a1_kind\":\"write\",\"b_line\":110,\"b_kind\":\"write\",\"a2_line\":144,\"a2_kind\":\"read\",\"why\":\"irq_wisp can overwrite v_nectar between irq_raptor's write and its use.\"},{\"variable\":\"v_nectar\",\"a1_line\":144,\"a1_kind\":\"read\",\"b_line\":110,\"b_kind\":\"write\",\"a2_line\":164,\"a2_kind\":\"read\",\"why\":\"irq_wisp can change v_nectar between irq_raptor's two reads, so the checks use inconsistent values.\"},{\"variable\":\"v_nectar\",\"a1_line\":190,\"a1_kind\":\"write\",\"b_line\":110,\"b_kind\":\"write\",\"a2_line\":194,\"a2_kind\":\"read\",\"why\":\"irq_wisp can overwrite v_nectar between irq_yew's write and its read.\"},{\"variable\":\"v_nectar\",\"a1_line\":194,\"a1_kind\":\"read\",\"b_line\":110,\"b_kind\":\"write\",\"a2_line\":214,\"a2_kind\":\"read\",\"why\":\"irq_wisp can change v_nectar between irq_yew's two reads.\"},{\"variable\":\"v_maple\",\"a1_line\":138,\"a1_kind\":\"write\",\"b_line\":109,\"b_kind\":\"write\",\"a2_line\":168,\"a2_kind\":\"read\",\"why\":\"irq_wisp can overwrite v_maple between irq_raptor's write and its later read.\"},{\"variable\":\"v_maple\",\"a1_line\":138,\"a1_kind\":\"write\",\"b_line\":109,\"b_kind\":\"write\",\"a2_line\":171,\"a2_kind\":\"read\",\"why\":\"irq_wisp can overwrite v_maple between irq_raptor's write and its later read.\"},{\"variable\":\"v_ember\",\"a1_line\":186,\"a1_kind\":\"write\",\"b_line\":113,\"b_kind\":\"write\",\"a2_line\":218,\"a2_kind\":\"read\",\"why\":\"irq_wisp can overwrite v_ember between irq_yew's write and its later read.\"},{\"variable\":\"v_ember\",\"a1_line\":186,\"a1_kind\":\"write\",\"b_line\":113,\"b_kind\":\"write\",\"a2_line\":221,\"a2_kind\":\"read\",\"why\":\"irq_wisp can overwrite v_ember between irq_yew's write and its later read.\"}]}",
+  "wall_s": 17.06929898262024,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 2309,
+    "cache_read": 1011,
+    "cache_write": 4457,
+    "latency_s": 17.069105606002267
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

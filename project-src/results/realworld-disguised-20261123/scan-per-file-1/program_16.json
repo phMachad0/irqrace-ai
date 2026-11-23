@@ -1,0 +1,98 @@
+{
+  "case": "program_16",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_loom",
+        "a1_line": 47,
+        "a1_kind": "write",
+        "b_line": 58,
+        "b_kind": "write",
+        "a2_line": 48,
+        "a2_kind": "read",
+        "why": "irq_amber can preempt irq_fern between the increment and the read-back, so the read sees 0 instead of the incremented value."
+      },
+      {
+        "variable": "v_loom",
+        "a1_line": 47,
+        "a1_kind": "read",
+        "b_line": 58,
+        "b_kind": "write",
+        "a2_line": 47,
+        "a2_kind": "write",
+        "why": "The v_loom++ read-modify-write in irq_fern can be preempted by irq_amber's reset, and the stale value is then written back."
+      },
+      {
+        "variable": "v_loom",
+        "a1_line": 48,
+        "a1_kind": "read",
+        "b_line": 58,
+        "b_kind": "write",
+        "a2_line": 51,
+        "a2_kind": "write",
+        "why": "irq_amber can write v_loom between irq_fern's read and its write of 0. The earlier read result then no longer matches the state."
+      },
+      {
+        "variable": "v_loom",
+        "a1_line": 47,
+        "a1_kind": "write",
+        "b_line": 97,
+        "b_kind": "write",
+        "a2_line": 48,
+        "a2_kind": "read",
+        "why": "irq_cobalt has higher priority and can preempt irq_fern and reset v_loom between the write and the read."
+      },
+      {
+        "variable": "v_loom",
+        "a1_line": 58,
+        "a1_kind": "write",
+        "b_line": 97,
+        "b_kind": "write",
+        "a2_line": 59,
+        "a2_kind": "read",
+        "why": "irq_cobalt can preempt irq_amber between its write and its check of v_loom, so the check may see a different value."
+      },
+      {
+        "variable": "v_beacon",
+        "a1_line": 52,
+        "a1_kind": "read",
+        "b_line": 96,
+        "b_kind": "write",
+        "a2_line": 52,
+        "a2_kind": "write",
+        "why": "irq_cobalt can reset v_beacon in the middle of irq_fern's v_beacon++, and the stale increment overwrites the reset."
+      },
+      {
+        "variable": "v_ridge",
+        "a1_line": 53,
+        "a1_kind": "read",
+        "b_line": 98,
+        "b_kind": "write",
+        "a2_line": 54,
+        "a2_kind": "read",
+        "why": "irq_cobalt can reset v_ridge between irq_fern's use of it as an array index and its increment, so the two reads disagree."
+      },
+      {
+        "variable": "v_ridge",
+        "a1_line": 54,
+        "a1_kind": "read",
+        "b_line": 98,
+        "b_kind": "write",
+        "a2_line": 54,
+        "a2_kind": "write",
+        "why": "irq_cobalt can reset v_ridge in the middle of irq_fern's v_ridge++, and the stale value is then written back."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_loom\",\"a1_line\":47,\"a1_kind\":\"write\",\"b_line\":58,\"b_kind\":\"write\",\"a2_line\":48,\"a2_kind\":\"read\",\"why\":\"irq_amber can preempt irq_fern between the increment and the read-back, so the read sees 0 instead of the incremented value.\"},{\"variable\":\"v_loom\",\"a1_line\":47,\"a1_kind\":\"read\",\"b_line\":58,\"b_kind\":\"write\",\"a2_line\":47,\"a2_kind\":\"write\",\"why\":\"The v_loom++ read-modify-write in irq_fern can be preempted by irq_amber's reset, and the stale value is then written back.\"},{\"variable\":\"v_loom\",\"a1_line\":48,\"a1_kind\":\"read\",\"b_line\":58,\"b_kind\":\"write\",\"a2_line\":51,\"a2_kind\":\"write\",\"why\":\"irq_amber can write v_loom between irq_fern's read and its write of 0. The earlier read result then no longer matches the state.\"},{\"variable\":\"v_loom\",\"a1_line\":47,\"a1_kind\":\"write\",\"b_line\":97,\"b_kind\":\"write\",\"a2_line\":48,\"a2_kind\":\"read\",\"why\":\"irq_cobalt has higher priority and can preempt irq_fern and reset v_loom between the write and the read.\"},{\"variable\":\"v_loom\",\"a1_line\":58,\"a1_kind\":\"write\",\"b_line\":97,\"b_kind\":\"write\",\"a2_line\":59,\"a2_kind\":\"read\",\"why\":\"irq_cobalt can preempt irq_amber between its write and its check of v_loom, so the check may see a different value.\"},{\"variable\":\"v_beacon\",\"a1_line\":52,\"a1_kind\":\"read\",\"b_line\":96,\"b_kind\":\"write\",\"a2_line\":52,\"a2_kind\":\"write\",\"why\":\"irq_cobalt can reset v_beacon in the middle of irq_fern's v_beacon++, and the stale increment overwrites the reset.\"},{\"variable\":\"v_ridge\",\"a1_line\":53,\"a1_kind\":\"read\",\"b_line\":98,\"b_kind\":\"write\",\"a2_line\":54,\"a2_kind\":\"read\",\"why\":\"irq_cobalt can reset v_ridge between irq_fern's use of it as an array index and its increment, so the two reads disagree.\"},{\"variable\":\"v_ridge\",\"a1_line\":54,\"a1_kind\":\"read\",\"b_line\":98,\"b_kind\":\"write\",\"a2_line\":54,\"a2_kind\":\"write\",\"why\":\"irq_cobalt can reset v_ridge in the middle of irq_fern's v_ridge++, and the stale value is then written back.\"}]}",
+  "wall_s": 14.571587562561035,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1890,
+    "cache_read": 1011,
+    "cache_write": 2287,
+    "latency_s": 14.571403772977646
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

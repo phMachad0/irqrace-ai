@@ -1,0 +1,58 @@
+{
+  "case": "program_15",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_falcon",
+        "a1_line": 56,
+        "a1_kind": "write",
+        "b_line": 61,
+        "b_kind": "write",
+        "a2_line": 57,
+        "a2_kind": "read",
+        "why": "irq_anchor (priority 6) can preempt irq_summit between its write and read of v_falcon, so the check can see a nonzero value."
+      },
+      {
+        "variable": "v_prism",
+        "a1_line": 51,
+        "a1_kind": "read",
+        "b_line": 62,
+        "b_kind": "write",
+        "a2_line": 52,
+        "a2_kind": "write",
+        "why": "irq_anchor preempts irq_kelp between the index read and the increment, so an increment is lost and the stored slot is stale."
+      },
+      {
+        "variable": "v_prism",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 62,
+        "b_kind": "write",
+        "a2_line": 101,
+        "a2_kind": "write",
+        "why": "irq_anchor (priority 6) can preempt irq_thorn between reading v_prism and resetting it, so the bound check is stale."
+      },
+      {
+        "variable": "v_prism",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 52,
+        "b_kind": "write",
+        "a2_line": 101,
+        "a2_kind": "write",
+        "why": "irq_kelp (priority 5) can preempt irq_thorn between reading v_prism and resetting it, so the bound check is stale."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_falcon\",\"a1_line\":56,\"a1_kind\":\"write\",\"b_line\":61,\"b_kind\":\"write\",\"a2_line\":57,\"a2_kind\":\"read\",\"why\":\"irq_anchor (priority 6) can preempt irq_summit between its write and read of v_falcon, so the check can see a nonzero value.\"},{\"variable\":\"v_prism\",\"a1_line\":51,\"a1_kind\":\"read\",\"b_line\":62,\"b_kind\":\"write\",\"a2_line\":52,\"a2_kind\":\"write\",\"why\":\"irq_anchor preempts irq_kelp between the index read and the increment, so an increment is lost and the stored slot is stale.\"},{\"variable\":\"v_prism\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":62,\"b_kind\":\"write\",\"a2_line\":101,\"a2_kind\":\"write\",\"why\":\"irq_anchor (priority 6) can preempt irq_thorn between reading v_prism and resetting it, so the bound check is stale.\"},{\"variable\":\"v_prism\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":52,\"b_kind\":\"write\",\"a2_line\":101,\"a2_kind\":\"write\",\"why\":\"irq_kelp (priority 5) can preempt irq_thorn between reading v_prism and resetting it, so the bound check is stale.\"}]}",
+  "wall_s": 13.305697202682495,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1513,
+    "cache_read": 1011,
+    "cache_write": 2372,
+    "latency_s": 13.305490315018687
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

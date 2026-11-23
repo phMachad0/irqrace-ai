@@ -1,0 +1,78 @@
+{
+  "case": "program_02",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_drift",
+        "a1_line": 109,
+        "a1_kind": "read",
+        "b_line": 135,
+        "b_kind": "write",
+        "a2_line": 110,
+        "a2_kind": "read",
+        "why": "Main reads v_drift twice (v_fern and v_thorn are both 1). irq_pebble can preempt in between and write v_drift, because v_quarry is 1."
+      },
+      {
+        "variable": "v_fjord",
+        "a1_line": 159,
+        "a1_kind": "write",
+        "b_line": 117,
+        "b_kind": "write",
+        "a2_line": 189,
+        "a2_kind": "read",
+        "why": "irq_pebble has higher priority. It can preempt irq_crest after crest writes v_fjord and overwrite it, so crest then reads a different value."
+      },
+      {
+        "variable": "v_fjord",
+        "a1_line": 159,
+        "a1_kind": "write",
+        "b_line": 117,
+        "b_kind": "write",
+        "a2_line": 192,
+        "a2_kind": "read",
+        "why": "irq_pebble can overwrite v_fjord between crest's write at 159 and its read at 192."
+      },
+      {
+        "variable": "v_summit",
+        "a1_line": 160,
+        "a1_kind": "write",
+        "b_line": 118,
+        "b_kind": "write",
+        "a2_line": 165,
+        "a2_kind": "read",
+        "why": "irq_pebble can preempt irq_crest and overwrite v_summit before crest reads it."
+      },
+      {
+        "variable": "v_summit",
+        "a1_line": 160,
+        "a1_kind": "write",
+        "b_line": 118,
+        "b_kind": "write",
+        "a2_line": 185,
+        "a2_kind": "read",
+        "why": "irq_pebble can overwrite v_summit between crest's write at 160 and its read at 185."
+      },
+      {
+        "variable": "v_kiln",
+        "a1_line": 148,
+        "a1_kind": "write",
+        "b_line": 134,
+        "b_kind": "write",
+        "a2_line": 151,
+        "a2_kind": "read",
+        "why": "Crest writes v_kiln[9000]. irq_pebble can preempt and overwrite the same element, so crest's read at 151 sees pebble's value."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_drift\",\"a1_line\":109,\"a1_kind\":\"read\",\"b_line\":135,\"b_kind\":\"write\",\"a2_line\":110,\"a2_kind\":\"read\",\"why\":\"Main reads v_drift twice (v_fern and v_thorn are both 1). irq_pebble can preempt in between and write v_drift, because v_quarry is 1.\"},{\"variable\":\"v_fjord\",\"a1_line\":159,\"a1_kind\":\"write\",\"b_line\":117,\"b_kind\":\"write\",\"a2_line\":189,\"a2_kind\":\"read\",\"why\":\"irq_pebble has higher priority. It can preempt irq_crest after crest writes v_fjord and overwrite it, so crest then reads a different value.\"},{\"variable\":\"v_fjord\",\"a1_line\":159,\"a1_kind\":\"write\",\"b_line\":117,\"b_kind\":\"write\",\"a2_line\":192,\"a2_kind\":\"read\",\"why\":\"irq_pebble can overwrite v_fjord between crest's write at 159 and its read at 192.\"},{\"variable\":\"v_summit\",\"a1_line\":160,\"a1_kind\":\"write\",\"b_line\":118,\"b_kind\":\"write\",\"a2_line\":165,\"a2_kind\":\"read\",\"why\":\"irq_pebble can preempt irq_crest and overwrite v_summit before crest reads it.\"},{\"variable\":\"v_summit\",\"a1_line\":160,\"a1_kind\":\"write\",\"b_line\":118,\"b_kind\":\"write\",\"a2_line\":185,\"a2_kind\":\"read\",\"why\":\"irq_pebble can overwrite v_summit between crest's write at 160 and its read at 185.\"},{\"variable\":\"v_kiln\",\"a1_line\":148,\"a1_kind\":\"write\",\"b_line\":134,\"b_kind\":\"write\",\"a2_line\":151,\"a2_kind\":\"read\",\"why\":\"Crest writes v_kiln[9000]. irq_pebble can preempt and overwrite the same element, so crest's read at 151 sees pebble's value.\"}]}",
+  "wall_s": 14.294140815734863,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1631,
+    "cache_read": 4378,
+    "cache_write": 489,
+    "latency_s": 14.29392581700813
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

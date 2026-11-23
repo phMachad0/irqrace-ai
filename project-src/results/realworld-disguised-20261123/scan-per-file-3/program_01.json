@@ -1,0 +1,138 @@
+{
+  "case": "program_01",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_aspen",
+        "a1_line": 20,
+        "a1_kind": "write",
+        "b_line": 36,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "wharf (prio 4) can preempt prism between the increment and the check and overwrite v_aspen."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 20,
+        "a1_kind": "write",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "harbor (prio 3) preempts prism and modifies v_aspen before the check."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 20,
+        "a1_kind": "write",
+        "b_line": 49,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "loom (prio 5) preempts prism and resets v_aspen before the check."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 28,
+        "a1_kind": "write",
+        "b_line": 36,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "read",
+        "why": "wharf can preempt flint between the write and the read."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 28,
+        "a1_kind": "write",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "read",
+        "why": "harbor can preempt flint between the write and the read."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 28,
+        "a1_kind": "write",
+        "b_line": 49,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "read",
+        "why": "loom can preempt flint between the write and the read."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 36,
+        "a1_kind": "write",
+        "b_line": 49,
+        "b_kind": "write",
+        "a2_line": 37,
+        "a2_kind": "read",
+        "why": "loom (prio 5) can preempt wharf between the write and the read."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 44,
+        "a1_kind": "read",
+        "b_line": 36,
+        "b_kind": "write",
+        "a2_line": 44,
+        "a2_kind": "write",
+        "why": "The v_aspen++ in harbor is non-atomic, and wharf can preempt it and have its write lost."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 44,
+        "a1_kind": "read",
+        "b_line": 49,
+        "b_kind": "write",
+        "a2_line": 44,
+        "a2_kind": "write",
+        "why": "loom can preempt the v_aspen++ read-modify-write in harbor and have its write lost."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 20,
+        "a1_kind": "read",
+        "b_line": 36,
+        "b_kind": "write",
+        "a2_line": 20,
+        "a2_kind": "write",
+        "why": "wharf can preempt the v_aspen++ read-modify-write in prism and have its write lost."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 20,
+        "a1_kind": "read",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 20,
+        "a2_kind": "write",
+        "why": "harbor can preempt the v_aspen++ read-modify-write in prism and have its write lost."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 20,
+        "a1_kind": "read",
+        "b_line": 49,
+        "b_kind": "write",
+        "a2_line": 20,
+        "a2_kind": "write",
+        "why": "loom can preempt the v_aspen++ read-modify-write in prism and have its write lost."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_aspen\",\"a1_line\":20,\"a1_kind\":\"write\",\"b_line\":36,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"wharf (prio 4) can preempt prism between the increment and the check and overwrite v_aspen.\"},{\"variable\":\"v_aspen\",\"a1_line\":20,\"a1_kind\":\"write\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"harbor (prio 3) preempts prism and modifies v_aspen before the check.\"},{\"variable\":\"v_aspen\",\"a1_line\":20,\"a1_kind\":\"write\",\"b_line\":49,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"loom (prio 5) preempts prism and resets v_aspen before the check.\"},{\"variable\":\"v_aspen\",\"a1_line\":28,\"a1_kind\":\"write\",\"b_line\":36,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"read\",\"why\":\"wharf can preempt flint between the write and the read.\"},{\"variable\":\"v_aspen\",\"a1_line\":28,\"a1_kind\":\"write\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"read\",\"why\":\"harbor can preempt flint between the write and the read.\"},{\"variable\":\"v_aspen\",\"a1_line\":28,\"a1_kind\":\"write\",\"b_line\":49,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"read\",\"why\":\"loom can preempt flint between the write and the read.\"},{\"variable\":\"v_aspen\",\"a1_line\":36,\"a1_kind\":\"write\",\"b_line\":49,\"b_kind\":\"write\",\"a2_line\":37,\"a2_kind\":\"read\",\"why\":\"loom (prio 5) can preempt wharf between the write and the read.\"},{\"variable\":\"v_aspen\",\"a1_line\":44,\"a1_kind\":\"read\",\"b_line\":36,\"b_kind\":\"write\",\"a2_line\":44,\"a2_kind\":\"write\",\"why\":\"The v_aspen++ in harbor is non-atomic, and wharf can preempt it and have its write lost.\"},{\"variable\":\"v_aspen\",\"a1_line\":44,\"a1_kind\":\"read\",\"b_line\":49,\"b_kind\":\"write\",\"a2_line\":44,\"a2_kind\":\"write\",\"why\":\"loom can preempt the v_aspen++ read-modify-write in harbor and have its write lost.\"},{\"variable\":\"v_aspen\",\"a1_line\":20,\"a1_kind\":\"read\",\"b_line\":36,\"b_kind\":\"write\",\"a2_line\":20,\"a2_kind\":\"write\",\"why\":\"wharf can preempt the v_aspen++ read-modify-write in prism and have its write lost.\"},{\"variable\":\"v_aspen\",\"a1_line\":20,\"a1_kind\":\"read\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":20,\"a2_kind\":\"write\",\"why\":\"harbor can preempt the v_aspen++ read-modify-write in prism and have its write lost.\"},{\"variable\":\"v_aspen\",\"a1_line\":20,\"a1_kind\":\"read\",\"b_line\":49,\"b_kind\":\"write\",\"a2_line\":20,\"a2_kind\":\"write\",\"why\":\"loom can preempt the v_aspen++ read-modify-write in prism and have its write lost.\"}]}",
+  "wall_s": 14.5671706199646,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1899,
+    "cache_read": 2200,
+    "cache_write": 487,
+    "latency_s": 14.56677876401227
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,8 @@
+{
+  "mode": "per-file",
+  "backend": "claude-cli:sonnet@low",
+  "workers": 4,
+  "suite": "realworld:/home/pedro/Documentos/tcc/worktrees/realworld-disguised",
+  "max_tokens": 16000,
+  "wall_s": 70.89013004302979
+}

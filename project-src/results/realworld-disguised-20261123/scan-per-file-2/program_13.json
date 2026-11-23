@@ -1,0 +1,48 @@
+{
+  "case": "program_13",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_sable",
+        "a1_line": 174,
+        "a1_kind": "read",
+        "b_line": 196,
+        "b_kind": "write",
+        "a2_line": 174,
+        "a2_kind": "write",
+        "why": "v_sable++ in irq_delta (prio 2) is a read-modify-write that irq_ridge (prio 5) can preempt, so ridge's write at 196 is lost."
+      },
+      {
+        "variable": "v_coral",
+        "a1_line": 149,
+        "a1_kind": "read",
+        "b_line": 183,
+        "b_kind": "write",
+        "a2_line": 150,
+        "a2_kind": "read",
+        "why": "irq_inlet (prio 3) can preempt irq_umbra's fn_anchor between its two reads of v_coral and change the value."
+      },
+      {
+        "variable": "v_onyx",
+        "a1_line": 151,
+        "a1_kind": "read",
+        "b_line": 190,
+        "b_kind": "write",
+        "a2_line": 152,
+        "a2_kind": "read",
+        "why": "irq_raptor (prio 4) can preempt irq_umbra's fn_anchor between its two reads of v_onyx and change the value."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_sable\",\"a1_line\":174,\"a1_kind\":\"read\",\"b_line\":196,\"b_kind\":\"write\",\"a2_line\":174,\"a2_kind\":\"write\",\"why\":\"v_sable++ in irq_delta (prio 2) is a read-modify-write that irq_ridge (prio 5) can preempt, so ridge's write at 196 is lost.\"},{\"variable\":\"v_coral\",\"a1_line\":149,\"a1_kind\":\"read\",\"b_line\":183,\"b_kind\":\"write\",\"a2_line\":150,\"a2_kind\":\"read\",\"why\":\"irq_inlet (prio 3) can preempt irq_umbra's fn_anchor between its two reads of v_coral and change the value.\"},{\"variable\":\"v_onyx\",\"a1_line\":151,\"a1_kind\":\"read\",\"b_line\":190,\"b_kind\":\"write\",\"a2_line\":152,\"a2_kind\":\"read\",\"why\":\"irq_raptor (prio 4) can preempt irq_umbra's fn_anchor between its two reads of v_onyx and change the value.\"}]}",
+  "wall_s": 10.540825605392456,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1178,
+    "cache_read": 5192,
+    "cache_write": 488,
+    "latency_s": 10.540677174984012
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

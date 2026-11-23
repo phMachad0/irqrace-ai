@@ -1,0 +1,98 @@
+{
+  "case": "program_08",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_saffron",
+        "a1_line": 46,
+        "a1_kind": "write",
+        "b_line": 55,
+        "b_kind": "write",
+        "a2_line": 50,
+        "a2_kind": "read",
+        "why": "irq_pebble (priority 4) can preempt irq_tide (priority 3) between its write and its re-read, so the check at line 50 can see a different value."
+      },
+      {
+        "variable": "v_saffron",
+        "a1_line": 46,
+        "a1_kind": "write",
+        "b_line": 61,
+        "b_kind": "write",
+        "a2_line": 50,
+        "a2_kind": "read",
+        "why": "irq_husk (priority 5) can preempt irq_tide between the write and the re-read and change v_saffron."
+      },
+      {
+        "variable": "v_saffron",
+        "a1_line": 46,
+        "a1_kind": "write",
+        "b_line": 72,
+        "b_kind": "write",
+        "a2_line": 50,
+        "a2_kind": "read",
+        "why": "irq_drift (priority 6) can preempt irq_tide between the write and the re-read and change v_saffron."
+      },
+      {
+        "variable": "v_saffron",
+        "a1_line": 61,
+        "a1_kind": "write",
+        "b_line": 72,
+        "b_kind": "write",
+        "a2_line": 65,
+        "a2_kind": "read",
+        "why": "irq_drift (priority 6) can preempt irq_husk (priority 5) between its write and the re-read of v_saffron."
+      },
+      {
+        "variable": "v_jasper",
+        "a1_line": 36,
+        "a1_kind": "read",
+        "b_line": 67,
+        "b_kind": "write",
+        "a2_line": 37,
+        "a2_kind": "read",
+        "why": "irq_husk (priority 5) can preempt irq_nook (priority 2) between the two reads in fn_oasis, so the two reads can return different values."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 34,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 35,
+        "a2_kind": "read",
+        "why": "irq_drift (priority 6) can preempt irq_nook between the two reads of v_lantern in fn_oasis and write it. Both guards, v_yew and v_harbor, can be 1."
+      },
+      {
+        "variable": "v_birch",
+        "a1_line": 14,
+        "a1_kind": "write",
+        "b_line": 9,
+        "b_kind": "read",
+        "a2_line": 18,
+        "a2_kind": "write",
+        "why": "irq_drift's fn_upland can preempt a lower ISR between its fn_lagoon and fn_shoal writes of v_birch. It then reads a transient value."
+      },
+      {
+        "variable": "v_meadow",
+        "a1_line": 15,
+        "a1_kind": "write",
+        "b_line": 6,
+        "b_kind": "read",
+        "a2_line": 19,
+        "a2_kind": "write",
+        "why": "irq_drift's fn_upland can preempt a lower ISR between its fn_lagoon and fn_shoal writes of v_meadow. It then reads a transient value."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_saffron\",\"a1_line\":46,\"a1_kind\":\"write\",\"b_line\":55,\"b_kind\":\"write\",\"a2_line\":50,\"a2_kind\":\"read\",\"why\":\"irq_pebble (priority 4) can preempt irq_tide (priority 3) between its write and its re-read, so the check at line 50 can see a different value.\"},{\"variable\":\"v_saffron\",\"a1_line\":46,\"a1_kind\":\"write\",\"b_line\":61,\"b_kind\":\"write\",\"a2_line\":50,\"a2_kind\":\"read\",\"why\":\"irq_husk (priority 5) can preempt irq_tide between the write and the re-read and change v_saffron.\"},{\"variable\":\"v_saffron\",\"a1_line\":46,\"a1_kind\":\"write\",\"b_line\":72,\"b_kind\":\"write\",\"a2_line\":50,\"a2_kind\":\"read\",\"why\":\"irq_drift (priority 6) can preempt irq_tide between the write and the re-read and change v_saffron.\"},{\"variable\":\"v_saffron\",\"a1_line\":61,\"a1_kind\":\"write\",\"b_line\":72,\"b_kind\":\"write\",\"a2_line\":65,\"a2_kind\":\"read\",\"why\":\"irq_drift (priority 6) can preempt irq_husk (priority 5) between its write and the re-read of v_saffron.\"},{\"variable\":\"v_jasper\",\"a1_line\":36,\"a1_kind\":\"read\",\"b_line\":67,\"b_kind\":\"write\",\"a2_line\":37,\"a2_kind\":\"read\",\"why\":\"irq_husk (priority 5) can preempt irq_nook (priority 2) between the two reads in fn_oasis, so the two reads can return different values.\"},{\"variable\":\"v_lantern\",\"a1_line\":34,\"a1_kind\":\"read\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":35,\"a2_kind\":\"read\",\"why\":\"irq_drift (priority 6) can preempt irq_nook between the two reads of v_lantern in fn_oasis and write it. Both guards, v_yew and v_harbor, can be 1.\"},{\"variable\":\"v_birch\",\"a1_line\":14,\"a1_kind\":\"write\",\"b_line\":9,\"b_kind\":\"read\",\"a2_line\":18,\"a2_kind\":\"write\",\"why\":\"irq_drift's fn_upland can preempt a lower ISR between its fn_lagoon and fn_shoal writes of v_birch. It then reads a transient value.\"},{\"variable\":\"v_meadow\",\"a1_line\":15,\"a1_kind\":\"write\",\"b_line\":6,\"b_kind\":\"read\",\"a2_line\":19,\"a2_kind\":\"write\",\"why\":\"irq_drift's fn_upland can preempt a lower ISR between its fn_lagoon and fn_shoal writes of v_meadow. It then reads a transient value.\"}]}",
+  "wall_s": 14.874377727508545,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1974,
+    "cache_read": 1011,
+    "cache_write": 2113,
+    "latency_s": 14.87417602998903
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

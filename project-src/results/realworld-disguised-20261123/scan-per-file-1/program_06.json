@@ -1,0 +1,58 @@
+{
+  "case": "program_06",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_falcon",
+        "a1_line": 20,
+        "a1_kind": "read",
+        "b_line": 34,
+        "b_kind": "write",
+        "a2_line": 20,
+        "a2_kind": "write",
+        "why": "The higher-priority urchin ISR can preempt yarrow between the read and the write of v_falcon++. The increment then overwrites urchin's value with a stale one."
+      },
+      {
+        "variable": "v_falcon",
+        "a1_line": 20,
+        "a1_kind": "write",
+        "b_line": 35,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "Urchin can reset v_falcon to 0 between yarrow's increment and its check. The check then sees 0 instead of the value yarrow just wrote."
+      },
+      {
+        "variable": "v_falcon",
+        "a1_line": 20,
+        "a1_kind": "read",
+        "b_line": 35,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "Urchin's write can land between yarrow's two reads of v_falcon. The two reads then see different values."
+      },
+      {
+        "variable": "v_falcon",
+        "a1_line": 27,
+        "a1_kind": "write",
+        "b_line": 35,
+        "b_kind": "write",
+        "a2_line": 28,
+        "a2_kind": "read",
+        "why": "Urchin can preempt grove after it sets v_falcon to 1 and reset it to 0. Grove's check then fails, though it just wrote 1."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_falcon\",\"a1_line\":20,\"a1_kind\":\"read\",\"b_line\":34,\"b_kind\":\"write\",\"a2_line\":20,\"a2_kind\":\"write\",\"why\":\"The higher-priority urchin ISR can preempt yarrow between the read and the write of v_falcon++. The increment then overwrites urchin's value with a stale one.\"},{\"variable\":\"v_falcon\",\"a1_line\":20,\"a1_kind\":\"write\",\"b_line\":35,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"Urchin can reset v_falcon to 0 between yarrow's increment and its check. The check then sees 0 instead of the value yarrow just wrote.\"},{\"variable\":\"v_falcon\",\"a1_line\":20,\"a1_kind\":\"read\",\"b_line\":35,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"Urchin's write can land between yarrow's two reads of v_falcon. The two reads then see different values.\"},{\"variable\":\"v_falcon\",\"a1_line\":27,\"a1_kind\":\"write\",\"b_line\":35,\"b_kind\":\"write\",\"a2_line\":28,\"a2_kind\":\"read\",\"why\":\"Urchin can preempt grove after it sets v_falcon to 1 and reset it to 0. Grove's check then fails, though it just wrote 1.\"}]}",
+  "wall_s": 8.953413009643555,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1077,
+    "cache_read": 1011,
+    "cache_write": 1492,
+    "latency_s": 8.953269405988976
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

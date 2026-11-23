@@ -93,7 +93,7 @@ RW_SUITE = ROOT / "bench" / "realworld"
 
 def cases() -> list[str]:
     """The names the model sees: case names, or ``program_NN`` in a disguised copy."""
-    if REALWORLD:
+    if REALWORLD and DISGUISED is None:
         return sorted(p.stem for p in RW_CONFIGS.glob("*.yaml") if "__" not in p.stem)
     if DISGUISED is not None:
         return sorted(json.loads((DISGUISED / "index.json").read_text())["programs"])
@@ -114,7 +114,7 @@ def original(name: str, line: int) -> tuple[str, int]:
 
 def source_of(case: str) -> str:
     """The case's C file, numbered, without the trailing annotation block."""
-    if REALWORLD:
+    if REALWORLD and DISGUISED is None:
         lines = (RW_SUITE / case / "main.c").read_text(encoding="utf-8", errors="replace").splitlines()
         # blink1-3 end with their answers ("//violations", "//true violations", "//false positive").
         cut = next((i for i, l in enumerate(lines)
@@ -135,7 +135,9 @@ def source_of(case: str) -> str:
 
 
 def flows_of(case: str) -> str:
-    if REALWORLD:
+    if REALWORLD and DISGUISED is not None:
+        flows, equal = _meta(case)["flows"], _meta(case)["equal_priority_preemption"]
+    elif REALWORLD:
         cfg = yaml.safe_load((RW_CONFIGS / f"{case}.yaml").read_text())
         flows = cfg["flows"]
         equal = cfg["semantics"]["equal_priority_preemption"]
@@ -197,7 +199,7 @@ def cmd_per_file(args) -> int:
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         list(pool.map(one, cases()))
     (out / "run.json").write_text(json.dumps({"mode": "per-file", "backend": args.backend, "workers": args.workers,
-                                              "suite": "realworld" if REALWORLD else (str(DISGUISED) if DISGUISED else "original"), "max_tokens": MAX_TOKENS,
+                                              "suite": (f"realworld:{DISGUISED}" if DISGUISED else "realworld") if REALWORLD else (str(DISGUISED) if DISGUISED else "original"), "max_tokens": MAX_TOKENS,
                                               "wall_s": time.time() - t0}, indent=2))
     return 0
 
@@ -217,7 +219,7 @@ def cmd_one_prompt(args) -> int:
         res = {"error": str(e)}
     (out / "all.json").write_text(json.dumps(res, indent=2, ensure_ascii=False))
     (out / "run.json").write_text(json.dumps({"mode": "one-prompt", "backend": args.backend,
-                                              "suite": "realworld" if REALWORLD else (str(DISGUISED) if DISGUISED else "original"), "max_tokens": MAX_TOKENS,
+                                              "suite": (f"realworld:{DISGUISED}" if DISGUISED else "realworld") if REALWORLD else (str(DISGUISED) if DISGUISED else "original"), "max_tokens": MAX_TOKENS,
                                               "wall_s": time.time() - t0}, indent=2))
     print("error" if "error" in res else f"{sum(len(c['violations']) for c in res['parsed']['cases'])} findings")
     return 0
@@ -283,9 +285,24 @@ def score_realworld(out: Path, by_name: dict, calls: list, run: dict) -> int:
     from irqrace.realworld import load_errata, match, parse_violation_info
 
     errata = load_errata()
+    if DISGUISED is not None:  # back to the original programs, names and lines
+        translated: dict[str, list[dict]] = {}
+        for name, found in by_name.items():
+            if not (DISGUISED / f"{name}.json").exists():
+                continue  # a name the model invented
+            meta = _meta(name)
+            back = {new: old for old, new in meta["names"].items()}
+            for v in found:
+                w = dict(v)
+                base = re.split(r"[\[.\-]", v["variable"].strip().lstrip("*&"))[0].strip()
+                w["variable"] = back.get(base, v["variable"])
+                for k in ("a1_line", "b_line", "a2_line"):
+                    w[k] = meta["line_map"].get(str(v[k]), -v[k])
+                translated.setdefault(meta["case"], []).append(w)
+        by_name = translated
     rows = []
     tot = {"bugs": 0, "bugs_found": 0, "traps": 0, "traps_found": 0, "findings": 0, "unmatched": 0}
-    for prog in cases():
+    for prog in sorted(p.stem for p in RW_CONFIGS.glob("*.yaml") if "__" not in p.stem):
         entries, _ = parse_violation_info(RW_SUITE / prog / "violation.info", prog, errata)
         cands = []
         for i, v in enumerate(by_name.get(prog, [])):
@@ -329,8 +346,10 @@ def cmd_score(args) -> int:
     global DISGUISED, REALWORLD
     out = Path(args.dir)
     by_name, calls, run = findings_by_case(out)
-    if run.get("suite") == "realworld":
+    if str(run.get("suite", "")).startswith("realworld"):
         REALWORLD = True
+        _, _, path = run["suite"].partition(":")
+        DISGUISED = Path(path) if path else None
         return score_realworld(out, by_name, calls, run)
     DISGUISED = Path(run["suite"]) if run.get("suite", "original") != "original" else None
     by_case: dict[str, list[dict]] = {}

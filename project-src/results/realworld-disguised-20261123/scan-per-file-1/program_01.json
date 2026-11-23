@@ -1,0 +1,168 @@
+{
+  "case": "program_01",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_aspen",
+        "a1_line": 20,
+        "a1_kind": "read",
+        "b_line": 36,
+        "b_kind": "write",
+        "a2_line": 20,
+        "a2_kind": "write",
+        "why": "v_aspen++ in prism can be preempted by wharf's write, losing the update."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 20,
+        "a1_kind": "read",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 20,
+        "a2_kind": "write",
+        "why": "Higher-priority harbor can modify v_aspen between the read and write of the increment."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 20,
+        "a1_kind": "read",
+        "b_line": 49,
+        "b_kind": "write",
+        "a2_line": 20,
+        "a2_kind": "write",
+        "why": "loom can reset v_aspen mid-increment."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 20,
+        "a1_kind": "read",
+        "b_line": 36,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "wharf can change v_aspen between prism's read and its later check."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 20,
+        "a1_kind": "read",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "harbor can change v_aspen between prism's read and its later check."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 20,
+        "a1_kind": "read",
+        "b_line": 49,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "loom can change v_aspen between prism's read and its later check."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 20,
+        "a1_kind": "write",
+        "b_line": 36,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "wharf can overwrite v_aspen between prism's increment and its check."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 20,
+        "a1_kind": "write",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "harbor can overwrite v_aspen between prism's increment and its check."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 20,
+        "a1_kind": "write",
+        "b_line": 49,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "loom can overwrite v_aspen between prism's increment and its check."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 28,
+        "a1_kind": "write",
+        "b_line": 36,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "read",
+        "why": "wharf can overwrite v_aspen between flint's write and check."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 28,
+        "a1_kind": "write",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "read",
+        "why": "harbor can modify v_aspen between flint's write and check."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 28,
+        "a1_kind": "write",
+        "b_line": 49,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "read",
+        "why": "loom can reset v_aspen between flint's write and check."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 36,
+        "a1_kind": "write",
+        "b_line": 49,
+        "b_kind": "write",
+        "a2_line": 37,
+        "a2_kind": "read",
+        "why": "loom (higher priority) can reset v_aspen between wharf's write and check."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 44,
+        "a1_kind": "read",
+        "b_line": 36,
+        "b_kind": "write",
+        "a2_line": 44,
+        "a2_kind": "write",
+        "why": "wharf preempts harbor's v_aspen++ and its write is lost."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 44,
+        "a1_kind": "read",
+        "b_line": 49,
+        "b_kind": "write",
+        "a2_line": 44,
+        "a2_kind": "write",
+        "why": "loom preempts harbor's v_aspen++ and its write is lost."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_aspen\",\"a1_line\":20,\"a1_kind\":\"read\",\"b_line\":36,\"b_kind\":\"write\",\"a2_line\":20,\"a2_kind\":\"write\",\"why\":\"v_aspen++ in prism can be preempted by wharf's write, losing the update.\"},{\"variable\":\"v_aspen\",\"a1_line\":20,\"a1_kind\":\"read\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":20,\"a2_kind\":\"write\",\"why\":\"Higher-priority harbor can modify v_aspen between the read and write of the increment.\"},{\"variable\":\"v_aspen\",\"a1_line\":20,\"a1_kind\":\"read\",\"b_line\":49,\"b_kind\":\"write\",\"a2_line\":20,\"a2_kind\":\"write\",\"why\":\"loom can reset v_aspen mid-increment.\"},{\"variable\":\"v_aspen\",\"a1_line\":20,\"a1_kind\":\"read\",\"b_line\":36,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"wharf can change v_aspen between prism's read and its later check.\"},{\"variable\":\"v_aspen\",\"a1_line\":20,\"a1_kind\":\"read\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"harbor can change v_aspen between prism's read and its later check.\"},{\"variable\":\"v_aspen\",\"a1_line\":20,\"a1_kind\":\"read\",\"b_line\":49,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"loom can change v_aspen between prism's read and its later check.\"},{\"variable\":\"v_aspen\",\"a1_line\":20,\"a1_kind\":\"write\",\"b_line\":36,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"wharf can overwrite v_aspen between prism's increment and its check.\"},{\"variable\":\"v_aspen\",\"a1_line\":20,\"a1_kind\":\"write\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"harbor can overwrite v_aspen between prism's increment and its check.\"},{\"variable\":\"v_aspen\",\"a1_line\":20,\"a1_kind\":\"write\",\"b_line\":49,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"loom can overwrite v_aspen between prism's increment and its check.\"},{\"variable\":\"v_aspen\",\"a1_line\":28,\"a1_kind\":\"write\",\"b_line\":36,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"read\",\"why\":\"wharf can overwrite v_aspen between flint's write and check.\"},{\"variable\":\"v_aspen\",\"a1_line\":28,\"a1_kind\":\"write\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"read\",\"why\":\"harbor can modify v_aspen between flint's write and check.\"},{\"variable\":\"v_aspen\",\"a1_line\":28,\"a1_kind\":\"write\",\"b_line\":49,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"read\",\"why\":\"loom can reset v_aspen between flint's write and check.\"},{\"variable\":\"v_aspen\",\"a1_line\":36,\"a1_kind\":\"write\",\"b_line\":49,\"b_kind\":\"write\",\"a2_line\":37,\"a2_kind\":\"read\",\"why\":\"loom (higher priority) can reset v_aspen between wharf's write and check.\"},{\"variable\":\"v_aspen\",\"a1_line\":44,\"a1_kind\":\"read\",\"b_line\":36,\"b_kind\":\"write\",\"a2_line\":44,\"a2_kind\":\"write\",\"why\":\"wharf preempts harbor's v_aspen++ and its write is lost.\"},{\"variable\":\"v_aspen\",\"a1_line\":44,\"a1_kind\":\"read\",\"b_line\":49,\"b_kind\":\"write\",\"a2_line\":44,\"a2_kind\":\"write\",\"why\":\"loom preempts harbor's v_aspen++ and its write is lost.\"}]}",
+  "wall_s": 14.898428440093994,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 2203,
+    "cache_read": 0,
+    "cache_write": 2683,
+    "latency_s": 14.896269832970574
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,1407 @@
+{
+  "parsed": {
+    "cases": [
+      {
+        "case": "program_01",
+        "violations": [
+          {
+            "variable": "v_aspen",
+            "a1_line": 20,
+            "a1_kind": "write",
+            "b_line": 36,
+            "b_kind": "write",
+            "a2_line": 21,
+            "a2_kind": "read",
+            "why": "irq_wharf (prio 4) can preempt irq_prism between the increment and the check."
+          },
+          {
+            "variable": "v_aspen",
+            "a1_line": 20,
+            "a1_kind": "write",
+            "b_line": 44,
+            "b_kind": "write",
+            "a2_line": 21,
+            "a2_kind": "read",
+            "why": "irq_harbor (prio 3) preempts irq_prism and changes v_aspen."
+          },
+          {
+            "variable": "v_aspen",
+            "a1_line": 20,
+            "a1_kind": "write",
+            "b_line": 49,
+            "b_kind": "write",
+            "a2_line": 21,
+            "a2_kind": "read",
+            "why": "irq_loom (prio 5) preempts irq_prism and resets v_aspen."
+          },
+          {
+            "variable": "v_aspen",
+            "a1_line": 28,
+            "a1_kind": "write",
+            "b_line": 36,
+            "b_kind": "write",
+            "a2_line": 29,
+            "a2_kind": "read",
+            "why": "irq_wharf preempts irq_flint between write and check."
+          },
+          {
+            "variable": "v_aspen",
+            "a1_line": 28,
+            "a1_kind": "write",
+            "b_line": 44,
+            "b_kind": "write",
+            "a2_line": 29,
+            "a2_kind": "read",
+            "why": "irq_harbor preempts irq_flint between write and check."
+          },
+          {
+            "variable": "v_aspen",
+            "a1_line": 28,
+            "a1_kind": "write",
+            "b_line": 49,
+            "b_kind": "write",
+            "a2_line": 29,
+            "a2_kind": "read",
+            "why": "irq_loom preempts irq_flint between write and check."
+          },
+          {
+            "variable": "v_aspen",
+            "a1_line": 36,
+            "a1_kind": "write",
+            "b_line": 49,
+            "b_kind": "write",
+            "a2_line": 37,
+            "a2_kind": "read",
+            "why": "irq_loom (prio 5) preempts irq_wharf (prio 4) between write and check."
+          }
+        ]
+      },
+      {
+        "case": "program_02",
+        "violations": [
+          {
+            "variable": "v_drift",
+            "a1_line": 109,
+            "a1_kind": "read",
+            "b_line": 135,
+            "b_kind": "write",
+            "a2_line": 110,
+            "a2_kind": "read",
+            "why": "irq_pebble can write v_drift between main's two reads in fn_garnet after interrupts are enabled."
+          },
+          {
+            "variable": "v_urchin",
+            "a1_line": 111,
+            "a1_kind": "read",
+            "b_line": 136,
+            "b_kind": "write",
+            "a2_line": 112,
+            "a2_kind": "read",
+            "why": "irq_pebble may write v_urchin between the two reads in main."
+          }
+        ]
+      },
+      {
+        "case": "program_03",
+        "violations": [
+          {
+            "variable": "v_ember",
+            "a1_line": 20,
+            "a1_kind": "write",
+            "b_line": 36,
+            "b_kind": "write",
+            "a2_line": 21,
+            "a2_kind": "read",
+            "why": "irq_velvet (prio 4) preempts irq_loom between update and check."
+          },
+          {
+            "variable": "v_ember",
+            "a1_line": 28,
+            "a1_kind": "write",
+            "b_line": 20,
+            "b_kind": "write",
+            "a2_line": 29,
+            "a2_kind": "read",
+            "why": "irq_loom preempts irq_bluff between write and check."
+          },
+          {
+            "variable": "v_ember",
+            "a1_line": 28,
+            "a1_kind": "write",
+            "b_line": 36,
+            "b_kind": "write",
+            "a2_line": 29,
+            "a2_kind": "read",
+            "why": "irq_velvet preempts irq_bluff."
+          },
+          {
+            "variable": "v_ember",
+            "a1_line": 28,
+            "a1_kind": "write",
+            "b_line": 44,
+            "b_kind": "write",
+            "a2_line": 29,
+            "a2_kind": "read",
+            "why": "irq_reef preempts irq_bluff."
+          }
+        ]
+      },
+      {
+        "case": "program_04",
+        "violations": [
+          {
+            "variable": "v_fern",
+            "a1_line": 244,
+            "a1_kind": "write",
+            "b_line": 156,
+            "b_kind": "write",
+            "a2_line": 245,
+            "a2_kind": "read",
+            "why": "irq_umbra preempts irq_bluff between write and read."
+          },
+          {
+            "variable": "v_fern",
+            "a1_line": 244,
+            "a1_kind": "write",
+            "b_line": 156,
+            "b_kind": "write",
+            "a2_line": 246,
+            "a2_kind": "read",
+            "why": "irq_umbra preempts irq_bluff before second read."
+          },
+          {
+            "variable": "v_fern",
+            "a1_line": 245,
+            "a1_kind": "read",
+            "b_line": 156,
+            "b_kind": "write",
+            "a2_line": 246,
+            "a2_kind": "read",
+            "why": "irq_umbra can change v_fern between the two reads."
+          },
+          {
+            "variable": "v_nectar",
+            "a1_line": 278,
+            "a1_kind": "write",
+            "b_line": 159,
+            "b_kind": "write",
+            "a2_line": 280,
+            "a2_kind": "read",
+            "why": "irq_umbra (prio 5) preempts irq_ermine."
+          },
+          {
+            "variable": "v_nectar",
+            "a1_line": 177,
+            "a1_kind": "write",
+            "b_line": 159,
+            "b_kind": "write",
+            "a2_line": 178,
+            "a2_kind": "read",
+            "why": "irq_umbra preempts irq_falcon."
+          },
+          {
+            "variable": "v_nectar",
+            "a1_line": 265,
+            "a1_kind": "write",
+            "b_line": 159,
+            "b_kind": "write",
+            "a2_line": 266,
+            "a2_kind": "read",
+            "why": "irq_umbra preempts irq_vine."
+          },
+          {
+            "variable": "v_nectar",
+            "a1_line": 197,
+            "a1_kind": "write",
+            "b_line": 159,
+            "b_kind": "write",
+            "a2_line": 198,
+            "a2_kind": "read",
+            "why": "irq_umbra preempts irq_rust."
+          },
+          {
+            "variable": "v_nectar",
+            "a1_line": 233,
+            "a1_kind": "write",
+            "b_line": 159,
+            "b_kind": "write",
+            "a2_line": 235,
+            "a2_kind": "read",
+            "why": "irq_umbra preempts irq_bluff."
+          },
+          {
+            "variable": "v_nectar",
+            "a1_line": 250,
+            "a1_kind": "write",
+            "b_line": 159,
+            "b_kind": "write",
+            "a2_line": 252,
+            "a2_kind": "read",
+            "why": "irq_umbra preempts irq_prism."
+          },
+          {
+            "variable": "v_nectar",
+            "a1_line": 215,
+            "a1_kind": "write",
+            "b_line": 159,
+            "b_kind": "write",
+            "a2_line": 216,
+            "a2_kind": "read",
+            "why": "irq_umbra preempts irq_ember."
+          },
+          {
+            "variable": "v_reef",
+            "a1_line": 175,
+            "a1_kind": "write",
+            "b_line": 157,
+            "b_kind": "write",
+            "a2_line": 180,
+            "a2_kind": "read",
+            "why": "irq_umbra preempts irq_falcon."
+          },
+          {
+            "variable": "v_reef",
+            "a1_line": 195,
+            "a1_kind": "write",
+            "b_line": 157,
+            "b_kind": "write",
+            "a2_line": 200,
+            "a2_kind": "read",
+            "why": "irq_umbra preempts irq_rust."
+          },
+          {
+            "variable": "v_reef",
+            "a1_line": 213,
+            "a1_kind": "write",
+            "b_line": 157,
+            "b_kind": "write",
+            "a2_line": 218,
+            "a2_kind": "read",
+            "why": "irq_umbra preempts irq_ember."
+          }
+        ]
+      },
+      {
+        "case": "program_05",
+        "violations": [
+          {
+            "variable": "v_fern",
+            "a1_line": 150,
+            "a1_kind": "write",
+            "b_line": 116,
+            "b_kind": "write",
+            "a2_line": 181,
+            "a2_kind": "read",
+            "why": "irq_raptor (prio 6) preempts irq_glacier."
+          },
+          {
+            "variable": "v_fern",
+            "a1_line": 150,
+            "a1_kind": "write",
+            "b_line": 116,
+            "b_kind": "write",
+            "a2_line": 184,
+            "a2_kind": "read",
+            "why": "irq_raptor preempts irq_glacier."
+          },
+          {
+            "variable": "v_velvet",
+            "a1_line": 151,
+            "a1_kind": "write",
+            "b_line": 117,
+            "b_kind": "write",
+            "a2_line": 156,
+            "a2_kind": "read",
+            "why": "irq_raptor preempts irq_glacier."
+          },
+          {
+            "variable": "v_velvet",
+            "a1_line": 151,
+            "a1_kind": "write",
+            "b_line": 117,
+            "b_kind": "write",
+            "a2_line": 177,
+            "a2_kind": "read",
+            "why": "irq_raptor preempts irq_glacier."
+          },
+          {
+            "variable": "v_velvet",
+            "a1_line": 200,
+            "a1_kind": "write",
+            "b_line": 117,
+            "b_kind": "write",
+            "a2_line": 204,
+            "a2_kind": "read",
+            "why": "irq_raptor preempts irq_willow."
+          },
+          {
+            "variable": "v_velvet",
+            "a1_line": 200,
+            "a1_kind": "write",
+            "b_line": 117,
+            "b_kind": "write",
+            "a2_line": 224,
+            "a2_kind": "read",
+            "why": "irq_raptor preempts irq_willow."
+          },
+          {
+            "variable": "v_velvet",
+            "a1_line": 270,
+            "a1_kind": "write",
+            "b_line": 117,
+            "b_kind": "write",
+            "a2_line": 273,
+            "a2_kind": "read",
+            "why": "irq_raptor preempts irq_urchin."
+          },
+          {
+            "variable": "v_velvet",
+            "a1_line": 270,
+            "a1_kind": "write",
+            "b_line": 117,
+            "b_kind": "write",
+            "a2_line": 293,
+            "a2_kind": "read",
+            "why": "irq_raptor preempts irq_urchin."
+          },
+          {
+            "variable": "v_beacon",
+            "a1_line": 267,
+            "a1_kind": "write",
+            "b_line": 119,
+            "b_kind": "write",
+            "a2_line": 297,
+            "a2_kind": "read",
+            "why": "irq_raptor preempts irq_urchin."
+          },
+          {
+            "variable": "v_beacon",
+            "a1_line": 267,
+            "a1_kind": "write",
+            "b_line": 119,
+            "b_kind": "write",
+            "a2_line": 300,
+            "a2_kind": "read",
+            "why": "irq_raptor preempts irq_urchin."
+          },
+          {
+            "variable": "v_upland",
+            "a1_line": 196,
+            "a1_kind": "write",
+            "b_line": 120,
+            "b_kind": "write",
+            "a2_line": 228,
+            "a2_kind": "read",
+            "why": "irq_raptor preempts irq_willow."
+          },
+          {
+            "variable": "v_upland",
+            "a1_line": 196,
+            "a1_kind": "write",
+            "b_line": 120,
+            "b_kind": "write",
+            "a2_line": 231,
+            "a2_kind": "read",
+            "why": "irq_raptor preempts irq_willow."
+          },
+          {
+            "variable": "v_lantern",
+            "a1_line": 108,
+            "a1_kind": "read",
+            "b_line": 134,
+            "b_kind": "write",
+            "a2_line": 109,
+            "a2_kind": "read",
+            "why": "irq_raptor writes v_lantern between main's reads (v_knoll is 1)."
+          }
+        ]
+      },
+      {
+        "case": "program_06",
+        "violations": [
+          {
+            "variable": "v_falcon",
+            "a1_line": 20,
+            "a1_kind": "write",
+            "b_line": 34,
+            "b_kind": "write",
+            "a2_line": 21,
+            "a2_kind": "read",
+            "why": "irq_urchin (prio 3) preempts irq_yarrow."
+          },
+          {
+            "variable": "v_falcon",
+            "a1_line": 20,
+            "a1_kind": "write",
+            "b_line": 35,
+            "b_kind": "write",
+            "a2_line": 21,
+            "a2_kind": "read",
+            "why": "irq_urchin sets v_falcon=0 between."
+          },
+          {
+            "variable": "v_falcon",
+            "a1_line": 27,
+            "a1_kind": "write",
+            "b_line": 34,
+            "b_kind": "write",
+            "a2_line": 28,
+            "a2_kind": "read",
+            "why": "irq_urchin preempts irq_grove."
+          },
+          {
+            "variable": "v_falcon",
+            "a1_line": 27,
+            "a1_kind": "write",
+            "b_line": 35,
+            "b_kind": "write",
+            "a2_line": 28,
+            "a2_kind": "read",
+            "why": "irq_urchin preempts irq_grove."
+          }
+        ]
+      },
+      {
+        "case": "program_07",
+        "violations": [
+          {
+            "variable": "v_harbor",
+            "a1_line": 144,
+            "a1_kind": "write",
+            "b_line": 159,
+            "b_kind": "write",
+            "a2_line": 145,
+            "a2_kind": "read",
+            "why": "irq_acorn can preempt irq_ridge (equal priority may preempt)."
+          },
+          {
+            "variable": "v_harbor",
+            "a1_line": 144,
+            "a1_kind": "write",
+            "b_line": 113,
+            "b_kind": "write",
+            "a2_line": 145,
+            "a2_kind": "read",
+            "why": "irq_acorn's fn_cobalt writes v_harbor between."
+          },
+          {
+            "variable": "v_harbor",
+            "a1_line": 145,
+            "a1_kind": "read",
+            "b_line": 159,
+            "b_kind": "write",
+            "a2_line": 106,
+            "a2_kind": "write",
+            "why": "irq_acorn writes v_harbor between the check and fn_bluff's write."
+          },
+          {
+            "variable": "v_wharf",
+            "a1_line": 142,
+            "a1_kind": "write",
+            "b_line": 157,
+            "b_kind": "write",
+            "a2_line": 114,
+            "a2_kind": "read",
+            "why": "irq_acorn writes v_wharf between write and read in ridge."
+          },
+          {
+            "variable": "v_wharf",
+            "a1_line": 157,
+            "a1_kind": "write",
+            "b_line": 142,
+            "b_kind": "write",
+            "a2_line": 114,
+            "a2_kind": "read",
+            "why": "irq_ridge preempts irq_acorn."
+          },
+          {
+            "variable": "v_velvet",
+            "a1_line": 136,
+            "a1_kind": "read",
+            "b_line": 153,
+            "b_kind": "write",
+            "a2_line": 137,
+            "a2_kind": "read",
+            "why": "irq_acorn writes v_velvet between the two reads in fn_maple."
+          },
+          {
+            "variable": "v_quill",
+            "a1_line": 170,
+            "a1_kind": "write",
+            "b_line": 162,
+            "b_kind": "write",
+            "a2_line": 173,
+            "a2_kind": "read",
+            "why": "irq_acorn preempts irq_north."
+          }
+        ]
+      },
+      {
+        "case": "program_08",
+        "violations": [
+          {
+            "variable": "v_saffron",
+            "a1_line": 46,
+            "a1_kind": "write",
+            "b_line": 55,
+            "b_kind": "write",
+            "a2_line": 50,
+            "a2_kind": "read",
+            "why": "irq_pebble preempts irq_tide."
+          },
+          {
+            "variable": "v_saffron",
+            "a1_line": 46,
+            "a1_kind": "write",
+            "b_line": 61,
+            "b_kind": "write",
+            "a2_line": 50,
+            "a2_kind": "read",
+            "why": "irq_husk preempts irq_tide."
+          },
+          {
+            "variable": "v_saffron",
+            "a1_line": 46,
+            "a1_kind": "write",
+            "b_line": 72,
+            "b_kind": "write",
+            "a2_line": 50,
+            "a2_kind": "read",
+            "why": "irq_drift preempts irq_tide."
+          },
+          {
+            "variable": "v_saffron",
+            "a1_line": 61,
+            "a1_kind": "write",
+            "b_line": 72,
+            "b_kind": "write",
+            "a2_line": 65,
+            "a2_kind": "read",
+            "why": "irq_drift preempts irq_husk."
+          },
+          {
+            "variable": "v_lantern",
+            "a1_line": 34,
+            "a1_kind": "read",
+            "b_line": 79,
+            "b_kind": "write",
+            "a2_line": 35,
+            "a2_kind": "read",
+            "why": "irq_drift writes v_lantern between reads in fn_oasis (irq_nook)."
+          }
+        ]
+      },
+      {
+        "case": "program_09",
+        "violations": [
+          {
+            "variable": "v_velvet",
+            "a1_line": 158,
+            "a1_kind": "write",
+            "b_line": 167,
+            "b_kind": "write",
+            "a2_line": 159,
+            "a2_kind": "read",
+            "why": "irq_vine preempts irq_lantern."
+          },
+          {
+            "variable": "v_velvet",
+            "a1_line": 158,
+            "a1_kind": "write",
+            "b_line": 120,
+            "b_kind": "write",
+            "a2_line": 159,
+            "a2_kind": "read",
+            "why": "irq_vine's fn_tide clears v_velvet."
+          },
+          {
+            "variable": "v_velvet",
+            "a1_line": 158,
+            "a1_kind": "write",
+            "b_line": 127,
+            "b_kind": "write",
+            "a2_line": 159,
+            "a2_kind": "read",
+            "why": "irq_vine's fn_wharf writes v_velvet."
+          },
+          {
+            "variable": "v_knoll",
+            "a1_line": 156,
+            "a1_kind": "write",
+            "b_line": 165,
+            "b_kind": "write",
+            "a2_line": 128,
+            "a2_kind": "read",
+            "why": "irq_vine preempts irq_lantern."
+          },
+          {
+            "variable": "v_larch",
+            "a1_line": 150,
+            "a1_kind": "read",
+            "b_line": 170,
+            "b_kind": "write",
+            "a2_line": 151,
+            "a2_kind": "read",
+            "why": "irq_vine writes v_larch between main's reads."
+          },
+          {
+            "variable": "v_loom",
+            "a1_line": 152,
+            "a1_kind": "read",
+            "b_line": 180,
+            "b_kind": "write",
+            "a2_line": 153,
+            "a2_kind": "read",
+            "why": "irq_nectar writes v_loom between main's reads."
+          }
+        ]
+      },
+      {
+        "case": "program_10",
+        "violations": [
+          {
+            "variable": "v_inlet",
+            "a1_line": 52,
+            "a1_kind": "read",
+            "b_line": 91,
+            "b_kind": "write",
+            "a2_line": 53,
+            "a2_kind": "write",
+            "why": "irq_husk preempts irq_urchin and resets v_inlet."
+          },
+          {
+            "variable": "v_wharf",
+            "a1_line": 46,
+            "a1_kind": "write",
+            "b_line": 90,
+            "b_kind": "write",
+            "a2_line": 47,
+            "a2_kind": "read",
+            "why": "irq_husk preempts irq_urchin."
+          },
+          {
+            "variable": "v_wharf",
+            "a1_line": 47,
+            "a1_kind": "read",
+            "b_line": 90,
+            "b_kind": "write",
+            "a2_line": 50,
+            "a2_kind": "write",
+            "why": "irq_husk writes v_wharf between."
+          }
+        ]
+      },
+      {
+        "case": "program_11",
+        "violations": [
+          {
+            "variable": "v_quiver",
+            "a1_line": 159,
+            "a1_kind": "read",
+            "b_line": 228,
+            "b_kind": "write",
+            "a2_line": 160,
+            "a2_kind": "read",
+            "why": "irq_upland writes v_quiver between reads in fn_north (irq_drift)."
+          },
+          {
+            "variable": "v_yew",
+            "a1_line": 256,
+            "a1_kind": "write",
+            "b_line": 215,
+            "b_kind": "write",
+            "a2_line": 259,
+            "a2_kind": "read",
+            "why": "irq_kestrel preempts irq_ermine."
+          },
+          {
+            "variable": "v_acorn",
+            "a1_line": 167,
+            "a1_kind": "write",
+            "b_line": 218,
+            "b_kind": "write",
+            "a2_line": 168,
+            "a2_kind": "read",
+            "why": "irq_upland preempts irq_drift."
+          },
+          {
+            "variable": "v_acorn",
+            "a1_line": 167,
+            "a1_kind": "write",
+            "b_line": 232,
+            "b_kind": "write",
+            "a2_line": 168,
+            "a2_kind": "read",
+            "why": "irq_falcon preempts irq_drift."
+          },
+          {
+            "variable": "v_acorn",
+            "a1_line": 167,
+            "a1_kind": "write",
+            "b_line": 218,
+            "b_kind": "write",
+            "a2_line": 168,
+            "a2_kind": "read",
+            "why": "duplicate-kind placeholder avoided"
+          },
+          {
+            "variable": "v_acorn",
+            "a1_line": 185,
+            "a1_kind": "write",
+            "b_line": 218,
+            "b_kind": "write",
+            "a2_line": 186,
+            "a2_kind": "read",
+            "why": "irq_upland preempts irq_reef."
+          },
+          {
+            "variable": "v_acorn",
+            "a1_line": 185,
+            "a1_kind": "write",
+            "b_line": 232,
+            "b_kind": "write",
+            "a2_line": 186,
+            "a2_kind": "read",
+            "why": "irq_falcon preempts irq_reef."
+          },
+          {
+            "variable": "v_acorn",
+            "a1_line": 244,
+            "a1_kind": "write",
+            "b_line": 218,
+            "b_kind": "write",
+            "a2_line": 246,
+            "a2_kind": "read",
+            "why": "irq_upland preempts irq_ermine."
+          },
+          {
+            "variable": "v_acorn",
+            "a1_line": 244,
+            "a1_kind": "write",
+            "b_line": 232,
+            "b_kind": "write",
+            "a2_line": 246,
+            "a2_kind": "read",
+            "why": "irq_falcon preempts irq_ermine."
+          },
+          {
+            "variable": "v_wisp",
+            "a1_line": 166,
+            "a1_kind": "write",
+            "b_line": 219,
+            "b_kind": "write",
+            "a2_line": 176,
+            "a2_kind": "read",
+            "why": "irq_upland preempts irq_drift."
+          },
+          {
+            "variable": "v_wisp",
+            "a1_line": 166,
+            "a1_kind": "write",
+            "b_line": 233,
+            "b_kind": "write",
+            "a2_line": 176,
+            "a2_kind": "read",
+            "why": "irq_falcon preempts irq_drift."
+          },
+          {
+            "variable": "v_wisp",
+            "a1_line": 184,
+            "a1_kind": "write",
+            "b_line": 219,
+            "b_kind": "write",
+            "a2_line": 193,
+            "a2_kind": "read",
+            "why": "irq_upland preempts irq_reef."
+          },
+          {
+            "variable": "v_wisp",
+            "a1_line": 184,
+            "a1_kind": "write",
+            "b_line": 233,
+            "b_kind": "write",
+            "a2_line": 193,
+            "a2_kind": "read",
+            "why": "irq_falcon preempts irq_reef."
+          },
+          {
+            "variable": "v_glacier",
+            "a1_line": 165,
+            "a1_kind": "write",
+            "b_line": 200,
+            "b_kind": "write",
+            "a2_line": 170,
+            "a2_kind": "read",
+            "why": "irq_kestrel preempts irq_drift."
+          },
+          {
+            "variable": "v_glacier",
+            "a1_line": 183,
+            "a1_kind": "write",
+            "b_line": 200,
+            "b_kind": "write",
+            "a2_line": 188,
+            "a2_kind": "read",
+            "why": "irq_kestrel preempts irq_reef."
+          }
+        ]
+      },
+      {
+        "case": "program_12",
+        "violations": [
+          {
+            "variable": "v_glacier",
+            "a1_line": 34,
+            "a1_kind": "read",
+            "b_line": 71,
+            "b_kind": "write",
+            "a2_line": 35,
+            "a2_kind": "read",
+            "why": "irq_fjord writes v_glacier between main's two reads in fn_ivory."
+          }
+        ]
+      },
+      {
+        "case": "program_13",
+        "violations": [
+          {
+            "variable": "v_coral",
+            "a1_line": 149,
+            "a1_kind": "read",
+            "b_line": 183,
+            "b_kind": "write",
+            "a2_line": 150,
+            "a2_kind": "read",
+            "why": "irq_inlet (prio 3) preempts irq_umbra's fn_anchor."
+          },
+          {
+            "variable": "v_onyx",
+            "a1_line": 151,
+            "a1_kind": "read",
+            "b_line": 190,
+            "b_kind": "write",
+            "a2_line": 152,
+            "a2_kind": "read",
+            "why": "irq_raptor preempts irq_umbra's fn_anchor."
+          }
+        ]
+      },
+      {
+        "case": "program_14",
+        "violations": [
+          {
+            "variable": "v_knoll",
+            "a1_line": 176,
+            "a1_kind": "write",
+            "b_line": 105,
+            "b_kind": "write",
+            "a2_line": 177,
+            "a2_kind": "read",
+            "why": "irq_wisp preempts irq_raptor."
+          },
+          {
+            "variable": "v_knoll",
+            "a1_line": 176,
+            "a1_kind": "write",
+            "b_line": 105,
+            "b_kind": "write",
+            "a2_line": 178,
+            "a2_kind": "read",
+            "why": "irq_wisp preempts irq_raptor."
+          },
+          {
+            "variable": "v_knoll",
+            "a1_line": 177,
+            "a1_kind": "read",
+            "b_line": 105,
+            "b_kind": "write",
+            "a2_line": 178,
+            "a2_kind": "read",
+            "why": "irq_wisp changes v_knoll between reads."
+          },
+          {
+            "variable": "v_nectar",
+            "a1_line": 139,
+            "a1_kind": "write",
+            "b_line": 110,
+            "b_kind": "write",
+            "a2_line": 144,
+            "a2_kind": "read",
+            "why": "irq_wisp preempts irq_raptor."
+          },
+          {
+            "variable": "v_nectar",
+            "a1_line": 139,
+            "a1_kind": "write",
+            "b_line": 110,
+            "b_kind": "write",
+            "a2_line": 164,
+            "a2_kind": "read",
+            "why": "irq_wisp preempts irq_raptor."
+          },
+          {
+            "variable": "v_nectar",
+            "a1_line": 190,
+            "a1_kind": "write",
+            "b_line": 110,
+            "b_kind": "write",
+            "a2_line": 194,
+            "a2_kind": "read",
+            "why": "irq_wisp preempts irq_yew."
+          },
+          {
+            "variable": "v_nectar",
+            "a1_line": 190,
+            "a1_kind": "write",
+            "b_line": 110,
+            "b_kind": "write",
+            "a2_line": 214,
+            "a2_kind": "read",
+            "why": "irq_wisp preempts irq_yew."
+          },
+          {
+            "variable": "v_maple",
+            "a1_line": 138,
+            "a1_kind": "write",
+            "b_line": 109,
+            "b_kind": "write",
+            "a2_line": 168,
+            "a2_kind": "read",
+            "why": "irq_wisp preempts irq_raptor."
+          },
+          {
+            "variable": "v_maple",
+            "a1_line": 138,
+            "a1_kind": "write",
+            "b_line": 109,
+            "b_kind": "write",
+            "a2_line": 171,
+            "a2_kind": "read",
+            "why": "irq_wisp preempts irq_raptor."
+          },
+          {
+            "variable": "v_ember",
+            "a1_line": 186,
+            "a1_kind": "write",
+            "b_line": 113,
+            "b_kind": "write",
+            "a2_line": 218,
+            "a2_kind": "read",
+            "why": "irq_wisp preempts irq_yew."
+          },
+          {
+            "variable": "v_ember",
+            "a1_line": 186,
+            "a1_kind": "write",
+            "b_line": 113,
+            "b_kind": "write",
+            "a2_line": 221,
+            "a2_kind": "read",
+            "why": "irq_wisp preempts irq_yew."
+          }
+        ]
+      },
+      {
+        "case": "program_15",
+        "violations": [
+          {
+            "variable": "v_prism",
+            "a1_line": 51,
+            "a1_kind": "read",
+            "b_line": 62,
+            "b_kind": "write",
+            "a2_line": 52,
+            "a2_kind": "write",
+            "why": "irq_anchor (prio 6) preempts irq_kelp between index use and increment."
+          },
+          {
+            "variable": "v_prism",
+            "a1_line": 95,
+            "a1_kind": "read",
+            "b_line": 62,
+            "b_kind": "write",
+            "a2_line": 101,
+            "a2_kind": "write",
+            "why": "irq_anchor preempts irq_thorn between read and write."
+          },
+          {
+            "variable": "v_prism",
+            "a1_line": 95,
+            "a1_kind": "read",
+            "b_line": 52,
+            "b_kind": "write",
+            "a2_line": 101,
+            "a2_kind": "write",
+            "why": "irq_kelp (prio 5) preempts irq_thorn."
+          },
+          {
+            "variable": "v_falcon",
+            "a1_line": 56,
+            "a1_kind": "write",
+            "b_line": 61,
+            "b_kind": "write",
+            "a2_line": 57,
+            "a2_kind": "read",
+            "why": "irq_anchor preempts irq_summit."
+          },
+          {
+            "variable": "v_falcon",
+            "a1_line": 56,
+            "a1_kind": "write",
+            "b_line": 100,
+            "b_kind": "write",
+            "a2_line": 57,
+            "a2_kind": "read",
+            "why": "irq_thorn (prio 3) preempts irq_summit."
+          }
+        ]
+      },
+      {
+        "case": "program_16",
+        "violations": [
+          {
+            "variable": "v_loom",
+            "a1_line": 47,
+            "a1_kind": "write",
+            "b_line": 58,
+            "b_kind": "write",
+            "a2_line": 48,
+            "a2_kind": "read",
+            "why": "irq_amber preempts irq_fern."
+          },
+          {
+            "variable": "v_loom",
+            "a1_line": 47,
+            "a1_kind": "write",
+            "b_line": 97,
+            "b_kind": "write",
+            "a2_line": 48,
+            "a2_kind": "read",
+            "why": "irq_cobalt preempts irq_fern."
+          },
+          {
+            "variable": "v_loom",
+            "a1_line": 48,
+            "a1_kind": "read",
+            "b_line": 58,
+            "b_kind": "write",
+            "a2_line": 51,
+            "a2_kind": "write",
+            "why": "irq_amber writes v_loom between."
+          },
+          {
+            "variable": "v_loom",
+            "a1_line": 58,
+            "a1_kind": "write",
+            "b_line": 97,
+            "b_kind": "write",
+            "a2_line": 59,
+            "a2_kind": "read",
+            "why": "irq_cobalt preempts irq_amber."
+          },
+          {
+            "variable": "v_ridge",
+            "a1_line": 53,
+            "a1_kind": "read",
+            "b_line": 98,
+            "b_kind": "write",
+            "a2_line": 54,
+            "a2_kind": "write",
+            "why": "irq_cobalt resets v_ridge between index use and increment."
+          }
+        ]
+      },
+      {
+        "case": "program_17",
+        "violations": [
+          {
+            "variable": "v_meadow",
+            "a1_line": 41,
+            "a1_kind": "write",
+            "b_line": 56,
+            "b_kind": "write",
+            "a2_line": 45,
+            "a2_kind": "read",
+            "why": "irq_grove preempts irq_shoal."
+          },
+          {
+            "variable": "v_meadow",
+            "a1_line": 41,
+            "a1_kind": "write",
+            "b_line": 67,
+            "b_kind": "write",
+            "a2_line": 45,
+            "a2_kind": "read",
+            "why": "irq_delta preempts irq_shoal."
+          },
+          {
+            "variable": "v_meadow",
+            "a1_line": 41,
+            "a1_kind": "write",
+            "b_line": 73,
+            "b_kind": "write",
+            "a2_line": 45,
+            "a2_kind": "read",
+            "why": "irq_ermine preempts irq_shoal."
+          },
+          {
+            "variable": "v_meadow",
+            "a1_line": 41,
+            "a1_kind": "write",
+            "b_line": 79,
+            "b_kind": "write",
+            "a2_line": 45,
+            "a2_kind": "read",
+            "why": "irq_vine preempts irq_shoal."
+          },
+          {
+            "variable": "v_meadow",
+            "a1_line": 41,
+            "a1_kind": "write",
+            "b_line": 86,
+            "b_kind": "write",
+            "a2_line": 45,
+            "a2_kind": "read",
+            "why": "irq_crest preempts irq_shoal."
+          },
+          {
+            "variable": "v_meadow",
+            "a1_line": 41,
+            "a1_kind": "write",
+            "b_line": 100,
+            "b_kind": "write",
+            "a2_line": 45,
+            "a2_kind": "read",
+            "why": "irq_kiln preempts irq_shoal."
+          },
+          {
+            "variable": "v_meadow",
+            "a1_line": 79,
+            "a1_kind": "write",
+            "b_line": 73,
+            "b_kind": "write",
+            "a2_line": 80,
+            "a2_kind": "read",
+            "why": "irq_ermine preempts irq_vine."
+          },
+          {
+            "variable": "v_meadow",
+            "a1_line": 79,
+            "a1_kind": "write",
+            "b_line": 86,
+            "b_kind": "write",
+            "a2_line": 80,
+            "a2_kind": "read",
+            "why": "irq_crest preempts irq_vine."
+          },
+          {
+            "variable": "v_meadow",
+            "a1_line": 79,
+            "a1_kind": "write",
+            "b_line": 100,
+            "b_kind": "write",
+            "a2_line": 80,
+            "a2_kind": "read",
+            "why": "irq_kiln preempts irq_vine."
+          },
+          {
+            "variable": "v_umbra",
+            "a1_line": 18,
+            "a1_kind": "write",
+            "b_line": 14,
+            "b_kind": "write",
+            "a2_line": 60,
+            "a2_kind": "read",
+            "why": "a higher ISR (ermine/crest/kiln) writes v_umbra between irq_grove's write and read."
+          },
+          {
+            "variable": "v_marble",
+            "a1_line": 35,
+            "a1_kind": "read",
+            "b_line": 61,
+            "b_kind": "write",
+            "a2_line": 36,
+            "a2_kind": "read",
+            "why": "irq_grove writes v_marble between reads in fn_north (irq_shoal)."
+          },
+          {
+            "variable": "v_ivory",
+            "a1_line": 37,
+            "a1_kind": "read",
+            "b_line": 63,
+            "b_kind": "write",
+            "a2_line": 38,
+            "a2_kind": "read",
+            "why": "irq_grove writes v_ivory between reads in fn_north."
+          },
+          {
+            "variable": "v_knoll",
+            "a1_line": 93,
+            "a1_kind": "write",
+            "b_line": 105,
+            "b_kind": "write",
+            "a2_line": 96,
+            "a2_kind": "read",
+            "why": "irq_kiln preempts irq_crest."
+          }
+        ]
+      },
+      {
+        "case": "program_18",
+        "violations": [
+          {
+            "variable": "v_glacier",
+            "a1_line": 169,
+            "a1_kind": "write",
+            "b_line": 208,
+            "b_kind": "write",
+            "a2_line": 178,
+            "a2_kind": "read",
+            "why": "irq_tundra preempts irq_loom."
+          },
+          {
+            "variable": "v_glacier",
+            "a1_line": 169,
+            "a1_kind": "write",
+            "b_line": 221,
+            "b_kind": "write",
+            "a2_line": 178,
+            "a2_kind": "read",
+            "why": "irq_iris preempts irq_loom."
+          },
+          {
+            "variable": "v_glacier",
+            "a1_line": 178,
+            "a1_kind": "read",
+            "b_line": 208,
+            "b_kind": "write",
+            "a2_line": 182,
+            "a2_kind": "write",
+            "why": "irq_tundra writes between."
+          },
+          {
+            "variable": "v_glacier",
+            "a1_line": 178,
+            "a1_kind": "read",
+            "b_line": 221,
+            "b_kind": "write",
+            "a2_line": 182,
+            "a2_kind": "write",
+            "why": "irq_iris writes between."
+          },
+          {
+            "variable": "v_glacier",
+            "a1_line": 189,
+            "a1_kind": "write",
+            "b_line": 208,
+            "b_kind": "write",
+            "a2_line": 200,
+            "a2_kind": "read",
+            "why": "irq_tundra preempts irq_harbor."
+          },
+          {
+            "variable": "v_glacier",
+            "a1_line": 189,
+            "a1_kind": "write",
+            "b_line": 221,
+            "b_kind": "write",
+            "a2_line": 200,
+            "a2_kind": "read",
+            "why": "irq_iris preempts irq_harbor."
+          },
+          {
+            "variable": "v_glacier",
+            "a1_line": 200,
+            "a1_kind": "read",
+            "b_line": 208,
+            "b_kind": "write",
+            "a2_line": 203,
+            "a2_kind": "write",
+            "why": "irq_tundra writes between."
+          },
+          {
+            "variable": "v_glacier",
+            "a1_line": 200,
+            "a1_kind": "read",
+            "b_line": 221,
+            "b_kind": "write",
+            "a2_line": 203,
+            "a2_kind": "write",
+            "why": "irq_iris writes between."
+          },
+          {
+            "variable": "v_ridge",
+            "a1_line": 170,
+            "a1_kind": "write",
+            "b_line": 207,
+            "b_kind": "write",
+            "a2_line": 171,
+            "a2_kind": "read",
+            "why": "irq_tundra preempts irq_loom."
+          },
+          {
+            "variable": "v_ridge",
+            "a1_line": 170,
+            "a1_kind": "write",
+            "b_line": 220,
+            "b_kind": "write",
+            "a2_line": 171,
+            "a2_kind": "read",
+            "why": "irq_iris preempts irq_loom."
+          },
+          {
+            "variable": "v_ridge",
+            "a1_line": 190,
+            "a1_kind": "write",
+            "b_line": 207,
+            "b_kind": "write",
+            "a2_line": 191,
+            "a2_kind": "read",
+            "why": "irq_tundra preempts irq_harbor."
+          },
+          {
+            "variable": "v_ridge",
+            "a1_line": 190,
+            "a1_kind": "write",
+            "b_line": 220,
+            "b_kind": "write",
+            "a2_line": 191,
+            "a2_kind": "read",
+            "why": "irq_iris preempts irq_harbor."
+          },
+          {
+            "variable": "v_velvet",
+            "a1_line": 161,
+            "a1_kind": "read",
+            "b_line": 216,
+            "b_kind": "write",
+            "a2_line": 162,
+            "a2_kind": "read",
+            "why": "irq_tundra writes v_velvet between reads in fn_saffron."
+          },
+          {
+            "variable": "v_lantern",
+            "a1_line": 197,
+            "a1_kind": "read",
+            "b_line": 231,
+            "b_kind": "write",
+            "a2_line": 198,
+            "a2_kind": "read",
+            "why": "irq_iris writes v_lantern between irq_harbor's reads."
+          }
+        ]
+      }
+    ]
+  },
+  "text": "{\"cases\":[{\"case\":\"program_01\",\"violations\":[{\"variable\":\"v_aspen\",\"a1_line\":20,\"a1_kind\":\"write\",\"b_line\":36,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"irq_wharf (prio 4) can preempt irq_prism between the increment and the check.\"},{\"variable\":\"v_aspen\",\"a1_line\":20,\"a1_kind\":\"write\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"irq_harbor (prio 3) preempts irq_prism and changes v_aspen.\"},{\"variable\":\"v_aspen\",\"a1_line\":20,\"a1_kind\":\"write\",\"b_line\":49,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"irq_loom (prio 5) preempts irq_prism and resets v_aspen.\"},{\"variable\":\"v_aspen\",\"a1_line\":28,\"a1_kind\":\"write\",\"b_line\":36,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"read\",\"why\":\"irq_wharf preempts irq_flint between write and check.\"},{\"variable\":\"v_aspen\",\"a1_line\":28,\"a1_kind\":\"write\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"read\",\"why\":\"irq_harbor preempts irq_flint between write and check.\"},{\"variable\":\"v_aspen\",\"a1_line\":28,\"a1_kind\":\"write\",\"b_line\":49,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"read\",\"why\":\"irq_loom preempts irq_flint between write and check.\"},{\"variable\":\"v_aspen\",\"a1_line\":36,\"a1_kind\":\"write\",\"b_line\":49,\"b_kind\":\"write\",\"a2_line\":37,\"a2_kind\":\"read\",\"why\":\"irq_loom (prio 5) preempts irq_wharf (prio 4) between write and check.\"}]},{\"case\":\"program_02\",\"violations\":[{\"variable\":\"v_drift\",\"a1_line\":109,\"a1_kind\":\"read\",\"b_line\":135,\"b_kind\":\"write\",\"a2_line\":110,\"a2_kind\":\"read\",\"why\":\"irq_pebble can write v_drift between main's two reads in fn_garnet after interrupts are enabled.\"},{\"variable\":\"v_urchin\",\"a1_line\":111,\"a1_kind\":\"read\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":112,\"a2_kind\":\"read\",\"why\":\"irq_pebble may write v_urchin between the two reads in main.\"}]},{\"case\":\"program_03\",\"violations\":[{\"variable\":\"v_ember\",\"a1_line\":20,\"a1_kind\":\"write\",\"b_line\":36,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"irq_velvet (prio 4) preempts irq_loom between update and check.\"},{\"variable\":\"v_ember\",\"a1_line\":28,\"a1_kind\":\"write\",\"b_line\":20,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"read\",\"why\":\"irq_loom preempts irq_bluff between write and check.\"},{\"variable\":\"v_ember\",\"a1_line\":28,\"a1_kind\":\"write\",\"b_line\":36,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"read\",\"why\":\"irq_velvet preempts irq_bluff.\"},{\"variable\":\"v_ember\",\"a1_line\":28,\"a1_kind\":\"write\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"read\",\"why\":\"irq_reef preempts irq_bluff.\"}]},{\"case\":\"program_04\",\"violations\":[{\"variable\":\"v_fern\",\"a1_line\":244,\"a1_kind\":\"write\",\"b_line\":156,\"b_kind\":\"write\",\"a2_line\":245,\"a2_kind\":\"read\",\"why\":\"irq_umbra preempts irq_bluff between write and read.\"},{\"variable\":\"v_fern\",\"a1_line\":244,\"a1_kind\":\"write\",\"b_line\":156,\"b_kind\":\"write\",\"a2_line\":246,\"a2_kind\":\"read\",\"why\":\"irq_umbra preempts irq_bluff before second read.\"},{\"variable\":\"v_fern\",\"a1_line\":245,\"a1_kind\":\"read\",\"b_line\":156,\"b_kind\":\"write\",\"a2_line\":246,\"a2_kind\":\"read\",\"why\":\"irq_umbra can change v_fern between the two reads.\"},{\"variable\":\"v_nectar\",\"a1_line\":278,\"a1_kind\":\"write\",\"b_line\":159,\"b_kind\":\"write\",\"a2_line\":280,\"a2_kind\":\"read\",\"why\":\"irq_umbra (prio 5) preempts irq_ermine.\"},{\"variable\":\"v_nectar\",\"a1_line\":177,\"a1_kind\":\"write\",\"b_line\":159,\"b_kind\":\"write\",\"a2_line\":178,\"a2_kind\":\"read\",\"why\":\"irq_umbra preempts irq_falcon.\"},{\"variable\":\"v_nectar\",\"a1_line\":265,\"a1_kind\":\"write\",\"b_line\":159,\"b_kind\":\"write\",\"a2_line\":266,\"a2_kind\":\"read\",\"why\":\"irq_umbra preempts irq_vine.\"},{\"variable\":\"v_nectar\",\"a1_line\":197,\"a1_kind\":\"write\",\"b_line\":159,\"b_kind\":\"write\",\"a2_line\":198,\"a2_kind\":\"read\",\"why\":\"irq_umbra preempts irq_rust.\"},{\"variable\":\"v_nectar\",\"a1_line\":233,\"a1_kind\":\"write\",\"b_line\":159,\"b_kind\":\"write\",\"a2_line\":235,\"a2_kind\":\"read\",\"why\":\"irq_umbra preempts irq_bluff.\"},{\"variable\":\"v_nectar\",\"a1_line\":250,\"a1_kind\":\"write\",\"b_line\":159,\"b_kind\":\"write\",\"a2_line\":252,\"a2_kind\":\"read\",\"why\":\"irq_umbra preempts irq_prism.\"},{\"variable\":\"v_nectar\",\"a1_line\":215,\"a1_kind\":\"write\",\"b_line\":159,\"b_kind\":\"write\",\"a2_line\":216,\"a2_kind\":\"read\",\"why\":\"irq_umbra preempts irq_ember.\"},{\"variable\":\"v_reef\",\"a1_line\":175,\"a1_kind\":\"write\",\"b_line\":157,\"b_kind\":\"write\",\"a2_line\":180,\"a2_kind\":\"read\",\"why\":\"irq_umbra preempts irq_falcon.\"},{\"variable\":\"v_reef\",\"a1_line\":195,\"a1_kind\":\"write\",\"b_line\":157,\"b_kind\":\"write\",\"a2_line\":200,\"a2_kind\":\"read\",\"why\":\"irq_umbra preempts irq_rust.\"},{\"variable\":\"v_reef\",\"a1_line\":213,\"a1_kind\":\"write\",\"b_line\":157,\"b_kind\":\"write\",\"a2_line\":218,\"a2_kind\":\"read\",\"why\":\"irq_umbra preempts irq_ember.\"}]},{\"case\":\"program_05\",\"violations\":[{\"variable\":\"v_fern\",\"a1_line\":150,\"a1_kind\":\"write\",\"b_line\":116,\"b_kind\":\"write\",\"a2_line\":181,\"a2_kind\":\"read\",\"why\":\"irq_raptor (prio 6) preempts irq_glacier.\"},{\"variable\":\"v_fern\",\"a1_line\":150,\"a1_kind\":\"write\",\"b_line\":116,\"b_kind\":\"write\",\"a2_line\":184,\"a2_kind\":\"read\",\"why\":\"irq_raptor preempts irq_glacier.\"},{\"variable\":\"v_velvet\",\"a1_line\":151,\"a1_kind\":\"write\",\"b_line\":117,\"b_kind\":\"write\",\"a2_line\":156,\"a2_kind\":\"read\",\"why\":\"irq_raptor preempts irq_glacier.\"},{\"variable\":\"v_velvet\",\"a1_line\":151,\"a1_kind\":\"write\",\"b_line\":117,\"b_kind\":\"write\",\"a2_line\":177,\"a2_kind\":\"read\",\"why\":\"irq_raptor preempts irq_glacier.\"},{\"variable\":\"v_velvet\",\"a1_line\":200,\"a1_kind\":\"write\",\"b_line\":117,\"b_kind\":\"write\",\"a2_line\":204,\"a2_kind\":\"read\",\"why\":\"irq_raptor preempts irq_willow.\"},{\"variable\":\"v_velvet\",\"a1_line\":200,\"a1_kind\":\"write\",\"b_line\":117,\"b_kind\":\"write\",\"a2_line\":224,\"a2_kind\":\"read\",\"why\":\"irq_raptor preempts irq_willow.\"},{\"variable\":\"v_velvet\",\"a1_line\":270,\"a1_kind\":\"write\",\"b_line\":117,\"b_kind\":\"write\",\"a2_line\":273,\"a2_kind\":\"read\",\"why\":\"irq_raptor preempts irq_urchin.\"},{\"variable\":\"v_velvet\",\"a1_line\":270,\"a1_kind\":\"write\",\"b_line\":117,\"b_kind\":\"write\",\"a2_line\":293,\"a2_kind\":\"read\",\"why\":\"irq_raptor preempts irq_urchin.\"},{\"variable\":\"v_beacon\",\"a1_line\":267,\"a1_kind\":\"write\",\"b_line\":119,\"b_kind\":\"write\",\"a2_line\":297,\"a2_kind\":\"read\",\"why\":\"irq_raptor preempts irq_urchin.\"},{\"variable\":\"v_beacon\",\"a1_line\":267,\"a1_kind\":\"write\",\"b_line\":119,\"b_kind\":\"write\",\"a2_line\":300,\"a2_kind\":\"read\",\"why\":\"irq_raptor preempts irq_urchin.\"},{\"variable\":\"v_upland\",\"a1_line\":196,\"a1_kind\":\"write\",\"b_line\":120,\"b_kind\":\"write\",\"a2_line\":228,\"a2_kind\":\"read\",\"why\":\"irq_raptor preempts irq_willow.\"},{\"variable\":\"v_upland\",\"a1_line\":196,\"a1_kind\":\"write\",\"b_line\":120,\"b_kind\":\"write\",\"a2_line\":231,\"a2_kind\":\"read\",\"why\":\"irq_raptor preempts irq_willow.\"},{\"variable\":\"v_lantern\",\"a1_line\":108,\"a1_kind\":\"read\",\"b_line\":134,\"b_kind\":\"write\",\"a2_line\":109,\"a2_kind\":\"read\",\"why\":\"irq_raptor writes v_lantern between main's reads (v_knoll is 1).\"}]},{\"case\":\"program_06\",\"violations\":[{\"variable\":\"v_falcon\",\"a1_line\":20,\"a1_kind\":\"write\",\"b_line\":34,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"irq_urchin (prio 3) preempts irq_yarrow.\"},{\"variable\":\"v_falcon\",\"a1_line\":20,\"a1_kind\":\"write\",\"b_line\":35,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"irq_urchin sets v_falcon=0 between.\"},{\"variable\":\"v_falcon\",\"a1_line\":27,\"a1_kind\":\"write\",\"b_line\":34,\"b_kind\":\"write\",\"a2_line\":28,\"a2_kind\":\"read\",\"why\":\"irq_urchin preempts irq_grove.\"},{\"variable\":\"v_falcon\",\"a1_line\":27,\"a1_kind\":\"write\",\"b_line\":35,\"b_kind\":\"write\",\"a2_line\":28,\"a2_kind\":\"read\",\"why\":\"irq_urchin preempts irq_grove.\"}]},{\"case\":\"program_07\",\"violations\":[{\"variable\":\"v_harbor\",\"a1_line\":144,\"a1_kind\":\"write\",\"b_line\":159,\"b_kind\":\"write\",\"a2_line\":145,\"a2_kind\":\"read\",\"why\":\"irq_acorn can preempt irq_ridge (equal priority may preempt).\"},{\"variable\":\"v_harbor\",\"a1_line\":144,\"a1_kind\":\"write\",\"b_line\":113,\"b_kind\":\"write\",\"a2_line\":145,\"a2_kind\":\"read\",\"why\":\"irq_acorn's fn_cobalt writes v_harbor between.\"},{\"variable\":\"v_harbor\",\"a1_line\":145,\"a1_kind\":\"read\",\"b_line\":159,\"b_kind\":\"write\",\"a2_line\":106,\"a2_kind\":\"write\",\"why\":\"irq_acorn writes v_harbor between the check and fn_bluff's write.\"},{\"variable\":\"v_wharf\",\"a1_line\":142,\"a1_kind\":\"write\",\"b_line\":157,\"b_kind\":\"write\",\"a2_line\":114,\"a2_kind\":\"read\",\"why\":\"irq_acorn writes v_wharf between write and read in ridge.\"},{\"variable\":\"v_wharf\",\"a1_line\":157,\"a1_kind\":\"write\",\"b_line\":142,\"b_kind\":\"write\",\"a2_line\":114,\"a2_kind\":\"read\",\"why\":\"irq_ridge preempts irq_acorn.\"},{\"variable\":\"v_velvet\",\"a1_line\":136,\"a1_kind\":\"read\",\"b_line\":153,\"b_kind\":\"write\",\"a2_line\":137,\"a2_kind\":\"read\",\"why\":\"irq_acorn writes v_velvet between the two reads in fn_maple.\"},{\"variable\":\"v_quill\",\"a1_line\":170,\"a1_kind\":\"write\",\"b_line\":162,\"b_kind\":\"write\",\"a2_line\":173,\"a2_kind\":\"read\",\"why\":\"irq_acorn preempts irq_north.\"}]},{\"case\":\"program_08\",\"violations\":[{\"variable\":\"v_saffron\",\"a1_line\":46,\"a1_kind\":\"write\",\"b_line\":55,\"b_kind\":\"write\",\"a2_line\":50,\"a2_kind\":\"read\",\"why\":\"irq_pebble preempts irq_tide.\"},{\"variable\":\"v_saffron\",\"a1_line\":46,\"a1_kind\":\"write\",\"b_line\":61,\"b_kind\":\"write\",\"a2_line\":50,\"a2_kind\":\"read\",\"why\":\"irq_husk preempts irq_tide.\"},{\"variable\":\"v_saffron\",\"a1_line\":46,\"a1_kind\":\"write\",\"b_line\":72,\"b_kind\":\"write\",\"a2_line\":50,\"a2_kind\":\"read\",\"why\":\"irq_drift preempts irq_tide.\"},{\"variable\":\"v_saffron\",\"a1_line\":61,\"a1_kind\":\"write\",\"b_line\":72,\"b_kind\":\"write\",\"a2_line\":65,\"a2_kind\":\"read\",\"why\":\"irq_drift preempts irq_husk.\"},{\"variable\":\"v_lantern\",\"a1_line\":34,\"a1_kind\":\"read\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":35,\"a2_kind\":\"read\",\"why\":\"irq_drift writes v_lantern between reads in fn_oasis (irq_nook).\"}]},{\"case\":\"program_09\",\"violations\":[{\"variable\":\"v_velvet\",\"a1_line\":158,\"a1_kind\":\"write\",\"b_line\":167,\"b_kind\":\"write\",\"a2_line\":159,\"a2_kind\":\"read\",\"why\":\"irq_vine preempts irq_lantern.\"},{\"variable\":\"v_velvet\",\"a1_line\":158,\"a1_kind\":\"write\",\"b_line\":120,\"b_kind\":\"write\",\"a2_line\":159,\"a2_kind\":\"read\",\"why\":\"irq_vine's fn_tide clears v_velvet.\"},{\"variable\":\"v_velvet\",\"a1_line\":158,\"a1_kind\":\"write\",\"b_line\":127,\"b_kind\":\"write\",\"a2_line\":159,\"a2_kind\":\"read\",\"why\":\"irq_vine's fn_wharf writes v_velvet.\"},{\"variable\":\"v_knoll\",\"a1_line\":156,\"a1_kind\":\"write\",\"b_line\":165,\"b_kind\":\"write\",\"a2_line\":128,\"a2_kind\":\"read\",\"why\":\"irq_vine preempts irq_lantern.\"},{\"variable\":\"v_larch\",\"a1_line\":150,\"a1_kind\":\"read\",\"b_line\":170,\"b_kind\":\"write\",\"a2_line\":151,\"a2_kind\":\"read\",\"why\":\"irq_vine writes v_larch between main's reads.\"},{\"variable\":\"v_loom\",\"a1_line\":152,\"a1_kind\":\"read\",\"b_line\":180,\"b_kind\":\"write\",\"a2_line\":153,\"a2_kind\":\"read\",\"why\":\"irq_nectar writes v_loom between main's reads.\"}]},{\"case\":\"program_10\",\"violations\":[{\"variable\":\"v_inlet\",\"a1_line\":52,\"a1_kind\":\"read\",\"b_line\":91,\"b_kind\":\"write\",\"a2_line\":53,\"a2_kind\":\"write\",\"why\":\"irq_husk preempts irq_urchin and resets v_inlet.\"},{\"variable\":\"v_wharf\",\"a1_line\":46,\"a1_kind\":\"write\",\"b_line\":90,\"b_kind\":\"write\",\"a2_line\":47,\"a2_kind\":\"read\",\"why\":\"irq_husk preempts irq_urchin.\"},{\"variable\":\"v_wharf\",\"a1_line\":47,\"a1_kind\":\"read\",\"b_line\":90,\"b_kind\":\"write\",\"a2_line\":50,\"a2_kind\":\"write\",\"why\":\"irq_husk writes v_wharf between.\"}]},{\"case\":\"program_11\",\"violations\":[{\"variable\":\"v_quiver\",\"a1_line\":159,\"a1_kind\":\"read\",\"b_line\":228,\"b_kind\":\"write\",\"a2_line\":160,\"a2_kind\":\"read\",\"why\":\"irq_upland writes v_quiver between reads in fn_north (irq_drift).\"},{\"variable\":\"v_yew\",\"a1_line\":256,\"a1_kind\":\"write\",\"b_line\":215,\"b_kind\":\"write\",\"a2_line\":259,\"a2_kind\":\"read\",\"why\":\"irq_kestrel preempts irq_ermine.\"},{\"variable\":\"v_acorn\",\"a1_line\":167,\"a1_kind\":\"write\",\"b_line\":218,\"b_kind\":\"write\",\"a2_line\":168,\"a2_kind\":\"read\",\"why\":\"irq_upland preempts irq_drift.\"},{\"variable\":\"v_acorn\",\"a1_line\":167,\"a1_kind\":\"write\",\"b_line\":232,\"b_kind\":\"write\",\"a2_line\":168,\"a2_kind\":\"read\",\"why\":\"irq_falcon preempts irq_drift.\"},{\"variable\":\"v_acorn\",\"a1_line\":167,\"a1_kind\":\"write\",\"b_line\":218,\"b_kind\":\"write\",\"a2_line\":168,\"a2_kind\":\"read\",\"why\":\"duplicate-kind placeholder avoided\"},{\"variable\":\"v_acorn\",\"a1_line\":185,\"a1_kind\":\"write\",\"b_line\":218,\"b_kind\":\"write\",\"a2_line\":186,\"a2_kind\":\"read\",\"why\":\"irq_upland preempts irq_reef.\"},{\"variable\":\"v_acorn\",\"a1_line\":185,\"a1_kind\":\"write\",\"b_line\":232,\"b_kind\":\"write\",\"a2_line\":186,\"a2_kind\":\"read\",\"why\":\"irq_falcon preempts irq_reef.\"},{\"variable\":\"v_acorn\",\"a1_line\":244,\"a1_kind\":\"write\",\"b_line\":218,\"b_kind\":\"write\",\"a2_line\":246,\"a2_kind\":\"read\",\"why\":\"irq_upland preempts irq_ermine.\"},{\"variable\":\"v_acorn\",\"a1_line\":244,\"a1_kind\":\"write\",\"b_line\":232,\"b_kind\":\"write\",\"a2_line\":246,\"a2_kind\":\"read\",\"why\":\"irq_falcon preempts irq_ermine.\"},{\"variable\":\"v_wisp\",\"a1_line\":166,\"a1_kind\":\"write\",\"b_line\":219,\"b_kind\":\"write\",\"a2_line\":176,\"a2_kind\":\"read\",\"why\":\"irq_upland preempts irq_drift.\"},{\"variable\":\"v_wisp\",\"a1_line\":166,\"a1_kind\":\"write\",\"b_line\":233,\"b_kind\":\"write\",\"a2_line\":176,\"a2_kind\":\"read\",\"why\":\"irq_falcon preempts irq_drift.\"},{\"variable\":\"v_wisp\",\"a1_line\":184,\"a1_kind\":\"write\",\"b_line\":219,\"b_kind\":\"write\",\"a2_line\":193,\"a2_kind\":\"read\",\"why\":\"irq_upland preempts irq_reef.\"},{\"variable\":\"v_wisp\",\"a1_line\":184,\"a1_kind\":\"write\",\"b_line\":233,\"b_kind\":\"write\",\"a2_line\":193,\"a2_kind\":\"read\",\"why\":\"irq_falcon preempts irq_reef.\"},{\"variable\":\"v_glacier\",\"a1_line\":165,\"a1_kind\":\"write\",\"b_line\":200,\"b_kind\":\"write\",\"a2_line\":170,\"a2_kind\":\"read\",\"why\":\"irq_kestrel preempts irq_drift.\"},{\"variable\":\"v_glacier\",\"a1_line\":183,\"a1_kind\":\"write\",\"b_line\":200,\"b_kind\":\"write\",\"a2_line\":188,\"a2_kind\":\"read\",\"why\":\"irq_kestrel preempts irq_reef.\"}]},{\"case\":\"program_12\",\"violations\":[{\"variable\":\"v_glacier\",\"a1_line\":34,\"a1_kind\":\"read\",\"b_line\":71,\"b_kind\":\"write\",\"a2_line\":35,\"a2_kind\":\"read\",\"why\":\"irq_fjord writes v_glacier between main's two reads in fn_ivory.\"}]},{\"case\":\"program_13\",\"violations\":[{\"variable\":\"v_coral\",\"a1_line\":149,\"a1_kind\":\"read\",\"b_line\":183,\"b_kind\":\"write\",\"a2_line\":150,\"a2_kind\":\"read\",\"why\":\"irq_inlet (prio 3) preempts irq_umbra's fn_anchor.\"},{\"variable\":\"v_onyx\",\"a1_line\":151,\"a1_kind\":\"read\",\"b_line\":190,\"b_kind\":\"write\",\"a2_line\":152,\"a2_kind\":\"read\",\"why\":\"irq_raptor preempts irq_umbra's fn_anchor.\"}]},{\"case\":\"program_14\",\"violations\":[{\"variable\":\"v_knoll\",\"a1_line\":176,\"a1_kind\":\"write\",\"b_line\":105,\"b_kind\":\"write\",\"a2_line\":177,\"a2_kind\":\"read\",\"why\":\"irq_wisp preempts irq_raptor.\"},{\"variable\":\"v_knoll\",\"a1_line\":176,\"a1_kind\":\"write\",\"b_line\":105,\"b_kind\":\"write\",\"a2_line\":178,\"a2_kind\":\"read\",\"why\":\"irq_wisp preempts irq_raptor.\"},{\"variable\":\"v_knoll\",\"a1_line\":177,\"a1_kind\":\"read\",\"b_line\":105,\"b_kind\":\"write\",\"a2_line\":178,\"a2_kind\":\"read\",\"why\":\"irq_wisp changes v_knoll between reads.\"},{\"variable\":\"v_nectar\",\"a1_line\":139,\"a1_kind\":\"write\",\"b_line\":110,\"b_kind\":\"write\",\"a2_line\":144,\"a2_kind\":\"read\",\"why\":\"irq_wisp preempts irq_raptor.\"},{\"variable\":\"v_nectar\",\"a1_line\":139,\"a1_kind\":\"write\",\"b_line\":110,\"b_kind\":\"write\",\"a2_line\":164,\"a2_kind\":\"read\",\"why\":\"irq_wisp preempts irq_raptor.\"},{\"variable\":\"v_nectar\",\"a1_line\":190,\"a1_kind\":\"write\",\"b_line\":110,\"b_kind\":\"write\",\"a2_line\":194,\"a2_kind\":\"read\",\"why\":\"irq_wisp preempts irq_yew.\"},{\"variable\":\"v_nectar\",\"a1_line\":190,\"a1_kind\":\"write\",\"b_line\":110,\"b_kind\":\"write\",\"a2_line\":214,\"a2_kind\":\"read\",\"why\":\"irq_wisp preempts irq_yew.\"},{\"variable\":\"v_maple\",\"a1_line\":138,\"a1_kind\":\"write\",\"b_line\":109,\"b_kind\":\"write\",\"a2_line\":168,\"a2_kind\":\"read\",\"why\":\"irq_wisp preempts irq_raptor.\"},{\"variable\":\"v_maple\",\"a1_line\":138,\"a1_kind\":\"write\",\"b_line\":109,\"b_kind\":\"write\",\"a2_line\":171,\"a2_kind\":\"read\",\"why\":\"irq_wisp preempts irq_raptor.\"},{\"variable\":\"v_ember\",\"a1_line\":186,\"a1_kind\":\"write\",\"b_line\":113,\"b_kind\":\"write\",\"a2_line\":218,\"a2_kind\":\"read\",\"why\":\"irq_wisp preempts irq_yew.\"},{\"variable\":\"v_ember\",\"a1_line\":186,\"a1_kind\":\"write\",\"b_line\":113,\"b_kind\":\"write\",\"a2_line\":221,\"a2_kind\":\"read\",\"why\":\"irq_wisp preempts irq_yew.\"}]},{\"case\":\"program_15\",\"violations\":[{\"variable\":\"v_prism\",\"a1_line\":51,\"a1_kind\":\"read\",\"b_line\":62,\"b_kind\":\"write\",\"a2_line\":52,\"a2_kind\":\"write\",\"why\":\"irq_anchor (prio 6) preempts irq_kelp between index use and increment.\"},{\"variable\":\"v_prism\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":62,\"b_kind\":\"write\",\"a2_line\":101,\"a2_kind\":\"write\",\"why\":\"irq_anchor preempts irq_thorn between read and write.\"},{\"variable\":\"v_prism\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":52,\"b_kind\":\"write\",\"a2_line\":101,\"a2_kind\":\"write\",\"why\":\"irq_kelp (prio 5) preempts irq_thorn.\"},{\"variable\":\"v_falcon\",\"a1_line\":56,\"a1_kind\":\"write\",\"b_line\":61,\"b_kind\":\"write\",\"a2_line\":57,\"a2_kind\":\"read\",\"why\":\"irq_anchor preempts irq_summit.\"},{\"variable\":\"v_falcon\",\"a1_line\":56,\"a1_kind\":\"write\",\"b_line\":100,\"b_kind\":\"write\",\"a2_line\":57,\"a2_kind\":\"read\",\"why\":\"irq_thorn (prio 3) preempts irq_summit.\"}]},{\"case\":\"program_16\",\"violations\":[{\"variable\":\"v_loom\",\"a1_line\":47,\"a1_kind\":\"write\",\"b_line\":58,\"b_kind\":\"write\",\"a2_line\":48,\"a2_kind\":\"read\",\"why\":\"irq_amber preempts irq_fern.\"},{\"variable\":\"v_loom\",\"a1_line\":47,\"a1_kind\":\"write\",\"b_line\":97,\"b_kind\":\"write\",\"a2_line\":48,\"a2_kind\":\"read\",\"why\":\"irq_cobalt preempts irq_fern.\"},{\"variable\":\"v_loom\",\"a1_line\":48,\"a1_kind\":\"read\",\"b_line\":58,\"b_kind\":\"write\",\"a2_line\":51,\"a2_kind\":\"write\",\"why\":\"irq_amber writes v_loom between.\"},{\"variable\":\"v_loom\",\"a1_line\":58,\"a1_kind\":\"write\",\"b_line\":97,\"b_kind\":\"write\",\"a2_line\":59,\"a2_kind\":\"read\",\"why\":\"irq_cobalt preempts irq_amber.\"},{\"variable\":\"v_ridge\",\"a1_line\":53,\"a1_kind\":\"read\",\"b_line\":98,\"b_kind\":\"write\",\"a2_line\":54,\"a2_kind\":\"write\",\"why\":\"irq_cobalt resets v_ridge between index use and increment.\"}]},{\"case\":\"program_17\",\"violations\":[{\"variable\":\"v_meadow\",\"a1_line\":41,\"a1_kind\":\"write\",\"b_line\":56,\"b_kind\":\"write\",\"a2_line\":45,\"a2_kind\":\"read\",\"why\":\"irq_grove preempts irq_shoal.\"},{\"variable\":\"v_meadow\",\"a1_line\":41,\"a1_kind\":\"write\",\"b_line\":67,\"b_kind\":\"write\",\"a2_line\":45,\"a2_kind\":\"read\",\"why\":\"irq_delta preempts irq_shoal.\"},{\"variable\":\"v_meadow\",\"a1_line\":41,\"a1_kind\":\"write\",\"b_line\":73,\"b_kind\":\"write\",\"a2_line\":45,\"a2_kind\":\"read\",\"why\":\"irq_ermine preempts irq_shoal.\"},{\"variable\":\"v_meadow\",\"a1_line\":41,\"a1_kind\":\"write\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":45,\"a2_kind\":\"read\",\"why\":\"irq_vine preempts irq_shoal.\"},{\"variable\":\"v_meadow\",\"a1_line\":41,\"a1_kind\":\"write\",\"b_line\":86,\"b_kind\":\"write\",\"a2_line\":45,\"a2_kind\":\"read\",\"why\":\"irq_crest preempts irq_shoal.\"},{\"variable\":\"v_meadow\",\"a1_line\":41,\"a1_kind\":\"write\",\"b_line\":100,\"b_kind\":\"write\",\"a2_line\":45,\"a2_kind\":\"read\",\"why\":\"irq_kiln preempts irq_shoal.\"},{\"variable\":\"v_meadow\",\"a1_line\":79,\"a1_kind\":\"write\",\"b_line\":73,\"b_kind\":\"write\",\"a2_line\":80,\"a2_kind\":\"read\",\"why\":\"irq_ermine preempts irq_vine.\"},{\"variable\":\"v_meadow\",\"a1_line\":79,\"a1_kind\":\"write\",\"b_line\":86,\"b_kind\":\"write\",\"a2_line\":80,\"a2_kind\":\"read\",\"why\":\"irq_crest preempts irq_vine.\"},{\"variable\":\"v_meadow\",\"a1_line\":79,\"a1_kind\":\"write\",\"b_line\":100,\"b_kind\":\"write\",\"a2_line\":80,\"a2_kind\":\"read\",\"why\":\"irq_kiln preempts irq_vine.\"},{\"variable\":\"v_umbra\",\"a1_line\":18,\"a1_kind\":\"write\",\"b_line\":14,\"b_kind\":\"write\",\"a2_line\":60,\"a2_kind\":\"read\",\"why\":\"a higher ISR (ermine/crest/kiln) writes v_umbra between irq_grove's write and read.\"},{\"variable\":\"v_marble\",\"a1_line\":35,\"a1_kind\":\"read\",\"b_line\":61,\"b_kind\":\"write\",\"a2_line\":36,\"a2_kind\":\"read\",\"why\":\"irq_grove writes v_marble between reads in fn_north (irq_shoal).\"},{\"variable\":\"v_ivory\",\"a1_line\":37,\"a1_kind\":\"read\",\"b_line\":63,\"b_kind\":\"write\",\"a2_line\":38,\"a2_kind\":\"read\",\"why\":\"irq_grove writes v_ivory between reads in fn_north.\"},{\"variable\":\"v_knoll\",\"a1_line\":93,\"a1_kind\":\"write\",\"b_line\":105,\"b_kind\":\"write\",\"a2_line\":96,\"a2_kind\":\"read\",\"why\":\"irq_kiln preempts irq_crest.\"}]},{\"case\":\"program_18\",\"violations\":[{\"variable\":\"v_glacier\",\"a1_line\":169,\"a1_kind\":\"write\",\"b_line\":208,\"b_kind\":\"write\",\"a2_line\":178,\"a2_kind\":\"read\",\"why\":\"irq_tundra preempts irq_loom.\"},{\"variable\":\"v_glacier\",\"a1_line\":169,\"a1_kind\":\"write\",\"b_line\":221,\"b_kind\":\"write\",\"a2_line\":178,\"a2_kind\":\"read\",\"why\":\"irq_iris preempts irq_loom.\"},{\"variable\":\"v_glacier\",\"a1_line\":178,\"a1_kind\":\"read\",\"b_line\":208,\"b_kind\":\"write\",\"a2_line\":182,\"a2_kind\":\"write\",\"why\":\"irq_tundra writes between.\"},{\"variable\":\"v_glacier\",\"a1_line\":178,\"a1_kind\":\"read\",\"b_line\":221,\"b_kind\":\"write\",\"a2_line\":182,\"a2_kind\":\"write\",\"why\":\"irq_iris writes between.\"},{\"variable\":\"v_glacier\",\"a1_line\":189,\"a1_kind\":\"write\",\"b_line\":208,\"b_kind\":\"write\",\"a2_line\":200,\"a2_kind\":\"read\",\"why\":\"irq_tundra preempts irq_harbor.\"},{\"variable\":\"v_glacier\",\"a1_line\":189,\"a1_kind\":\"write\",\"b_line\":221,\"b_kind\":\"write\",\"a2_line\":200,\"a2_kind\":\"read\",\"why\":\"irq_iris preempts irq_harbor.\"},{\"variable\":\"v_glacier\",\"a1_line\":200,\"a1_kind\":\"read\",\"b_line\":208,\"b_kind\":\"write\",\"a2_line\":203,\"a2_kind\":\"write\",\"why\":\"irq_tundra writes between.\"},{\"variable\":\"v_glacier\",\"a1_line\":200,\"a1_kind\":\"read\",\"b_line\":221,\"b_kind\":\"write\",\"a2_line\":203,\"a2_kind\":\"write\",\"why\":\"irq_iris writes between.\"},{\"variable\":\"v_ridge\",\"a1_line\":170,\"a1_kind\":\"write\",\"b_line\":207,\"b_kind\":\"write\",\"a2_line\":171,\"a2_kind\":\"read\",\"why\":\"irq_tundra preempts irq_loom.\"},{\"variable\":\"v_ridge\",\"a1_line\":170,\"a1_kind\":\"write\",\"b_line\":220,\"b_kind\":\"write\",\"a2_line\":171,\"a2_kind\":\"read\",\"why\":\"irq_iris preempts irq_loom.\"},{\"variable\":\"v_ridge\",\"a1_line\":190,\"a1_kind\":\"write\",\"b_line\":207,\"b_kind\":\"write\",\"a2_line\":191,\"a2_kind\":\"read\",\"why\":\"irq_tundra preempts irq_harbor.\"},{\"variable\":\"v_ridge\",\"a1_line\":190,\"a1_kind\":\"write\",\"b_line\":220,\"b_kind\":\"write\",\"a2_line\":191,\"a2_kind\":\"read\",\"why\":\"irq_iris preempts irq_harbor.\"},{\"variable\":\"v_velvet\",\"a1_line\":161,\"a1_kind\":\"read\",\"b_line\":216,\"b_kind\":\"write\",\"a2_line\":162,\"a2_kind\":\"read\",\"why\":\"irq_tundra writes v_velvet between reads in fn_saffron.\"},{\"variable\":\"v_lantern\",\"a1_line\":197,\"a1_kind\":\"read\",\"b_line\":231,\"b_kind\":\"write\",\"a2_line\":198,\"a2_kind\":\"read\",\"why\":\"irq_iris writes v_lantern between irq_harbor's reads.\"}]}]}",
+  "wall_s": 143.20645093917847,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 23683,
+    "cache_read": 46262,
+    "cache_write": 488,
+    "latency_s": 143.20587066398002
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

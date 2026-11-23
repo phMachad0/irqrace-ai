@@ -1,0 +1,68 @@
+{
+  "case": "program_07",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_harbor",
+        "a1_line": 144,
+        "a1_kind": "write",
+        "b_line": 159,
+        "b_kind": "write",
+        "a2_line": 145,
+        "a2_kind": "read",
+        "why": "irq_acorn (equal priority) can preempt irq_ridge between its write and the check, changing v_harbor."
+      },
+      {
+        "variable": "v_harbor",
+        "a1_line": 159,
+        "a1_kind": "write",
+        "b_line": 145,
+        "b_kind": "read",
+        "a2_line": 106,
+        "a2_kind": "write",
+        "why": "irq_ridge can preempt irq_acorn between its writes and read the intermediate value of v_harbor."
+      },
+      {
+        "variable": "v_wharf",
+        "a1_line": 142,
+        "a1_kind": "write",
+        "b_line": 157,
+        "b_kind": "write",
+        "a2_line": 114,
+        "a2_kind": "read",
+        "why": "irq_acorn can write v_wharf between irq_ridge's write and its later read in fn_cobalt."
+      },
+      {
+        "variable": "v_velvet",
+        "a1_line": 136,
+        "a1_kind": "read",
+        "b_line": 153,
+        "b_kind": "write",
+        "a2_line": 137,
+        "a2_kind": "read",
+        "why": "irq_acorn can write v_velvet between the two reads in fn_maple called from irq_ridge."
+      },
+      {
+        "variable": "v_quill",
+        "a1_line": 170,
+        "a1_kind": "write",
+        "b_line": 162,
+        "b_kind": "write",
+        "a2_line": 173,
+        "a2_kind": "read",
+        "why": "irq_acorn (higher priority) can preempt irq_north and overwrite v_quill[9000] between its write and read."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_harbor\",\"a1_line\":144,\"a1_kind\":\"write\",\"b_line\":159,\"b_kind\":\"write\",\"a2_line\":145,\"a2_kind\":\"read\",\"why\":\"irq_acorn (equal priority) can preempt irq_ridge between its write and the check, changing v_harbor.\"},{\"variable\":\"v_harbor\",\"a1_line\":159,\"a1_kind\":\"write\",\"b_line\":145,\"b_kind\":\"read\",\"a2_line\":106,\"a2_kind\":\"write\",\"why\":\"irq_ridge can preempt irq_acorn between its writes and read the intermediate value of v_harbor.\"},{\"variable\":\"v_wharf\",\"a1_line\":142,\"a1_kind\":\"write\",\"b_line\":157,\"b_kind\":\"write\",\"a2_line\":114,\"a2_kind\":\"read\",\"why\":\"irq_acorn can write v_wharf between irq_ridge's write and its later read in fn_cobalt.\"},{\"variable\":\"v_velvet\",\"a1_line\":136,\"a1_kind\":\"read\",\"b_line\":153,\"b_kind\":\"write\",\"a2_line\":137,\"a2_kind\":\"read\",\"why\":\"irq_acorn can write v_velvet between the two reads in fn_maple called from irq_ridge.\"},{\"variable\":\"v_quill\",\"a1_line\":170,\"a1_kind\":\"write\",\"b_line\":162,\"b_kind\":\"write\",\"a2_line\":173,\"a2_kind\":\"read\",\"why\":\"irq_acorn (higher priority) can preempt irq_north and overwrite v_quill[9000] between its write and read.\"}]}",
+  "wall_s": 16.452969789505005,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1958,
+    "cache_read": 3878,
+    "cache_write": 485,
+    "latency_s": 16.452743399015162
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,222 @@
+{
+  "summary": {
+    "suite": "realworld",
+    "mode": "one-prompt",
+    "backend": "claude-cli:sonnet@low",
+    "wall_s": 143.20838451385498,
+    "calls": 1,
+    "errors": [],
+    "bugs": 45,
+    "bugs_found": 34,
+    "traps": 14,
+    "traps_found": 2,
+    "findings": 130,
+    "unmatched": 75,
+    "input_total": 46752,
+    "output_tokens": 23683,
+    "latency_sum_s": 143.20587066398002,
+    "models": [
+      "claude-sonnet-5-5"
+    ]
+  },
+  "programs": [
+    {
+      "program": "blink1",
+      "bugs": 3,
+      "bugs_found": 2,
+      "traps": 1,
+      "traps_found": 0,
+      "findings": 4,
+      "unmatched": 2,
+      "missed": "#2 true violation timerCount(95R,121W,95W)",
+      "traps_reported": ""
+    },
+    {
+      "program": "blink2",
+      "bugs": 4,
+      "bugs_found": 2,
+      "traps": 1,
+      "traps_found": 0,
+      "findings": 4,
+      "unmatched": 2,
+      "missed": "#1 true violation timerCount(93R,121W,93R); #2 true violation timerCount(95R,121W,95W)",
+      "traps_reported": ""
+    },
+    {
+      "program": "blink3",
+      "bugs": 4,
+      "bugs_found": 2,
+      "traps": 1,
+      "traps_found": 0,
+      "findings": 7,
+      "unmatched": 5,
+      "missed": "#1 true violation timerCount(93R,123/136W,93W); #2 true violation timerCount(136R,123W,136W)",
+      "traps_reported": ""
+    },
+    {
+      "program": "brake1",
+      "bugs": 2,
+      "bugs_found": 1,
+      "traps": 1,
+      "traps_found": 1,
+      "findings": 2,
+      "unmatched": 0,
+      "missed": "#3 true violation: int test_global_array[9000] wwr",
+      "traps_reported": "#2 false violation: int test_global_var2 rwr"
+    },
+    {
+      "program": "brake2",
+      "bugs": 2,
+      "bugs_found": 2,
+      "traps": 1,
+      "traps_found": 0,
+      "findings": 11,
+      "unmatched": 8,
+      "missed": "",
+      "traps_reported": ""
+    },
+    {
+      "program": "brake3",
+      "bugs": 2,
+      "bugs_found": 1,
+      "traps": 2,
+      "traps_found": 0,
+      "findings": 13,
+      "unmatched": 12,
+      "missed": "#4 true violation int test_global_array[9000] wwr",
+      "traps_reported": ""
+    },
+    {
+      "program": "i2c_pca_isa_1",
+      "bugs": 1,
+      "bugs_found": 1,
+      "traps": 2,
+      "traps_found": 0,
+      "findings": 1,
+      "unmatched": 0,
+      "missed": "",
+      "traps_reported": ""
+    },
+    {
+      "program": "i2c_pca_isa_2",
+      "bugs": 2,
+      "bugs_found": 2,
+      "traps": 1,
+      "traps_found": 0,
+      "findings": 5,
+      "unmatched": 0,
+      "missed": "",
+      "traps_reported": ""
+    },
+    {
+      "program": "i2c_pca_isa_3",
+      "bugs": 3,
+      "bugs_found": 3,
+      "traps": 1,
+      "traps_found": 1,
+      "findings": 13,
+      "unmatched": 1,
+      "missed": "",
+      "traps_reported": "#2 false violation int test_global_var2 rwr"
+    },
+    {
+      "program": "i8xx_tco_1",
+      "bugs": 3,
+      "bugs_found": 3,
+      "traps": 1,
+      "traps_found": 0,
+      "findings": 7,
+      "unmatched": 3,
+      "missed": "",
+      "traps_reported": ""
+    },
+    {
+      "program": "i8xx_tco_2",
+      "bugs": 3,
+      "bugs_found": 3,
+      "traps": 0,
+      "traps_found": 0,
+      "findings": 6,
+      "unmatched": 1,
+      "missed": "",
+      "traps_reported": ""
+    },
+    {
+      "program": "i8xx_tco_3",
+      "bugs": 3,
+      "bugs_found": 2,
+      "traps": 0,
+      "traps_found": 0,
+      "findings": 2,
+      "unmatched": 0,
+      "missed": "#3 true violation int test_global_var3 rww",
+      "traps_reported": ""
+    },
+    {
+      "program": "logger1",
+      "bugs": 3,
+      "bugs_found": 2,
+      "traps": 0,
+      "traps_found": 0,
+      "findings": 3,
+      "unmatched": 1,
+      "missed": "#2 true violation int intervalCounter rww",
+      "traps_reported": ""
+    },
+    {
+      "program": "logger2",
+      "bugs": 0,
+      "bugs_found": 0,
+      "traps": 0,
+      "traps_found": 0,
+      "findings": 5,
+      "unmatched": 5,
+      "missed": "",
+      "traps_reported": ""
+    },
+    {
+      "program": "logger3",
+      "bugs": 2,
+      "bugs_found": 2,
+      "traps": 0,
+      "traps_found": 0,
+      "findings": 5,
+      "unmatched": 0,
+      "missed": "",
+      "traps_reported": ""
+    },
+    {
+      "program": "wdt_pci_1",
+      "bugs": 2,
+      "bugs_found": 2,
+      "traps": 1,
+      "traps_found": 0,
+      "findings": 14,
+      "unmatched": 12,
+      "missed": "",
+      "traps_reported": ""
+    },
+    {
+      "program": "wdt_pci_2",
+      "bugs": 2,
+      "bugs_found": 2,
+      "traps": 1,
+      "traps_found": 0,
+      "findings": 15,
+      "unmatched": 13,
+      "missed": "",
+      "traps_reported": ""
+    },
+    {
+      "program": "wdt_pci_3",
+      "bugs": 4,
+      "bugs_found": 2,
+      "traps": 0,
+      "traps_found": 0,
+      "findings": 13,
+      "unmatched": 10,
+      "missed": "#3 true violation int test_global_var2 wrw; #4 true violation int test_global_var3 rww",
+      "traps_reported": ""
+    }
+  ]
+}

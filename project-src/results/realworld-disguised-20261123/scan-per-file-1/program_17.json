@@ -1,0 +1,108 @@
+{
+  "case": "program_17",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_meadow",
+        "a1_line": 41,
+        "a1_kind": "write",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 45,
+        "a2_kind": "read",
+        "why": "irq_vine (higher priority) can preempt irq_shoal and set v_meadow=-1 between the write of 0 and the check."
+      },
+      {
+        "variable": "v_meadow",
+        "a1_line": 79,
+        "a1_kind": "write",
+        "b_line": 73,
+        "b_kind": "write",
+        "a2_line": 80,
+        "a2_kind": "read",
+        "why": "Higher priority irq_ermine, irq_crest or irq_kiln can write v_meadow=0 between the write of -1 and the check in irq_vine."
+      },
+      {
+        "variable": "v_umbra",
+        "a1_line": 14,
+        "a1_kind": "write",
+        "b_line": 60,
+        "b_kind": "read",
+        "a2_line": 18,
+        "a2_kind": "write",
+        "why": "irq_grove can preempt irq_shoal between its two writes of v_umbra and read an intermediate value."
+      },
+      {
+        "variable": "v_umbra",
+        "a1_line": 14,
+        "a1_kind": "write",
+        "b_line": 9,
+        "b_kind": "read",
+        "a2_line": 18,
+        "a2_kind": "write",
+        "why": "irq_kiln's fn_nimbus can preempt a lower ISR between fn_jade and fn_reef and read the intermediate v_umbra."
+      },
+      {
+        "variable": "v_pebble",
+        "a1_line": 15,
+        "a1_kind": "write",
+        "b_line": 6,
+        "b_kind": "read",
+        "a2_line": 19,
+        "a2_kind": "write",
+        "why": "irq_kiln's fn_nimbus can read v_pebble between the two writes made by a lower-priority ISR."
+      },
+      {
+        "variable": "v_umbra",
+        "a1_line": 18,
+        "a1_kind": "write",
+        "b_line": 14,
+        "b_kind": "write",
+        "a2_line": 60,
+        "a2_kind": "read",
+        "why": "A higher-priority ISR (ermine, crest, kiln) can run fn_jade between irq_grove's reset to -1 and its check at line 60."
+      },
+      {
+        "variable": "v_marble",
+        "a1_line": 35,
+        "a1_kind": "read",
+        "b_line": 61,
+        "b_kind": "write",
+        "a2_line": 36,
+        "a2_kind": "read",
+        "why": "irq_grove can preempt irq_shoal (via fn_north) between the two reads of v_marble and change it."
+      },
+      {
+        "variable": "v_ivory",
+        "a1_line": 37,
+        "a1_kind": "read",
+        "b_line": 63,
+        "b_kind": "write",
+        "a2_line": 38,
+        "a2_kind": "read",
+        "why": "irq_grove can preempt irq_shoal (via fn_north) between the two reads of v_ivory and change it."
+      },
+      {
+        "variable": "v_knoll",
+        "a1_line": 93,
+        "a1_kind": "write",
+        "b_line": 105,
+        "b_kind": "write",
+        "a2_line": 96,
+        "a2_kind": "read",
+        "why": "irq_kiln (higher priority) can overwrite v_knoll[9000] between irq_crest's write and its read."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_meadow\",\"a1_line\":41,\"a1_kind\":\"write\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":45,\"a2_kind\":\"read\",\"why\":\"irq_vine (higher priority) can preempt irq_shoal and set v_meadow=-1 between the write of 0 and the check.\"},{\"variable\":\"v_meadow\",\"a1_line\":79,\"a1_kind\":\"write\",\"b_line\":73,\"b_kind\":\"write\",\"a2_line\":80,\"a2_kind\":\"read\",\"why\":\"Higher priority irq_ermine, irq_crest or irq_kiln can write v_meadow=0 between the write of -1 and the check in irq_vine.\"},{\"variable\":\"v_umbra\",\"a1_line\":14,\"a1_kind\":\"write\",\"b_line\":60,\"b_kind\":\"read\",\"a2_line\":18,\"a2_kind\":\"write\",\"why\":\"irq_grove can preempt irq_shoal between its two writes of v_umbra and read an intermediate value.\"},{\"variable\":\"v_umbra\",\"a1_line\":14,\"a1_kind\":\"write\",\"b_line\":9,\"b_kind\":\"read\",\"a2_line\":18,\"a2_kind\":\"write\",\"why\":\"irq_kiln's fn_nimbus can preempt a lower ISR between fn_jade and fn_reef and read the intermediate v_umbra.\"},{\"variable\":\"v_pebble\",\"a1_line\":15,\"a1_kind\":\"write\",\"b_line\":6,\"b_kind\":\"read\",\"a2_line\":19,\"a2_kind\":\"write\",\"why\":\"irq_kiln's fn_nimbus can read v_pebble between the two writes made by a lower-priority ISR.\"},{\"variable\":\"v_umbra\",\"a1_line\":18,\"a1_kind\":\"write\",\"b_line\":14,\"b_kind\":\"write\",\"a2_line\":60,\"a2_kind\":\"read\",\"why\":\"A higher-priority ISR (ermine, crest, kiln) can run fn_jade between irq_grove's reset to -1 and its check at line 60.\"},{\"variable\":\"v_marble\",\"a1_line\":35,\"a1_kind\":\"read\",\"b_line\":61,\"b_kind\":\"write\",\"a2_line\":36,\"a2_kind\":\"read\",\"why\":\"irq_grove can preempt irq_shoal (via fn_north) between the two reads of v_marble and change it.\"},{\"variable\":\"v_ivory\",\"a1_line\":37,\"a1_kind\":\"read\",\"b_line\":63,\"b_kind\":\"write\",\"a2_line\":38,\"a2_kind\":\"read\",\"why\":\"irq_grove can preempt irq_shoal (via fn_north) between the two reads of v_ivory and change it.\"},{\"variable\":\"v_knoll\",\"a1_line\":93,\"a1_kind\":\"write\",\"b_line\":105,\"b_kind\":\"write\",\"a2_line\":96,\"a2_kind\":\"read\",\"why\":\"irq_kiln (higher priority) can overwrite v_knoll[9000] between irq_crest's write and its read.\"}]}",
+  "wall_s": 19.683233976364136,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 2507,
+    "cache_read": 1011,
+    "cache_write": 2513,
+    "latency_s": 19.68300935201114
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

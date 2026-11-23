@@ -1,0 +1,78 @@
+{
+  "case": "program_07",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_harbor",
+        "a1_line": 144,
+        "a1_kind": "write",
+        "b_line": 159,
+        "b_kind": "write",
+        "a2_line": 145,
+        "a2_kind": "read",
+        "why": "irq_acorn can preempt irq_ridge (equal priority) between its write and the check, so the check can see acorn's value."
+      },
+      {
+        "variable": "v_harbor",
+        "a1_line": 113,
+        "a1_kind": "write",
+        "b_line": 145,
+        "b_kind": "read",
+        "a2_line": 115,
+        "a2_kind": "write",
+        "why": "irq_ridge can preempt irq_acorn's fn_cobalt between its two writes and read the intermediate value."
+      },
+      {
+        "variable": "v_wharf",
+        "a1_line": 142,
+        "a1_kind": "write",
+        "b_line": 157,
+        "b_kind": "write",
+        "a2_line": 114,
+        "a2_kind": "read",
+        "why": "irq_acorn can preempt irq_ridge between its write and the read in fn_cobalt."
+      },
+      {
+        "variable": "v_velvet",
+        "a1_line": 136,
+        "a1_kind": "read",
+        "b_line": 153,
+        "b_kind": "write",
+        "a2_line": 137,
+        "a2_kind": "read",
+        "why": "irq_acorn can preempt irq_ridge between the two reads in fn_maple and change the value."
+      },
+      {
+        "variable": "v_yarrow",
+        "a1_line": 138,
+        "a1_kind": "read",
+        "b_line": 155,
+        "b_kind": "write",
+        "a2_line": 139,
+        "a2_kind": "read",
+        "why": "irq_acorn can preempt irq_ridge between the two reads and change the value."
+      },
+      {
+        "variable": "v_quill",
+        "a1_line": 170,
+        "a1_kind": "write",
+        "b_line": 162,
+        "b_kind": "write",
+        "a2_line": 173,
+        "a2_kind": "read",
+        "why": "irq_acorn (higher priority) can preempt irq_north between its write and read of v_quill[9000]."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_harbor\",\"a1_line\":144,\"a1_kind\":\"write\",\"b_line\":159,\"b_kind\":\"write\",\"a2_line\":145,\"a2_kind\":\"read\",\"why\":\"irq_acorn can preempt irq_ridge (equal priority) between its write and the check, so the check can see acorn's value.\"},{\"variable\":\"v_harbor\",\"a1_line\":113,\"a1_kind\":\"write\",\"b_line\":145,\"b_kind\":\"read\",\"a2_line\":115,\"a2_kind\":\"write\",\"why\":\"irq_ridge can preempt irq_acorn's fn_cobalt between its two writes and read the intermediate value.\"},{\"variable\":\"v_wharf\",\"a1_line\":142,\"a1_kind\":\"write\",\"b_line\":157,\"b_kind\":\"write\",\"a2_line\":114,\"a2_kind\":\"read\",\"why\":\"irq_acorn can preempt irq_ridge between its write and the read in fn_cobalt.\"},{\"variable\":\"v_velvet\",\"a1_line\":136,\"a1_kind\":\"read\",\"b_line\":153,\"b_kind\":\"write\",\"a2_line\":137,\"a2_kind\":\"read\",\"why\":\"irq_acorn can preempt irq_ridge between the two reads in fn_maple and change the value.\"},{\"variable\":\"v_yarrow\",\"a1_line\":138,\"a1_kind\":\"read\",\"b_line\":155,\"b_kind\":\"write\",\"a2_line\":139,\"a2_kind\":\"read\",\"why\":\"irq_acorn can preempt irq_ridge between the two reads and change the value.\"},{\"variable\":\"v_quill\",\"a1_line\":170,\"a1_kind\":\"write\",\"b_line\":162,\"b_kind\":\"write\",\"a2_line\":173,\"a2_kind\":\"read\",\"why\":\"irq_acorn (higher priority) can preempt irq_north between its write and read of v_quill[9000].\"}]}",
+  "wall_s": 14.52564811706543,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1750,
+    "cache_read": 1011,
+    "cache_write": 3359,
+    "latency_s": 14.525436277966946
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

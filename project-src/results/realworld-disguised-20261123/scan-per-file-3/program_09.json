@@ -1,0 +1,58 @@
+{
+  "case": "program_09",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_larch",
+        "a1_line": 150,
+        "a1_kind": "read",
+        "b_line": 170,
+        "b_kind": "write",
+        "a2_line": 151,
+        "a2_kind": "read",
+        "why": "irq_vine can preempt fn_delta between the two reads of v_larch and write it, so the reads can see different values."
+      },
+      {
+        "variable": "v_loom",
+        "a1_line": 152,
+        "a1_kind": "read",
+        "b_line": 180,
+        "b_kind": "write",
+        "a2_line": 153,
+        "a2_kind": "read",
+        "why": "After irq_flint sets v_walnut to 0, irq_nectar can preempt main between the two reads of v_loom and write it."
+      },
+      {
+        "variable": "v_velvet",
+        "a1_line": 158,
+        "a1_kind": "write",
+        "b_line": 167,
+        "b_kind": "write",
+        "a2_line": 159,
+        "a2_kind": "read",
+        "why": "irq_vine (higher priority) can preempt irq_lantern after it writes 42 and before it reads v_velvet back. irq_vine rewrites v_velvet at line 167 and again through fn_tide."
+      },
+      {
+        "variable": "v_velvet",
+        "a1_line": 158,
+        "a1_kind": "write",
+        "b_line": 120,
+        "b_kind": "write",
+        "a2_line": 159,
+        "a2_kind": "read",
+        "why": "irq_vine calls fn_tide, which resets v_velvet to 0. If that happens between irq_lantern's write of 42 and its read, the check at line 159 fails."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_larch\",\"a1_line\":150,\"a1_kind\":\"read\",\"b_line\":170,\"b_kind\":\"write\",\"a2_line\":151,\"a2_kind\":\"read\",\"why\":\"irq_vine can preempt fn_delta between the two reads of v_larch and write it, so the reads can see different values.\"},{\"variable\":\"v_loom\",\"a1_line\":152,\"a1_kind\":\"read\",\"b_line\":180,\"b_kind\":\"write\",\"a2_line\":153,\"a2_kind\":\"read\",\"why\":\"After irq_flint sets v_walnut to 0, irq_nectar can preempt main between the two reads of v_loom and write it.\"},{\"variable\":\"v_velvet\",\"a1_line\":158,\"a1_kind\":\"write\",\"b_line\":167,\"b_kind\":\"write\",\"a2_line\":159,\"a2_kind\":\"read\",\"why\":\"irq_vine (higher priority) can preempt irq_lantern after it writes 42 and before it reads v_velvet back. irq_vine rewrites v_velvet at line 167 and again through fn_tide.\"},{\"variable\":\"v_velvet\",\"a1_line\":158,\"a1_kind\":\"write\",\"b_line\":120,\"b_kind\":\"write\",\"a2_line\":159,\"a2_kind\":\"read\",\"why\":\"irq_vine calls fn_tide, which resets v_velvet to 0. If that happens between irq_lantern's write of 42 and its read, the check at line 159 fails.\"}]}",
+  "wall_s": 14.213960409164429,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1601,
+    "cache_read": 5062,
+    "cache_write": 486,
+    "latency_s": 14.213699023996014
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}
