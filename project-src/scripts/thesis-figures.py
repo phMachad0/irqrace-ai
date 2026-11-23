@@ -801,7 +801,8 @@ def fig_f5(plt, ctx: Ctx):
     ns = sorted({v[3] for v in series.values()})
     note(fig, f"+2 por defeito detectado, −3 por armadilha reportada; rótulo: média/máximo. S2: linha "
               f"{ctx.s2_prompt}, {VIEW_NAMES[ctx.view]}; barras: mínimo e máximo de n = "
-              f"{', '.join(map(str, ns))} execuções. Gabarito 2.2: S0 não tem pontuação.")
+              f"{', '.join(map(str, ns))} execuções."
+              + (" Gabarito 2.2: S0 não tem pontuação." if "2.2" in labs else ""))
     return fig, {"labels": labs}
 
 
