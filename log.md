@@ -2044,3 +2044,17 @@ point called infeasible** (`+racebench`: `010` bug#1 infeasible in 3 of 3; now `
 cost (≈2 M input tokens, ≈255 s). The main checkout's venv broke mid-session (python3 linked to a
 removed PlatformIO interpreter); measurements now use `../worktrees/.venv-irqrace`. Run 1 of both
 arms was re-run after `claude -p` timeouts.
+
+## [2026-11-22] direction | monograph reviewed; results replaced by the final configuration
+Pedro's direction: review what Lucas wrote, cut implementation narrative and empty sections, and
+replace the benchmark numbers by the final configuration's (`+interleaving`, triage grouped by
+variable with calls shared across programs, Sonnet at low effort), with the LLM-only reading as a
+comparison. Chapter 5's evaluation was rewritten: five research questions (static recall, triage,
+published tools, direct reading by the model, ablation and repair pending); repository paths,
+commit hashes and run directories removed from the text; the Racebench 2.2 extension, the
+prompt-variant protocol and the ablation protocol removed as unexecuted; the disguised-copy test
+added. Tables give the best of three runs (most bug points on top, then score), the text the range.
+Figures F1–F5 and F9 regenerated from `project-src/results/thesis-interleaving/combined`.
+Stale statements fixed: the response cache (removed 2026-10-30) in Tecnologias and RNF6, and
+equal-priority preemption as a fixed rule (now declared by the configuration). The abstract still
+calls the document partial; left for Pedro.

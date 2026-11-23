@@ -106,7 +106,7 @@ operada, não atende ao objetivo a que se propõe.
     \hline
     RNF5 & A etapa de triagem deve ser independente do provedor do modelo, permitindo trocar de modelo sem alterar os \textit{prompts}. \\
     \hline
-    RNF6 & Toda medição deve registrar o modelo, a data e a configuração de \textit{prompt} que a produziram, e as respostas do modelo devem ser guardadas em cache para que uma medição possa ser recalculada sem nova chamada. \\
+    RNF6 & Toda medição deve registrar o modelo, a data e a configuração de \textit{prompt} que a produziram, e cada conversa com o modelo deve ser guardada junto com a medição, para que qualquer veredicto possa ser conferido depois. \\
     \hline
     RNF7 & O código analisado deve entrar no \textit{prompt} delimitado e declarado como dado, nunca como instrução. \\
     \hline
@@ -144,8 +144,9 @@ Elas valem tanto como especificação quanto como declaração de limites.
     correção da análise de ponteiros usada é herdada, não reverificada.
   \item Uma função sem corpo disponível pode ler e escrever qualquer variável
     global.
-  \item Fluxos de mesma prioridade podem se interromper mutuamente, e o
-    aninhamento é permitido.
+  \item Fluxos de mesma prioridade podem se interromper mutuamente, a menos que
+    a configuração declare que a plataforma não o permite, e o aninhamento é
+    permitido.
   \item Uma interrupção só está mascarada num intervalo se estiver mascarada em
     todos os caminhos e se nenhum outro fluxo puder reabilitá-la ali dentro.
   \item Apenas uma prova descarta um candidato, de modo que nem o resultado

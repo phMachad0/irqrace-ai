@@ -49,8 +49,14 @@ execuções (formato no docstring do script). Com o extra `figures` instalado
 (`pip install -e ".[figures]"`, dentro de `project-src`):
 
 ```bash
-python scripts/thesis-figures.py --data results/thesis
+python scripts/thesis-figures.py --data results/thesis-interleaving/combined --only F1,F2,F3,F4,F5,F9
 ```
+
+Desde 2026-11-22 as figuras saem da configuração final (linha `+interleaving`,
+triagem agrupada por variável com chamadas compartilhadas entre os programas,
+Claude Sonnet com esforço baixo, três execuções; `results/thesis-interleaving/`).
+O conjunto antigo, das execuções `+racebench` do M1/M2, continua em
+`results/thesis`.
 
 Os PDFs saem em `monografia/figuras/`, com `thesis-figures.json` registrando de
 que execuções saiu cada figura, o que o `\fonte{}` correspondente deve citar.

@@ -52,22 +52,21 @@ denominado portão de \textit{recall}, é executado a cada alteração e trata u
 \section{Implementação da etapa com modelo de linguagem}
 \label{sec:fase-llm}
 
-A quinta fase é desenvolvida sobre um conjunto de registros de contexto
-montados manualmente a partir do Racebench, descrito na
-Seção~\ref{sec:conjunto-triagem}, e não sobre a saída da etapa estática. Essa
-escolha permite que as duas etapas avancem em paralelo e dá ao conjunto um
-segundo uso, o de servir como sonda para verificar se um \llm\ é capaz de
-julgar esse tipo de defeito antes que se invista na construção completa da
-etapa. A integração entre as duas ocorre ao final desta fase, e os números
-medidos sobre o conjunto montado manualmente não são transportados para a
-população real, pelas razões discutidas na Seção~\ref{sec:ameacas}.
+A quinta fase é desenvolvida sobre vinte registros de contexto montados
+manualmente a partir do Racebench, dez defeitos e dez armadilhas, e não sobre a
+saída da etapa estática. Essa escolha permite que as duas etapas avancem em
+paralelo e dá ao conjunto um segundo uso, o de servir como sonda para verificar
+se um \llm\ é capaz de julgar esse tipo de defeito antes que se invista na
+construção completa da etapa. A integração entre as duas ocorre ao final desta
+fase, e os números da avaliação vêm todos da população real, isto é, dos
+registros que a etapa estática emite.
 
 \section{Avaliação}
 \label{sec:fase-avaliacao}
 
-A sexta fase segue o protocolo da Seção~\ref{sec:avaliacao}, aplicado primeiro
-ao Racebench e depois à suíte de 18 programas reais. No Racebench, além da
-ablação, ela compreende três experimentos, a comparação com as ferramentas
-publicadas nos termos de cada artigo, a comparação de variantes de
-\textit{prompt} em desenho pareado e a extensão do gabarito com os defeitos não
-anotados, todos descritos na Seção~\ref{sec:protocolo}.
+A sexta fase segue o protocolo da Seção~\ref{sec:avaliacao}, aplicado ao
+Racebench e à suíte de 18 programas reais. Além de medir a ferramenta, ela a
+compara com as ferramentas publicadas, nos termos de cada artigo, e com a
+leitura direta do código pelo mesmo modelo de linguagem, sem análise estática,
+inclusive sobre uma cópia disfarçada do Racebench
+(Seção~\ref{sec:protocolo}).
