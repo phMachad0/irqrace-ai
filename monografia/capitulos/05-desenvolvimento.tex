@@ -689,12 +689,14 @@ topo, junto com 260 candidatos que o gabarito não anota.
     \hline
     Sistema & Reportados & Violações & Falsas & Chamadas & Entrada & Tempo \\
     \hline
-    S1 & 484 & 45/45 & 8/14 & -- & -- & -- \\
-    S2 & 354 & 45/45 & 6/14 & 158 & 6,4 milhões & 8 min \\
+    S1 & 484 & 45/45 & 8/14 & -- & -- & 13 min \\
+    S2 & 354 & 45/45 & 6/14 & 158 & 6,4 milhões & + 8 min \\
     \hline
   \end{tabular}
   \fonte{Elaborada pelos autores. S1 reporta tudo o que chega à triagem; S2, o
-  grupo provavelmente real. Uma execução. Entrada em \textit{tokens}.}
+  grupo provavelmente real. Uma execução. Entrada em \textit{tokens}. Tempo de
+  S1: soma do processamento dos 18 programas; de S2: a triagem, que se soma ao
+  de S1.}
 \end{table}
 
 \begin{figure}[htb]
@@ -733,17 +735,20 @@ entrada cresce com ele.
   Racebench}
   \label{tab:qp3-racebench}
   \small
-  \begin{tabular}{|l|c|c|c|r|}
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{|l|c|c|c|c|r|r|}
     \hline
-    Sistema & Defeitos & Armadilhas & Pontuação & Entrada \\
+    Sistema & Defeitos & Armadilhas & Pontuação & Reportados & Entrada & Tempo \\
     \hline
-    S2 & 53/53 & 3 & 97/106 & 2,0 milhões \\
-    leitura por arquivo & 48/53 & 6 & 78/106 & 75 mil \\
-    leitura única & 46/53 & 3 & 83/106 & 19 mil \\
+    S2 & 53/53 & 3 & 97/106 & 137 & 2,0 milhões & 4 min 21 s \\
+    leitura por arquivo & 48/53 & 6 & 78/106 & 75 & 75 mil & 68 s \\
+    leitura única & 46/53 & 3 & 83/106 & 55 & 19 mil & 93 s \\
     \hline
   \end{tabular}
   \fonte{Elaborada pelos autores. Gabarito reetiquetado (53/33); execução
-  mediana de três, para cada sistema. Entrada em \textit{tokens}. Na leitura por arquivo,
+  mediana de três, para cada sistema. Reportados: tudo o que o sistema aponta,
+  anotado ou não. Entrada em \textit{tokens}. O tempo de S2 é o da triagem; a
+  etapa estática leva cerca de 18 s. Na leitura por arquivo,
   cada chamada recebe um arquivo, e na leitura única, todos.}
 \end{table}
 
@@ -767,22 +772,31 @@ a leitura única, entre um e sete.
   suíte de programas reais}
   \label{tab:qp3-reais}
   \small
-  \begin{tabular}{|l|c|c|c|r|}
+  \begin{tabular}{|l|c|c|c|r|r|}
     \hline
-    Sistema & Violações & Falsas & Itens reportados & Entrada \\
+    Sistema & Violações & Falsas & Reportados & Entrada & Tempo \\
     \hline
-    S2 & 45/45 & 6/14 & 354 & 6,4 milhões \\
-    leitura por arquivo & 45/45 & 6/14 & 136 & 204 mil \\
-    leitura única & 29/45 & 8/14 & 48 & 173 mil \\
+    S2 & 45/45 & 6/14 & 354 & 6,4 milhões & 8 min 16 s \\
+    leitura por arquivo & 45/45 & 6/14 & 136 & 204 mil & 75 s \\
+    leitura única & 29/45 & 8/14 & 48 & 173 mil & 44 s \\
     \hline
   \end{tabular}
   \fonte{Elaborada pelos autores. S2: uma execução. Leituras: execução mediana
-  de três, pelas violações encontradas. Entrada em \textit{tokens}.}
+  de três, pelas violações encontradas. Entrada em \textit{tokens}. O tempo de
+  S2 é o da triagem; a etapa estática soma cerca de 13 minutos de processamento
+  nos 18 programas.}
 \end{table}
 
 Na suíte de programas reais, S2 e a leitura arquivo a arquivo chegam ao mesmo
 recall, e a leitura reporta menos itens e lê trinta vezes menos
-(Tabela~\ref{tab:qp3-reais}). Nas três execuções, a leitura arquivo a arquivo
+(Tabela~\ref{tab:qp3-reais}). Os itens a mais de S2 não escondem violações
+que a leitura tenha deixado passar. Das 67 variáveis que S2 deixa no topo, a
+leitura aponta 62 em alguma das três execuções, ainda que com menos triplas
+por variável. Nas cinco restantes, os 23 candidatos de S2 são falsos
+positivos. Um deles é uma violação falsa do gabarito. Nos outros, a escrita
+remota está sob uma condição que o fluxo que a executa nunca satisfaz, ou a
+rotina que faz a leitura escreve a variável antes de lê-la e não pode ser
+interrompida entre as duas operações. Nas três execuções, a leitura arquivo a arquivo
 encontrou 44 ou 45 violações, e a leitura única, entre 12 e 34, parando cedo
 em duas delas. Os programas dessa suíte foram lidos como distribuídos, com os
 nomes originais das variáveis, que em vários casos indicam por si sós onde a
