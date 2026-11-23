@@ -38,7 +38,11 @@ A ferramenta percorre o ciclo detectar, contextualizar, triar, reparar e
 reverificar, ilustrado na Figura~\ref{fig:pipeline}. A etapa estática produz os
 candidatos e o contexto de cada um; a etapa com modelo de linguagem os ordena,
 explica e propõe correções; e a própria análise estática, com apoio de um
-verificador limitado, confirma as correções.
+verificador limitado, confirma as correções. Para que a triagem caiba no
+tempo de uso de uma ferramenta de análise, os candidatos são julgados em
+grupos, um por variável compartilhada, e as chamadas ao modelo são divididas
+entre todos os programas analisados
+(Seção~\ref{sec:agrupamento}).
 
 \begin{figure}[htb]
   \centering
@@ -231,10 +235,15 @@ candidato na fila de leitura.
 Todos os grupos aparecem no relatório, e o grupo determina apenas a posição
 de leitura.
 
-Os candidatos que tratam da mesma variável são julgados numa única conversa.
-Eles compartilham a maior parte das evidências, como o código das funções
-envolvidas, os fluxos e suas prioridades, e repetir esse material a cada
-candidato era o que dominava o custo. A conversa apresenta uma vez o que é
+\subsection{Agrupamento por variável e divisão das chamadas}
+\label{sec:agrupamento}
+
+O custo da triagem vem do volume de texto que o modelo lê e gera. Os
+candidatos que tratam da mesma variável compartilham a maior parte das
+evidências, como o código das funções envolvidas, os fluxos e suas
+prioridades, e julgá-los um a um repetiria esse material a cada chamada. Por
+isso eles são julgados numa única conversa, com até vinte candidatos por
+conversa. A conversa apresenta uma vez o que é
 comum e lista cada candidato com o que lhe é próprio, e o modelo devolve um
 veredicto para cada um, identificado. A ferramenta confere que todo candidato
 recebeu exatamente uma resposta. Um candidato omitido é perguntado de novo,
@@ -652,8 +661,8 @@ de impossibilidade antes da triagem, e onze chegam a ela.
 
 Na suíte de programas reais, a etapa estática reduz 1.980 candidatos do
 estágio~1 a 587 após o estágio~2 e a 484 após o solucionador, e as 45
-violações anotadas continuam presentes. Das 14 falsas violações, oito chegam à
-triagem.
+violações anotadas continuam presentes (Tabela~\ref{tab:reais}). Das 14 falsas
+violações, oito chegam à triagem.
 
 \subsubsection{QP2, triagem}
 
@@ -666,9 +675,27 @@ gabarito reetiquetado e de 48 para 72 de 96 no distribuído
 (Figura~\ref{fig:f5}). Nas três execuções, os defeitos no topo ficaram entre
 49 e 53 e as armadilhas entre zero e três. A execução com 49 deixou no grupo
 incerto todos os candidatos de uma mesma variável, entre eles quatro defeitos,
-que continuam no relatório. Na suíte de programas reais, as 45 violações
-verdadeiras ficam no grupo provavelmente real, e das oito falsas que chegam à
-triagem, seis continuam no topo.
+que continuam no relatório. Na suíte de programas reais
+(Tabela~\ref{tab:reais}), as 45 violações verdadeiras ficam no grupo
+provavelmente real, e das oito falsas que chegam à triagem, seis continuam no
+topo, junto com 260 candidatos que o gabarito não anota.
+
+\begin{table}[htb]
+  \centering
+  \caption{Etapa estática e triagem na suíte de programas reais}
+  \label{tab:reais}
+  \small
+  \begin{tabular}{|l|c|c|c|c|r|c|}
+    \hline
+    Sistema & Reportados & Violações & Falsas & Chamadas & Entrada & Tempo \\
+    \hline
+    S1 & 484 & 45/45 & 8/14 & -- & -- & -- \\
+    S2 & 354 & 45/45 & 6/14 & 158 & 6,4 milhões & 8 min \\
+    \hline
+  \end{tabular}
+  \fonte{Elaborada pelos autores. S1 reporta tudo o que chega à triagem; S2, o
+  grupo provavelmente real. Uma execução. Entrada em \textit{tokens}.}
+\end{table}
 
 \begin{figure}[htb]
   \centering
@@ -690,7 +717,7 @@ Uma execução da triagem sobre o Racebench faz 84 chamadas ao modelo, lê cerca
 de 2,0 milhões de \textit{tokens} de entrada, gera cerca de 110 mil de saída e
 leva pouco mais de quatro minutos. O agrupamento dos candidatos por variável e
 a divisão das chamadas entre os programas, descritos na
-Seção~\ref{sec:projeto}, respondem por quase toda essa marca. Com uma conversa
+Seção~\ref{sec:agrupamento}, respondem por quase toda essa marca. Com uma conversa
 por candidato e os programas tratados um após o outro, a mesma triagem fazia
 307 chamadas, lia 3,5 milhões de \textit{tokens} e levava cerca de 16 minutos
 no mesmo equipamento, sem ganho de recall. Na suíte de programas reais, a
@@ -760,6 +787,20 @@ encontrou 44 ou 45 violações, e a leitura única, entre 12 e 34, parando cedo
 em duas delas. Os programas dessa suíte foram lidos como distribuídos, com os
 nomes originais das variáveis, que em vários casos indicam por si sós onde a
 violação foi plantada.
+
+A comparação de custo favorece a leitura direta nas duas suítes por uma razão
+de tamanho. Os programas dos dois \textit{benchmarks} são pequenos, de algumas
+dezenas a pouco mais de mil linhas, e cabem inteiros numa chamada, enquanto a
+triagem envia a cada conversa o registro de contexto completo dos candidatos,
+com o código das funções envolvidas. Os dois custos crescem com grandezas
+diferentes. O da leitura direta cresce com o tamanho do código lido, e o da
+triagem com o número de candidatos, que depende das variáveis compartilhadas
+com rotinas de interrupção e não do tamanho do repositório. Num repositório
+grande, em que a maior parte do código não toca essas variáveis, a leitura
+direta precisaria percorrer tudo, e a diferença de custo tende a diminuir. As
+duas suítes avaliadas não chegam a mostrar esse efeito, já que a diferença
+fica em torno de trinta vezes em ambas, e confirmá-lo exige um código de
+porte maior.
 
 \subsubsection{QP4, ablação e reparo}
 
