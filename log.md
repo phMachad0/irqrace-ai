@@ -2067,3 +2067,32 @@ calls the document partial; left for Pedro.
 a retried lead (omitted item, or rejected answer) rewrote the checklist's `turns.jsonl`; it now
 appends. No measured run was affected (scan in `results/realworld-cmp2-20261121/NOTES.md`). Both
 groupings stay opt-in; whether `+interleaving` and `--by-variable` become the defaults is Pedro's call.
+
+## [2026-11-24] result | S1 on the Racebench copy IntRace analysed
+IntRace's Table 3 (size, #ISR, #Race per row) matches the `2.1` directory (files headed
+`racebench2.0`), not `2.1_remarks`; the excluded case is most likely `001` (inferred: row 13, 72
+lines, matches no file). Its 49 races are the distributed bug points plus one in `009` and one in
+`017`; its rows sum to 53/4, not the stated 54/5, and "90.7%" is precision. S1 run on pristine
+`2.1` (`ec1d828`, no 006 patch), annotations moved to 2.1 lines: **46/47** bug points on IntRace's
+30 cases, 15/36 traps reported, 152 triples (IntRace: 54 items). The one loss is `006`, whose A2 is
+dead code in that copy (`j < 5` written `i < 5`); Z3 `unsat`, correct. Funnel 286 → 186 → 152.
+`results/intrace-terms-20261124/NOTES.md`; [[IntRace (paper)]], [[Racebench]].
+
+## [2026-11-25] result | S2 on the Racebench copy IntRace analysed
+Final configuration (`+interleaving`, by variable, pool of 4, Sonnet low), three runs on pristine
+`2.1`, 48/38 moved to 2.1 lines, IntRace's 30 cases: **46/47** bug points on top in every run (the
+47th is `006`'s dead code, refuted before triage), no bug point called infeasible, 5–7 annotated
+traps on top (3 of them reachable per the 2026-10-28 relabel, 2 the annotator's hedged ones in
+`022`), 126–130 items reported against IntRace's 54, ~1.8 M input tokens and ~250 s per run.
+Five attempts were lost to `claude -p` stalling at the 1,200 s timeout on the largest checklist
+calls (not reproduced in isolation); set aside and repeated per protocol.
+`results/intrace-terms-20261124/NOTES.md`.
+
+## [2026-11-25] query | are the traps and unannotated items S2 keeps on top false?
+Filed in `results/intrace-terms-20261124/NOTES.md`. On IntRace's copy, of the 7 traps S2 put on top
+over three runs, 4 are reachable violations (019 ×2, 020, 022's malformed "R56") and 3 are false
+(022's two dominated ones, 009 `*m`). IntRace's 5 false positives are almost certainly the suite's
+traps (its own examples are traps 2 of 004 and 007), some of them true races as pairs. Of the 75
+unannotated items on top: 12 real violations missing from the ground truth, 18 real variants, 28
+initialisation writes (debatable), 14 false (11 dominated, 2 B reading its own ISR's write, 1
+impossible path), 3 possible only in theory.

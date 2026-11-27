@@ -2,7 +2,7 @@
 type: source
 tags: [wiki, source]
 sources: ["[[IntRace (paper)]]"]
-updated: 2026-08-17
+updated: 2026-11-24
 status: solid
 ---
 	
@@ -46,6 +46,15 @@ Three stages, each strictly more precise and more expensive than the last:
 Two datasets. Intel Xeon E5-2630, 32 GB, Ubuntu.
 
 - **[[Racebench]]**: 30 of 31 cases (one excluded because Rchecker errored on it).
+  *Reconstructed 2026-11-24 from Table 3* (`project-src/results/intrace-terms-20261124/NOTES.md`):
+  the sizes and ISR counts match the **`2.1` directory** (files headed `racebench2.0`), not
+  `2.1_remarks`; the excluded case is most likely **`svp_simple_001_001`** (inferred: the one
+  unmatched row has 1 ISR and 72 lines, no file has 72, and of the two leftover cases only `019`
+  has one ISR). Per case, `#Race` equals the distributed bug points except `009` and `017`
+  (+1 each). The table's rows sum to 53 reported and 4 FP against its Sum row's 54 and 5, and
+  "90.7%" is 49/54, a **precision**, not a recall. On that copy and case set irqrace's static
+  stages keep 46 of 47 annotated bug points (the 47th is dead code there) and the triage keeps
+  the same 46 on top, reporting 126–130 items against IntRace's 54.
   IntRace reports **5 false positives, a 90.7% detection rate, and a 73.2% reduction in
   false positives versus [[Rchecker]]** — whose numbers were taken from its published paper,
   not re-run, because the implementation is unavailable. 36 of the found races are judged

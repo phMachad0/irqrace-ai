@@ -2,7 +2,7 @@
 type: benchmark
 tags: [wiki, benchmark]
 sources: ["[[Racebench (documentation)]]", "[[IntRace (paper)]]", "[[NIChecker (paper)]]", "[[BMC4AV (paper)]]"]
-updated: 2026-10-29
+updated: 2026-11-24
 status: solid
 ---
 
@@ -273,7 +273,7 @@ all. (Reaching that number required stripping bitcasts from call sites: `common.
 | --- | --- | --- | --- | --- |
 | benchmark itself | annotated triples | 31 simple | **53** bug points, 33 traps *(measured since the 2026-10-28 relabel; 48/38 before — the papers below were scored against 48/38)* | — |
 | [[Racebench (documentation)]] | — | 31 simple | 50 bug points, 33 traps | +2 / −5 against the annotations |
-| [[IntRace (paper)]] | [[Data Race]] | 30 (one dropped: [[Rchecker]] errored on it) | 50 | +2 |
+| [[IntRace (paper)]] | [[Data Race]] | 30 (one dropped: [[Rchecker]] errored on it; most likely `001`) — files of the `2.1` directory | 50 (49 over its 30 cases) | +2: one more in `009` and in `017` (Table 3, reconstructed 2026-11-24) |
 | [[NIChecker (paper)]] | [[Atomicity Violation]] | 31 | 54, "four harmful patterns" | **+6** — still unexplained |
 | [[BMC4AV (paper)]] | [[Atomicity Violation]] | 25 (six dropped as `(R,W,W)`-only) | 38 | **exactly reproduces the annotations** — see below |
 
