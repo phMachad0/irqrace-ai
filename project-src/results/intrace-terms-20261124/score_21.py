@@ -14,7 +14,8 @@ import json
 import sys
 from pathlib import Path
 
-sys.path.insert(0, "/home/pedro/Documentos/tcc/worktrees/t3-model-speed/project-src/src")
+PROJECT = Path(__file__).resolve().parents[2]  # project-src/
+sys.path.insert(0, str(PROJECT / "src"))
 from irqrace.bench_metrics import label_set  # noqa: E402
 from irqrace.evaluation import match_subject  # noqa: E402
 

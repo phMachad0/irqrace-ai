@@ -37,7 +37,7 @@ Rchecker's results, numbered 1–30 without case names (`match.py` holds the tra
 
 ## What ran
 
-- Commit `2829a9b` (t3-model-speed), static binaries from `analysis/build`, the machine of the
+- Commit `2829a9b` (branch `tcc/t2-protocol-review`), static binaries from `analysis/build`, the machine of the
   monograph's runs. `irqrace pipeline --through context` on 31 configs (`configs/`): the
   production C1 files with `source_root` pointed at **pristine `2.1/`** (`git archive 3d77421`,
   so without the 006 source patch) and, for `028` and `030`, the entry point

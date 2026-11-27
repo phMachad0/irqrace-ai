@@ -9,16 +9,19 @@ Uses the same line mapping as score_21.py. S2 reports the `likely_real` bucket;
 import dataclasses
 import json
 import re
+import os
 import sys
 from pathlib import Path
 
-sys.path.insert(0, "/home/pedro/Documentos/tcc/worktrees/t3-model-speed/project-src/src")
+PROJECT = Path(__file__).resolve().parents[2]  # project-src/
+sys.path.insert(0, str(PROJECT / "src"))
 from irqrace.bench_metrics import label_set  # noqa: E402
 from irqrace.evaluation import match_subject  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
-REMARKS = Path("/home/pedro/Documentos/tcc/worktrees/t3-model-speed/project-src/bench/racebench/2.1_remarks")
-SRC = HERE / "pristine/project-src/bench/racebench/2.1"
+REMARKS = PROJECT / "bench" / "racebench" / "2.1_remarks"
+#: Pristine 2.1 (git archive 3d77421); see NOTES.md.
+SRC = Path(os.environ.get("PRISTINE_RACEBENCH", HERE / "pristine/project-src/bench/racebench")) / "2.1"
 ns: dict = {}
 code = (HERE / "score_21.py").read_text()
 exec(code[code.index("def line_map"):code.index("def run_dir")], {"difflib": __import__("difflib"), "Path": Path}, ns)

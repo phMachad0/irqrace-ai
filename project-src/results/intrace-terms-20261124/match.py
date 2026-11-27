@@ -1,10 +1,12 @@
-import sys, itertools
+import os, sys, itertools
 from pathlib import Path
-sys.path.insert(0, "/home/pedro/Documentos/tcc/worktrees/t3-model-speed/project-src/src")
+PROJECT = Path(__file__).resolve().parents[2]  # project-src/
+sys.path.insert(0, str(PROJECT / "src"))
 from irqrace.groundtruth import parse_suite, load_suite
 import re
-CUR = Path("/home/pedro/Documentos/tcc/worktrees/t3-model-speed/project-src/bench")
-PRIS = Path("pristine/project-src/bench/racebench")
+CUR = PROJECT / "bench"
+#: The suite as imported (git archive 3d77421 project-src/bench/racebench), unpacked here.
+PRIS = Path(os.environ.get("PRISTINE_RACEBENCH", "pristine/project-src/bench/racebench"))
 # IntRace Table 3: No, size, isr, race, rchecker num/tp/fp, intrace num/tp/fp
 T = """1 60 3 1 2 1 1 1 1 0
 2 74 2 1 2 1 1 1 1 0
