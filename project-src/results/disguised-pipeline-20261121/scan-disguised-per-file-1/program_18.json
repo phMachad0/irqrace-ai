@@ -1,0 +1,68 @@
+{
+  "case": "program_18",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_vessel",
+        "a1_line": 33,
+        "a1_kind": "read",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 34,
+        "a2_kind": "write",
+        "why": "ISR can reset v_vessel between the check and the write of 12, so the write is based on a stale read."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 33,
+        "a1_kind": "read",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 36,
+        "a2_kind": "write",
+        "why": "ISR write between the compare and the else-branch write makes the decision stale."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 22,
+        "a1_kind": "write",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 33,
+        "a2_kind": "read",
+        "why": "ISR write can intervene between the task's write of 0 and its later read in fn_juniper."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 22,
+        "a1_kind": "write",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 57,
+        "a2_kind": "read",
+        "why": "ISR write can intervene between the task's write and its later read in fn_nectar."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 33,
+        "a1_kind": "read",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 57,
+        "a2_kind": "read",
+        "why": "ISR write between the two task reads can give them different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_vessel\",\"a1_line\":33,\"a1_kind\":\"read\",\"b_line\":41,\"b_kind\":\"write\",\"a2_line\":34,\"a2_kind\":\"write\",\"why\":\"ISR can reset v_vessel between the check and the write of 12, so the write is based on a stale read.\"},{\"variable\":\"v_vessel\",\"a1_line\":33,\"a1_kind\":\"read\",\"b_line\":41,\"b_kind\":\"write\",\"a2_line\":36,\"a2_kind\":\"write\",\"why\":\"ISR write between the compare and the else-branch write makes the decision stale.\"},{\"variable\":\"v_vessel\",\"a1_line\":22,\"a1_kind\":\"write\",\"b_line\":41,\"b_kind\":\"write\",\"a2_line\":33,\"a2_kind\":\"read\",\"why\":\"ISR write can intervene between the task's write of 0 and its later read in fn_juniper.\"},{\"variable\":\"v_vessel\",\"a1_line\":22,\"a1_kind\":\"write\",\"b_line\":41,\"b_kind\":\"write\",\"a2_line\":57,\"a2_kind\":\"read\",\"why\":\"ISR write can intervene between the task's write and its later read in fn_nectar.\"},{\"variable\":\"v_vessel\",\"a1_line\":33,\"a1_kind\":\"read\",\"b_line\":41,\"b_kind\":\"write\",\"a2_line\":57,\"a2_kind\":\"read\",\"why\":\"ISR write between the two task reads can give them different values.\"}]}",
+  "wall_s": 8.45432996749878,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 949,
+    "cache_read": 975,
+    "cache_write": 1560,
+    "latency_s": 8.45413458099938
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

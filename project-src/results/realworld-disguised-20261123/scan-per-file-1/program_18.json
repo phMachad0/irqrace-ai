@@ -1,0 +1,158 @@
+{
+  "case": "program_18",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_glacier",
+        "a1_line": 169,
+        "a1_kind": "write",
+        "b_line": 208,
+        "b_kind": "write",
+        "a2_line": 178,
+        "a2_kind": "read",
+        "why": "tundra can preempt loom and reset v_glacier between loom's write and its check."
+      },
+      {
+        "variable": "v_glacier",
+        "a1_line": 169,
+        "a1_kind": "write",
+        "b_line": 221,
+        "b_kind": "write",
+        "a2_line": 178,
+        "a2_kind": "read",
+        "why": "iris can preempt loom and reset v_glacier between loom's write and its check."
+      },
+      {
+        "variable": "v_glacier",
+        "a1_line": 178,
+        "a1_kind": "read",
+        "b_line": 208,
+        "b_kind": "write",
+        "a2_line": 182,
+        "a2_kind": "write",
+        "why": "tundra writes v_glacier between loom's read and its later write."
+      },
+      {
+        "variable": "v_glacier",
+        "a1_line": 178,
+        "a1_kind": "read",
+        "b_line": 221,
+        "b_kind": "write",
+        "a2_line": 182,
+        "a2_kind": "write",
+        "why": "iris writes v_glacier between loom's read and its later write."
+      },
+      {
+        "variable": "v_glacier",
+        "a1_line": 189,
+        "a1_kind": "write",
+        "b_line": 208,
+        "b_kind": "write",
+        "a2_line": 200,
+        "a2_kind": "read",
+        "why": "tundra can preempt harbor and reset v_glacier between harbor's write and its check."
+      },
+      {
+        "variable": "v_glacier",
+        "a1_line": 189,
+        "a1_kind": "write",
+        "b_line": 221,
+        "b_kind": "write",
+        "a2_line": 200,
+        "a2_kind": "read",
+        "why": "iris can preempt harbor and reset v_glacier between harbor's write and its check."
+      },
+      {
+        "variable": "v_glacier",
+        "a1_line": 200,
+        "a1_kind": "read",
+        "b_line": 208,
+        "b_kind": "write",
+        "a2_line": 203,
+        "a2_kind": "write",
+        "why": "tundra writes v_glacier between harbor's read and its later write."
+      },
+      {
+        "variable": "v_glacier",
+        "a1_line": 200,
+        "a1_kind": "read",
+        "b_line": 221,
+        "b_kind": "write",
+        "a2_line": 203,
+        "a2_kind": "write",
+        "why": "iris writes v_glacier between harbor's read and its later write."
+      },
+      {
+        "variable": "v_ridge",
+        "a1_line": 170,
+        "a1_kind": "write",
+        "b_line": 207,
+        "b_kind": "write",
+        "a2_line": 171,
+        "a2_kind": "read",
+        "why": "tundra can clear v_ridge between loom's write and its read."
+      },
+      {
+        "variable": "v_ridge",
+        "a1_line": 170,
+        "a1_kind": "write",
+        "b_line": 220,
+        "b_kind": "write",
+        "a2_line": 171,
+        "a2_kind": "read",
+        "why": "iris can clear v_ridge between loom's write and its read."
+      },
+      {
+        "variable": "v_ridge",
+        "a1_line": 190,
+        "a1_kind": "write",
+        "b_line": 207,
+        "b_kind": "write",
+        "a2_line": 191,
+        "a2_kind": "read",
+        "why": "tundra can clear v_ridge between harbor's write and its read."
+      },
+      {
+        "variable": "v_ridge",
+        "a1_line": 190,
+        "a1_kind": "write",
+        "b_line": 220,
+        "b_kind": "write",
+        "a2_line": 191,
+        "a2_kind": "read",
+        "why": "iris can clear v_ridge between harbor's write and its read."
+      },
+      {
+        "variable": "v_velvet",
+        "a1_line": 161,
+        "a1_kind": "read",
+        "b_line": 216,
+        "b_kind": "write",
+        "a2_line": 162,
+        "a2_kind": "read",
+        "why": "tundra can write v_velvet between loom's two reads in fn_saffron, so the two reads can differ."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 197,
+        "a1_kind": "read",
+        "b_line": 231,
+        "b_kind": "write",
+        "a2_line": 198,
+        "a2_kind": "read",
+        "why": "iris can write v_lantern between harbor's two reads, so the two reads can differ."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_glacier\",\"a1_line\":169,\"a1_kind\":\"write\",\"b_line\":208,\"b_kind\":\"write\",\"a2_line\":178,\"a2_kind\":\"read\",\"why\":\"tundra can preempt loom and reset v_glacier between loom's write and its check.\"},{\"variable\":\"v_glacier\",\"a1_line\":169,\"a1_kind\":\"write\",\"b_line\":221,\"b_kind\":\"write\",\"a2_line\":178,\"a2_kind\":\"read\",\"why\":\"iris can preempt loom and reset v_glacier between loom's write and its check.\"},{\"variable\":\"v_glacier\",\"a1_line\":178,\"a1_kind\":\"read\",\"b_line\":208,\"b_kind\":\"write\",\"a2_line\":182,\"a2_kind\":\"write\",\"why\":\"tundra writes v_glacier between loom's read and its later write.\"},{\"variable\":\"v_glacier\",\"a1_line\":178,\"a1_kind\":\"read\",\"b_line\":221,\"b_kind\":\"write\",\"a2_line\":182,\"a2_kind\":\"write\",\"why\":\"iris writes v_glacier between loom's read and its later write.\"},{\"variable\":\"v_glacier\",\"a1_line\":189,\"a1_kind\":\"write\",\"b_line\":208,\"b_kind\":\"write\",\"a2_line\":200,\"a2_kind\":\"read\",\"why\":\"tundra can preempt harbor and reset v_glacier between harbor's write and its check.\"},{\"variable\":\"v_glacier\",\"a1_line\":189,\"a1_kind\":\"write\",\"b_line\":221,\"b_kind\":\"write\",\"a2_line\":200,\"a2_kind\":\"read\",\"why\":\"iris can preempt harbor and reset v_glacier between harbor's write and its check.\"},{\"variable\":\"v_glacier\",\"a1_line\":200,\"a1_kind\":\"read\",\"b_line\":208,\"b_kind\":\"write\",\"a2_line\":203,\"a2_kind\":\"write\",\"why\":\"tundra writes v_glacier between harbor's read and its later write.\"},{\"variable\":\"v_glacier\",\"a1_line\":200,\"a1_kind\":\"read\",\"b_line\":221,\"b_kind\":\"write\",\"a2_line\":203,\"a2_kind\":\"write\",\"why\":\"iris writes v_glacier between harbor's read and its later write.\"},{\"variable\":\"v_ridge\",\"a1_line\":170,\"a1_kind\":\"write\",\"b_line\":207,\"b_kind\":\"write\",\"a2_line\":171,\"a2_kind\":\"read\",\"why\":\"tundra can clear v_ridge between loom's write and its read.\"},{\"variable\":\"v_ridge\",\"a1_line\":170,\"a1_kind\":\"write\",\"b_line\":220,\"b_kind\":\"write\",\"a2_line\":171,\"a2_kind\":\"read\",\"why\":\"iris can clear v_ridge between loom's write and its read.\"},{\"variable\":\"v_ridge\",\"a1_line\":190,\"a1_kind\":\"write\",\"b_line\":207,\"b_kind\":\"write\",\"a2_line\":191,\"a2_kind\":\"read\",\"why\":\"tundra can clear v_ridge between harbor's write and its read.\"},{\"variable\":\"v_ridge\",\"a1_line\":190,\"a1_kind\":\"write\",\"b_line\":220,\"b_kind\":\"write\",\"a2_line\":191,\"a2_kind\":\"read\",\"why\":\"iris can clear v_ridge between harbor's write and its read.\"},{\"variable\":\"v_velvet\",\"a1_line\":161,\"a1_kind\":\"read\",\"b_line\":216,\"b_kind\":\"write\",\"a2_line\":162,\"a2_kind\":\"read\",\"why\":\"tundra can write v_velvet between loom's two reads in fn_saffron, so the two reads can differ.\"},{\"variable\":\"v_lantern\",\"a1_line\":197,\"a1_kind\":\"read\",\"b_line\":231,\"b_kind\":\"write\",\"a2_line\":198,\"a2_kind\":\"read\",\"why\":\"iris can write v_lantern between harbor's two reads, so the two reads can differ.\"}]}",
+  "wall_s": 16.413289546966553,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 2319,
+    "cache_read": 1011,
+    "cache_write": 5095,
+    "latency_s": 16.413059824029915
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

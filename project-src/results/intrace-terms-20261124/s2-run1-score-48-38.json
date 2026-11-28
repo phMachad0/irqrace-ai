@@ -1,0 +1,680 @@
+{
+ "pair": "triage/+interleaving/1",
+ "labels": "48/38",
+ "all31": {
+  "likely_real": {
+   "bugs": 48,
+   "found": 47,
+   "traps_rep": 6,
+   "reported": 128,
+   "bugs_infeasible": 0
+  },
+  "not_infeasible": {
+   "bugs": 48,
+   "found": 47,
+   "traps_rep": 7,
+   "reported": 132,
+   "bugs_infeasible": 0
+  }
+ },
+ "intrace30": {
+  "likely_real": {
+   "bugs": 47,
+   "found": 46,
+   "traps_rep": 5,
+   "reported": 126,
+   "bugs_infeasible": 0
+  },
+  "not_infeasible": {
+   "bugs": 47,
+   "found": 46,
+   "traps_rep": 6,
+   "reported": 130,
+   "bugs_infeasible": 0
+  }
+ },
+ "spend": {
+  "requests": 84.0,
+  "tokens_in": 176.0,
+  "tokens_out": 106479.0,
+  "cache_read": 1765135.0,
+  "cache_write": 44505.0,
+  "latency_s": 925.9000000000001
+ },
+ "wall_s": 252.9,
+ "batch_status": "ok",
+ "cases": [
+  {
+   "case": "svp_simple_001_001",
+   "likely_real": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 1,
+    "reported": 2,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 1,
+    "reported": 2,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": [
+    [
+     43,
+     64,
+     44
+    ]
+   ]
+  },
+  {
+   "case": "svp_simple_002_001",
+   "likely_real": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 1,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 1,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": []
+  },
+  {
+   "case": "svp_simple_003_001",
+   "likely_real": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 1,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 1,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": []
+  },
+  {
+   "case": "svp_simple_004_001",
+   "likely_real": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 1,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 1,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": []
+  },
+  {
+   "case": "svp_simple_005_001",
+   "likely_real": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 1,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 1,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": []
+  },
+  {
+   "case": "svp_simple_006_001",
+   "likely_real": {
+    "bugs": 1,
+    "found": 0,
+    "traps_rep": 0,
+    "reported": 0,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 1,
+    "found": 0,
+    "traps_rep": 0,
+    "reported": 1,
+    "bugs_infeasible": 0
+   },
+   "missed": [
+    [
+     [
+      33,
+      52,
+      35
+     ],
+     "not reported"
+    ]
+   ],
+   "traps_on_top": []
+  },
+  {
+   "case": "svp_simple_007_001",
+   "likely_real": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 6,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 7,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": []
+  },
+  {
+   "case": "svp_simple_008_001",
+   "likely_real": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 1,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 1,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": []
+  },
+  {
+   "case": "svp_simple_009_001",
+   "likely_real": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 6,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 1,
+    "reported": 8,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": []
+  },
+  {
+   "case": "svp_simple_010_001",
+   "likely_real": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 1,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 1,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": []
+  },
+  {
+   "case": "svp_simple_011_001",
+   "likely_real": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 2,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 2,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": []
+  },
+  {
+   "case": "svp_simple_012_001",
+   "likely_real": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 1,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 1,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": []
+  },
+  {
+   "case": "svp_simple_013_001",
+   "likely_real": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 1,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 1,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": []
+  },
+  {
+   "case": "svp_simple_014_001",
+   "likely_real": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 1,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 1,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": []
+  },
+  {
+   "case": "svp_simple_015_001",
+   "likely_real": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 1,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 1,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": []
+  },
+  {
+   "case": "svp_simple_016_001",
+   "likely_real": {
+    "bugs": 3,
+    "found": 3,
+    "traps_rep": 0,
+    "reported": 6,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 3,
+    "found": 3,
+    "traps_rep": 0,
+    "reported": 6,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": []
+  },
+  {
+   "case": "svp_simple_017_001",
+   "likely_real": {
+    "bugs": 4,
+    "found": 4,
+    "traps_rep": 0,
+    "reported": 20,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 4,
+    "found": 4,
+    "traps_rep": 0,
+    "reported": 20,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": []
+  },
+  {
+   "case": "svp_simple_018_001",
+   "likely_real": {
+    "bugs": 3,
+    "found": 3,
+    "traps_rep": 0,
+    "reported": 4,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 3,
+    "found": 3,
+    "traps_rep": 0,
+    "reported": 4,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": []
+  },
+  {
+   "case": "svp_simple_019_001",
+   "likely_real": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 2,
+    "reported": 5,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 2,
+    "reported": 5,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": [
+    [
+     49,
+     65,
+     54
+    ],
+    [
+     48,
+     63,
+     53
+    ]
+   ]
+  },
+  {
+   "case": "svp_simple_020_001",
+   "likely_real": {
+    "bugs": 2,
+    "found": 2,
+    "traps_rep": 1,
+    "reported": 3,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 2,
+    "found": 2,
+    "traps_rep": 1,
+    "reported": 3,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": [
+    [
+     37,
+     44,
+     40
+    ]
+   ]
+  },
+  {
+   "case": "svp_simple_021_001",
+   "likely_real": {
+    "bugs": 3,
+    "found": 3,
+    "traps_rep": 0,
+    "reported": 6,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 3,
+    "found": 3,
+    "traps_rep": 0,
+    "reported": 6,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": []
+  },
+  {
+   "case": "svp_simple_022_001",
+   "likely_real": {
+    "bugs": 4,
+    "found": 4,
+    "traps_rep": 2,
+    "reported": 12,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 4,
+    "found": 4,
+    "traps_rep": 2,
+    "reported": 12,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": [
+    [
+     32,
+     66,
+     39
+    ],
+    [
+     55,
+     66,
+     63
+    ]
+   ]
+  },
+  {
+   "case": "svp_simple_023_001",
+   "likely_real": {
+    "bugs": 2,
+    "found": 2,
+    "traps_rep": 0,
+    "reported": 5,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 2,
+    "found": 2,
+    "traps_rep": 0,
+    "reported": 5,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": []
+  },
+  {
+   "case": "svp_simple_024_001",
+   "likely_real": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 1,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 1,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": []
+  },
+  {
+   "case": "svp_simple_025_001",
+   "likely_real": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 2,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 2,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": []
+  },
+  {
+   "case": "svp_simple_026_001",
+   "likely_real": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 4,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 4,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": []
+  },
+  {
+   "case": "svp_simple_027_001",
+   "likely_real": {
+    "bugs": 2,
+    "found": 2,
+    "traps_rep": 0,
+    "reported": 8,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 2,
+    "found": 2,
+    "traps_rep": 0,
+    "reported": 8,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": []
+  },
+  {
+   "case": "svp_simple_028_001",
+   "likely_real": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 7,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 7,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": []
+  },
+  {
+   "case": "svp_simple_029_001",
+   "likely_real": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 2,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 2,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": []
+  },
+  {
+   "case": "svp_simple_030_001",
+   "likely_real": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 7,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 1,
+    "found": 1,
+    "traps_rep": 0,
+    "reported": 7,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": []
+  },
+  {
+   "case": "svp_simple_031_001",
+   "likely_real": {
+    "bugs": 3,
+    "found": 3,
+    "traps_rep": 0,
+    "reported": 10,
+    "bugs_infeasible": 0
+   },
+   "not_infeasible": {
+    "bugs": 3,
+    "found": 3,
+    "traps_rep": 0,
+    "reported": 10,
+    "bugs_infeasible": 0
+   },
+   "missed": [],
+   "traps_on_top": []
+  }
+ ]
+}

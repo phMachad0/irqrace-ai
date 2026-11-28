@@ -1,0 +1,742 @@
+{
+  "parsed": {
+    "cases": [
+      {
+        "case": "program_01",
+        "violations": [
+          {
+            "variable": "v_pebble",
+            "a1_line": 19,
+            "a1_kind": "read",
+            "b_line": 7,
+            "b_kind": "write",
+            "a2_line": 20,
+            "a2_kind": "read",
+            "why": "ISR can write v_pebble between the two reads in the task's condition."
+          }
+        ]
+      },
+      {
+        "case": "program_02",
+        "violations": [
+          {
+            "variable": "v_ember",
+            "a1_line": 20,
+            "a1_kind": "read",
+            "b_line": 30,
+            "b_kind": "write",
+            "a2_line": 22,
+            "a2_kind": "read",
+            "why": "Chain ridge->yarrow enables hazel, which writes v_ember between the task's two reads."
+          }
+        ]
+      },
+      {
+        "case": "program_03",
+        "violations": [
+          {
+            "variable": "v_fjord",
+            "a1_line": 22,
+            "a1_kind": "read",
+            "b_line": 45,
+            "b_kind": "write",
+            "a2_line": 27,
+            "a2_kind": "read",
+            "why": "irq_summit is not masked and can write v_fjord between the task's reads."
+          }
+        ]
+      },
+      {
+        "case": "program_04",
+        "violations": [
+          {
+            "variable": "v_tundra",
+            "a1_line": 63,
+            "a1_kind": "read",
+            "b_line": 73,
+            "b_kind": "write",
+            "a2_line": 24,
+            "a2_kind": "read",
+            "why": "ISR may change v_tundra between the task's reads."
+          },
+          {
+            "variable": "v_tundra",
+            "a1_line": 24,
+            "a1_kind": "read",
+            "b_line": 73,
+            "b_kind": "write",
+            "a2_line": 26,
+            "a2_kind": "read",
+            "why": "ISR may change v_tundra between the check and the use as argument."
+          }
+        ]
+      },
+      {
+        "case": "program_05",
+        "violations": [
+          {
+            "variable": "v_quartz",
+            "a1_line": 19,
+            "a1_kind": "write",
+            "b_line": 10,
+            "b_kind": "read",
+            "a2_line": 20,
+            "a2_kind": "write",
+            "why": "ISR reads v_quartz between the task's two writes."
+          },
+          {
+            "variable": "v_vessel",
+            "a1_line": 22,
+            "a1_kind": "write",
+            "b_line": 11,
+            "b_kind": "read",
+            "a2_line": 24,
+            "a2_kind": "write",
+            "why": "ISR reads the pointer v_vessel between the task's two pointer writes."
+          }
+        ]
+      },
+      {
+        "case": "program_06",
+        "violations": [
+          {
+            "variable": "v_meadow",
+            "a1_line": 24,
+            "a1_kind": "read",
+            "b_line": 12,
+            "b_kind": "write",
+            "a2_line": 26,
+            "a2_kind": "read",
+            "why": "ISR writes v_meadow between the task's two reads."
+          }
+        ]
+      },
+      {
+        "case": "program_07",
+        "violations": [
+          {
+            "variable": "v_pylon",
+            "a1_line": 21,
+            "a1_kind": "read",
+            "b_line": 11,
+            "b_kind": "write",
+            "a2_line": 23,
+            "a2_kind": "read",
+            "why": "ISR increments v_pylon between task's index reads."
+          },
+          {
+            "variable": "v_vessel",
+            "a1_line": 21,
+            "a1_kind": "write",
+            "b_line": 12,
+            "b_kind": "write",
+            "a2_line": 23,
+            "a2_kind": "read",
+            "why": "ISR writes v_vessel[v_pylon] between task's write and read."
+          },
+          {
+            "variable": "v_vessel",
+            "a1_line": 27,
+            "a1_kind": "write",
+            "b_line": 9,
+            "b_kind": "write",
+            "a2_line": 31,
+            "a2_kind": "read",
+            "why": "ISR overwrites v_vessel[2] between task's write and read."
+          }
+        ]
+      },
+      {
+        "case": "program_08",
+        "violations": [
+          {
+            "variable": "v_amber",
+            "a1_line": 19,
+            "a1_kind": "read",
+            "b_line": 23,
+            "b_kind": "write",
+            "a2_line": 19,
+            "a2_kind": "write",
+            "why": "ISR resets v_amber between read and write-back of the increment (lost update)."
+          }
+        ]
+      },
+      {
+        "case": "program_09",
+        "violations": [
+          {
+            "variable": "v_raptor",
+            "a1_line": 32,
+            "a1_kind": "read",
+            "b_line": 52,
+            "b_kind": "write",
+            "a2_line": 37,
+            "a2_kind": "read",
+            "why": "After enable_isr(1), basalt can write v_raptor between the task's reads."
+          }
+        ]
+      },
+      {
+        "case": "program_10",
+        "violations": [
+          {
+            "variable": "v_amber",
+            "a1_line": 15,
+            "a1_kind": "read",
+            "b_line": 25,
+            "b_kind": "write",
+            "a2_line": 17,
+            "a2_kind": "read",
+            "why": "irq_nimbus enables vessel, which preempts upland and writes v_amber."
+          },
+          {
+            "variable": "v_fjord",
+            "a1_line": 19,
+            "a1_kind": "read",
+            "b_line": 26,
+            "b_kind": "write",
+            "a2_line": 21,
+            "a2_kind": "read",
+            "why": "Same chain lets vessel write v_fjord between upland's reads."
+          }
+        ]
+      },
+      {
+        "case": "program_11",
+        "violations": [
+          {
+            "variable": "v_umber",
+            "a1_line": 12,
+            "a1_kind": "read",
+            "b_line": 36,
+            "b_kind": "write",
+            "a2_line": 13,
+            "a2_kind": "write",
+            "why": "irq_orchid (enabled) increments v_umber between the task's check and reset."
+          }
+        ]
+      },
+      {
+        "case": "program_12",
+        "violations": [
+          {
+            "variable": "v_ridge",
+            "a1_line": 30,
+            "a1_kind": "write",
+            "b_line": 17,
+            "b_kind": "read",
+            "a2_line": 31,
+            "a2_kind": "write",
+            "why": "Union members overlap; ISR reads between the task's two writes."
+          }
+        ]
+      },
+      {
+        "case": "program_13",
+        "violations": [
+          {
+            "variable": "v_umber",
+            "a1_line": 14,
+            "a1_kind": "write",
+            "b_line": 7,
+            "b_kind": "read",
+            "a2_line": 16,
+            "a2_kind": "write",
+            "why": "ISR reads v_umber between the task's two writes."
+          }
+        ]
+      },
+      {
+        "case": "program_14",
+        "violations": [
+          {
+            "variable": "v_velvet",
+            "a1_line": 48,
+            "a1_kind": "read",
+            "b_line": 40,
+            "b_kind": "write",
+            "a2_line": 49,
+            "a2_kind": "write",
+            "why": "ISR writes v_velvet between check and reset."
+          },
+          {
+            "variable": "v_velvet",
+            "a1_line": 49,
+            "a1_kind": "write",
+            "b_line": 40,
+            "b_kind": "write",
+            "a2_line": 26,
+            "a2_kind": "read",
+            "why": "ISR overwrites v_velvet after the task's reset before it is read."
+          }
+        ]
+      },
+      {
+        "case": "program_15",
+        "violations": [
+          {
+            "variable": "v_onyx",
+            "a1_line": 19,
+            "a1_kind": "write",
+            "b_line": 10,
+            "b_kind": "write",
+            "a2_line": 19,
+            "a2_kind": "read",
+            "why": "ISR overwrites v_onyx between init and loop condition."
+          },
+          {
+            "variable": "v_onyx",
+            "a1_line": 19,
+            "a1_kind": "read",
+            "b_line": 10,
+            "b_kind": "write",
+            "a2_line": 22,
+            "a2_kind": "read",
+            "why": "ISR changes the loop index between condition and use."
+          },
+          {
+            "variable": "v_onyx",
+            "a1_line": 22,
+            "a1_kind": "read",
+            "b_line": 10,
+            "b_kind": "write",
+            "a2_line": 20,
+            "a2_kind": "write",
+            "why": "ISR write lost/overwritten by v_onyx++."
+          }
+        ]
+      },
+      {
+        "case": "program_16",
+        "violations": [
+          {
+            "variable": "v_iris",
+            "a1_line": 11,
+            "a1_kind": "read",
+            "b_line": 43,
+            "b_kind": "write",
+            "a2_line": 18,
+            "a2_kind": "read",
+            "why": "ISR changes v_iris between the two computations."
+          },
+          {
+            "variable": "v_beacon",
+            "a1_line": 12,
+            "a1_kind": "read",
+            "b_line": 38,
+            "b_kind": "write",
+            "a2_line": 19,
+            "a2_kind": "read",
+            "why": "ISR changes v_beacon between reads."
+          },
+          {
+            "variable": "v_beacon",
+            "a1_line": 19,
+            "a1_kind": "read",
+            "b_line": 38,
+            "b_kind": "write",
+            "a2_line": 20,
+            "a2_kind": "read",
+            "why": "ISR changes v_beacon between the two reads in the area computation."
+          }
+        ]
+      },
+      {
+        "case": "program_17",
+        "violations": [
+          {
+            "variable": "v_quiver",
+            "a1_line": 47,
+            "a1_kind": "read",
+            "b_line": 43,
+            "b_kind": "write",
+            "a2_line": 47,
+            "a2_kind": "read",
+            "why": "ISR writes v_quiver[36] via v_ember between the task's two reads."
+          },
+          {
+            "variable": "v_quiver",
+            "a1_line": 47,
+            "a1_kind": "read",
+            "b_line": 43,
+            "b_kind": "write",
+            "a2_line": 43,
+            "a2_kind": "write",
+            "why": "ISR writes v_quiver[36] between task's read and its write."
+          }
+        ]
+      },
+      {
+        "case": "program_18",
+        "violations": [
+          {
+            "variable": "v_vessel",
+            "a1_line": 15,
+            "a1_kind": "write",
+            "b_line": 34,
+            "b_kind": "write",
+            "a2_line": 26,
+            "a2_kind": "read",
+            "why": "ISR overwrites v_vessel between write and check."
+          },
+          {
+            "variable": "v_vessel",
+            "a1_line": 26,
+            "a1_kind": "read",
+            "b_line": 34,
+            "b_kind": "write",
+            "a2_line": 27,
+            "a2_kind": "write",
+            "why": "ISR write between check and update."
+          },
+          {
+            "variable": "v_vessel",
+            "a1_line": 26,
+            "a1_kind": "read",
+            "b_line": 34,
+            "b_kind": "write",
+            "a2_line": 29,
+            "a2_kind": "write",
+            "why": "ISR write between check and update."
+          },
+          {
+            "variable": "v_vessel",
+            "a1_line": 27,
+            "a1_kind": "write",
+            "b_line": 34,
+            "b_kind": "write",
+            "a2_line": 50,
+            "a2_kind": "read",
+            "why": "ISR overwrites value before it is copied."
+          },
+          {
+            "variable": "v_vessel",
+            "a1_line": 29,
+            "a1_kind": "write",
+            "b_line": 34,
+            "b_kind": "write",
+            "a2_line": 50,
+            "a2_kind": "read",
+            "why": "ISR overwrites value before it is copied."
+          },
+          {
+            "variable": "v_vessel",
+            "a1_line": 50,
+            "a1_kind": "read",
+            "b_line": 34,
+            "b_kind": "write",
+            "a2_line": 22,
+            "a2_kind": "read",
+            "why": "ISR changes v_vessel between the two copies."
+          }
+        ]
+      },
+      {
+        "case": "program_19",
+        "violations": [
+          {
+            "variable": "v_hazel",
+            "a1_line": 31,
+            "a1_kind": "read",
+            "b_line": 8,
+            "b_kind": "write",
+            "a2_line": 34,
+            "a2_kind": "read",
+            "why": "nimbus, enabled by jasper, writes v_hazel between the task's reads."
+          },
+          {
+            "variable": "v_meadow",
+            "a1_line": 32,
+            "a1_kind": "read",
+            "b_line": 9,
+            "b_kind": "write",
+            "a2_line": 35,
+            "a2_kind": "read",
+            "why": "nimbus writes v_meadow between task's reads."
+          }
+        ]
+      },
+      {
+        "case": "program_20",
+        "violations": [
+          {
+            "variable": "v_beacon",
+            "a1_line": 46,
+            "a1_kind": "read",
+            "b_line": 20,
+            "b_kind": "write",
+            "a2_line": 47,
+            "a2_kind": "read",
+            "why": "ISR clears v_beacon entries between the two element reads."
+          }
+        ]
+      },
+      {
+        "case": "program_21",
+        "violations": [
+          {
+            "variable": "v_lantern",
+            "a1_line": 18,
+            "a1_kind": "read",
+            "b_line": 32,
+            "b_kind": "write",
+            "a2_line": 19,
+            "a2_kind": "write",
+            "why": "irq_meadow (enabled) modifies v_lantern between check and reset."
+          },
+          {
+            "variable": "v_lantern",
+            "a1_line": 18,
+            "a1_kind": "read",
+            "b_line": 10,
+            "b_kind": "write",
+            "a2_line": 19,
+            "a2_kind": "write",
+            "why": "irq_vessel, enabled by meadow, preempts and modifies v_lantern."
+          }
+        ]
+      },
+      {
+        "case": "program_22",
+        "violations": [
+          {
+            "variable": "v_quiver",
+            "a1_line": 31,
+            "a1_kind": "read",
+            "b_line": 14,
+            "b_kind": "write",
+            "a2_line": 33,
+            "a2_kind": "read",
+            "why": "ISR writes v_quiver between the task's reads."
+          },
+          {
+            "variable": "v_willow",
+            "a1_line": 36,
+            "a1_kind": "read",
+            "b_line": 18,
+            "b_kind": "write",
+            "a2_line": 50,
+            "a2_kind": "read",
+            "why": "ISR writes v_willow between reads."
+          },
+          {
+            "variable": "v_willow",
+            "a1_line": 42,
+            "a1_kind": "read",
+            "b_line": 18,
+            "b_kind": "write",
+            "a2_line": 50,
+            "a2_kind": "read",
+            "why": "ISR enabled at 41 can write v_willow before the later read."
+          },
+          {
+            "variable": "v_amber",
+            "a1_line": 39,
+            "a1_kind": "read",
+            "b_line": 16,
+            "b_kind": "write",
+            "a2_line": 47,
+            "a2_kind": "read",
+            "why": "ISR enabled at 41 sets v_amber to 0 between the two checks."
+          }
+        ]
+      },
+      {
+        "case": "program_23",
+        "violations": [
+          {
+            "variable": "v_tundra",
+            "a1_line": 26,
+            "a1_kind": "write",
+            "b_line": 11,
+            "b_kind": "write",
+            "a2_line": 28,
+            "a2_kind": "read",
+            "why": "ISR overwrites v_tundra between task's assignment and dereference."
+          },
+          {
+            "variable": "v_tundra",
+            "a1_line": 28,
+            "a1_kind": "read",
+            "b_line": 11,
+            "b_kind": "write",
+            "a2_line": 29,
+            "a2_kind": "read",
+            "why": "ISR changes the pointer between the two dereferences."
+          }
+        ]
+      },
+      {
+        "case": "program_24",
+        "violations": [
+          {
+            "variable": "v_fjord",
+            "a1_line": 8,
+            "a1_kind": "read",
+            "b_line": 18,
+            "b_kind": "write",
+            "a2_line": 12,
+            "a2_kind": "read",
+            "why": "ISR changes v_fjord between reads."
+          },
+          {
+            "variable": "v_fjord",
+            "a1_line": 12,
+            "a1_kind": "read",
+            "b_line": 18,
+            "b_kind": "write",
+            "a2_line": 13,
+            "a2_kind": "read",
+            "why": "ISR changes v_fjord between check and use."
+          },
+          {
+            "variable": "v_fjord",
+            "a1_line": 13,
+            "a1_kind": "read",
+            "b_line": 18,
+            "b_kind": "write",
+            "a2_line": 13,
+            "a2_kind": "write",
+            "why": "ISR write lost by the increment."
+          }
+        ]
+      },
+      {
+        "case": "program_25",
+        "violations": [
+          {
+            "variable": "v_amber",
+            "a1_line": 12,
+            "a1_kind": "write",
+            "b_line": 6,
+            "b_kind": "write",
+            "a2_line": 13,
+            "a2_kind": "read",
+            "why": "ISR overwrites v_amber before it is read."
+          },
+          {
+            "variable": "v_amber",
+            "a1_line": 13,
+            "a1_kind": "read",
+            "b_line": 6,
+            "b_kind": "write",
+            "a2_line": 14,
+            "a2_kind": "read",
+            "why": "ISR changes v_amber between reads."
+          },
+          {
+            "variable": "v_amber",
+            "a1_line": 14,
+            "a1_kind": "read",
+            "b_line": 6,
+            "b_kind": "write",
+            "a2_line": 15,
+            "a2_kind": "read",
+            "why": "ISR changes v_amber between reads."
+          }
+        ]
+      },
+      {
+        "case": "program_26",
+        "violations": [
+          {
+            "variable": "v_glacier",
+            "a1_line": 19,
+            "a1_kind": "write",
+            "b_line": 11,
+            "b_kind": "read",
+            "a2_line": 27,
+            "a2_kind": "write",
+            "why": "ISR reads intermediate v_glacier between the task's two writes."
+          }
+        ]
+      },
+      {
+        "case": "program_27",
+        "violations": [
+          {
+            "variable": "v_fjord",
+            "a1_line": 21,
+            "a1_kind": "write",
+            "b_line": 14,
+            "b_kind": "write",
+            "a2_line": 25,
+            "a2_kind": "read",
+            "why": "Higher priority irq_kelp overwrites v_fjord[TRIGGER] before lantern reads it."
+          }
+        ]
+      },
+      {
+        "case": "program_28",
+        "violations": [
+          {
+            "variable": "v_glacier",
+            "a1_line": 15,
+            "a1_kind": "write",
+            "b_line": 21,
+            "b_kind": "write",
+            "a2_line": 30,
+            "a2_kind": "read",
+            "why": "ISR overwrites v_glacier[40] between task's write and read."
+          }
+        ]
+      },
+      {
+        "case": "program_29",
+        "violations": [
+          {
+            "variable": "v_garnet",
+            "a1_line": 34,
+            "a1_kind": "read",
+            "b_line": 24,
+            "b_kind": "write",
+            "a2_line": 35,
+            "a2_kind": "write",
+            "why": "irq_kestrel increments v_garnet between check and reset."
+          }
+        ]
+      },
+      {
+        "case": "program_30",
+        "violations": [
+          {
+            "variable": "v_quartz",
+            "a1_line": 42,
+            "a1_kind": "write",
+            "b_line": 11,
+            "b_kind": "read",
+            "a2_line": 45,
+            "a2_kind": "write",
+            "why": "irq_indigo reads v_quartz[9999] between task's two writes once enabled by zenith."
+          }
+        ]
+      },
+      {
+        "case": "program_31",
+        "violations": [
+          {
+            "variable": "v_basalt",
+            "a1_line": 17,
+            "a1_kind": "read",
+            "b_line": 10,
+            "b_kind": "write",
+            "a2_line": 18,
+            "a2_kind": "write",
+            "why": "irq_kestrel is not masked and modifies v_basalt between check and reset."
+          }
+        ]
+      }
+    ]
+  },
+  "text": "{\"cases\":[{\"case\":\"program_01\",\"violations\":[{\"variable\":\"v_pebble\",\"a1_line\":19,\"a1_kind\":\"read\",\"b_line\":7,\"b_kind\":\"write\",\"a2_line\":20,\"a2_kind\":\"read\",\"why\":\"ISR can write v_pebble between the two reads in the task's condition.\"}]},{\"case\":\"program_02\",\"violations\":[{\"variable\":\"v_ember\",\"a1_line\":20,\"a1_kind\":\"read\",\"b_line\":30,\"b_kind\":\"write\",\"a2_line\":22,\"a2_kind\":\"read\",\"why\":\"Chain ridge->yarrow enables hazel, which writes v_ember between the task's two reads.\"}]},{\"case\":\"program_03\",\"violations\":[{\"variable\":\"v_fjord\",\"a1_line\":22,\"a1_kind\":\"read\",\"b_line\":45,\"b_kind\":\"write\",\"a2_line\":27,\"a2_kind\":\"read\",\"why\":\"irq_summit is not masked and can write v_fjord between the task's reads.\"}]},{\"case\":\"program_04\",\"violations\":[{\"variable\":\"v_tundra\",\"a1_line\":63,\"a1_kind\":\"read\",\"b_line\":73,\"b_kind\":\"write\",\"a2_line\":24,\"a2_kind\":\"read\",\"why\":\"ISR may change v_tundra between the task's reads.\"},{\"variable\":\"v_tundra\",\"a1_line\":24,\"a1_kind\":\"read\",\"b_line\":73,\"b_kind\":\"write\",\"a2_line\":26,\"a2_kind\":\"read\",\"why\":\"ISR may change v_tundra between the check and the use as argument.\"}]},{\"case\":\"program_05\",\"violations\":[{\"variable\":\"v_quartz\",\"a1_line\":19,\"a1_kind\":\"write\",\"b_line\":10,\"b_kind\":\"read\",\"a2_line\":20,\"a2_kind\":\"write\",\"why\":\"ISR reads v_quartz between the task's two writes.\"},{\"variable\":\"v_vessel\",\"a1_line\":22,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"read\",\"a2_line\":24,\"a2_kind\":\"write\",\"why\":\"ISR reads the pointer v_vessel between the task's two pointer writes.\"}]},{\"case\":\"program_06\",\"violations\":[{\"variable\":\"v_meadow\",\"a1_line\":24,\"a1_kind\":\"read\",\"b_line\":12,\"b_kind\":\"write\",\"a2_line\":26,\"a2_kind\":\"read\",\"why\":\"ISR writes v_meadow between the task's two reads.\"}]},{\"case\":\"program_07\",\"violations\":[{\"variable\":\"v_pylon\",\"a1_line\":21,\"a1_kind\":\"read\",\"b_line\":11,\"b_kind\":\"write\",\"a2_line\":23,\"a2_kind\":\"read\",\"why\":\"ISR increments v_pylon between task's index reads.\"},{\"variable\":\"v_vessel\",\"a1_line\":21,\"a1_kind\":\"write\",\"b_line\":12,\"b_kind\":\"write\",\"a2_line\":23,\"a2_kind\":\"read\",\"why\":\"ISR writes v_vessel[v_pylon] between task's write and read.\"},{\"variable\":\"v_vessel\",\"a1_line\":27,\"a1_kind\":\"write\",\"b_line\":9,\"b_kind\":\"write\",\"a2_line\":31,\"a2_kind\":\"read\",\"why\":\"ISR overwrites v_vessel[2] between task's write and read.\"}]},{\"case\":\"program_08\",\"violations\":[{\"variable\":\"v_amber\",\"a1_line\":19,\"a1_kind\":\"read\",\"b_line\":23,\"b_kind\":\"write\",\"a2_line\":19,\"a2_kind\":\"write\",\"why\":\"ISR resets v_amber between read and write-back of the increment (lost update).\"}]},{\"case\":\"program_09\",\"violations\":[{\"variable\":\"v_raptor\",\"a1_line\":32,\"a1_kind\":\"read\",\"b_line\":52,\"b_kind\":\"write\",\"a2_line\":37,\"a2_kind\":\"read\",\"why\":\"After enable_isr(1), basalt can write v_raptor between the task's reads.\"}]},{\"case\":\"program_10\",\"violations\":[{\"variable\":\"v_amber\",\"a1_line\":15,\"a1_kind\":\"read\",\"b_line\":25,\"b_kind\":\"write\",\"a2_line\":17,\"a2_kind\":\"read\",\"why\":\"irq_nimbus enables vessel, which preempts upland and writes v_amber.\"},{\"variable\":\"v_fjord\",\"a1_line\":19,\"a1_kind\":\"read\",\"b_line\":26,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"Same chain lets vessel write v_fjord between upland's reads.\"}]},{\"case\":\"program_11\",\"violations\":[{\"variable\":\"v_umber\",\"a1_line\":12,\"a1_kind\":\"read\",\"b_line\":36,\"b_kind\":\"write\",\"a2_line\":13,\"a2_kind\":\"write\",\"why\":\"irq_orchid (enabled) increments v_umber between the task's check and reset.\"}]},{\"case\":\"program_12\",\"violations\":[{\"variable\":\"v_ridge\",\"a1_line\":30,\"a1_kind\":\"write\",\"b_line\":17,\"b_kind\":\"read\",\"a2_line\":31,\"a2_kind\":\"write\",\"why\":\"Union members overlap; ISR reads between the task's two writes.\"}]},{\"case\":\"program_13\",\"violations\":[{\"variable\":\"v_umber\",\"a1_line\":14,\"a1_kind\":\"write\",\"b_line\":7,\"b_kind\":\"read\",\"a2_line\":16,\"a2_kind\":\"write\",\"why\":\"ISR reads v_umber between the task's two writes.\"}]},{\"case\":\"program_14\",\"violations\":[{\"variable\":\"v_velvet\",\"a1_line\":48,\"a1_kind\":\"read\",\"b_line\":40,\"b_kind\":\"write\",\"a2_line\":49,\"a2_kind\":\"write\",\"why\":\"ISR writes v_velvet between check and reset.\"},{\"variable\":\"v_velvet\",\"a1_line\":49,\"a1_kind\":\"write\",\"b_line\":40,\"b_kind\":\"write\",\"a2_line\":26,\"a2_kind\":\"read\",\"why\":\"ISR overwrites v_velvet after the task's reset before it is read.\"}]},{\"case\":\"program_15\",\"violations\":[{\"variable\":\"v_onyx\",\"a1_line\":19,\"a1_kind\":\"write\",\"b_line\":10,\"b_kind\":\"write\",\"a2_line\":19,\"a2_kind\":\"read\",\"why\":\"ISR overwrites v_onyx between init and loop condition.\"},{\"variable\":\"v_onyx\",\"a1_line\":19,\"a1_kind\":\"read\",\"b_line\":10,\"b_kind\":\"write\",\"a2_line\":22,\"a2_kind\":\"read\",\"why\":\"ISR changes the loop index between condition and use.\"},{\"variable\":\"v_onyx\",\"a1_line\":22,\"a1_kind\":\"read\",\"b_line\":10,\"b_kind\":\"write\",\"a2_line\":20,\"a2_kind\":\"write\",\"why\":\"ISR write lost/overwritten by v_onyx++.\"}]},{\"case\":\"program_16\",\"violations\":[{\"variable\":\"v_iris\",\"a1_line\":11,\"a1_kind\":\"read\",\"b_line\":43,\"b_kind\":\"write\",\"a2_line\":18,\"a2_kind\":\"read\",\"why\":\"ISR changes v_iris between the two computations.\"},{\"variable\":\"v_beacon\",\"a1_line\":12,\"a1_kind\":\"read\",\"b_line\":38,\"b_kind\":\"write\",\"a2_line\":19,\"a2_kind\":\"read\",\"why\":\"ISR changes v_beacon between reads.\"},{\"variable\":\"v_beacon\",\"a1_line\":19,\"a1_kind\":\"read\",\"b_line\":38,\"b_kind\":\"write\",\"a2_line\":20,\"a2_kind\":\"read\",\"why\":\"ISR changes v_beacon between the two reads in the area computation.\"}]},{\"case\":\"program_17\",\"violations\":[{\"variable\":\"v_quiver\",\"a1_line\":47,\"a1_kind\":\"read\",\"b_line\":43,\"b_kind\":\"write\",\"a2_line\":47,\"a2_kind\":\"read\",\"why\":\"ISR writes v_quiver[36] via v_ember between the task's two reads.\"},{\"variable\":\"v_quiver\",\"a1_line\":47,\"a1_kind\":\"read\",\"b_line\":43,\"b_kind\":\"write\",\"a2_line\":43,\"a2_kind\":\"write\",\"why\":\"ISR writes v_quiver[36] between task's read and its write.\"}]},{\"case\":\"program_18\",\"violations\":[{\"variable\":\"v_vessel\",\"a1_line\":15,\"a1_kind\":\"write\",\"b_line\":34,\"b_kind\":\"write\",\"a2_line\":26,\"a2_kind\":\"read\",\"why\":\"ISR overwrites v_vessel between write and check.\"},{\"variable\":\"v_vessel\",\"a1_line\":26,\"a1_kind\":\"read\",\"b_line\":34,\"b_kind\":\"write\",\"a2_line\":27,\"a2_kind\":\"write\",\"why\":\"ISR write between check and update.\"},{\"variable\":\"v_vessel\",\"a1_line\":26,\"a1_kind\":\"read\",\"b_line\":34,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"write\",\"why\":\"ISR write between check and update.\"},{\"variable\":\"v_vessel\",\"a1_line\":27,\"a1_kind\":\"write\",\"b_line\":34,\"b_kind\":\"write\",\"a2_line\":50,\"a2_kind\":\"read\",\"why\":\"ISR overwrites value before it is copied.\"},{\"variable\":\"v_vessel\",\"a1_line\":29,\"a1_kind\":\"write\",\"b_line\":34,\"b_kind\":\"write\",\"a2_line\":50,\"a2_kind\":\"read\",\"why\":\"ISR overwrites value before it is copied.\"},{\"variable\":\"v_vessel\",\"a1_line\":50,\"a1_kind\":\"read\",\"b_line\":34,\"b_kind\":\"write\",\"a2_line\":22,\"a2_kind\":\"read\",\"why\":\"ISR changes v_vessel between the two copies.\"}]},{\"case\":\"program_19\",\"violations\":[{\"variable\":\"v_hazel\",\"a1_line\":31,\"a1_kind\":\"read\",\"b_line\":8,\"b_kind\":\"write\",\"a2_line\":34,\"a2_kind\":\"read\",\"why\":\"nimbus, enabled by jasper, writes v_hazel between the task's reads.\"},{\"variable\":\"v_meadow\",\"a1_line\":32,\"a1_kind\":\"read\",\"b_line\":9,\"b_kind\":\"write\",\"a2_line\":35,\"a2_kind\":\"read\",\"why\":\"nimbus writes v_meadow between task's reads.\"}]},{\"case\":\"program_20\",\"violations\":[{\"variable\":\"v_beacon\",\"a1_line\":46,\"a1_kind\":\"read\",\"b_line\":20,\"b_kind\":\"write\",\"a2_line\":47,\"a2_kind\":\"read\",\"why\":\"ISR clears v_beacon entries between the two element reads.\"}]},{\"case\":\"program_21\",\"violations\":[{\"variable\":\"v_lantern\",\"a1_line\":18,\"a1_kind\":\"read\",\"b_line\":32,\"b_kind\":\"write\",\"a2_line\":19,\"a2_kind\":\"write\",\"why\":\"irq_meadow (enabled) modifies v_lantern between check and reset.\"},{\"variable\":\"v_lantern\",\"a1_line\":18,\"a1_kind\":\"read\",\"b_line\":10,\"b_kind\":\"write\",\"a2_line\":19,\"a2_kind\":\"write\",\"why\":\"irq_vessel, enabled by meadow, preempts and modifies v_lantern.\"}]},{\"case\":\"program_22\",\"violations\":[{\"variable\":\"v_quiver\",\"a1_line\":31,\"a1_kind\":\"read\",\"b_line\":14,\"b_kind\":\"write\",\"a2_line\":33,\"a2_kind\":\"read\",\"why\":\"ISR writes v_quiver between the task's reads.\"},{\"variable\":\"v_willow\",\"a1_line\":36,\"a1_kind\":\"read\",\"b_line\":18,\"b_kind\":\"write\",\"a2_line\":50,\"a2_kind\":\"read\",\"why\":\"ISR writes v_willow between reads.\"},{\"variable\":\"v_willow\",\"a1_line\":42,\"a1_kind\":\"read\",\"b_line\":18,\"b_kind\":\"write\",\"a2_line\":50,\"a2_kind\":\"read\",\"why\":\"ISR enabled at 41 can write v_willow before the later read.\"},{\"variable\":\"v_amber\",\"a1_line\":39,\"a1_kind\":\"read\",\"b_line\":16,\"b_kind\":\"write\",\"a2_line\":47,\"a2_kind\":\"read\",\"why\":\"ISR enabled at 41 sets v_amber to 0 between the two checks.\"}]},{\"case\":\"program_23\",\"violations\":[{\"variable\":\"v_tundra\",\"a1_line\":26,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"write\",\"a2_line\":28,\"a2_kind\":\"read\",\"why\":\"ISR overwrites v_tundra between task's assignment and dereference.\"},{\"variable\":\"v_tundra\",\"a1_line\":28,\"a1_kind\":\"read\",\"b_line\":11,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"read\",\"why\":\"ISR changes the pointer between the two dereferences.\"}]},{\"case\":\"program_24\",\"violations\":[{\"variable\":\"v_fjord\",\"a1_line\":8,\"a1_kind\":\"read\",\"b_line\":18,\"b_kind\":\"write\",\"a2_line\":12,\"a2_kind\":\"read\",\"why\":\"ISR changes v_fjord between reads.\"},{\"variable\":\"v_fjord\",\"a1_line\":12,\"a1_kind\":\"read\",\"b_line\":18,\"b_kind\":\"write\",\"a2_line\":13,\"a2_kind\":\"read\",\"why\":\"ISR changes v_fjord between check and use.\"},{\"variable\":\"v_fjord\",\"a1_line\":13,\"a1_kind\":\"read\",\"b_line\":18,\"b_kind\":\"write\",\"a2_line\":13,\"a2_kind\":\"write\",\"why\":\"ISR write lost by the increment.\"}]},{\"case\":\"program_25\",\"violations\":[{\"variable\":\"v_amber\",\"a1_line\":12,\"a1_kind\":\"write\",\"b_line\":6,\"b_kind\":\"write\",\"a2_line\":13,\"a2_kind\":\"read\",\"why\":\"ISR overwrites v_amber before it is read.\"},{\"variable\":\"v_amber\",\"a1_line\":13,\"a1_kind\":\"read\",\"b_line\":6,\"b_kind\":\"write\",\"a2_line\":14,\"a2_kind\":\"read\",\"why\":\"ISR changes v_amber between reads.\"},{\"variable\":\"v_amber\",\"a1_line\":14,\"a1_kind\":\"read\",\"b_line\":6,\"b_kind\":\"write\",\"a2_line\":15,\"a2_kind\":\"read\",\"why\":\"ISR changes v_amber between reads.\"}]},{\"case\":\"program_26\",\"violations\":[{\"variable\":\"v_glacier\",\"a1_line\":19,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"read\",\"a2_line\":27,\"a2_kind\":\"write\",\"why\":\"ISR reads intermediate v_glacier between the task's two writes.\"}]},{\"case\":\"program_27\",\"violations\":[{\"variable\":\"v_fjord\",\"a1_line\":21,\"a1_kind\":\"write\",\"b_line\":14,\"b_kind\":\"write\",\"a2_line\":25,\"a2_kind\":\"read\",\"why\":\"Higher priority irq_kelp overwrites v_fjord[TRIGGER] before lantern reads it.\"}]},{\"case\":\"program_28\",\"violations\":[{\"variable\":\"v_glacier\",\"a1_line\":15,\"a1_kind\":\"write\",\"b_line\":21,\"b_kind\":\"write\",\"a2_line\":30,\"a2_kind\":\"read\",\"why\":\"ISR overwrites v_glacier[40] between task's write and read.\"}]},{\"case\":\"program_29\",\"violations\":[{\"variable\":\"v_garnet\",\"a1_line\":34,\"a1_kind\":\"read\",\"b_line\":24,\"b_kind\":\"write\",\"a2_line\":35,\"a2_kind\":\"write\",\"why\":\"irq_kestrel increments v_garnet between check and reset.\"}]},{\"case\":\"program_30\",\"violations\":[{\"variable\":\"v_quartz\",\"a1_line\":42,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"read\",\"a2_line\":45,\"a2_kind\":\"write\",\"why\":\"irq_indigo reads v_quartz[9999] between task's two writes once enabled by zenith.\"}]},{\"case\":\"program_31\",\"violations\":[{\"variable\":\"v_basalt\",\"a1_line\":17,\"a1_kind\":\"read\",\"b_line\":10,\"b_kind\":\"write\",\"a2_line\":18,\"a2_kind\":\"write\",\"why\":\"irq_kestrel is not masked and modifies v_basalt between check and reset.\"}]}]}",
+  "wall_s": 89.43866324424744,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 13407,
+    "cache_read": 16764,
+    "cache_write": 483,
+    "latency_s": 89.43841466601589
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

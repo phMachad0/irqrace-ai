@@ -1,0 +1,78 @@
+{
+  "case": "program_25",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_amber",
+        "a1_line": 14,
+        "a1_kind": "write",
+        "b_line": 8,
+        "b_kind": "write",
+        "a2_line": 15,
+        "a2_kind": "read",
+        "why": "ISR can write v_amber between task's write and first read, breaking atomicity (write‑write‑read)."
+      },
+      {
+        "variable": "v_amber",
+        "a1_line": 14,
+        "a1_kind": "write",
+        "b_line": 8,
+        "b_kind": "write",
+        "a2_line": 16,
+        "a2_kind": "read",
+        "why": "ISR can write v_amber between task's write and second read, breaking atomicity (write‑write‑read)."
+      },
+      {
+        "variable": "v_amber",
+        "a1_line": 14,
+        "a1_kind": "write",
+        "b_line": 8,
+        "b_kind": "write",
+        "a2_line": 17,
+        "a2_kind": "read",
+        "why": "ISR can write v_amber between task's write and third read, breaking atomicity (write‑write‑read)."
+      },
+      {
+        "variable": "v_amber",
+        "a1_line": 15,
+        "a1_kind": "read",
+        "b_line": 8,
+        "b_kind": "write",
+        "a2_line": 16,
+        "a2_kind": "read",
+        "why": "ISR can write v_amber between two reads, causing a read‑write‑read atomicity violation."
+      },
+      {
+        "variable": "v_amber",
+        "a1_line": 15,
+        "a1_kind": "read",
+        "b_line": 8,
+        "b_kind": "write",
+        "a2_line": 17,
+        "a2_kind": "read",
+        "why": "ISR can write v_amber between first and third reads, causing a read‑write‑read atomicity violation."
+      },
+      {
+        "variable": "v_amber",
+        "a1_line": 16,
+        "a1_kind": "read",
+        "b_line": 8,
+        "b_kind": "write",
+        "a2_line": 17,
+        "a2_kind": "read",
+        "why": "ISR can write v_amber between second and third reads, causing a read‑write‑read atomicity violation."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_amber\",\"a1_line\":14,\"a1_kind\":\"write\",\"b_line\":8,\"b_kind\":\"write\",\"a2_line\":15,\"a2_kind\":\"read\",\"why\":\"ISR can write v_amber between task's write and first read, breaking atomicity (write‑write‑read).\"},{\"variable\":\"v_amber\",\"a1_line\":14,\"a1_kind\":\"write\",\"b_line\":8,\"b_kind\":\"write\",\"a2_line\":16,\"a2_kind\":\"read\",\"why\":\"ISR can write v_amber between task's write and second read, breaking atomicity (write‑write‑read).\"},{\"variable\":\"v_amber\",\"a1_line\":14,\"a1_kind\":\"write\",\"b_line\":8,\"b_kind\":\"write\",\"a2_line\":17,\"a2_kind\":\"read\",\"why\":\"ISR can write v_amber between task's write and third read, breaking atomicity (write‑write‑read).\"},{\"variable\":\"v_amber\",\"a1_line\":15,\"a1_kind\":\"read\",\"b_line\":8,\"b_kind\":\"write\",\"a2_line\":16,\"a2_kind\":\"read\",\"why\":\"ISR can write v_amber between two reads, causing a read‑write‑read atomicity violation.\"},{\"variable\":\"v_amber\",\"a1_line\":15,\"a1_kind\":\"read\",\"b_line\":8,\"b_kind\":\"write\",\"a2_line\":17,\"a2_kind\":\"read\",\"why\":\"ISR can write v_amber between first and third reads, causing a read‑write‑read atomicity violation.\"},{\"variable\":\"v_amber\",\"a1_line\":16,\"a1_kind\":\"read\",\"b_line\":8,\"b_kind\":\"write\",\"a2_line\":17,\"a2_kind\":\"read\",\"why\":\"ISR can write v_amber between second and third reads, causing a read‑write‑read atomicity violation.\"}]}",
+  "wall_s": 26.618722915649414,
+  "usage": {
+    "input_tokens": 251,
+    "output_tokens": 1424,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 26.61858333699638
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

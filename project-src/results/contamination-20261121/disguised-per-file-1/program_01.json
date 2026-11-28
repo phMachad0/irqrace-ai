@@ -1,0 +1,28 @@
+{
+  "case": "program_01",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_pebble",
+        "a1_line": 19,
+        "a1_kind": "read",
+        "b_line": 7,
+        "b_kind": "write",
+        "a2_line": 20,
+        "a2_kind": "read",
+        "why": "The task reads v_pebble twice in one condition with interrupts enabled. The ISR can write v_pebble between the two reads, so the two reads can see different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_pebble\",\"a1_line\":19,\"a1_kind\":\"read\",\"b_line\":7,\"b_kind\":\"write\",\"a2_line\":20,\"a2_kind\":\"read\",\"why\":\"The task reads v_pebble twice in one condition with interrupts enabled. The ISR can write v_pebble between the two reads, so the two reads can see different values.\"}]}",
+  "wall_s": 6.069977283477783,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 350,
+    "cache_read": 975,
+    "cache_write": 1216,
+    "latency_s": 6.069801767007448
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

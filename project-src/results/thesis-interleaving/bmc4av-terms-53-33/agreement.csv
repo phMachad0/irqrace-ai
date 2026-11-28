@@ -1,0 +1,7 @@
+prompt_row,run_a,run_b,field,n_shared,agreement,kappa
++interleaving,+interleaving/1@1,+interleaving/1@2,feasibility,112,0.883929,0.724868
++interleaving,+interleaving/1@1,+interleaving/1@2,bucket,112,0.883929,0.724868
++interleaving,+interleaving/1@1,+interleaving/1@3,feasibility,112,0.875,0.700019
++interleaving,+interleaving/1@1,+interleaving/1@3,bucket,112,0.875,0.700019
++interleaving,+interleaving/1@2,+interleaving/1@3,feasibility,112,0.991071,0.974294
++interleaving,+interleaving/1@2,+interleaving/1@3,bucket,112,0.991071,0.974294

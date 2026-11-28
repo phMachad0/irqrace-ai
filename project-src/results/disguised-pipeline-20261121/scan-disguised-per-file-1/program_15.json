@@ -1,0 +1,68 @@
+{
+  "case": "program_15",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_onyx",
+        "a1_line": 21,
+        "a1_kind": "write",
+        "b_line": 12,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "The ISR can overwrite the freshly initialised 0 with 50 before the loop condition reads it, so the loop starts from the wrong value."
+      },
+      {
+        "variable": "v_onyx",
+        "a1_line": 21,
+        "a1_kind": "read",
+        "b_line": 12,
+        "b_kind": "write",
+        "a2_line": 24,
+        "a2_kind": "read",
+        "why": "The condition check passes on the old value, then the ISR sets 50, so the array index at line 24 is a different value than the one that was checked."
+      },
+      {
+        "variable": "v_onyx",
+        "a1_line": 24,
+        "a1_kind": "read",
+        "b_line": 12,
+        "b_kind": "write",
+        "a2_line": 22,
+        "a2_kind": "read",
+        "why": "The ISR changes v_onyx between the index use at line 24 and the increment read at line 22, so the increment starts from 50 instead of the index just used."
+      },
+      {
+        "variable": "v_onyx",
+        "a1_line": 22,
+        "a1_kind": "read",
+        "b_line": 12,
+        "b_kind": "write",
+        "a2_line": 22,
+        "a2_kind": "write",
+        "why": "The increment is a non-atomic read-modify-write, so the ISR write of 50 is lost when the task stores old+1."
+      },
+      {
+        "variable": "v_onyx",
+        "a1_line": 22,
+        "a1_kind": "write",
+        "b_line": 12,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "The ISR overwrites the incremented value with 50 before the loop condition reads it, so the condition sees 50 rather than the task's own value."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_onyx\",\"a1_line\":21,\"a1_kind\":\"write\",\"b_line\":12,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"The ISR can overwrite the freshly initialised 0 with 50 before the loop condition reads it, so the loop starts from the wrong value.\"},{\"variable\":\"v_onyx\",\"a1_line\":21,\"a1_kind\":\"read\",\"b_line\":12,\"b_kind\":\"write\",\"a2_line\":24,\"a2_kind\":\"read\",\"why\":\"The condition check passes on the old value, then the ISR sets 50, so the array index at line 24 is a different value than the one that was checked.\"},{\"variable\":\"v_onyx\",\"a1_line\":24,\"a1_kind\":\"read\",\"b_line\":12,\"b_kind\":\"write\",\"a2_line\":22,\"a2_kind\":\"read\",\"why\":\"The ISR changes v_onyx between the index use at line 24 and the increment read at line 22, so the increment starts from 50 instead of the index just used.\"},{\"variable\":\"v_onyx\",\"a1_line\":22,\"a1_kind\":\"read\",\"b_line\":12,\"b_kind\":\"write\",\"a2_line\":22,\"a2_kind\":\"write\",\"why\":\"The increment is a non-atomic read-modify-write, so the ISR write of 50 is lost when the task stores old+1.\"},{\"variable\":\"v_onyx\",\"a1_line\":22,\"a1_kind\":\"write\",\"b_line\":12,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"The ISR overwrites the incremented value with 50 before the loop condition reads it, so the condition sees 50 rather than the task's own value.\"}]}",
+  "wall_s": 14.307595491409302,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1366,
+    "cache_read": 975,
+    "cache_write": 1270,
+    "latency_s": 14.3073846079933
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

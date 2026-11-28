@@ -24,8 +24,7 @@ Module map:
   effect-based Logic Rate.
 * :mod:`~irqrace.llm.pipeline` -- W8 integration driving triage and repair
   over a C3 :class:`~irqrace.runstore.RunStore`.
-* :mod:`~irqrace.llm.cache` / :mod:`~irqrace.llm.cost` -- result cache and the
-  cost model.
+* :mod:`~irqrace.llm.cost` -- the cost model.
 * :mod:`~irqrace.llm.scoring` -- recall gate, trap rejection, Inspection Ratio,
   consistency.
 """

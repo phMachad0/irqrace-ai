@@ -69,11 +69,11 @@ def test_hashes_distinguish_the_rows():
 
 
 def test_hash_covers_asset_content_not_just_the_flags(tmp_path, monkeypatch):
-    """Editing a prompt must invalidate the cache for every row using it.
+    """Editing a prompt must change the identity of every row using it.
 
-    Without this, an edited domain-rules table would be compared against cached
-    answers produced by the previous wording, and the ablation would silently
-    measure a row against a stale version of itself.
+    Without this, an edited domain-rules table would be reported under the same
+    hash as the previous wording, and the ablation would silently measure a row
+    against another version of itself.
     """
     before = FULL.hash()
     original = (prompts._ASSETS / "domain_rules.md").read_text(encoding="utf-8")
@@ -103,3 +103,52 @@ def test_self_validation_states_all_four_recall_rules():
         "always a safe answer",
     ):
         assert phrase in text
+
+
+def test_the_c4_rows_are_the_full_prompt_with_requests_on():
+    from irqrace.llm.prompts import EXPERIMENTAL, ROW_HELP
+
+    for name in ("+c4", "+racebench+c4"):
+        row = EXPERIMENTAL[name]
+        assert row.progressive and row.decomposition and row.self_validation and row.domain_rules
+        assert "You may ask for more code" in row.system_prompt("feasibility")
+        assert "You may ask for more code" in row.system_prompt("harmfulness")
+    assert EXPERIMENTAL["+racebench+c4"].extra == EXPERIMENTAL["+racebench"].extra
+    assert len({r.hash() for r in EXPERIMENTAL.values()}) == len(EXPERIMENTAL)
+    assert FULL.hash() not in {r.hash() for r in EXPERIMENTAL.values()}
+    assert set(ROW_HELP) == {*BY_NAME, *DEFERRED, *EXPERIMENTAL}
+
+
+def test_the_request_prompt_stands_alone_and_offers_only_what_is_served():
+    """It runs without the self-validation checklist too, and a kind that always
+    answers `unsupported` is a promise the resolver cannot keep."""
+    text = DEFERRED["+progressive"].system_prompt()
+    assert "checklist" not in text and "masking_state_at" not in text
+    assert "optional" in text and "not_found" in text
+
+
+def test_the_interleaving_row_is_generic():
+    """+interleaving carries +racebench's notion of a defect and none of its
+    arrival model: the execution model is read from the record, and nothing in
+    the asset names a suite, a program or one of their variables."""
+    import re
+
+    from irqrace.llm.prompts import EXPERIMENTAL, _read
+
+    row = EXPERIMENTAL["+interleaving"]
+    assert row.extra == ("interleaving_semantics.md",)
+    assert (row.domain_rules, row.decomposition, row.self_validation, row.progressive) == (
+        FULL.domain_rules, FULL.decomposition, FULL.self_validation, FULL.progressive)
+    text = _read("interleaving_semantics.md")
+    lowered = text.lower()
+    for word in ("racebench", "benchmark", "planted", "svp_", "nichecker", "bmc4av", "test_global",
+                 "expect_close", "wdt_pci", "i8xx", "blink", "brake", "logger"):
+        assert word not in lowered, word
+    assert not re.search(r"\bline \d", text)
+    # The arrival model is the record's, not a fixed one.
+    assert "equal_priority_preemption" in text
+    assert "Equal priority does not preempt" not in text
+    assert "union members overlap" in text
+    assert "the interleaving is the defect" in lowered
+    assert "interleaving_semantics.md" in row.assets("feasibility")
+    assert "interleaving_semantics.md" in row.assets("harmfulness")

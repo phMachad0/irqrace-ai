@@ -1,0 +1,118 @@
+{
+  "case": "program_18",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_glacier",
+        "a1_line": 169,
+        "a1_kind": "write",
+        "b_line": 208,
+        "b_kind": "write",
+        "a2_line": 178,
+        "a2_kind": "read",
+        "why": "irq_tundra (higher priority) can preempt irq_loom between its write of 42 and the check, resetting v_glacier to 0."
+      },
+      {
+        "variable": "v_glacier",
+        "a1_line": 169,
+        "a1_kind": "write",
+        "b_line": 221,
+        "b_kind": "write",
+        "a2_line": 178,
+        "a2_kind": "read",
+        "why": "irq_iris (higher priority) can preempt irq_loom between its write of 42 and the check."
+      },
+      {
+        "variable": "v_glacier",
+        "a1_line": 189,
+        "a1_kind": "write",
+        "b_line": 208,
+        "b_kind": "write",
+        "a2_line": 200,
+        "a2_kind": "read",
+        "why": "irq_tundra can preempt irq_harbor between its write and its read of v_glacier."
+      },
+      {
+        "variable": "v_glacier",
+        "a1_line": 189,
+        "a1_kind": "write",
+        "b_line": 221,
+        "b_kind": "write",
+        "a2_line": 200,
+        "a2_kind": "read",
+        "why": "irq_iris can preempt irq_harbor between its write and its read of v_glacier."
+      },
+      {
+        "variable": "v_ridge",
+        "a1_line": 170,
+        "a1_kind": "write",
+        "b_line": 207,
+        "b_kind": "write",
+        "a2_line": 171,
+        "a2_kind": "read",
+        "why": "irq_tundra can preempt irq_loom between its write of v_ridge and the read, setting it to 0."
+      },
+      {
+        "variable": "v_ridge",
+        "a1_line": 170,
+        "a1_kind": "write",
+        "b_line": 220,
+        "b_kind": "write",
+        "a2_line": 171,
+        "a2_kind": "read",
+        "why": "irq_iris can preempt irq_loom between its write of v_ridge and the read, setting it to 0."
+      },
+      {
+        "variable": "v_ridge",
+        "a1_line": 190,
+        "a1_kind": "write",
+        "b_line": 207,
+        "b_kind": "write",
+        "a2_line": 191,
+        "a2_kind": "read",
+        "why": "irq_tundra can preempt irq_harbor between its write of v_ridge and the read."
+      },
+      {
+        "variable": "v_ridge",
+        "a1_line": 190,
+        "a1_kind": "write",
+        "b_line": 220,
+        "b_kind": "write",
+        "a2_line": 191,
+        "a2_kind": "read",
+        "why": "irq_iris can preempt irq_harbor between its write of v_ridge and the read."
+      },
+      {
+        "variable": "v_velvet",
+        "a1_line": 161,
+        "a1_kind": "read",
+        "b_line": 216,
+        "b_kind": "write",
+        "a2_line": 162,
+        "a2_kind": "read",
+        "why": "irq_tundra can preempt irq_loom (in fn_saffron) between two reads of v_velvet and change its value."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 197,
+        "a1_kind": "read",
+        "b_line": 231,
+        "b_kind": "write",
+        "a2_line": 198,
+        "a2_kind": "read",
+        "why": "irq_iris can preempt irq_harbor between two reads of v_lantern and change its value."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_glacier\",\"a1_line\":169,\"a1_kind\":\"write\",\"b_line\":208,\"b_kind\":\"write\",\"a2_line\":178,\"a2_kind\":\"read\",\"why\":\"irq_tundra (higher priority) can preempt irq_loom between its write of 42 and the check, resetting v_glacier to 0.\"},{\"variable\":\"v_glacier\",\"a1_line\":169,\"a1_kind\":\"write\",\"b_line\":221,\"b_kind\":\"write\",\"a2_line\":178,\"a2_kind\":\"read\",\"why\":\"irq_iris (higher priority) can preempt irq_loom between its write of 42 and the check.\"},{\"variable\":\"v_glacier\",\"a1_line\":189,\"a1_kind\":\"write\",\"b_line\":208,\"b_kind\":\"write\",\"a2_line\":200,\"a2_kind\":\"read\",\"why\":\"irq_tundra can preempt irq_harbor between its write and its read of v_glacier.\"},{\"variable\":\"v_glacier\",\"a1_line\":189,\"a1_kind\":\"write\",\"b_line\":221,\"b_kind\":\"write\",\"a2_line\":200,\"a2_kind\":\"read\",\"why\":\"irq_iris can preempt irq_harbor between its write and its read of v_glacier.\"},{\"variable\":\"v_ridge\",\"a1_line\":170,\"a1_kind\":\"write\",\"b_line\":207,\"b_kind\":\"write\",\"a2_line\":171,\"a2_kind\":\"read\",\"why\":\"irq_tundra can preempt irq_loom between its write of v_ridge and the read, setting it to 0.\"},{\"variable\":\"v_ridge\",\"a1_line\":170,\"a1_kind\":\"write\",\"b_line\":220,\"b_kind\":\"write\",\"a2_line\":171,\"a2_kind\":\"read\",\"why\":\"irq_iris can preempt irq_loom between its write of v_ridge and the read, setting it to 0.\"},{\"variable\":\"v_ridge\",\"a1_line\":190,\"a1_kind\":\"write\",\"b_line\":207,\"b_kind\":\"write\",\"a2_line\":191,\"a2_kind\":\"read\",\"why\":\"irq_tundra can preempt irq_harbor between its write of v_ridge and the read.\"},{\"variable\":\"v_ridge\",\"a1_line\":190,\"a1_kind\":\"write\",\"b_line\":220,\"b_kind\":\"write\",\"a2_line\":191,\"a2_kind\":\"read\",\"why\":\"irq_iris can preempt irq_harbor between its write of v_ridge and the read.\"},{\"variable\":\"v_velvet\",\"a1_line\":161,\"a1_kind\":\"read\",\"b_line\":216,\"b_kind\":\"write\",\"a2_line\":162,\"a2_kind\":\"read\",\"why\":\"irq_tundra can preempt irq_loom (in fn_saffron) between two reads of v_velvet and change its value.\"},{\"variable\":\"v_lantern\",\"a1_line\":197,\"a1_kind\":\"read\",\"b_line\":231,\"b_kind\":\"write\",\"a2_line\":198,\"a2_kind\":\"read\",\"why\":\"irq_iris can preempt irq_harbor between two reads of v_lantern and change its value.\"}]}",
+  "wall_s": 13.901236295700073,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1948,
+    "cache_read": 5620,
+    "cache_write": 486,
+    "latency_s": 13.901059580035508
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

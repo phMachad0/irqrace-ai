@@ -1,0 +1,118 @@
+{
+  "case": "logger2",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "tickCounter",
+        "a1_line": 81,
+        "a1_kind": "write",
+        "b_line": 100,
+        "b_kind": "write",
+        "a2_line": 82,
+        "a2_kind": "read",
+        "why": "measure2 (prio 3) can preempt measure1 and reset tickCounter between the increment and the read."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 81,
+        "a1_kind": "write",
+        "b_line": 158,
+        "b_kind": "write",
+        "a2_line": 82,
+        "a2_kind": "read",
+        "why": "communicate ISR (prio 5) can preempt measure1 and zero tickCounter before it is read."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 82,
+        "a1_kind": "read",
+        "b_line": 100,
+        "b_kind": "write",
+        "a2_line": 86,
+        "a2_kind": "write",
+        "why": "measure2 can write tickCounter between measure1's read and its write."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 82,
+        "a1_kind": "read",
+        "b_line": 158,
+        "b_kind": "write",
+        "a2_line": 86,
+        "a2_kind": "write",
+        "why": "communicate can write tickCounter between measure1's read and its write."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 81,
+        "a1_kind": "read",
+        "b_line": 100,
+        "b_kind": "write",
+        "a2_line": 81,
+        "a2_kind": "write",
+        "why": "The non-atomic increment in measure1 can be preempted by measure2's write, so the update is lost."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 81,
+        "a1_kind": "read",
+        "b_line": 158,
+        "b_kind": "write",
+        "a2_line": 81,
+        "a2_kind": "write",
+        "why": "The non-atomic increment can be preempted by communicate's write, so the update is lost."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 100,
+        "a1_kind": "write",
+        "b_line": 158,
+        "b_kind": "write",
+        "a2_line": 101,
+        "a2_kind": "read",
+        "why": "communicate can preempt measure2 between its write and its read of tickCounter."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 90,
+        "a1_kind": "read",
+        "b_line": 159,
+        "b_kind": "write",
+        "a2_line": 92,
+        "a2_kind": "write",
+        "why": "communicate can reset numberOfRecords after measure1 used it as an index and before it increments it."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 90,
+        "a1_kind": "read",
+        "b_line": 159,
+        "b_kind": "write",
+        "a2_line": 92,
+        "a2_kind": "read",
+        "why": "communicate can reset numberOfRecords between measure1's two reads of it."
+      },
+      {
+        "variable": "intervalCounter",
+        "a1_line": 89,
+        "a1_kind": "read",
+        "b_line": 157,
+        "b_kind": "write",
+        "a2_line": 89,
+        "a2_kind": "write",
+        "why": "The non-atomic increment in measure1 can be preempted by communicate's reset, so the reset is lost."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"tickCounter\",\"a1_line\":81,\"a1_kind\":\"write\",\"b_line\":100,\"b_kind\":\"write\",\"a2_line\":82,\"a2_kind\":\"read\",\"why\":\"measure2 (prio 3) can preempt measure1 and reset tickCounter between the increment and the read.\"},{\"variable\":\"tickCounter\",\"a1_line\":81,\"a1_kind\":\"write\",\"b_line\":158,\"b_kind\":\"write\",\"a2_line\":82,\"a2_kind\":\"read\",\"why\":\"communicate ISR (prio 5) can preempt measure1 and zero tickCounter before it is read.\"},{\"variable\":\"tickCounter\",\"a1_line\":82,\"a1_kind\":\"read\",\"b_line\":100,\"b_kind\":\"write\",\"a2_line\":86,\"a2_kind\":\"write\",\"why\":\"measure2 can write tickCounter between measure1's read and its write.\"},{\"variable\":\"tickCounter\",\"a1_line\":82,\"a1_kind\":\"read\",\"b_line\":158,\"b_kind\":\"write\",\"a2_line\":86,\"a2_kind\":\"write\",\"why\":\"communicate can write tickCounter between measure1's read and its write.\"},{\"variable\":\"tickCounter\",\"a1_line\":81,\"a1_kind\":\"read\",\"b_line\":100,\"b_kind\":\"write\",\"a2_line\":81,\"a2_kind\":\"write\",\"why\":\"The non-atomic increment in measure1 can be preempted by measure2's write, so the update is lost.\"},{\"variable\":\"tickCounter\",\"a1_line\":81,\"a1_kind\":\"read\",\"b_line\":158,\"b_kind\":\"write\",\"a2_line\":81,\"a2_kind\":\"write\",\"why\":\"The non-atomic increment can be preempted by communicate's write, so the update is lost.\"},{\"variable\":\"tickCounter\",\"a1_line\":100,\"a1_kind\":\"write\",\"b_line\":158,\"b_kind\":\"write\",\"a2_line\":101,\"a2_kind\":\"read\",\"why\":\"communicate can preempt measure2 between its write and its read of tickCounter.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":90,\"a1_kind\":\"read\",\"b_line\":159,\"b_kind\":\"write\",\"a2_line\":92,\"a2_kind\":\"write\",\"why\":\"communicate can reset numberOfRecords after measure1 used it as an index and before it increments it.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":90,\"a1_kind\":\"read\",\"b_line\":159,\"b_kind\":\"write\",\"a2_line\":92,\"a2_kind\":\"read\",\"why\":\"communicate can reset numberOfRecords between measure1's two reads of it.\"},{\"variable\":\"intervalCounter\",\"a1_line\":89,\"a1_kind\":\"read\",\"b_line\":157,\"b_kind\":\"write\",\"a2_line\":89,\"a2_kind\":\"write\",\"why\":\"The non-atomic increment in measure1 can be preempted by communicate's reset, so the reset is lost.\"}]}",
+  "wall_s": 14.245369672775269,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1996,
+    "cache_read": 3636,
+    "cache_write": 488,
+    "latency_s": 14.24505204099114
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

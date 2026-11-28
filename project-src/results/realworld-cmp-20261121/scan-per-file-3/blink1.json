@@ -1,0 +1,78 @@
+{
+  "case": "blink1",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 120,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "write",
+        "why": "Force ISR (prio 3) can preempt Timer_A between the read and write of timerCount++, so its update is lost."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 121,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "write",
+        "why": "Force ISR preempts the increment and sets timerCount to 0, then Timer_A writes back a stale value."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "write",
+        "b_line": 121,
+        "b_kind": "write",
+        "a2_line": 96,
+        "a2_kind": "read",
+        "why": "Force ISR can run between the increment and the check, so the check sees 0 instead of the incremented value."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "write",
+        "b_line": 120,
+        "b_kind": "write",
+        "a2_line": 96,
+        "a2_kind": "read",
+        "why": "Force ISR can overwrite timerCount between the increment and the check in Timer_A."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 108,
+        "a1_kind": "write",
+        "b_line": 121,
+        "b_kind": "write",
+        "a2_line": 109,
+        "a2_kind": "read",
+        "why": "Force ISR preempts Timer_B between setting timerCount=1 and checking it, so the check sees 0 and the branch is skipped."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 108,
+        "a1_kind": "write",
+        "b_line": 120,
+        "b_kind": "write",
+        "a2_line": 109,
+        "a2_kind": "read",
+        "why": "Force ISR can preempt Timer_B between the write and the read of timerCount, changing the value that is read."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":120,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"Force ISR (prio 3) can preempt Timer_A between the read and write of timerCount++, so its update is lost.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":121,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"Force ISR preempts the increment and sets timerCount to 0, then Timer_A writes back a stale value.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":121,\"b_kind\":\"write\",\"a2_line\":96,\"a2_kind\":\"read\",\"why\":\"Force ISR can run between the increment and the check, so the check sees 0 instead of the incremented value.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":120,\"b_kind\":\"write\",\"a2_line\":96,\"a2_kind\":\"read\",\"why\":\"Force ISR can overwrite timerCount between the increment and the check in Timer_A.\"},{\"variable\":\"timerCount\",\"a1_line\":108,\"a1_kind\":\"write\",\"b_line\":121,\"b_kind\":\"write\",\"a2_line\":109,\"a2_kind\":\"read\",\"why\":\"Force ISR preempts Timer_B between setting timerCount=1 and checking it, so the check sees 0 and the branch is skipped.\"},{\"variable\":\"timerCount\",\"a1_line\":108,\"a1_kind\":\"write\",\"b_line\":120,\"b_kind\":\"write\",\"a2_line\":109,\"a2_kind\":\"read\",\"why\":\"Force ISR can preempt Timer_B between the write and the read of timerCount, changing the value that is read.\"}]}",
+  "wall_s": 10.919372797012329,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1310,
+    "cache_read": 3431,
+    "cache_write": 484,
+    "latency_s": 10.913778576999903
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,28 @@
+{
+  "case": "program_28",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_glacier[40]",
+        "a1_line": 15,
+        "a1_kind": "write",
+        "b_line": 21,
+        "b_kind": "write",
+        "a2_line": 30,
+        "a2_kind": "read",
+        "why": "Main writes v_glacier[40] at line 15 and reads it back at line 30 with the interrupt never masked. The ISR loop can overwrite element 40 in between, so the read sees 0x05 instead of 0x01."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_glacier[40]\",\"a1_line\":15,\"a1_kind\":\"write\",\"b_line\":21,\"b_kind\":\"write\",\"a2_line\":30,\"a2_kind\":\"read\",\"why\":\"Main writes v_glacier[40] at line 15 and reads it back at line 30 with the interrupt never masked. The ISR loop can overwrite element 40 in between, so the read sees 0x05 instead of 0x01.\"}]}",
+  "wall_s": 5.453363656997681,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 483,
+    "cache_read": 1829,
+    "cache_write": 484,
+    "latency_s": 5.45320121300756
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

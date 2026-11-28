@@ -1,0 +1,68 @@
+{
+  "case": "logger1",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "tickCounter",
+        "a1_line": 76,
+        "a1_kind": "write",
+        "b_line": 136,
+        "b_kind": "write",
+        "a2_line": 77,
+        "a2_kind": "read",
+        "why": "The higher-priority communicate ISR can preempt the measure ISR between the increment and the read-back. It resets tickCounter, so the measure ISR reads a value it didn't write."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 76,
+        "a1_kind": "read",
+        "b_line": 136,
+        "b_kind": "write",
+        "a2_line": 76,
+        "a2_kind": "write",
+        "why": "The ISR can write tickCounter between the read and the write of the non-atomic tickCounter++. That update is lost."
+      },
+      {
+        "variable": "intervalCounter",
+        "a1_line": 82,
+        "a1_kind": "read",
+        "b_line": 135,
+        "b_kind": "write",
+        "a2_line": 82,
+        "a2_kind": "write",
+        "why": "The communicate ISR can reset intervalCounter between the read and write of intervalCounter++. The reset is overwritten with a stale value."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 83,
+        "a1_kind": "read",
+        "b_line": 137,
+        "b_kind": "write",
+        "a2_line": 85,
+        "a2_kind": "write",
+        "why": "The communicate ISR can reset numberOfRecords after the measure ISR used it as the records index. The measure ISR then increments a stale value, so the index and count are inconsistent."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 85,
+        "a1_kind": "read",
+        "b_line": 137,
+        "b_kind": "write",
+        "a2_line": 85,
+        "a2_kind": "write",
+        "why": "The communicate ISR can write numberOfRecords between the read and write of numberOfRecords++. The reset is lost."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"tickCounter\",\"a1_line\":76,\"a1_kind\":\"write\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":77,\"a2_kind\":\"read\",\"why\":\"The higher-priority communicate ISR can preempt the measure ISR between the increment and the read-back. It resets tickCounter, so the measure ISR reads a value it didn't write.\"},{\"variable\":\"tickCounter\",\"a1_line\":76,\"a1_kind\":\"read\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":76,\"a2_kind\":\"write\",\"why\":\"The ISR can write tickCounter between the read and the write of the non-atomic tickCounter++. That update is lost.\"},{\"variable\":\"intervalCounter\",\"a1_line\":82,\"a1_kind\":\"read\",\"b_line\":135,\"b_kind\":\"write\",\"a2_line\":82,\"a2_kind\":\"write\",\"why\":\"The communicate ISR can reset intervalCounter between the read and write of intervalCounter++. The reset is overwritten with a stale value.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":83,\"a1_kind\":\"read\",\"b_line\":137,\"b_kind\":\"write\",\"a2_line\":85,\"a2_kind\":\"write\",\"why\":\"The communicate ISR can reset numberOfRecords after the measure ISR used it as the records index. The measure ISR then increments a stale value, so the index and count are inconsistent.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":85,\"a1_kind\":\"read\",\"b_line\":137,\"b_kind\":\"write\",\"a2_line\":85,\"a2_kind\":\"write\",\"why\":\"The communicate ISR can write numberOfRecords between the read and write of numberOfRecords++. The reset is lost.\"}]}",
+  "wall_s": 10.358809232711792,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1319,
+    "cache_read": 3302,
+    "cache_write": 487,
+    "latency_s": 10.358647669985658
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,48 @@
+{
+  "case": "svp_simple_031_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_031_001_tc_block_rcvd_bytes_ch1",
+        "a1_line": 46,
+        "a1_kind": "read",
+        "b_line": 90,
+        "b_kind": "write",
+        "a2_line": 83,
+        "a2_kind": "read",
+        "why": "The ISR can preempt main between the copy at line 46 and the check at line 83 and change the value, so the two reads see different values."
+      },
+      {
+        "variable": "svp_simple_031_001_tc_block_rcvd_bytes_ch1",
+        "a1_line": 83,
+        "a1_kind": "read",
+        "b_line": 90,
+        "b_kind": "write",
+        "a2_line": 85,
+        "a2_kind": "read",
+        "why": "The ISR can change the value after the >=16 check at line 83 and before the value is passed as an argument at line 85, so the check no longer holds."
+      },
+      {
+        "variable": "svp_simple_031_001_tc_block_rcvd_bytes_ch1",
+        "a1_line": 85,
+        "a1_kind": "read",
+        "b_line": 90,
+        "b_kind": "write",
+        "a2_line": 65,
+        "a2_kind": "read",
+        "why": "The ISR can write between the argument read at line 85 and the re-read in func_2 at line 65, so func_2 can see a different value."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_031_001_tc_block_rcvd_bytes_ch1\",\"a1_line\":46,\"a1_kind\":\"read\",\"b_line\":90,\"b_kind\":\"write\",\"a2_line\":83,\"a2_kind\":\"read\",\"why\":\"The ISR can preempt main between the copy at line 46 and the check at line 83 and change the value, so the two reads see different values.\"},{\"variable\":\"svp_simple_031_001_tc_block_rcvd_bytes_ch1\",\"a1_line\":83,\"a1_kind\":\"read\",\"b_line\":90,\"b_kind\":\"write\",\"a2_line\":85,\"a2_kind\":\"read\",\"why\":\"The ISR can change the value after the >=16 check at line 83 and before the value is passed as an argument at line 85, so the check no longer holds.\"},{\"variable\":\"svp_simple_031_001_tc_block_rcvd_bytes_ch1\",\"a1_line\":85,\"a1_kind\":\"read\",\"b_line\":90,\"b_kind\":\"write\",\"a2_line\":65,\"a2_kind\":\"read\",\"why\":\"The ISR can write between the argument read at line 85 and the re-read in func_2 at line 65, so func_2 can see a different value.\"}]}",
+  "wall_s": 6.055232763290405,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 605,
+    "cache_read": 3370,
+    "cache_write": 484,
+    "latency_s": 6.055077708995668
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

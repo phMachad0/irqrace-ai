@@ -1,0 +1,68 @@
+{
+  "case": "program_21",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_lantern",
+        "a1_line": 18,
+        "a1_kind": "read",
+        "b_line": 32,
+        "b_kind": "write",
+        "a2_line": 19,
+        "a2_kind": "write",
+        "why": "After enable_isr(1), meadow can preempt between the check and the reset, so the reset is based on a stale value."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 18,
+        "a1_kind": "read",
+        "b_line": 10,
+        "b_kind": "write",
+        "a2_line": 19,
+        "a2_kind": "write",
+        "why": "Once meadow has run enable_isr(2), vessel can preempt between the check and the reset, so the reset is based on a stale value."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 26,
+        "a1_kind": "write",
+        "b_line": 6,
+        "b_kind": "write",
+        "a2_line": 18,
+        "a2_kind": "read",
+        "why": "If interrupts are still enabled before line 16, nectar can modify the value after the rand() write and before the check reads it."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 26,
+        "a1_kind": "write",
+        "b_line": 10,
+        "b_kind": "write",
+        "a2_line": 18,
+        "a2_kind": "read",
+        "why": "If interrupts are still enabled before line 16, vessel can modify the value after the rand() write and before the check reads it."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 26,
+        "a1_kind": "write",
+        "b_line": 32,
+        "b_kind": "write",
+        "a2_line": 18,
+        "a2_kind": "read",
+        "why": "If interrupts are still enabled before line 16, or via the window after line 17, meadow can modify the value after the rand() write and before the check reads it."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_lantern\",\"a1_line\":18,\"a1_kind\":\"read\",\"b_line\":32,\"b_kind\":\"write\",\"a2_line\":19,\"a2_kind\":\"write\",\"why\":\"After enable_isr(1), meadow can preempt between the check and the reset, so the reset is based on a stale value.\"},{\"variable\":\"v_lantern\",\"a1_line\":18,\"a1_kind\":\"read\",\"b_line\":10,\"b_kind\":\"write\",\"a2_line\":19,\"a2_kind\":\"write\",\"why\":\"Once meadow has run enable_isr(2), vessel can preempt between the check and the reset, so the reset is based on a stale value.\"},{\"variable\":\"v_lantern\",\"a1_line\":26,\"a1_kind\":\"write\",\"b_line\":6,\"b_kind\":\"write\",\"a2_line\":18,\"a2_kind\":\"read\",\"why\":\"If interrupts are still enabled before line 16, nectar can modify the value after the rand() write and before the check reads it.\"},{\"variable\":\"v_lantern\",\"a1_line\":26,\"a1_kind\":\"write\",\"b_line\":10,\"b_kind\":\"write\",\"a2_line\":18,\"a2_kind\":\"read\",\"why\":\"If interrupts are still enabled before line 16, vessel can modify the value after the rand() write and before the check reads it.\"},{\"variable\":\"v_lantern\",\"a1_line\":26,\"a1_kind\":\"write\",\"b_line\":32,\"b_kind\":\"write\",\"a2_line\":18,\"a2_kind\":\"read\",\"why\":\"If interrupts are still enabled before line 16, or via the window after line 17, meadow can modify the value after the rand() write and before the check reads it.\"}]}",
+  "wall_s": 11.743358612060547,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1363,
+    "cache_read": 1808,
+    "cache_write": 488,
+    "latency_s": 11.743186820996925
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

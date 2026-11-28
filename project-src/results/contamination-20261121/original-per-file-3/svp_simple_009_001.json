@@ -1,0 +1,48 @@
+{
+  "case": "svp_simple_009_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_009_001_m",
+        "a1_line": 35,
+        "a1_kind": "write",
+        "b_line": 46,
+        "b_kind": "write",
+        "a2_line": 37,
+        "a2_kind": "read",
+        "why": "ISR can overwrite m between main's write of m and its load of m at line 37, so main dereferences the ISR's pointer to a local that is out of scope."
+      },
+      {
+        "variable": "svp_simple_009_001_m",
+        "a1_line": 37,
+        "a1_kind": "read",
+        "b_line": 46,
+        "b_kind": "write",
+        "a2_line": 38,
+        "a2_kind": "read",
+        "why": "ISR changes m between the two loads in main, so the two dereferences hit different targets."
+      },
+      {
+        "variable": "svp_simple_009_001_m",
+        "a1_line": 35,
+        "a1_kind": "write",
+        "b_line": 46,
+        "b_kind": "write",
+        "a2_line": 38,
+        "a2_kind": "read",
+        "why": "ISR can overwrite m after main sets it and before the load at line 38."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_009_001_m\",\"a1_line\":35,\"a1_kind\":\"write\",\"b_line\":46,\"b_kind\":\"write\",\"a2_line\":37,\"a2_kind\":\"read\",\"why\":\"ISR can overwrite m between main's write of m and its load of m at line 37, so main dereferences the ISR's pointer to a local that is out of scope.\"},{\"variable\":\"svp_simple_009_001_m\",\"a1_line\":37,\"a1_kind\":\"read\",\"b_line\":46,\"b_kind\":\"write\",\"a2_line\":38,\"a2_kind\":\"read\",\"why\":\"ISR changes m between the two loads in main, so the two dereferences hit different targets.\"},{\"variable\":\"svp_simple_009_001_m\",\"a1_line\":35,\"a1_kind\":\"write\",\"b_line\":46,\"b_kind\":\"write\",\"a2_line\":38,\"a2_kind\":\"read\",\"why\":\"ISR can overwrite m after main sets it and before the load at line 38.\"}]}",
+  "wall_s": 7.633114814758301,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 812,
+    "cache_read": 2367,
+    "cache_write": 488,
+    "latency_s": 7.632855893985834
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

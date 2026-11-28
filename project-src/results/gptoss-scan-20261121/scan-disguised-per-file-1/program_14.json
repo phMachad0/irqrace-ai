@@ -1,0 +1,38 @@
+{
+  "case": "program_14",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_pylon",
+        "a1_line": 63,
+        "a1_kind": "write",
+        "b_line": 45,
+        "b_kind": "write",
+        "a2_line": 52,
+        "a2_kind": "read",
+        "why": "Task writes v_pylon, ISR may preempt and write it, then task reads v_pylon, creating a write‑write‑read race."
+      },
+      {
+        "variable": "v_pylon",
+        "a1_line": 52,
+        "a1_kind": "read",
+        "b_line": 45,
+        "b_kind": "write",
+        "a2_line": 53,
+        "a2_kind": "write",
+        "why": "Task reads v_pylon, ISR can preempt and write it, then task writes v_pylon, forming a read‑write‑write atomicity violation."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_pylon\",\"a1_line\":63,\"a1_kind\":\"write\",\"b_line\":45,\"b_kind\":\"write\",\"a2_line\":52,\"a2_kind\":\"read\",\"why\":\"Task writes v_pylon, ISR may preempt and write it, then task reads v_pylon, creating a write‑write‑read race.\"},{\"variable\":\"v_pylon\",\"a1_line\":52,\"a1_kind\":\"read\",\"b_line\":45,\"b_kind\":\"write\",\"a2_line\":53,\"a2_kind\":\"write\",\"why\":\"Task reads v_pylon, ISR can preempt and write it, then task writes v_pylon, forming a read‑write‑write atomicity violation.\"}]}",
+  "wall_s": 16.57216787338257,
+  "usage": {
+    "input_tokens": 1143,
+    "output_tokens": 1942,
+    "cache_read": 0,
+    "cache_write": 0,
+    "latency_s": 16.572098183998605
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

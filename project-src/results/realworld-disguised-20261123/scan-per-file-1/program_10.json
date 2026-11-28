@@ -1,0 +1,68 @@
+{
+  "case": "program_10",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_wharf",
+        "a1_line": 46,
+        "a1_kind": "write",
+        "b_line": 90,
+        "b_kind": "write",
+        "a2_line": 47,
+        "a2_kind": "read",
+        "why": "irq_husk (higher priority) can preempt irq_urchin after v_wharf++ and set v_wharf=1, so urchin reads a different value than it wrote."
+      },
+      {
+        "variable": "v_wharf",
+        "a1_line": 47,
+        "a1_kind": "read",
+        "b_line": 90,
+        "b_kind": "write",
+        "a2_line": 50,
+        "a2_kind": "write",
+        "why": "irq_husk can write v_wharf between urchin's read and its later write of 0, so the husk write is overwritten."
+      },
+      {
+        "variable": "v_lagoon",
+        "a1_line": 51,
+        "a1_kind": "read",
+        "b_line": 89,
+        "b_kind": "write",
+        "a2_line": 51,
+        "a2_kind": "write",
+        "why": "The v_lagoon++ in urchin is a non-atomic read-modify-write. Husk's write of 1 can land in between and be lost."
+      },
+      {
+        "variable": "v_inlet",
+        "a1_line": 52,
+        "a1_kind": "read",
+        "b_line": 91,
+        "b_kind": "write",
+        "a2_line": 53,
+        "a2_kind": "read",
+        "why": "Husk can set v_inlet=1 between urchin's use of v_inlet as the array index and its increment. The index and the increment then use different values."
+      },
+      {
+        "variable": "v_inlet",
+        "a1_line": 53,
+        "a1_kind": "read",
+        "b_line": 91,
+        "b_kind": "write",
+        "a2_line": 53,
+        "a2_kind": "write",
+        "why": "The v_inlet++ in urchin is a non-atomic read-modify-write. Husk's write of 1 can be overwritten."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_wharf\",\"a1_line\":46,\"a1_kind\":\"write\",\"b_line\":90,\"b_kind\":\"write\",\"a2_line\":47,\"a2_kind\":\"read\",\"why\":\"irq_husk (higher priority) can preempt irq_urchin after v_wharf++ and set v_wharf=1, so urchin reads a different value than it wrote.\"},{\"variable\":\"v_wharf\",\"a1_line\":47,\"a1_kind\":\"read\",\"b_line\":90,\"b_kind\":\"write\",\"a2_line\":50,\"a2_kind\":\"write\",\"why\":\"irq_husk can write v_wharf between urchin's read and its later write of 0, so the husk write is overwritten.\"},{\"variable\":\"v_lagoon\",\"a1_line\":51,\"a1_kind\":\"read\",\"b_line\":89,\"b_kind\":\"write\",\"a2_line\":51,\"a2_kind\":\"write\",\"why\":\"The v_lagoon++ in urchin is a non-atomic read-modify-write. Husk's write of 1 can land in between and be lost.\"},{\"variable\":\"v_inlet\",\"a1_line\":52,\"a1_kind\":\"read\",\"b_line\":91,\"b_kind\":\"write\",\"a2_line\":53,\"a2_kind\":\"read\",\"why\":\"Husk can set v_inlet=1 between urchin's use of v_inlet as the array index and its increment. The index and the increment then use different values.\"},{\"variable\":\"v_inlet\",\"a1_line\":53,\"a1_kind\":\"read\",\"b_line\":91,\"b_kind\":\"write\",\"a2_line\":53,\"a2_kind\":\"write\",\"why\":\"The v_inlet++ in urchin is a non-atomic read-modify-write. Husk's write of 1 can be overwritten.\"}]}",
+  "wall_s": 10.961193084716797,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1304,
+    "cache_read": 1011,
+    "cache_write": 2248,
+    "latency_s": 10.960998443013523
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

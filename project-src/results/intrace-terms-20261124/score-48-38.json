@@ -1,0 +1,653 @@
+[
+ {
+  "case": "svp_simple_001_001",
+  "intrace": null,
+  "bugs": 1,
+  "traps": 2,
+  "found": 1,
+  "traps_reported": 1,
+  "reported": 6,
+  "pairs": 6,
+  "missed": [],
+  "s1": 14,
+  "s2": 10,
+  "s3": 6,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_002_001",
+  "intrace": [
+   11,
+   1,
+   2,
+   1,
+   1
+  ],
+  "bugs": 1,
+  "traps": 3,
+  "found": 1,
+  "traps_reported": 0,
+  "reported": 1,
+  "pairs": 2,
+  "missed": [],
+  "s1": 5,
+  "s2": 5,
+  "s3": 1,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_003_001",
+  "intrace": [
+   2,
+   1,
+   1,
+   1,
+   0
+  ],
+  "bugs": 1,
+  "traps": 2,
+  "found": 1,
+  "traps_reported": 0,
+  "reported": 3,
+  "pairs": 2,
+  "missed": [],
+  "s1": 9,
+  "s2": 6,
+  "s3": 3,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_004_001",
+  "intrace": [
+   8,
+   1,
+   1,
+   1,
+   0
+  ],
+  "bugs": 1,
+  "traps": 2,
+  "found": 1,
+  "traps_reported": 1,
+  "reported": 2,
+  "pairs": 4,
+  "missed": [],
+  "s1": 3,
+  "s2": 3,
+  "s3": 2,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_005_001",
+  "intrace": [
+   16,
+   1,
+   1,
+   1,
+   0
+  ],
+  "bugs": 1,
+  "traps": 2,
+  "found": 1,
+  "traps_reported": 0,
+  "reported": 2,
+  "pairs": 2,
+  "missed": [],
+  "s1": 4,
+  "s2": 4,
+  "s3": 2,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_006_001",
+  "intrace": [
+   19,
+   1,
+   1,
+   1,
+   0
+  ],
+  "bugs": 1,
+  "traps": 2,
+  "found": 0,
+  "traps_reported": 1,
+  "reported": 3,
+  "pairs": 3,
+  "missed": [
+   [
+    33,
+    52,
+    35
+   ]
+  ],
+  "s1": 10,
+  "s2": 10,
+  "s3": 3,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_007_001",
+  "intrace": [
+   3,
+   1,
+   2,
+   1,
+   1
+  ],
+  "bugs": 1,
+  "traps": 2,
+  "found": 1,
+  "traps_reported": 1,
+  "reported": 12,
+  "pairs": 11,
+  "missed": [],
+  "s1": 17,
+  "s2": 15,
+  "s3": 12,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_008_001",
+  "intrace": [
+   9,
+   1,
+   2,
+   1,
+   1
+  ],
+  "bugs": 1,
+  "traps": 1,
+  "found": 1,
+  "traps_reported": 0,
+  "reported": 1,
+  "pairs": 2,
+  "missed": [],
+  "s1": 11,
+  "s2": 5,
+  "s3": 1,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_009_001",
+  "intrace": [
+   26,
+   2,
+   2,
+   2,
+   0
+  ],
+  "bugs": 1,
+  "traps": 1,
+  "found": 1,
+  "traps_reported": 1,
+  "reported": 8,
+  "pairs": 8,
+  "missed": [],
+  "s1": 13,
+  "s2": 10,
+  "s3": 8,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_010_001",
+  "intrace": [
+   24,
+   1,
+   1,
+   1,
+   0
+  ],
+  "bugs": 1,
+  "traps": 1,
+  "found": 1,
+  "traps_reported": 0,
+  "reported": 1,
+  "pairs": 2,
+  "missed": [],
+  "s1": 2,
+  "s2": 2,
+  "s3": 1,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_011_001",
+  "intrace": [
+   23,
+   1,
+   1,
+   1,
+   0
+  ],
+  "bugs": 1,
+  "traps": 1,
+  "found": 1,
+  "traps_reported": 0,
+  "reported": 2,
+  "pairs": 4,
+  "missed": [],
+  "s1": 4,
+  "s2": 4,
+  "s3": 2,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_012_001",
+  "intrace": [
+   17,
+   1,
+   1,
+   1,
+   0
+  ],
+  "bugs": 1,
+  "traps": 0,
+  "found": 1,
+  "traps_reported": 0,
+  "reported": 1,
+  "pairs": 2,
+  "missed": [],
+  "s1": 1,
+  "s2": 1,
+  "s3": 1,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_013_001",
+  "intrace": [
+   14,
+   1,
+   2,
+   1,
+   1
+  ],
+  "bugs": 1,
+  "traps": 1,
+  "found": 1,
+  "traps_reported": 1,
+  "reported": 3,
+  "pairs": 4,
+  "missed": [],
+  "s1": 3,
+  "s2": 3,
+  "s3": 3,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_014_001",
+  "intrace": [
+   1,
+   1,
+   1,
+   1,
+   0
+  ],
+  "bugs": 1,
+  "traps": 1,
+  "found": 1,
+  "traps_reported": 1,
+  "reported": 3,
+  "pairs": 4,
+  "missed": [],
+  "s1": 3,
+  "s2": 3,
+  "s3": 3,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_015_001",
+  "intrace": [
+   25,
+   1,
+   1,
+   1,
+   0
+  ],
+  "bugs": 1,
+  "traps": 1,
+  "found": 1,
+  "traps_reported": 0,
+  "reported": 1,
+  "pairs": 2,
+  "missed": [],
+  "s1": 1,
+  "s2": 1,
+  "s3": 1,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_016_001",
+  "intrace": [
+   12,
+   3,
+   3,
+   3,
+   0
+  ],
+  "bugs": 3,
+  "traps": 0,
+  "found": 3,
+  "traps_reported": 0,
+  "reported": 6,
+  "pairs": 4,
+  "missed": [],
+  "s1": 6,
+  "s2": 6,
+  "s3": 6,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_017_001",
+  "intrace": [
+   18,
+   5,
+   5,
+   5,
+   0
+  ],
+  "bugs": 4,
+  "traps": 1,
+  "found": 4,
+  "traps_reported": 0,
+  "reported": 20,
+  "pairs": 5,
+  "missed": [],
+  "s1": 22,
+  "s2": 20,
+  "s3": 20,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_018_001",
+  "intrace": [
+   4,
+   3,
+   3,
+   3,
+   0
+  ],
+  "bugs": 3,
+  "traps": 0,
+  "found": 3,
+  "traps_reported": 0,
+  "reported": 4,
+  "pairs": 5,
+  "missed": [],
+  "s1": 7,
+  "s2": 4,
+  "s3": 4,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_019_001",
+  "intrace": [
+   13,
+   1,
+   1,
+   1,
+   0
+  ],
+  "bugs": 1,
+  "traps": 4,
+  "found": 1,
+  "traps_reported": 3,
+  "reported": 7,
+  "pairs": 6,
+  "missed": [],
+  "s1": 8,
+  "s2": 8,
+  "s3": 7,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_020_001",
+  "intrace": [
+   28,
+   2,
+   2,
+   2,
+   0
+  ],
+  "bugs": 2,
+  "traps": 1,
+  "found": 2,
+  "traps_reported": 1,
+  "reported": 3,
+  "pairs": 6,
+  "missed": [],
+  "s1": 3,
+  "s2": 3,
+  "s3": 3,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_021_001",
+  "intrace": [
+   6,
+   3,
+   3,
+   3,
+   0
+  ],
+  "bugs": 3,
+  "traps": 0,
+  "found": 3,
+  "traps_reported": 0,
+  "reported": 6,
+  "pairs": 4,
+  "missed": [],
+  "s1": 10,
+  "s2": 6,
+  "s3": 6,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_022_001",
+  "intrace": [
+   15,
+   4,
+   4,
+   4,
+   0
+  ],
+  "bugs": 4,
+  "traps": 3,
+  "found": 4,
+  "traps_reported": 3,
+  "reported": 15,
+  "pairs": 7,
+  "missed": [],
+  "s1": 27,
+  "s2": 15,
+  "s3": 15,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_023_001",
+  "intrace": [
+   27,
+   2,
+   2,
+   2,
+   0
+  ],
+  "bugs": 2,
+  "traps": 0,
+  "found": 2,
+  "traps_reported": 0,
+  "reported": 5,
+  "pairs": 3,
+  "missed": [],
+  "s1": 9,
+  "s2": 5,
+  "s3": 5,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_024_001",
+  "intrace": [
+   7,
+   1,
+   1,
+   1,
+   0
+  ],
+  "bugs": 1,
+  "traps": 0,
+  "found": 1,
+  "traps_reported": 0,
+  "reported": 1,
+  "pairs": 2,
+  "missed": [],
+  "s1": 6,
+  "s2": 4,
+  "s3": 1,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_025_001",
+  "intrace": [
+   22,
+   1,
+   1,
+   1,
+   0
+  ],
+  "bugs": 1,
+  "traps": 0,
+  "found": 1,
+  "traps_reported": 0,
+  "reported": 2,
+  "pairs": 2,
+  "missed": [],
+  "s1": 3,
+  "s2": 2,
+  "s3": 2,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_026_001",
+  "intrace": [
+   5,
+   1,
+   1,
+   1,
+   0
+  ],
+  "bugs": 1,
+  "traps": 1,
+  "found": 1,
+  "traps_reported": 0,
+  "reported": 4,
+  "pairs": 5,
+  "missed": [],
+  "s1": 11,
+  "s2": 4,
+  "s3": 4,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_027_001",
+  "intrace": [
+   29,
+   2,
+   2,
+   2,
+   0
+  ],
+  "bugs": 2,
+  "traps": 1,
+  "found": 2,
+  "traps_reported": 0,
+  "reported": 8,
+  "pairs": 10,
+  "missed": [],
+  "s1": 21,
+  "s2": 8,
+  "s3": 8,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_028_001",
+  "intrace": [
+   10,
+   1,
+   1,
+   1,
+   0
+  ],
+  "bugs": 1,
+  "traps": 2,
+  "found": 1,
+  "traps_reported": 1,
+  "reported": 8,
+  "pairs": 10,
+  "missed": [],
+  "s1": 21,
+  "s2": 8,
+  "s3": 8,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_029_001",
+  "intrace": [
+   30,
+   1,
+   1,
+   1,
+   0
+  ],
+  "bugs": 1,
+  "traps": 1,
+  "found": 1,
+  "traps_reported": 0,
+  "reported": 2,
+  "pairs": 3,
+  "missed": [],
+  "s1": 6,
+  "s2": 3,
+  "s3": 2,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_030_001",
+  "intrace": [
+   20,
+   1,
+   1,
+   1,
+   0
+  ],
+  "bugs": 1,
+  "traps": 2,
+  "found": 1,
+  "traps_reported": 1,
+  "reported": 8,
+  "pairs": 10,
+  "missed": [],
+  "s1": 21,
+  "s2": 8,
+  "s3": 8,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ },
+ {
+  "case": "svp_simple_031_001",
+  "intrace": [
+   21,
+   3,
+   3,
+   3,
+   0
+  ],
+  "bugs": 3,
+  "traps": 0,
+  "found": 3,
+  "traps_reported": 0,
+  "reported": 10,
+  "pairs": 5,
+  "missed": [],
+  "s1": 19,
+  "s2": 10,
+  "s3": 10,
+  "source_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/pristine/project-src/bench/racebench/2.1"
+ }
+]

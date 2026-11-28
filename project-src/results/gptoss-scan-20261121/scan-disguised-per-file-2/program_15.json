@@ -1,0 +1,48 @@
+{
+  "case": "program_15",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_onyx",
+        "a1_line": 21,
+        "a1_kind": "write",
+        "b_line": 12,
+        "b_kind": "write",
+        "a2_line": 22,
+        "a2_kind": "read",
+        "why": "ISR can run after the task writes v_onyx=0 but before the loop condition reads v_onyx, creating a write‑write‑read race."
+      },
+      {
+        "variable": "v_onyx",
+        "a1_line": 22,
+        "a1_kind": "read",
+        "b_line": 12,
+        "b_kind": "write",
+        "a2_line": 22,
+        "a2_kind": "write",
+        "why": "ISR can preempt between the read of v_onyx for the loop condition and the write performed by v_onyx++ (the increment), yielding a read‑write‑write violation."
+      },
+      {
+        "variable": "v_onyx",
+        "a1_line": 22,
+        "a1_kind": "read",
+        "b_line": 12,
+        "b_kind": "write",
+        "a2_line": 22,
+        "a2_kind": "read",
+        "why": "ISR can interrupt after the condition reads v_onyx; the task later reads v_onyx again in the next iteration, forming a read‑write‑read pattern."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_onyx\",\n      \"a1_line\": 21,\n      \"a1_kind\": \"write\",\n      \"b_line\": 12,\n      \"b_kind\": \"write\",\n      \"a2_line\": 22,\n      \"a2_kind\": \"read\",\n      \"why\": \"ISR can run after the task writes v_onyx=0 but before the loop condition reads v_onyx, creating a write‑write‑read race.\"\n    },\n    {\n      \"variable\": \"v_onyx\",\n      \"a1_line\": 22,\n      \"a1_kind\": \"read\",\n      \"b_line\": 12,\n      \"b_kind\": \"write\",\n      \"a2_line\": 22,\n      \"a2_kind\": \"write\",\n      \"why\": \"ISR can preempt between the read of v_onyx for the loop condition and the write performed by v_onyx++ (the increment), yielding a read‑write‑write violation.\"\n    },\n    {\n      \"variable\": \"v_onyx\",\n      \"a1_line\": 22,\n      \"a1_kind\": \"read\",\n      \"b_line\": 12,\n      \"b_kind\": \"write\",\n      \"a2_line\": 22,\n      \"a2_kind\": \"read\",\n      \"why\": \"ISR can interrupt after the condition reads v_onyx; the task later reads v_onyx again in the next iteration, forming a read‑write‑read pattern.\"\n    }\n  ]\n}",
+  "wall_s": 26.055457830429077,
+  "usage": {
+    "input_tokens": 821,
+    "output_tokens": 2612,
+    "cache_read": 0,
+    "cache_write": 0,
+    "latency_s": 26.0552920330083
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

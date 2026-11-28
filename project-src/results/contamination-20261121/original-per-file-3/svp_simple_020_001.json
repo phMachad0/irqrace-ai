@@ -1,0 +1,48 @@
+{
+  "case": "svp_simple_020_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_020_001_global_var",
+        "a1_line": 37,
+        "a1_kind": "read",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 40,
+        "a2_kind": "read",
+        "why": "isr_1 (priority 1) can preempt main between the two reads and change global_var, so the two reads can see different values."
+      },
+      {
+        "variable": "svp_simple_020_001_global_var",
+        "a1_line": 37,
+        "a1_kind": "read",
+        "b_line": 53,
+        "b_kind": "write",
+        "a2_line": 40,
+        "a2_kind": "read",
+        "why": "isr_1 can run between the reads and call enable_isr(2). isr_2 can then preempt main and write global_var before the second read."
+      },
+      {
+        "variable": "svp_simple_020_001_global_para",
+        "a1_line": 36,
+        "a1_kind": "read",
+        "b_line": 52,
+        "b_kind": "write",
+        "a2_line": 39,
+        "a2_kind": "read",
+        "why": "isr_1 can run between the two comparisons, set the flag and enable isr_2. isr_2 then writes global_para=11 before main's second read, so the two comparisons see different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_020_001_global_var\",\"a1_line\":37,\"a1_kind\":\"read\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":40,\"a2_kind\":\"read\",\"why\":\"isr_1 (priority 1) can preempt main between the two reads and change global_var, so the two reads can see different values.\"},{\"variable\":\"svp_simple_020_001_global_var\",\"a1_line\":37,\"a1_kind\":\"read\",\"b_line\":53,\"b_kind\":\"write\",\"a2_line\":40,\"a2_kind\":\"read\",\"why\":\"isr_1 can run between the reads and call enable_isr(2). isr_2 can then preempt main and write global_var before the second read.\"},{\"variable\":\"svp_simple_020_001_global_para\",\"a1_line\":36,\"a1_kind\":\"read\",\"b_line\":52,\"b_kind\":\"write\",\"a2_line\":39,\"a2_kind\":\"read\",\"why\":\"isr_1 can run between the two comparisons, set the flag and enable isr_2. isr_2 then writes global_para=11 before main's second read, so the two comparisons see different values.\"}]}",
+  "wall_s": 8.89761757850647,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1024,
+    "cache_read": 2483,
+    "cache_write": 488,
+    "latency_s": 8.897385292017134
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

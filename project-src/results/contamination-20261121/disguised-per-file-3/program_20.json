@@ -1,0 +1,28 @@
+{
+  "case": "program_20",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_beacon",
+        "a1_line": 46,
+        "a1_kind": "read",
+        "b_line": 20,
+        "b_kind": "write",
+        "a2_line": 47,
+        "a2_kind": "read",
+        "why": "The task reads v_beacon[1] at line 46 in the first v_glacier call. The ISR can clear it at line 20 before the second call reads v_beacon[1] at line 47. The two reads can then see different values. Nothing masks the interrupt."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_beacon\",\"a1_line\":46,\"a1_kind\":\"read\",\"b_line\":20,\"b_kind\":\"write\",\"a2_line\":47,\"a2_kind\":\"read\",\"why\":\"The task reads v_beacon[1] at line 46 in the first v_glacier call. The ISR can clear it at line 20 before the second call reads v_beacon[1] at line 47. The two reads can then see different values. Nothing masks the interrupt.\"}]}",
+  "wall_s": 6.920077085494995,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 693,
+    "cache_read": 2050,
+    "cache_write": 485,
+    "latency_s": 6.919900156994117
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,28 @@
+{
+  "case": "svp_simple_028_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_028_001_gloable_var",
+        "a1_line": 29,
+        "a1_kind": "read",
+        "b_line": 43,
+        "b_kind": "write",
+        "a2_line": 30,
+        "a2_kind": "write",
+        "why": "ISR 1 is enabled in main before the check, so it can increment the variable between main's read at line 29 and its write at line 30, and the write at line 30 then overwrites that update."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_028_001_gloable_var\",\"a1_line\":29,\"a1_kind\":\"read\",\"b_line\":43,\"b_kind\":\"write\",\"a2_line\":30,\"a2_kind\":\"write\",\"why\":\"ISR 1 is enabled in main before the check, so it can increment the variable between main's read at line 29 and its write at line 30, and the write at line 30 then overwrites that update.\"}]}",
+  "wall_s": 6.072213888168335,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 467,
+    "cache_read": 2605,
+    "cache_write": 485,
+    "latency_s": 6.072012004995486
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

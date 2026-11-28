@@ -1,0 +1,48 @@
+{
+  "case": "program_23",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_timber",
+        "a1_line": 28,
+        "a1_kind": "write",
+        "b_line": 13,
+        "b_kind": "write",
+        "a2_line": 30,
+        "a2_kind": "read",
+        "why": "ISR can repoint v_timber to its local between the task's assignment and the dereference at line 30."
+      },
+      {
+        "variable": "v_timber",
+        "a1_line": 30,
+        "a1_kind": "read",
+        "b_line": 13,
+        "b_kind": "write",
+        "a2_line": 31,
+        "a2_kind": "read",
+        "why": "ISR can change v_timber between the task's two dereferences, so line 31 uses a different pointer."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 25,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "read",
+        "a2_line": 26,
+        "a2_kind": "write",
+        "why": "v_tundra and v_indigo alias v_vessel; the ISR can read it between the task's two writes and see the intermediate value 2."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_timber\",\"a1_line\":28,\"a1_kind\":\"write\",\"b_line\":13,\"b_kind\":\"write\",\"a2_line\":30,\"a2_kind\":\"read\",\"why\":\"ISR can repoint v_timber to its local between the task's assignment and the dereference at line 30.\"},{\"variable\":\"v_timber\",\"a1_line\":30,\"a1_kind\":\"read\",\"b_line\":13,\"b_kind\":\"write\",\"a2_line\":31,\"a2_kind\":\"read\",\"why\":\"ISR can change v_timber between the task's two dereferences, so line 31 uses a different pointer.\"},{\"variable\":\"v_vessel\",\"a1_line\":25,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"read\",\"a2_line\":26,\"a2_kind\":\"write\",\"why\":\"v_tundra and v_indigo alias v_vessel; the ISR can read it between the task's two writes and see the intermediate value 2.\"}]}",
+  "wall_s": 11.333871364593506,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1300,
+    "cache_read": 975,
+    "cache_write": 1340,
+    "latency_s": 11.333720941998763
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

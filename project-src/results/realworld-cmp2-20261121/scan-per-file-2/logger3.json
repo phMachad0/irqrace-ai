@@ -1,0 +1,68 @@
+{
+  "case": "logger3",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 89,
+        "a1_kind": "read",
+        "b_line": 110,
+        "b_kind": "write",
+        "a2_line": 91,
+        "a2_kind": "read",
+        "why": "m3 (prio 6) can preempt m1 between the index read for records[] and the increment, so the increment reads a changed value."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 91,
+        "a1_kind": "read",
+        "b_line": 110,
+        "b_kind": "write",
+        "a2_line": 91,
+        "a2_kind": "write",
+        "why": "m3 preempts m1's non-atomic increment between its read and write, and the m3 increment is lost."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 159,
+        "a1_kind": "read",
+        "b_line": 91,
+        "b_kind": "write",
+        "a2_line": 165,
+        "a2_kind": "write",
+        "why": "m1 (prio 5) can preempt communicate between its read and its reset to 0. The reset overwrites m1's update, and the earlier read is stale."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 159,
+        "a1_kind": "read",
+        "b_line": 110,
+        "b_kind": "write",
+        "a2_line": 165,
+        "a2_kind": "write",
+        "why": "m3 (prio 6) can preempt communicate between its read and its reset. The reset overwrites m3's update, and the earlier read is stale."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 99,
+        "a1_kind": "write",
+        "b_line": 109,
+        "b_kind": "write",
+        "a2_line": 100,
+        "a2_kind": "read",
+        "why": "m3 (prio 6) can preempt m2 after it sets tickCounter to 0. The check at line 100 then sees a nonzero value."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"numberOfRecords\",\"a1_line\":89,\"a1_kind\":\"read\",\"b_line\":110,\"b_kind\":\"write\",\"a2_line\":91,\"a2_kind\":\"read\",\"why\":\"m3 (prio 6) can preempt m1 between the index read for records[] and the increment, so the increment reads a changed value.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":91,\"a1_kind\":\"read\",\"b_line\":110,\"b_kind\":\"write\",\"a2_line\":91,\"a2_kind\":\"write\",\"why\":\"m3 preempts m1's non-atomic increment between its read and write, and the m3 increment is lost.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":159,\"a1_kind\":\"read\",\"b_line\":91,\"b_kind\":\"write\",\"a2_line\":165,\"a2_kind\":\"write\",\"why\":\"m1 (prio 5) can preempt communicate between its read and its reset to 0. The reset overwrites m1's update, and the earlier read is stale.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":159,\"a1_kind\":\"read\",\"b_line\":110,\"b_kind\":\"write\",\"a2_line\":165,\"a2_kind\":\"write\",\"why\":\"m3 (prio 6) can preempt communicate between its read and its reset. The reset overwrites m3's update, and the earlier read is stale.\"},{\"variable\":\"tickCounter\",\"a1_line\":99,\"a1_kind\":\"write\",\"b_line\":109,\"b_kind\":\"write\",\"a2_line\":100,\"a2_kind\":\"read\",\"why\":\"m3 (prio 6) can preempt m2 after it sets tickCounter to 0. The check at line 100 then sees a nonzero value.\"}]}",
+  "wall_s": 12.733516931533813,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1572,
+    "cache_read": 3722,
+    "cache_write": 488,
+    "latency_s": 12.733283483976265
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,58 @@
+{
+  "case": "program_15",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_onyx",
+        "a1_line": 21,
+        "a1_kind": "write",
+        "b_line": 12,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "The ISR can overwrite v_onyx between the loop init and the condition check, so the check sees 50 instead of 0."
+      },
+      {
+        "variable": "v_onyx",
+        "a1_line": 21,
+        "a1_kind": "write",
+        "b_line": 12,
+        "b_kind": "write",
+        "a2_line": 24,
+        "a2_kind": "read",
+        "why": "The ISR can overwrite v_onyx after the init, so the index used at line 24 is 50 rather than the value the task set."
+      },
+      {
+        "variable": "v_onyx",
+        "a1_line": 22,
+        "a1_kind": "read",
+        "b_line": 12,
+        "b_kind": "write",
+        "a2_line": 22,
+        "a2_kind": "write",
+        "why": "The v_onyx++ read-modify-write is not atomic, so the ISR's write of 50 is overwritten by the stale incremented value."
+      },
+      {
+        "variable": "v_onyx",
+        "a1_line": 22,
+        "a1_kind": "write",
+        "b_line": 12,
+        "b_kind": "write",
+        "a2_line": 24,
+        "a2_kind": "read",
+        "why": "The ISR can overwrite the incremented v_onyx before it is used as the array index at line 24."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_onyx\",\"a1_line\":21,\"a1_kind\":\"write\",\"b_line\":12,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"The ISR can overwrite v_onyx between the loop init and the condition check, so the check sees 50 instead of 0.\"},{\"variable\":\"v_onyx\",\"a1_line\":21,\"a1_kind\":\"write\",\"b_line\":12,\"b_kind\":\"write\",\"a2_line\":24,\"a2_kind\":\"read\",\"why\":\"The ISR can overwrite v_onyx after the init, so the index used at line 24 is 50 rather than the value the task set.\"},{\"variable\":\"v_onyx\",\"a1_line\":22,\"a1_kind\":\"read\",\"b_line\":12,\"b_kind\":\"write\",\"a2_line\":22,\"a2_kind\":\"write\",\"why\":\"The v_onyx++ read-modify-write is not atomic, so the ISR's write of 50 is overwritten by the stale incremented value.\"},{\"variable\":\"v_onyx\",\"a1_line\":22,\"a1_kind\":\"write\",\"b_line\":12,\"b_kind\":\"write\",\"a2_line\":24,\"a2_kind\":\"read\",\"why\":\"The ISR can overwrite the incremented v_onyx before it is used as the array index at line 24.\"}]}",
+  "wall_s": 9.182519435882568,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1067,
+    "cache_read": 1760,
+    "cache_write": 488,
+    "latency_s": 9.182324739987962
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

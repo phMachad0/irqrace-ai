@@ -1,0 +1,158 @@
+{
+  "case": "program_04",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_fern",
+        "a1_line": 244,
+        "a1_kind": "write",
+        "b_line": 156,
+        "b_kind": "write",
+        "a2_line": 245,
+        "a2_kind": "read",
+        "why": "irq_umbra (prio 5) can preempt irq_bluff between its write and read of v_fern, so the read can see 1 instead of 0."
+      },
+      {
+        "variable": "v_fern",
+        "a1_line": 245,
+        "a1_kind": "read",
+        "b_line": 156,
+        "b_kind": "write",
+        "a2_line": 246,
+        "a2_kind": "read",
+        "why": "irq_umbra can preempt irq_bluff between the two reads, so they can return different values."
+      },
+      {
+        "variable": "v_saffron",
+        "a1_line": 259,
+        "a1_kind": "read",
+        "b_line": 277,
+        "b_kind": "write",
+        "a2_line": 259,
+        "a2_kind": "write",
+        "why": "irq_ermine (prio 4) preempts the v_saffron++ read-modify-write in irq_prism (prio 2), and its write of 10 is lost."
+      },
+      {
+        "variable": "v_sable",
+        "a1_line": 226,
+        "a1_kind": "write",
+        "b_line": 191,
+        "b_kind": "read",
+        "a2_line": 227,
+        "a2_kind": "write",
+        "why": "irq_falcon (prio 3) can preempt irq_ember (prio 1) between its two writes of v_sable and read an intermediate state."
+      },
+      {
+        "variable": "v_birch",
+        "a1_line": 176,
+        "a1_kind": "write",
+        "b_line": 279,
+        "b_kind": "write",
+        "a2_line": 185,
+        "a2_kind": "read",
+        "why": "irq_ermine or irq_umbra preempts irq_falcon between its write of 42 and the read check, which can see a different value."
+      },
+      {
+        "variable": "v_birch",
+        "a1_line": 196,
+        "a1_kind": "write",
+        "b_line": 279,
+        "b_kind": "write",
+        "a2_line": 205,
+        "a2_kind": "read",
+        "why": "irq_ermine (prio 4) preempts irq_rust (prio 2) between its write and read of v_birch."
+      },
+      {
+        "variable": "v_birch",
+        "a1_line": 214,
+        "a1_kind": "write",
+        "b_line": 279,
+        "b_kind": "write",
+        "a2_line": 223,
+        "a2_kind": "read",
+        "why": "irq_ermine preempts irq_ember between its write and read of v_birch."
+      },
+      {
+        "variable": "v_nectar",
+        "a1_line": 177,
+        "a1_kind": "write",
+        "b_line": 278,
+        "b_kind": "write",
+        "a2_line": 178,
+        "a2_kind": "read",
+        "why": "irq_ermine preempts irq_falcon between its write of 1 and its read of v_nectar, so the read can see 0."
+      },
+      {
+        "variable": "v_nectar",
+        "a1_line": 197,
+        "a1_kind": "write",
+        "b_line": 278,
+        "b_kind": "write",
+        "a2_line": 198,
+        "a2_kind": "read",
+        "why": "irq_ermine preempts irq_rust between its write and read of v_nectar."
+      },
+      {
+        "variable": "v_nectar",
+        "a1_line": 215,
+        "a1_kind": "write",
+        "b_line": 278,
+        "b_kind": "write",
+        "a2_line": 216,
+        "a2_kind": "read",
+        "why": "irq_ermine preempts irq_ember between its write and read of v_nectar."
+      },
+      {
+        "variable": "v_nectar",
+        "a1_line": 233,
+        "a1_kind": "write",
+        "b_line": 159,
+        "b_kind": "write",
+        "a2_line": 235,
+        "a2_kind": "read",
+        "why": "irq_umbra sets v_nectar to 1 between irq_bluff's write of 0 and its check."
+      },
+      {
+        "variable": "v_nectar",
+        "a1_line": 250,
+        "a1_kind": "write",
+        "b_line": 159,
+        "b_kind": "write",
+        "a2_line": 252,
+        "a2_kind": "read",
+        "why": "irq_umbra sets v_nectar to 1 between irq_prism's write of 0 and its check."
+      },
+      {
+        "variable": "v_nectar",
+        "a1_line": 264,
+        "a1_kind": "write",
+        "b_line": 159,
+        "b_kind": "write",
+        "a2_line": 266,
+        "a2_kind": "read",
+        "why": "irq_umbra (prio 5) preempts irq_vine (prio 3) between its write and read of v_nectar."
+      },
+      {
+        "variable": "v_nectar",
+        "a1_line": 278,
+        "a1_kind": "write",
+        "b_line": 159,
+        "b_kind": "write",
+        "a2_line": 280,
+        "a2_kind": "read",
+        "why": "irq_umbra (prio 5) preempts irq_ermine (prio 4) between its write and read of v_nectar."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_fern\",\"a1_line\":244,\"a1_kind\":\"write\",\"b_line\":156,\"b_kind\":\"write\",\"a2_line\":245,\"a2_kind\":\"read\",\"why\":\"irq_umbra (prio 5) can preempt irq_bluff between its write and read of v_fern, so the read can see 1 instead of 0.\"},{\"variable\":\"v_fern\",\"a1_line\":245,\"a1_kind\":\"read\",\"b_line\":156,\"b_kind\":\"write\",\"a2_line\":246,\"a2_kind\":\"read\",\"why\":\"irq_umbra can preempt irq_bluff between the two reads, so they can return different values.\"},{\"variable\":\"v_saffron\",\"a1_line\":259,\"a1_kind\":\"read\",\"b_line\":277,\"b_kind\":\"write\",\"a2_line\":259,\"a2_kind\":\"write\",\"why\":\"irq_ermine (prio 4) preempts the v_saffron++ read-modify-write in irq_prism (prio 2), and its write of 10 is lost.\"},{\"variable\":\"v_sable\",\"a1_line\":226,\"a1_kind\":\"write\",\"b_line\":191,\"b_kind\":\"read\",\"a2_line\":227,\"a2_kind\":\"write\",\"why\":\"irq_falcon (prio 3) can preempt irq_ember (prio 1) between its two writes of v_sable and read an intermediate state.\"},{\"variable\":\"v_birch\",\"a1_line\":176,\"a1_kind\":\"write\",\"b_line\":279,\"b_kind\":\"write\",\"a2_line\":185,\"a2_kind\":\"read\",\"why\":\"irq_ermine or irq_umbra preempts irq_falcon between its write of 42 and the read check, which can see a different value.\"},{\"variable\":\"v_birch\",\"a1_line\":196,\"a1_kind\":\"write\",\"b_line\":279,\"b_kind\":\"write\",\"a2_line\":205,\"a2_kind\":\"read\",\"why\":\"irq_ermine (prio 4) preempts irq_rust (prio 2) between its write and read of v_birch.\"},{\"variable\":\"v_birch\",\"a1_line\":214,\"a1_kind\":\"write\",\"b_line\":279,\"b_kind\":\"write\",\"a2_line\":223,\"a2_kind\":\"read\",\"why\":\"irq_ermine preempts irq_ember between its write and read of v_birch.\"},{\"variable\":\"v_nectar\",\"a1_line\":177,\"a1_kind\":\"write\",\"b_line\":278,\"b_kind\":\"write\",\"a2_line\":178,\"a2_kind\":\"read\",\"why\":\"irq_ermine preempts irq_falcon between its write of 1 and its read of v_nectar, so the read can see 0.\"},{\"variable\":\"v_nectar\",\"a1_line\":197,\"a1_kind\":\"write\",\"b_line\":278,\"b_kind\":\"write\",\"a2_line\":198,\"a2_kind\":\"read\",\"why\":\"irq_ermine preempts irq_rust between its write and read of v_nectar.\"},{\"variable\":\"v_nectar\",\"a1_line\":215,\"a1_kind\":\"write\",\"b_line\":278,\"b_kind\":\"write\",\"a2_line\":216,\"a2_kind\":\"read\",\"why\":\"irq_ermine preempts irq_ember between its write and read of v_nectar.\"},{\"variable\":\"v_nectar\",\"a1_line\":233,\"a1_kind\":\"write\",\"b_line\":159,\"b_kind\":\"write\",\"a2_line\":235,\"a2_kind\":\"read\",\"why\":\"irq_umbra sets v_nectar to 1 between irq_bluff's write of 0 and its check.\"},{\"variable\":\"v_nectar\",\"a1_line\":250,\"a1_kind\":\"write\",\"b_line\":159,\"b_kind\":\"write\",\"a2_line\":252,\"a2_kind\":\"read\",\"why\":\"irq_umbra sets v_nectar to 1 between irq_prism's write of 0 and its check.\"},{\"variable\":\"v_nectar\",\"a1_line\":264,\"a1_kind\":\"write\",\"b_line\":159,\"b_kind\":\"write\",\"a2_line\":266,\"a2_kind\":\"read\",\"why\":\"irq_umbra (prio 5) preempts irq_vine (prio 3) between its write and read of v_nectar.\"},{\"variable\":\"v_nectar\",\"a1_line\":278,\"a1_kind\":\"write\",\"b_line\":159,\"b_kind\":\"write\",\"a2_line\":280,\"a2_kind\":\"read\",\"why\":\"irq_umbra (prio 5) preempts irq_ermine (prio 4) between its write and read of v_nectar.\"}]}",
+  "wall_s": 20.92206907272339,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 2862,
+    "cache_read": 0,
+    "cache_write": 6564,
+    "latency_s": 20.920797491038684
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

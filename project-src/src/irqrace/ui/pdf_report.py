@@ -16,6 +16,8 @@ from typing import Any
 
 import pymupdf
 
+from irqrace.candidate import access_locations
+
 
 class PDFReportBuilder:
     """Builds a formatted multi-page PDF report using PyMuPDF."""
@@ -388,7 +390,7 @@ class PDFReportBuilder:
             pat = rec.get("pattern", "?")
             var_name = rec.get("variable", {}).get("name", "?")
             accs = rec.get("accesses", [])
-            lines_str = "(" + ",".join(str(a.get("source", {}).get("line", "?")) for a in accs) + ")"
+            lines_str = access_locations(accs)
 
             if t_doc and t_doc.get("not_triaged"):
                 feas = "não triado"

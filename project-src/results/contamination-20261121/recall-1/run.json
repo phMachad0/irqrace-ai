@@ -1,0 +1,7 @@
+{
+  "mode": "per-file",
+  "probe": "recall",
+  "backend": "claude-cli:sonnet@low",
+  "suite": "original",
+  "wall_s": 24.404236793518066
+}

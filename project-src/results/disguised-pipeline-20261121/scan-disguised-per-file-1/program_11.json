@@ -1,0 +1,58 @@
+{
+  "case": "program_11",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_umber",
+        "a1_line": 18,
+        "a1_kind": "read",
+        "b_line": 42,
+        "b_kind": "write",
+        "a2_line": 19,
+        "a2_kind": "write",
+        "why": "Interrupt 1 stays enabled after line 17, so irq_quiver (addData) can increment v_umber between the task's check and its reset to 0."
+      },
+      {
+        "variable": "v_umber",
+        "a1_line": 18,
+        "a1_kind": "read",
+        "b_line": 30,
+        "b_kind": "write",
+        "a2_line": 19,
+        "a2_kind": "write",
+        "why": "Once irq_quiver has run and enabled interrupt 2, irq_raptor can preempt the task between the check and the reset and modify v_umber."
+      },
+      {
+        "variable": "v_umber",
+        "a1_line": 35,
+        "a1_kind": "write",
+        "b_line": 25,
+        "b_kind": "write",
+        "a2_line": 18,
+        "a2_kind": "read",
+        "why": "Before line 16 interrupts are enabled, so irq_pylon can increment v_umber after the task's write at line 35. The task's later read at line 18 then sees a value it did not write."
+      },
+      {
+        "variable": "v_umber",
+        "a1_line": 35,
+        "a1_kind": "write",
+        "b_line": 42,
+        "b_kind": "write",
+        "a2_line": 18,
+        "a2_kind": "read",
+        "why": "irq_quiver can run during init() and increment v_umber between the task's write at line 35 and its read at line 18."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_umber\",\"a1_line\":18,\"a1_kind\":\"read\",\"b_line\":42,\"b_kind\":\"write\",\"a2_line\":19,\"a2_kind\":\"write\",\"why\":\"Interrupt 1 stays enabled after line 17, so irq_quiver (addData) can increment v_umber between the task's check and its reset to 0.\"},{\"variable\":\"v_umber\",\"a1_line\":18,\"a1_kind\":\"read\",\"b_line\":30,\"b_kind\":\"write\",\"a2_line\":19,\"a2_kind\":\"write\",\"why\":\"Once irq_quiver has run and enabled interrupt 2, irq_raptor can preempt the task between the check and the reset and modify v_umber.\"},{\"variable\":\"v_umber\",\"a1_line\":35,\"a1_kind\":\"write\",\"b_line\":25,\"b_kind\":\"write\",\"a2_line\":18,\"a2_kind\":\"read\",\"why\":\"Before line 16 interrupts are enabled, so irq_pylon can increment v_umber after the task's write at line 35. The task's later read at line 18 then sees a value it did not write.\"},{\"variable\":\"v_umber\",\"a1_line\":35,\"a1_kind\":\"write\",\"b_line\":42,\"b_kind\":\"write\",\"a2_line\":18,\"a2_kind\":\"read\",\"why\":\"irq_quiver can run during init() and increment v_umber between the task's write at line 35 and its read at line 18.\"}]}",
+  "wall_s": 12.368727445602417,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1541,
+    "cache_read": 975,
+    "cache_write": 1456,
+    "latency_s": 12.368575785018038
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

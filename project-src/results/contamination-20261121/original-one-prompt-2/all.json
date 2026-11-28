@@ -1,0 +1,722 @@
+{
+  "parsed": {
+    "cases": [
+      {
+        "case": "svp_simple_001_001",
+        "violations": [
+          {
+            "variable": "svp_simple_001_001_global_array[9999]",
+            "a1_line": 32,
+            "a1_kind": "write",
+            "b_line": 55,
+            "b_kind": "read",
+            "a2_line": 35,
+            "a2_kind": "write",
+            "why": "isr_2 (enabled by isr_1) can preempt main between the zeroing write and the trigger write and read the intermediate value."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_002_001",
+        "violations": [
+          {
+            "variable": "svp_simple_002_001_global_array[9999]",
+            "a1_line": 33,
+            "a1_kind": "write",
+            "b_line": 44,
+            "b_kind": "write",
+            "a2_line": 37,
+            "a2_kind": "read",
+            "why": "Higher-priority isr_2 can overwrite the element between isr_1's write and its read."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_003_001",
+        "violations": [
+          {
+            "variable": "svp_simple_003_001_global_var1",
+            "a1_line": 50,
+            "a1_kind": "read",
+            "b_line": 65,
+            "b_kind": "write",
+            "a2_line": 55,
+            "a2_kind": "read",
+            "why": "isr_1 is enabled at line 47 and can write var1 between main's two reads."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_004_001",
+        "violations": [
+          {
+            "variable": "svp_simple_004_001_global_var1",
+            "a1_line": 41,
+            "a1_kind": "read",
+            "b_line": 59,
+            "b_kind": "write",
+            "a2_line": 46,
+            "a2_kind": "read",
+            "why": "isr_1 can preempt main between its two reads of var1 and change the value."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_005_001",
+        "violations": [
+          {
+            "variable": "svp_simple_005_001_global_var",
+            "a1_line": 32,
+            "a1_kind": "write",
+            "b_line": 46,
+            "b_kind": "read",
+            "a2_line": 40,
+            "a2_kind": "write",
+            "why": "isr_1 can read the intermediate value between main's writes."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_006_001",
+        "violations": [
+          {
+            "variable": "svp_simple_006_001_global_var1",
+            "a1_line": 33,
+            "a1_kind": "read",
+            "b_line": 52,
+            "b_kind": "write",
+            "a2_line": 35,
+            "a2_kind": "read",
+            "why": "isr_1 can write var1 between main's two reads."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_007_001",
+        "violations": [
+          {
+            "variable": "svp_simple_007_001_global_var",
+            "a1_line": 32,
+            "a1_kind": "read",
+            "b_line": 49,
+            "b_kind": "write",
+            "a2_line": 34,
+            "a2_kind": "read",
+            "why": "isr_1 increments var between main's two index reads."
+          },
+          {
+            "variable": "svp_simple_007_001_global_array[2]",
+            "a1_line": 38,
+            "a1_kind": "write",
+            "b_line": 47,
+            "b_kind": "write",
+            "a2_line": 42,
+            "a2_kind": "read",
+            "why": "isr_1 overwrites array[2] between main's write and read."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_008_001",
+        "violations": [
+          {
+            "variable": "svp_simple_008_001_global_array[40]",
+            "a1_line": 35,
+            "a1_kind": "write",
+            "b_line": 52,
+            "b_kind": "write",
+            "a2_line": 46,
+            "a2_kind": "read",
+            "why": "isr_1 overwrites the array between main's write and read."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_009_001",
+        "violations": [
+          {
+            "variable": "svp_simple_009_001_m",
+            "a1_line": 35,
+            "a1_kind": "write",
+            "b_line": 46,
+            "b_kind": "write",
+            "a2_line": 37,
+            "a2_kind": "read",
+            "why": "isr_1 repoints m between main's assignment and dereference."
+          },
+          {
+            "variable": "svp_simple_009_001_m",
+            "a1_line": 37,
+            "a1_kind": "read",
+            "b_line": 46,
+            "b_kind": "write",
+            "a2_line": 38,
+            "a2_kind": "read",
+            "why": "isr_1 repoints m between main's two dereferences."
+          },
+          {
+            "variable": "svp_simple_009_001_local_var1",
+            "a1_line": 32,
+            "a1_kind": "write",
+            "b_line": 44,
+            "b_kind": "read",
+            "a2_line": 33,
+            "a2_kind": "write",
+            "why": "isr_1 reads local_var1 through p between main's two writes."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_010_001",
+        "violations": [
+          {
+            "variable": "svp_simple_010_001_global_union",
+            "a1_line": 40,
+            "a1_kind": "write",
+            "b_line": 51,
+            "b_kind": "read",
+            "a2_line": 41,
+            "a2_kind": "write",
+            "why": "header and data overlap in the union; isr_1 can read between main's two writes."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_011_001",
+        "violations": [
+          {
+            "variable": "svp_simple_011_001_global_var1",
+            "a1_line": 30,
+            "a1_kind": "write",
+            "b_line": 42,
+            "b_kind": "read",
+            "a2_line": 31,
+            "a2_kind": "write",
+            "why": "isr_1 reads var1 between main's two writes."
+          },
+          {
+            "variable": "svp_simple_011_001_u",
+            "a1_line": 33,
+            "a1_kind": "write",
+            "b_line": 43,
+            "b_kind": "read",
+            "a2_line": 35,
+            "a2_kind": "write",
+            "why": "isr_1 reads pointer u between main's two assignments."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_012_001",
+        "violations": [
+          {
+            "variable": "svp_simple_012_001_global_var",
+            "a1_line": 27,
+            "a1_kind": "write",
+            "b_line": 34,
+            "b_kind": "read",
+            "a2_line": 29,
+            "a2_kind": "write",
+            "why": "isr_1 reads var between main's two writes."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_013_001",
+        "violations": [
+          {
+            "variable": "svp_simple_013_001_global_var1",
+            "a1_line": 39,
+            "a1_kind": "read",
+            "b_line": 65,
+            "b_kind": "write",
+            "a2_line": 41,
+            "a2_kind": "read",
+            "why": "isr_3 (enabled via isr_1/isr_2 chain) writes var1 between main's reads."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_014_001",
+        "violations": [
+          {
+            "variable": "svp_simple_014_001_global_var1",
+            "a1_line": 39,
+            "a1_kind": "read",
+            "b_line": 58,
+            "b_kind": "write",
+            "a2_line": 41,
+            "a2_kind": "read",
+            "why": "isr_2 can preempt isr_1, enable isr_3, which writes var1 between isr_1's reads."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_015_001",
+        "violations": [
+          {
+            "variable": "svp_simple_015_001_global_var1",
+            "a1_line": 30,
+            "a1_kind": "read",
+            "b_line": 39,
+            "b_kind": "write",
+            "a2_line": 31,
+            "a2_kind": "read",
+            "why": "isr_1 changes var1 between main's range-check reads."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_016_001",
+        "violations": [
+          {
+            "variable": "svp_simple_016_001_global_var1",
+            "a1_line": 24,
+            "a1_kind": "write",
+            "b_line": 33,
+            "b_kind": "write",
+            "a2_line": 25,
+            "a2_kind": "read",
+            "why": "isr_1 overwrites var1 between main's write and read."
+          },
+          {
+            "variable": "svp_simple_016_001_global_var1",
+            "a1_line": 25,
+            "a1_kind": "read",
+            "b_line": 33,
+            "b_kind": "write",
+            "a2_line": 26,
+            "a2_kind": "read",
+            "why": "isr_1 changes var1 between consecutive reads."
+          },
+          {
+            "variable": "svp_simple_016_001_global_var1",
+            "a1_line": 26,
+            "a1_kind": "read",
+            "b_line": 33,
+            "b_kind": "write",
+            "a2_line": 27,
+            "a2_kind": "read",
+            "why": "isr_1 changes var1 between consecutive reads."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_017_001",
+        "violations": [
+          {
+            "variable": "svp_simple_017_001_global_var",
+            "a1_line": 29,
+            "a1_kind": "write",
+            "b_line": 39,
+            "b_kind": "write",
+            "a2_line": 29,
+            "a2_kind": "read",
+            "why": "isr_1 overwrites loop variable between init and condition check."
+          },
+          {
+            "variable": "svp_simple_017_001_global_var",
+            "a1_line": 29,
+            "a1_kind": "read",
+            "b_line": 39,
+            "b_kind": "write",
+            "a2_line": 32,
+            "a2_kind": "read",
+            "why": "isr_1 changes the loop index between condition and array indexing."
+          },
+          {
+            "variable": "svp_simple_017_001_global_var",
+            "a1_line": 32,
+            "a1_kind": "read",
+            "b_line": 39,
+            "b_kind": "write",
+            "a2_line": 30,
+            "a2_kind": "read",
+            "why": "isr_1 changes var between index use and increment read."
+          },
+          {
+            "variable": "svp_simple_017_001_global_var",
+            "a1_line": 30,
+            "a1_kind": "read",
+            "b_line": 39,
+            "b_kind": "write",
+            "a2_line": 30,
+            "a2_kind": "write",
+            "why": "isr_1 write is lost by the non-atomic increment."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_018_001",
+        "violations": [
+          {
+            "variable": "svp_simple_018_001_para1",
+            "a1_line": 40,
+            "a1_kind": "read",
+            "b_line": 59,
+            "b_kind": "write",
+            "a2_line": 47,
+            "a2_kind": "read",
+            "why": "isr_1 writes para1 between main's reads in func1 and func2."
+          },
+          {
+            "variable": "svp_simple_018_001_para2",
+            "a1_line": 41,
+            "a1_kind": "read",
+            "b_line": 54,
+            "b_kind": "write",
+            "a2_line": 48,
+            "a2_kind": "read",
+            "why": "isr_2 writes para2 between main's reads."
+          },
+          {
+            "variable": "svp_simple_018_001_para2",
+            "a1_line": 48,
+            "a1_kind": "read",
+            "b_line": 54,
+            "b_kind": "write",
+            "a2_line": 49,
+            "a2_kind": "read",
+            "why": "isr_2 writes para2 between consecutive reads."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_019_001",
+        "violations": [
+          {
+            "variable": "svp_simple_019_001_global_var1",
+            "a1_line": 45,
+            "a1_kind": "read",
+            "b_line": 71,
+            "b_kind": "write",
+            "a2_line": 51,
+            "a2_kind": "read",
+            "why": "isr_1 can run before disable_isr(1) at line 47 or after re-enable at line 50."
+          },
+          {
+            "variable": "svp_simple_019_001_global_var1",
+            "a1_line": 51,
+            "a1_kind": "read",
+            "b_line": 71,
+            "b_kind": "write",
+            "a2_line": 59,
+            "a2_kind": "read",
+            "why": "isr_1 is enabled at line 50 and can run before the next disable."
+          },
+          {
+            "variable": "svp_simple_019_001_global_condition3",
+            "a1_line": 48,
+            "a1_kind": "read",
+            "b_line": 69,
+            "b_kind": "write",
+            "a2_line": 56,
+            "a2_kind": "read",
+            "why": "isr_1 enabled at 50 sets condition3 to 0 between the two checks."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_020_001",
+        "violations": [
+          {
+            "variable": "svp_simple_020_001_global_para",
+            "a1_line": 36,
+            "a1_kind": "read",
+            "b_line": 52,
+            "b_kind": "write",
+            "a2_line": 39,
+            "a2_kind": "read",
+            "why": "isr_2 enabled by isr_1 writes para between main's two checks."
+          },
+          {
+            "variable": "svp_simple_020_001_global_var",
+            "a1_line": 37,
+            "a1_kind": "read",
+            "b_line": 44,
+            "b_kind": "write",
+            "a2_line": 40,
+            "a2_kind": "read",
+            "why": "isr_1 writes var between main's reads."
+          },
+          {
+            "variable": "svp_simple_020_001_global_var",
+            "a1_line": 37,
+            "a1_kind": "read",
+            "b_line": 53,
+            "b_kind": "write",
+            "a2_line": 40,
+            "a2_kind": "read",
+            "why": "isr_2 writes var between main's reads."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_021_001",
+        "violations": [
+          {
+            "variable": "svp_simple_021_001_tc_block_rcvd_bytes_ch1",
+            "a1_line": 44,
+            "a1_kind": "read",
+            "b_line": 79,
+            "b_kind": "write",
+            "a2_line": 45,
+            "a2_kind": "write",
+            "why": "isr_1 updates ch1 between the check and the reset."
+          },
+          {
+            "variable": "svp_simple_021_001_tc_block_rcvd_bytes_ch1",
+            "a1_line": 45,
+            "a1_kind": "write",
+            "b_line": 79,
+            "b_kind": "write",
+            "a2_line": 65,
+            "a2_kind": "read",
+            "why": "isr_1 overwrites the reset value before main reads it."
+          },
+          {
+            "variable": "svp_simple_021_001_tc_block_rcvd_bytes_ch1",
+            "a1_line": 44,
+            "a1_kind": "read",
+            "b_line": 79,
+            "b_kind": "write",
+            "a2_line": 65,
+            "a2_kind": "read",
+            "why": "isr_1 changes ch1 between the check and later copy."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_022_001",
+        "violations": [
+          {
+            "variable": "svp_simple_022_001_global_var1",
+            "a1_line": 32,
+            "a1_kind": "write",
+            "b_line": 66,
+            "b_kind": "write",
+            "a2_line": 55,
+            "a2_kind": "read",
+            "why": "isr_1 overwrites var1 before it is read."
+          },
+          {
+            "variable": "svp_simple_022_001_global_var1",
+            "a1_line": 55,
+            "a1_kind": "read",
+            "b_line": 66,
+            "b_kind": "write",
+            "a2_line": 58,
+            "a2_kind": "read",
+            "why": "isr_1 changes var1 between check and use."
+          },
+          {
+            "variable": "svp_simple_022_001_global_var1",
+            "a1_line": 58,
+            "a1_kind": "read",
+            "b_line": 66,
+            "b_kind": "write",
+            "a2_line": 63,
+            "a2_kind": "read",
+            "why": "isr_1 changes var1 between reads."
+          },
+          {
+            "variable": "svp_simple_022_001_global_var1",
+            "a1_line": 63,
+            "a1_kind": "read",
+            "b_line": 66,
+            "b_kind": "write",
+            "a2_line": 39,
+            "a2_kind": "read",
+            "why": "isr_1 changes var1 between reads."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_023_001",
+        "violations": [
+          {
+            "variable": "svp_simple_023_001_global_var",
+            "a1_line": 25,
+            "a1_kind": "read",
+            "b_line": 39,
+            "b_kind": "write",
+            "a2_line": 35,
+            "a2_kind": "read",
+            "why": "isr_1 zeroes var after main passed it as argument and before the increment reads it."
+          },
+          {
+            "variable": "svp_simple_023_001_global_var",
+            "a1_line": 35,
+            "a1_kind": "read",
+            "b_line": 39,
+            "b_kind": "write",
+            "a2_line": 35,
+            "a2_kind": "write",
+            "why": "non-atomic increment loses isr_1's write."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_024_001",
+        "violations": [
+          {
+            "variable": "svp_simple_024_001_global_array[1]",
+            "a1_line": 56,
+            "a1_kind": "read",
+            "b_line": 63,
+            "b_kind": "write",
+            "a2_line": 57,
+            "a2_kind": "read",
+            "why": "isr_1 clears the array between main's two reads, giving an inconsistent word."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_025_001",
+        "violations": [
+          {
+            "variable": "svp_simple_025_001_global_var",
+            "a1_line": 35,
+            "a1_kind": "read",
+            "b_line": 38,
+            "b_kind": "write",
+            "a2_line": 35,
+            "a2_kind": "write",
+            "why": "non-atomic increment loses isr_1's write."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_026_001",
+        "violations": [
+          {
+            "variable": "svp_simple_026_001_gloable_var",
+            "a1_line": 26,
+            "a1_kind": "read",
+            "b_line": 43,
+            "b_kind": "write",
+            "a2_line": 27,
+            "a2_kind": "write",
+            "why": "only isr 1 is masked; isr_2 can modify var between the check and the reset."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_027_001",
+        "violations": [
+          {
+            "variable": "svp_simple_027_001_gloable_var",
+            "a1_line": 27,
+            "a1_kind": "read",
+            "b_line": 41,
+            "b_kind": "write",
+            "a2_line": 28,
+            "a2_kind": "write",
+            "why": "isr_1 is enabled and can modify var between check and write."
+          },
+          {
+            "variable": "svp_simple_027_001_gloable_var",
+            "a1_line": 27,
+            "a1_kind": "read",
+            "b_line": 45,
+            "b_kind": "write",
+            "a2_line": 28,
+            "a2_kind": "write",
+            "why": "isr_2 enabled by isr_1 can modify var between check and write."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_028_001",
+        "violations": [
+          {
+            "variable": "svp_simple_028_001_gloable_var",
+            "a1_line": 29,
+            "a1_kind": "read",
+            "b_line": 43,
+            "b_kind": "write",
+            "a2_line": 30,
+            "a2_kind": "write",
+            "why": "isr_1 is enabled and increments var between the check and the reset."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_029_001",
+        "violations": [
+          {
+            "variable": "svp_simple_029_001_tm_blocks[36]",
+            "a1_line": 80,
+            "a1_kind": "read",
+            "b_line": 83,
+            "b_kind": "write",
+            "a2_line": 83,
+            "a2_kind": "write",
+            "why": "isr_1 writes tm_blocks[36] between main's read-modify-write of it."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_030_001",
+        "violations": [
+          {
+            "variable": "svp_simple_030_001_gloable_var",
+            "a1_line": 29,
+            "a1_kind": "read",
+            "b_line": 43,
+            "b_kind": "write",
+            "a2_line": 30,
+            "a2_kind": "write",
+            "why": "isr_1 (via addData) increments var between the check and the reset."
+          }
+        ]
+      },
+      {
+        "case": "svp_simple_031_001",
+        "violations": [
+          {
+            "variable": "svp_simple_031_001_tc_block_rcvd_bytes_ch1",
+            "a1_line": 46,
+            "a1_kind": "read",
+            "b_line": 90,
+            "b_kind": "write",
+            "a2_line": 83,
+            "a2_kind": "read",
+            "why": "isr_1 updates ch1 between main's read and later check."
+          },
+          {
+            "variable": "svp_simple_031_001_tc_block_rcvd_bytes_ch1",
+            "a1_line": 83,
+            "a1_kind": "read",
+            "b_line": 90,
+            "b_kind": "write",
+            "a2_line": 85,
+            "a2_kind": "read",
+            "why": "isr_1 changes ch1 between check and use."
+          },
+          {
+            "variable": "svp_simple_031_001_tc_block_rcvd_bytes_ch1",
+            "a1_line": 85,
+            "a1_kind": "read",
+            "b_line": 90,
+            "b_kind": "write",
+            "a2_line": 65,
+            "a2_kind": "read",
+            "why": "isr_1 changes ch1 between argument read and read in func_2."
+          }
+        ]
+      }
+    ]
+  },
+  "text": "{\"cases\":[{\"case\":\"svp_simple_001_001\",\"violations\":[{\"variable\":\"svp_simple_001_001_global_array[9999]\",\"a1_line\":32,\"a1_kind\":\"write\",\"b_line\":55,\"b_kind\":\"read\",\"a2_line\":35,\"a2_kind\":\"write\",\"why\":\"isr_2 (enabled by isr_1) can preempt main between the zeroing write and the trigger write and read the intermediate value.\"}]},{\"case\":\"svp_simple_002_001\",\"violations\":[{\"variable\":\"svp_simple_002_001_global_array[9999]\",\"a1_line\":33,\"a1_kind\":\"write\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":37,\"a2_kind\":\"read\",\"why\":\"Higher-priority isr_2 can overwrite the element between isr_1's write and its read.\"}]},{\"case\":\"svp_simple_003_001\",\"violations\":[{\"variable\":\"svp_simple_003_001_global_var1\",\"a1_line\":50,\"a1_kind\":\"read\",\"b_line\":65,\"b_kind\":\"write\",\"a2_line\":55,\"a2_kind\":\"read\",\"why\":\"isr_1 is enabled at line 47 and can write var1 between main's two reads.\"}]},{\"case\":\"svp_simple_004_001\",\"violations\":[{\"variable\":\"svp_simple_004_001_global_var1\",\"a1_line\":41,\"a1_kind\":\"read\",\"b_line\":59,\"b_kind\":\"write\",\"a2_line\":46,\"a2_kind\":\"read\",\"why\":\"isr_1 can preempt main between its two reads of var1 and change the value.\"}]},{\"case\":\"svp_simple_005_001\",\"violations\":[{\"variable\":\"svp_simple_005_001_global_var\",\"a1_line\":32,\"a1_kind\":\"write\",\"b_line\":46,\"b_kind\":\"read\",\"a2_line\":40,\"a2_kind\":\"write\",\"why\":\"isr_1 can read the intermediate value between main's writes.\"}]},{\"case\":\"svp_simple_006_001\",\"violations\":[{\"variable\":\"svp_simple_006_001_global_var1\",\"a1_line\":33,\"a1_kind\":\"read\",\"b_line\":52,\"b_kind\":\"write\",\"a2_line\":35,\"a2_kind\":\"read\",\"why\":\"isr_1 can write var1 between main's two reads.\"}]},{\"case\":\"svp_simple_007_001\",\"violations\":[{\"variable\":\"svp_simple_007_001_global_var\",\"a1_line\":32,\"a1_kind\":\"read\",\"b_line\":49,\"b_kind\":\"write\",\"a2_line\":34,\"a2_kind\":\"read\",\"why\":\"isr_1 increments var between main's two index reads.\"},{\"variable\":\"svp_simple_007_001_global_array[2]\",\"a1_line\":38,\"a1_kind\":\"write\",\"b_line\":47,\"b_kind\":\"write\",\"a2_line\":42,\"a2_kind\":\"read\",\"why\":\"isr_1 overwrites array[2] between main's write and read.\"}]},{\"case\":\"svp_simple_008_001\",\"violations\":[{\"variable\":\"svp_simple_008_001_global_array[40]\",\"a1_line\":35,\"a1_kind\":\"write\",\"b_line\":52,\"b_kind\":\"write\",\"a2_line\":46,\"a2_kind\":\"read\",\"why\":\"isr_1 overwrites the array between main's write and read.\"}]},{\"case\":\"svp_simple_009_001\",\"violations\":[{\"variable\":\"svp_simple_009_001_m\",\"a1_line\":35,\"a1_kind\":\"write\",\"b_line\":46,\"b_kind\":\"write\",\"a2_line\":37,\"a2_kind\":\"read\",\"why\":\"isr_1 repoints m between main's assignment and dereference.\"},{\"variable\":\"svp_simple_009_001_m\",\"a1_line\":37,\"a1_kind\":\"read\",\"b_line\":46,\"b_kind\":\"write\",\"a2_line\":38,\"a2_kind\":\"read\",\"why\":\"isr_1 repoints m between main's two dereferences.\"},{\"variable\":\"svp_simple_009_001_local_var1\",\"a1_line\":32,\"a1_kind\":\"write\",\"b_line\":44,\"b_kind\":\"read\",\"a2_line\":33,\"a2_kind\":\"write\",\"why\":\"isr_1 reads local_var1 through p between main's two writes.\"}]},{\"case\":\"svp_simple_010_001\",\"violations\":[{\"variable\":\"svp_simple_010_001_global_union\",\"a1_line\":40,\"a1_kind\":\"write\",\"b_line\":51,\"b_kind\":\"read\",\"a2_line\":41,\"a2_kind\":\"write\",\"why\":\"header and data overlap in the union; isr_1 can read between main's two writes.\"}]},{\"case\":\"svp_simple_011_001\",\"violations\":[{\"variable\":\"svp_simple_011_001_global_var1\",\"a1_line\":30,\"a1_kind\":\"write\",\"b_line\":42,\"b_kind\":\"read\",\"a2_line\":31,\"a2_kind\":\"write\",\"why\":\"isr_1 reads var1 between main's two writes.\"},{\"variable\":\"svp_simple_011_001_u\",\"a1_line\":33,\"a1_kind\":\"write\",\"b_line\":43,\"b_kind\":\"read\",\"a2_line\":35,\"a2_kind\":\"write\",\"why\":\"isr_1 reads pointer u between main's two assignments.\"}]},{\"case\":\"svp_simple_012_001\",\"violations\":[{\"variable\":\"svp_simple_012_001_global_var\",\"a1_line\":27,\"a1_kind\":\"write\",\"b_line\":34,\"b_kind\":\"read\",\"a2_line\":29,\"a2_kind\":\"write\",\"why\":\"isr_1 reads var between main's two writes.\"}]},{\"case\":\"svp_simple_013_001\",\"violations\":[{\"variable\":\"svp_simple_013_001_global_var1\",\"a1_line\":39,\"a1_kind\":\"read\",\"b_line\":65,\"b_kind\":\"write\",\"a2_line\":41,\"a2_kind\":\"read\",\"why\":\"isr_3 (enabled via isr_1/isr_2 chain) writes var1 between main's reads.\"}]},{\"case\":\"svp_simple_014_001\",\"violations\":[{\"variable\":\"svp_simple_014_001_global_var1\",\"a1_line\":39,\"a1_kind\":\"read\",\"b_line\":58,\"b_kind\":\"write\",\"a2_line\":41,\"a2_kind\":\"read\",\"why\":\"isr_2 can preempt isr_1, enable isr_3, which writes var1 between isr_1's reads.\"}]},{\"case\":\"svp_simple_015_001\",\"violations\":[{\"variable\":\"svp_simple_015_001_global_var1\",\"a1_line\":30,\"a1_kind\":\"read\",\"b_line\":39,\"b_kind\":\"write\",\"a2_line\":31,\"a2_kind\":\"read\",\"why\":\"isr_1 changes var1 between main's range-check reads.\"}]},{\"case\":\"svp_simple_016_001\",\"violations\":[{\"variable\":\"svp_simple_016_001_global_var1\",\"a1_line\":24,\"a1_kind\":\"write\",\"b_line\":33,\"b_kind\":\"write\",\"a2_line\":25,\"a2_kind\":\"read\",\"why\":\"isr_1 overwrites var1 between main's write and read.\"},{\"variable\":\"svp_simple_016_001_global_var1\",\"a1_line\":25,\"a1_kind\":\"read\",\"b_line\":33,\"b_kind\":\"write\",\"a2_line\":26,\"a2_kind\":\"read\",\"why\":\"isr_1 changes var1 between consecutive reads.\"},{\"variable\":\"svp_simple_016_001_global_var1\",\"a1_line\":26,\"a1_kind\":\"read\",\"b_line\":33,\"b_kind\":\"write\",\"a2_line\":27,\"a2_kind\":\"read\",\"why\":\"isr_1 changes var1 between consecutive reads.\"}]},{\"case\":\"svp_simple_017_001\",\"violations\":[{\"variable\":\"svp_simple_017_001_global_var\",\"a1_line\":29,\"a1_kind\":\"write\",\"b_line\":39,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"read\",\"why\":\"isr_1 overwrites loop variable between init and condition check.\"},{\"variable\":\"svp_simple_017_001_global_var\",\"a1_line\":29,\"a1_kind\":\"read\",\"b_line\":39,\"b_kind\":\"write\",\"a2_line\":32,\"a2_kind\":\"read\",\"why\":\"isr_1 changes the loop index between condition and array indexing.\"},{\"variable\":\"svp_simple_017_001_global_var\",\"a1_line\":32,\"a1_kind\":\"read\",\"b_line\":39,\"b_kind\":\"write\",\"a2_line\":30,\"a2_kind\":\"read\",\"why\":\"isr_1 changes var between index use and increment read.\"},{\"variable\":\"svp_simple_017_001_global_var\",\"a1_line\":30,\"a1_kind\":\"read\",\"b_line\":39,\"b_kind\":\"write\",\"a2_line\":30,\"a2_kind\":\"write\",\"why\":\"isr_1 write is lost by the non-atomic increment.\"}]},{\"case\":\"svp_simple_018_001\",\"violations\":[{\"variable\":\"svp_simple_018_001_para1\",\"a1_line\":40,\"a1_kind\":\"read\",\"b_line\":59,\"b_kind\":\"write\",\"a2_line\":47,\"a2_kind\":\"read\",\"why\":\"isr_1 writes para1 between main's reads in func1 and func2.\"},{\"variable\":\"svp_simple_018_001_para2\",\"a1_line\":41,\"a1_kind\":\"read\",\"b_line\":54,\"b_kind\":\"write\",\"a2_line\":48,\"a2_kind\":\"read\",\"why\":\"isr_2 writes para2 between main's reads.\"},{\"variable\":\"svp_simple_018_001_para2\",\"a1_line\":48,\"a1_kind\":\"read\",\"b_line\":54,\"b_kind\":\"write\",\"a2_line\":49,\"a2_kind\":\"read\",\"why\":\"isr_2 writes para2 between consecutive reads.\"}]},{\"case\":\"svp_simple_019_001\",\"violations\":[{\"variable\":\"svp_simple_019_001_global_var1\",\"a1_line\":45,\"a1_kind\":\"read\",\"b_line\":71,\"b_kind\":\"write\",\"a2_line\":51,\"a2_kind\":\"read\",\"why\":\"isr_1 can run before disable_isr(1) at line 47 or after re-enable at line 50.\"},{\"variable\":\"svp_simple_019_001_global_var1\",\"a1_line\":51,\"a1_kind\":\"read\",\"b_line\":71,\"b_kind\":\"write\",\"a2_line\":59,\"a2_kind\":\"read\",\"why\":\"isr_1 is enabled at line 50 and can run before the next disable.\"},{\"variable\":\"svp_simple_019_001_global_condition3\",\"a1_line\":48,\"a1_kind\":\"read\",\"b_line\":69,\"b_kind\":\"write\",\"a2_line\":56,\"a2_kind\":\"read\",\"why\":\"isr_1 enabled at 50 sets condition3 to 0 between the two checks.\"}]},{\"case\":\"svp_simple_020_001\",\"violations\":[{\"variable\":\"svp_simple_020_001_global_para\",\"a1_line\":36,\"a1_kind\":\"read\",\"b_line\":52,\"b_kind\":\"write\",\"a2_line\":39,\"a2_kind\":\"read\",\"why\":\"isr_2 enabled by isr_1 writes para between main's two checks.\"},{\"variable\":\"svp_simple_020_001_global_var\",\"a1_line\":37,\"a1_kind\":\"read\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":40,\"a2_kind\":\"read\",\"why\":\"isr_1 writes var between main's reads.\"},{\"variable\":\"svp_simple_020_001_global_var\",\"a1_line\":37,\"a1_kind\":\"read\",\"b_line\":53,\"b_kind\":\"write\",\"a2_line\":40,\"a2_kind\":\"read\",\"why\":\"isr_2 writes var between main's reads.\"}]},{\"case\":\"svp_simple_021_001\",\"violations\":[{\"variable\":\"svp_simple_021_001_tc_block_rcvd_bytes_ch1\",\"a1_line\":44,\"a1_kind\":\"read\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":45,\"a2_kind\":\"write\",\"why\":\"isr_1 updates ch1 between the check and the reset.\"},{\"variable\":\"svp_simple_021_001_tc_block_rcvd_bytes_ch1\",\"a1_line\":45,\"a1_kind\":\"write\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":65,\"a2_kind\":\"read\",\"why\":\"isr_1 overwrites the reset value before main reads it.\"},{\"variable\":\"svp_simple_021_001_tc_block_rcvd_bytes_ch1\",\"a1_line\":44,\"a1_kind\":\"read\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":65,\"a2_kind\":\"read\",\"why\":\"isr_1 changes ch1 between the check and later copy.\"}]},{\"case\":\"svp_simple_022_001\",\"violations\":[{\"variable\":\"svp_simple_022_001_global_var1\",\"a1_line\":32,\"a1_kind\":\"write\",\"b_line\":66,\"b_kind\":\"write\",\"a2_line\":55,\"a2_kind\":\"read\",\"why\":\"isr_1 overwrites var1 before it is read.\"},{\"variable\":\"svp_simple_022_001_global_var1\",\"a1_line\":55,\"a1_kind\":\"read\",\"b_line\":66,\"b_kind\":\"write\",\"a2_line\":58,\"a2_kind\":\"read\",\"why\":\"isr_1 changes var1 between check and use.\"},{\"variable\":\"svp_simple_022_001_global_var1\",\"a1_line\":58,\"a1_kind\":\"read\",\"b_line\":66,\"b_kind\":\"write\",\"a2_line\":63,\"a2_kind\":\"read\",\"why\":\"isr_1 changes var1 between reads.\"},{\"variable\":\"svp_simple_022_001_global_var1\",\"a1_line\":63,\"a1_kind\":\"read\",\"b_line\":66,\"b_kind\":\"write\",\"a2_line\":39,\"a2_kind\":\"read\",\"why\":\"isr_1 changes var1 between reads.\"}]},{\"case\":\"svp_simple_023_001\",\"violations\":[{\"variable\":\"svp_simple_023_001_global_var\",\"a1_line\":25,\"a1_kind\":\"read\",\"b_line\":39,\"b_kind\":\"write\",\"a2_line\":35,\"a2_kind\":\"read\",\"why\":\"isr_1 zeroes var after main passed it as argument and before the increment reads it.\"},{\"variable\":\"svp_simple_023_001_global_var\",\"a1_line\":35,\"a1_kind\":\"read\",\"b_line\":39,\"b_kind\":\"write\",\"a2_line\":35,\"a2_kind\":\"write\",\"why\":\"non-atomic increment loses isr_1's write.\"}]},{\"case\":\"svp_simple_024_001\",\"violations\":[{\"variable\":\"svp_simple_024_001_global_array[1]\",\"a1_line\":56,\"a1_kind\":\"read\",\"b_line\":63,\"b_kind\":\"write\",\"a2_line\":57,\"a2_kind\":\"read\",\"why\":\"isr_1 clears the array between main's two reads, giving an inconsistent word.\"}]},{\"case\":\"svp_simple_025_001\",\"violations\":[{\"variable\":\"svp_simple_025_001_global_var\",\"a1_line\":35,\"a1_kind\":\"read\",\"b_line\":38,\"b_kind\":\"write\",\"a2_line\":35,\"a2_kind\":\"write\",\"why\":\"non-atomic increment loses isr_1's write.\"}]},{\"case\":\"svp_simple_026_001\",\"violations\":[{\"variable\":\"svp_simple_026_001_gloable_var\",\"a1_line\":26,\"a1_kind\":\"read\",\"b_line\":43,\"b_kind\":\"write\",\"a2_line\":27,\"a2_kind\":\"write\",\"why\":\"only isr 1 is masked; isr_2 can modify var between the check and the reset.\"}]},{\"case\":\"svp_simple_027_001\",\"violations\":[{\"variable\":\"svp_simple_027_001_gloable_var\",\"a1_line\":27,\"a1_kind\":\"read\",\"b_line\":41,\"b_kind\":\"write\",\"a2_line\":28,\"a2_kind\":\"write\",\"why\":\"isr_1 is enabled and can modify var between check and write.\"},{\"variable\":\"svp_simple_027_001_gloable_var\",\"a1_line\":27,\"a1_kind\":\"read\",\"b_line\":45,\"b_kind\":\"write\",\"a2_line\":28,\"a2_kind\":\"write\",\"why\":\"isr_2 enabled by isr_1 can modify var between check and write.\"}]},{\"case\":\"svp_simple_028_001\",\"violations\":[{\"variable\":\"svp_simple_028_001_gloable_var\",\"a1_line\":29,\"a1_kind\":\"read\",\"b_line\":43,\"b_kind\":\"write\",\"a2_line\":30,\"a2_kind\":\"write\",\"why\":\"isr_1 is enabled and increments var between the check and the reset.\"}]},{\"case\":\"svp_simple_029_001\",\"violations\":[{\"variable\":\"svp_simple_029_001_tm_blocks[36]\",\"a1_line\":80,\"a1_kind\":\"read\",\"b_line\":83,\"b_kind\":\"write\",\"a2_line\":83,\"a2_kind\":\"write\",\"why\":\"isr_1 writes tm_blocks[36] between main's read-modify-write of it.\"}]},{\"case\":\"svp_simple_030_001\",\"violations\":[{\"variable\":\"svp_simple_030_001_gloable_var\",\"a1_line\":29,\"a1_kind\":\"read\",\"b_line\":43,\"b_kind\":\"write\",\"a2_line\":30,\"a2_kind\":\"write\",\"why\":\"isr_1 (via addData) increments var between the check and the reset.\"}]},{\"case\":\"svp_simple_031_001\",\"violations\":[{\"variable\":\"svp_simple_031_001_tc_block_rcvd_bytes_ch1\",\"a1_line\":46,\"a1_kind\":\"read\",\"b_line\":90,\"b_kind\":\"write\",\"a2_line\":83,\"a2_kind\":\"read\",\"why\":\"isr_1 updates ch1 between main's read and later check.\"},{\"variable\":\"svp_simple_031_001_tc_block_rcvd_bytes_ch1\",\"a1_line\":83,\"a1_kind\":\"read\",\"b_line\":90,\"b_kind\":\"write\",\"a2_line\":85,\"a2_kind\":\"read\",\"why\":\"isr_1 changes ch1 between check and use.\"},{\"variable\":\"svp_simple_031_001_tc_block_rcvd_bytes_ch1\",\"a1_line\":85,\"a1_kind\":\"read\",\"b_line\":90,\"b_kind\":\"write\",\"a2_line\":65,\"a2_kind\":\"read\",\"why\":\"isr_1 changes ch1 between argument read and read in func_2.\"}]}]}",
+  "wall_s": 76.02154326438904,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 11750,
+    "cache_read": 32944,
+    "cache_write": 493,
+    "latency_s": 76.02127816498978
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

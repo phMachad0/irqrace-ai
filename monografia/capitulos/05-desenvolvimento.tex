@@ -26,9 +26,8 @@ A etapa de triagem é escrita em Python, com um cliente que isola o provedor do
 modelo atrás de uma interface própria, como exige o RNF5. As respostas do
 modelo são pedidas em formato estruturado e validadas contra um esquema antes
 de serem usadas, de modo que uma resposta malformada falha de imediato em vez
-de contaminar uma medição. O cache de respostas é indexado pelo candidato, pela
-configuração de \textit{prompt} e pelo modelo, o que permite recalcular uma
-tabela sem repetir chamadas.
+de contaminar uma medição. Nenhuma resposta é reaproveitada entre execuções, o
+que mantém independentes as repetições de uma mesma medição.
 
 \section{Projeto e Implementação}
 \label{sec:projeto}
@@ -39,7 +38,11 @@ A ferramenta percorre o ciclo detectar, contextualizar, triar, reparar e
 reverificar, ilustrado na Figura~\ref{fig:pipeline}. A etapa estática produz os
 candidatos e o contexto de cada um; a etapa com modelo de linguagem os ordena,
 explica e propõe correções; e a própria análise estática, com apoio de um
-verificador limitado, confirma as correções.
+verificador limitado, confirma as correções. Para que a triagem caiba no
+tempo de uso de uma ferramenta de análise, os candidatos são julgados em
+grupos, um por variável compartilhada, e as chamadas ao modelo são divididas
+entre todos os programas analisados
+(Seção~\ref{sec:agrupamento}).
 
 \begin{figure}[htb]
   \centering
@@ -90,8 +93,8 @@ repositório inteiro.
 
 \subsection{Estágio 1, derivação de candidatos}
 
-O primeiro estágio segue o desenho de \citeonline{intrace} e ignora de
-propósito condições de desvio e estado das interrupções, para não perder nada.
+O primeiro estágio segue o desenho de \citeonline{intrace} e ignora
+deliberadamente condições de desvio e estado das interrupções, para não perder nenhum defeito.
 Ele identifica os fluxos a partir da configuração, tratando cada ponto de
 entrada como raiz de uma análise de alcançabilidade; identifica as posições
 compartilhadas por análise \textit{may}, sem se restringir a variáveis globais,
@@ -105,9 +108,9 @@ $A_2$ no fluxo interrompido, nessa ordem, e $B$ num fluxo capaz de interrompê-l
 entre os dois. A ordem entre $A_1$ e $A_2$ vem do grafo de fluxo de controle da
 função que os contém.
 
-Um detalhe sobre laços é decisivo para o recall. Um único acesso no
-código-fonte, dentro de um laço que pode repetir, corresponde a vários acessos
-em execução, e por isso a mesma instrução pode ocupar as posições $A_1$ e $A_2$
+O tratamento de laços tem consequência direta sobre o recall, pois um único
+acesso no código-fonte, dentro de um laço que pode repetir, corresponde a
+vários acessos em execução. Por isso a mesma instrução pode ocupar as posições $A_1$ e $A_2$
 de uma tripla. O mesmo vale para uma função chamada duas vezes pelo mesmo
 fluxo. O Racebench anota defeitos exatamente com essa forma, de modo que uma
 implementação que tratasse cada instrução como um acesso único perderia
@@ -116,10 +119,11 @@ defeitos sem emitir qualquer sinal de erro.
 \subsection{Estágio 2, prioridade e mascaramento}
 
 O segundo estágio descarta candidatos cujos fluxos comprovadamente não podem se
-sobrepor. Um fluxo só é interrompido por outro de prioridade estritamente
-maior, com a convenção de que número maior é prioridade maior. Fluxos de mesma
-prioridade são tratados como capazes de se interromper mutuamente, pois nenhum
-dos modelos formais da literatura cobre esse caso e essa é a leitura que não
+sobrepor. Um fluxo é interrompido por outro de prioridade maior, com a
+convenção de que número maior é prioridade maior. O que acontece entre fluxos
+de mesma prioridade depende da plataforma, e por isso a configuração declara se
+eles podem se interromper mutuamente. Quando a configuração permite, os
+candidatos que dependem dessa preempção são mantidos, que é a leitura que não
 perde defeitos.
 
 O mascaramento é calculado por uma análise de fluxo de dados que determina, em
@@ -127,8 +131,8 @@ cada ponto do programa, quais interrupções estão desabilitadas. Uma interrup�
 só conta como mascarada durante o intervalo $[A_1, A_2]$ se estiver mascarada
 em todo ponto de todo caminho de $A_1$ a $A_2$ no fluxo local e se nenhum fluxo
 capaz de executar dentro desse intervalo puder reabilitá-la. A segunda condição
-é o que evita perder o defeito do caso \texttt{svp\_simple\_001\_001} descrito
-na Seção~\ref{sec:interrupcoes}. Escritas em registradores que a configuração
+é o que evita perder o defeito do Código~\ref{cod:mascaramento}, descrito na
+Seção~\ref{sec:interrupcoes}. Escritas em registradores que a configuração
 não reconheça nunca contam como mascaramento.
 
 Nenhum modelo de periodicidade é assumido, porque o Racebench declara que uma
@@ -148,7 +152,7 @@ A posição desse estágio antes da triagem é fixa, por três motivos. Ele é u
 filtro correto, que só descarta com prova. Reduz fortemente o volume, e os
 números do IntRace dão a ordem de grandeza, com cerca de 208 candidatos por
 programa caindo para cerca de 95 após o segundo estágio e para algo em torno de
-13 após o terceiro \cite{intrace}, redução que é o que torna a triagem por \llm\
+13 após o terceiro \cite{intrace}, redução que torna a triagem por \llm\
 economicamente viável. E reproduz a arquitetura do LLift, em que o modelo
 recebe apenas os casos que a execução simbólica não conseguiu decidir
 \cite{llift}.
@@ -159,7 +163,7 @@ Para cada candidato sobrevivente a ferramenta emite um registro de contexto,
 que é um documento estruturado com as evidências necessárias para julgá-lo.
 \citeonline{llift} atribuem 5 de seus 13 falsos positivos a lacunas no
 relatório entregue pelo analisador ao modelo, o que justifica tratar esse
-registro como produto de primeira classe da análise, e não como subproduto. O
+registro como produto de primeira classe da análise. O
 Quadro~\ref{quadro:registro} resume seus campos.
 
 \begin{quadro}[htb]
@@ -228,15 +232,34 @@ candidato na fila de leitura.
   \fonte{Elaborado pelos autores.}
 \end{quadro}
 
-Todos os grupos aparecem no relatório. O grupo determina apenas a posição de
-leitura, e é essa ordem que o \textit{Inspection Ratio} avalia.
+Todos os grupos aparecem no relatório, e o grupo determina apenas a posição
+de leitura.
+
+\subsection{Agrupamento por variável e divisão das chamadas}
+\label{sec:agrupamento}
+
+O custo da triagem vem do volume de texto que o modelo lê e gera. Os
+candidatos que tratam da mesma variável compartilham a maior parte das
+evidências, como o código das funções envolvidas, os fluxos e suas
+prioridades, e julgá-los um a um repetiria esse material a cada chamada. Por
+isso eles são julgados numa única conversa, com até vinte candidatos por
+conversa. A conversa apresenta uma vez o que é
+comum e lista cada candidato com o que lhe é próprio, e o modelo devolve um
+veredicto para cada um, identificado. A ferramenta confere que todo candidato
+recebeu exatamente uma resposta. Um candidato omitido é perguntado de novo,
+numa conversa só sua, e uma resposta que cite candidatos inexistentes ou repita
+algum é descartada e o grupo é julgado candidato a candidato. Nenhum desses
+caminhos tira um candidato do relatório. As conversas dos vários programas
+dividem um número fixo de chamadas simultâneas ao modelo, de modo que um
+programa com poucos candidatos não deixa a capacidade ociosa enquanto outro
+termina.
 
 \subsection{Desenho do \textit{prompt}}
 
 O desenho segue os quatro componentes de \citeonline{llift}, adaptados ao
 domínio. O primeiro é o ensino de regras do domínio por exemplos. O
 conhecimento prévio do modelo vem sobretudo de \textit{threads} e o leva a
-procurar travas e relações \textit{happens-before}, então o \textit{prompt}
+procurar travas e relações \textit{happens-before}, e por isso o \textit{prompt}
 ensina uma tabela de padrões de interrupção com seus veredictos, cobrindo a
 seção crítica que abrange todo o intervalo, as duas seções separadas que deixam
 uma lacuna no meio, a prioridade estritamente menor que impede a preempção, a
@@ -260,6 +283,28 @@ sempre uma resposta segura.
 A resposta final é estruturada, com a explicação antes do veredicto, como
 recomendam \citeonline{iris}. O código analisado entra delimitado e declarado
 como dado, conforme o RNF7.
+
+Na configuração avaliada, os pedidos progressivos de contexto ficam
+desligados. Medidos no Racebench, eles dobraram o número de chamadas sem
+melhorar a ordenação, porque o registro de contexto já traz o código de que o
+modelo precisa.
+
+O \textit{prompt} precisa ainda dizer ao modelo o que conta como defeito. O
+critério de nocividade
+descrito acima pergunta se o valor alterado pela intercalação chega a afetar o
+programa, e por esse critério uma leitura cujo resultado nunca é usado torna a
+intercalação benigna. Os gabaritos dos dois \textit{benchmarks}, porém, contam a
+própria intercalação como defeito, e o critério de nocividade, aplicado à suíte
+de programas reais, classificou como benignas 24 das 45 violações anotadas. A
+configuração avaliada acrescenta por isso uma semântica de defeito explícita,
+segundo a qual uma intercalação possível num dos quatro padrões do
+Quadro~\ref{quadro:padroes} é nociva mesmo que o valor lido nunca seja usado.
+O mesmo texto instrui o modelo a tratar membros de uma \textit{union} como uma
+só posição de memória, a ler a declaração do tipo em vez de confiar no nome, e
+a seguir o modelo de execução que o registro de contexto declara, isto é, as
+prioridades, a preempção entre fluxos de mesma prioridade, o aninhamento e o
+estado inicial do mascaramento. Nada nele nomeia um \textit{benchmark}, um
+programa ou uma variável, e é o mesmo texto nas duas suítes.
 
 \subsection{Reparo com testemunha}
 
@@ -296,152 +341,517 @@ não mero detalhe de desempenho.
 
 \subsection{Perguntas de pesquisa}
 
-A avaliação responde a quatro perguntas. A primeira é se a etapa estática
-encontra todos os defeitos anotados no Racebench, ou seja, se atinge recall de
-100\%. A segunda é se a triagem reduz o esforço de revisão sem que nenhum
-defeito real seja classificado como inviável. A terceira é qual a contribuição
-de cada técnica de \textit{prompt}, respondida por uma ablação no formato de
-\citeonline{llift}. A quarta é se o modelo propõe correções corretas para os
-defeitos encontrados.
+A avaliação responde a quatro perguntas de pesquisa (QP).
 
-\subsection{Unidade de contagem e leitura do gabarito}
+\begin{description}
+  \item[QP1, recall estático.] A etapa estática encontra todos os defeitos
+  anotados nas duas suítes, e quantas armadilhas ela elimina com prova?
+  \item[QP2, triagem.] A triagem reduz as armadilhas no topo da fila de leitura
+  sem classificar como inviável nenhum defeito anotado? Quão estável é o
+  resultado entre execuções, e quanto custa?
+  \item[QP3, comparação com a leitura direta.] Pedir ao modelo que leia os
+  arquivos inteiros e aponte os defeitos, sem análise estática, chega ao mesmo
+  resultado a um custo menor?
+  \item[QP4, ablação e reparo.] Qual a contribuição de cada técnica de
+  \textit{prompt}, e o modelo propõe correções que a reverificação confirma?
+\end{description}
+
+\subsection{Gabaritos}
 
 Toda taxa de recall divide por um número de defeitos, e a
 Seção~\ref{sec:benchmarks-conceito} mostrou que a literatura usa números
-diferentes para os mesmos programas sem justificar a escolha. Este trabalho
-adota uma tripla anotada como um defeito. A Tabela~\ref{tab:unidades} mostra
-quanto a escolha muda o denominador.
+diferentes para os mesmos programas sem justificar a escolha. No Racebench,
+este trabalho conta cada tripla anotada como um defeito. Essa é a unidade mais
+fina, e por isso a mais difícil de inflar. Por variável em cada caso, a
+contagem cairia de 48 para 33 defeitos, e unidades grossas escondem estrutura,
+já que um mesmo caso chega a ter quatro defeitos distintos numa só variável.
 
-\begin{table}[htb]
-  \centering
-  \caption{Contagem do gabarito do Racebench conforme a unidade}
-  \label{tab:unidades}
-  \begin{tabular}{|l|c|c|}
-    \hline
-    Unidade & Defeitos & Armadilhas \\
-    \hline
-    por instância de tripla & 48 & 38 \\
-    \hline
-    por variável em cada caso & 33 & 29 \\
-    \hline
-    por caso & 31 & 31 \\
-    \hline
-  \end{tabular}
-  \fonte{Elaborada pelos autores a partir das anotações de \citeonline{racebench}.}
-\end{table}
+As anotações usam ao menos quatro gramáticas incompatíveis e contêm erros, a
+ponto de um leitor estrito encontrar apenas 28 defeitos sem acusar falha
+alguma. O leitor de gabarito tolera essas variações e teve sua contagem
+conferida contra uma contagem manual. Doze anotações foram corrigidas por uma
+errata em que cada correção traz sua evidência, seis em números de linha e seis
+em tipos de acesso, sem que nenhuma altere as contagens.
 
-A unidade por instância é a mais fina e, por isso, a mais difícil de inflar. É
-também a usada pelo BMC4AV, o que preserva a comparação, e as unidades mais
-grossas escondem estrutura, já que um mesmo caso chega a ter quatro defeitos
-distintos numa só variável.
+Um candidato corresponde a uma tripla anotada quando está no mesmo programa,
+trata da mesma posição de memória e tem as mesmas linhas ordenadas
+$(A_1, B, A_2)$ que a anotação corrigida. O tipo de acesso não entra na regra,
+porque as linhas já distinguem as 86 anotações sem colisão, e o nome da
+variável é comparado depois de resolver apelidos, já que doze anotações nomeiam
+a posição por um ponteiro, um elemento de vetor ou um campo de estrutura.
 
-As anotações usam ao menos quatro gramáticas incompatíveis e contêm erros, de
-modo que um leitor estrito encontra apenas 28 defeitos sem acusar nenhuma
-falha. O leitor de gabarito precisa portanto tolerar as variações, e sua
-contagem é validada contra uma contagem manual dos casos mais difíceis antes de
-qualquer medição. Doze anotações são corrigidas por uma errata em que cada
-correção traz sua evidência, sendo seis números de linha, cinco deles num único
-caso cujas anotações apontam para linhas sem nenhum acesso, e seis tipos de
-acesso trocados. Nenhuma correção altera as contagens. Sem elas, uma comparação
-exata com o texto distribuído daria recall zero para um defeito que a
-ferramenta encontra na linha certa.
+\subsubsection{Reetiquetagem de cinco armadilhas}
+\label{sec:reetiquetagem}
 
-\subsection{Regra de casamento}
+A revisão das primeiras execuções completas levou a uma alteração nos rótulos.
+Cinco armadilhas, distribuídas por três casos, foram relidas contra o código e
+contra o modelo de chegada que o próprio \textit{benchmark} declara, segundo o
+qual uma interrupção pode preemptar o programa principal ou uma interrupção de
+nível inferior sempre que estiver habilitada, em momento e número de vezes
+indeterminados \cite{racebench}. Para cada uma foi construída uma intercalação
+concreta que a torna alcançável. Em duas delas, a interrupção cai numa lacuna
+desmascarada entre duas seções críticas. Outra exige que uma rotina dispare
+entre a habilitação geral das interrupções e o mascaramento seletivo que vem
+depois. Outra depende de duas ativações seguidas da mesma rotina,
+possibilidade que o rótulo original não considerava e que o modelo de chegada
+admite. A última deixou de valer quando a versão anotada do programa moveu a
+reabilitação de uma interrupção sem atualizar o rótulo.
 
-Um candidato reportado corresponde a uma tripla anotada quando está no mesmo
-programa, trata da mesma posição de memória e tem as mesmas linhas ordenadas
-$(A_1, B, A_2)$ que a anotação corrigida. Três escolhas são deliberadas. O tipo
-de acesso não precisa coincidir, porque as linhas já distinguem todas as 86
-anotações sem colisão e 20 acessos anotados estão em linhas que leem e escrevem
-a variável. O nome da variável é comparado depois de resolver apelidos, pois 12
-anotações nomeiam a posição por um ponteiro, um elemento de vetor ou um campo
-de estrutura. E a comparação é feita sobre as anotações corrigidas, cuja errata
-é publicada junto com os resultados.
+Com a reetiquetagem, os 31 casos simples passam de 48 defeitos e 38 armadilhas
+para 53 defeitos e 33 armadilhas. Ficaram de fora dois itens que o próprio
+anotador marcou como ``possível falso positivo''. A versão reetiquetada (53/33)
+é a referência dos resultados, e a pontuação é dada também sob a versão
+distribuída (48/38), para que o efeito da decisão fique visível.
 
-\subsection{Conjunto de triagem}
-\label{sec:conjunto-triagem}
+\subsubsection{Suíte de programas reais}
 
-A etapa com \llm\ é desenvolvida e medida, até a integração, sobre 20 registros
-de contexto montados à mão a partir do Racebench, sendo 10 defeitos anotados e
-10 armadilhas. Eles estão organizados de modo a formar seis duplas
-adversariais, isto é, um defeito e uma armadilha que diferem num único detalhe,
-como o estado de mascaramento. As duplas existem para que o modelo não possa
-acertar com base apenas na aparência do código. Um caso cujas anotações descrevem uma versão do programa
-diferente da distribuída foi excluído do conjunto.
-
-A suíte de 18 programas reais entra na etapa final. Seu gabarito registra, por
-variável, 45 violações verdadeiras e 14 falsas, o que também a torna um
-conjunto de triagem.
+O gabarito da suíte de programas reais registra 45 violações verdadeiras e 14
+falsas, a maior parte por variável e padrão de acesso, e algumas por linhas. A
+unidade aqui é a entrada do gabarito, e uma entrada é encontrada quando algum
+candidato tem a variável e o padrão dela, além das linhas, se a entrada as
+especificar. Duas decisões de modelagem afetam esta suíte. A primeira diz
+respeito a três programas cujas prioridades distribuídas, sob a convenção de
+prioridade que o artigo do NIChecker declara, tornam impossíveis violações que
+o próprio gabarito anota. Nesses programas, as prioridades foram substituídas
+pelas da cópia distribuída com o BMC4AV, que torna essas violações alcançáveis.
+A segunda decisão trata da preempção entre fluxos de mesma
+prioridade. O artigo do NIChecker afirma que ela não ocorre, e a configuração
+segue essa semântica, com exceção de um programa em que duas violações anotadas
+exigem que duas rotinas de mesma prioridade se interrompam. Sem essa decisão,
+quase metade dos candidatos da suíte existiria apenas por causa dessa
+preempção.
 
 \subsection{Métricas}
 
-O portão de recall exige que todos os defeitos anotados cheguem ao relatório e
-que nenhum caia no grupo de menor prioridade de leitura. Uma falha aqui é
-defeito de projeto, não parâmetro a ajustar. A rejeição de armadilhas mede a
-fração das armadilhas classificadas nos grupos baixos, e é a medida de precisão
-da triagem que, ao contrário da precisão, não melhora descartando candidatos. O
-\textit{Inspection Ratio} mede a fração da lista ordenada que um revisor
-precisa ler até encontrar todos os defeitos \cite{reducing-fp}, com empates
-resolvidos pelo pior caso, colocando o defeito real por último. A consistência
-mede a concordância entre execuções repetidas do mesmo candidato, e
-\citeonline{llift} mostram que decomposição e autovalidação a melhoram
-independentemente da acurácia. As taxas de reparo são duas, a sintática, em que
-um analisador sintático aceita a correção, e a lógica, em que a correção
-equivale a uma escrita à mão, como em \citeonline{skipanalyzer}, seguidas da
-reverificação.
+O recall é a fração dos defeitos anotados que a ferramenta reporta. As
+armadilhas reportadas são as que chegam ao topo do relatório, e a precisão é
+calculada como $TP / (TP + A)$, em que $A$ é o número de armadilhas
+reportadas. Um candidato que o gabarito não anota nem como defeito nem como
+armadilha não é contado como falso positivo, porque as anotações não se
+declaram exaustivas. A pontuação da competição em que o Racebench nasceu, aqui
+chamada de pontuação NASAC, soma 2 pontos por defeito detectado e subtrai 3 por
+armadilha reportada, sobre um máximo de duas vezes o número de defeitos.
 
-No Racebench apenas a viabilidade entra nessas métricas. O gabarito anota fatos
-do programa, e muitos de seus defeitos leem a variável compartilhada para uma
-variável local que nunca é usada. Um modelo que classifica esses casos como
-benignos está raciocinando corretamente sobre o código, e pontuar essa resposta
-contra o gabarito puniria o acerto. A pergunta de nocividade continua sendo
-feita e registrada, e é avaliada na suíte de programas reais, na qual o código tem
-efeito observável.
+Como a triagem ordena e nunca descarta, é preciso definir o que conta como
+reportado, e neste capítulo é o que fica no grupo provavelmente real. Um defeito
+anotado que a triagem coloque no grupo provavelmente inviável é apontado como
+perda de recall da triagem, qualquer que seja a pontuação. A concordância entre
+execuções é medida pelo $\kappa$ de Cohen, $\kappa = (p_o - p_e)/(1 - p_e)$, em
+que $p_o$ é a fração de candidatos com o mesmo grupo nas duas execuções e $p_e$
+a concordância esperada ao acaso. Ele vale 1 para concordância total e 0 para
+o nível do acaso.
 
 \subsection{Protocolo experimental}
+\label{sec:protocolo}
 
-A ablação acrescenta um componente de \textit{prompt} por linha, sempre sobre
-os mesmos candidatos, partindo do \textit{prompt} simples e somando as regras
-do domínio, os pedidos progressivos de contexto, a decomposição da tarefa e a
-autovalidação. Como os pedidos de contexto só trazem informação nova quando
-respondidos a partir do código real, a linha correspondente é medida depois da
-integração com o resolvedor da etapa estática.
+A etapa estática é executada uma única vez sobre cada suíte, e todas as
+execuções da triagem partem dos mesmos registros de contexto. A triagem usa o
+modelo Claude Sonnet 5.5 com esforço de raciocínio baixo, acessado por
+assinatura, e é repetida em três execuções independentes no Racebench. As
+tabelas trazem a execução mediana de cada sistema, isto é, a segunda das três
+quando ordenadas pela pontuação, ou pelas violações encontradas na suíte de
+programas reais, que não tem pontuação. O texto dá a faixa das três. Na suíte de programas reais, a triagem foi executada uma vez.
+As medições foram feitas num computador com processador Intel Core i3-1115G4,
+de quatro núcleos, e 19~GB de memória. Nas tabelas e figuras, S1 designa a
+etapa estática sozinha, cujo relatório é tudo o que chega ao modelo, e S2 a
+etapa estática seguida da triagem.
 
-Na ablação do LLift o \textit{prompt} simples já perdia a maioria dos defeitos,
-e o recall era a variável que se movia. Se aqui o recall partir de 100\%, as
-variáveis dependentes passam a ser a rejeição de armadilhas e o
-\textit{Inspection Ratio}, e é assim que a tabela final deve ser lida.
+% ---------------------------------------------------------------------------
+% Comparação com as ferramentas publicadas (NIChecker, BMC4AV, IntRace):
+% retirada desta entrega por decisão dos autores, até que a diferença entre os
+% gabaritos dos artigos seja tratada. O texto e as tabelas ficam aqui, sem
+% compilar, para a próxima entrega. Os números já são os da configuração final.
+% ---------------------------------------------------------------------------
+\iffalse
+A comparação com as ferramentas publicadas envolve três sistemas. O primeiro,
+S0, reúne os resultados que os autores de NIChecker, BMC4AV e IntRace
+publicaram sobre o Racebench. O segundo, S1, é a etapa estática sozinha, cujo
+relatório é tudo o que chega ao modelo. O terceiro, S2, é a etapa estática
+seguida da triagem. S0 não é um número só, porque os artigos não concordam
+sobre o que o Racebench contém (Quadro~\ref{quadro:termos}), e uma tabela única
+com recalls calculados sobre 54, 50, 38 e 53 defeitos estaria comparando
+denominadores diferentes. A comparação é feita nos termos de cada
+artigo, com S1 e S2 restritos ao subconjunto de casos, ao gabarito e às
+exclusões que o artigo usou. É o critério que os próprios artigos aplicam entre
+si. O IntRace exclui o caso em que o Rchecker falhou ``para garantir a
+comparação'' \cite{intrace}, e o BMC4AV justifica sua comparação por ter sido
+avaliado ``na mesma configuração do intAtom'' \cite{bmc4av}. Os números de S0 são relatados
+pelos próprios artigos, em outros equipamentos, e parte deles é copiada de
+terceiros, de modo que o tempo de execução não é comparado.
 
-Todo número é registrado com o modelo, a data e a configuração de
-\textit{prompt} que o produziram, conforme o RNF6, e uma linha da ablação só é
-considerada medida se cobrir todos os candidatos previstos.
+\begin{quadro}[htb]
+  \caption{\label{quadro:termos}Termos em que cada artigo avalia o Racebench}
+  \small
+  \begin{tabular}{|L{2.0cm}|c|L{3.4cm}|L{2.3cm}|L{3.4cm}|}
+    \hline
+    Artigo & Casos & Gabarito assumido & Classe de defeito & Restrição aplicada a S1 e S2 \\
+    \hline
+    NIChecker & 31 & 54 violações, 6 a mais que as anotações, sem explicação &
+    violação de atomicidade & os 31 casos, gabarito 48/38, com a diferença
+    declarada \\
+    \hline
+    BMC4AV & 25 & 38, as anotações menos o padrão $(R,W,W)$ & violação de
+    atomicidade & os 25 casos, sem $(R,W,W)$, gabarito 48/38; também sobre
+    53/33 \\
+    \hline
+    IntRace & 30 & 50 & condição de corrida & nenhuma: classe de defeito
+    diferente, e o caso excluído não é identificado \\
+    \hline
+  \end{tabular}
+  \fonte{Elaborado pelos autores a partir de \citeonline{nichecker},
+  \citeonline{bmc4av}, \citeonline{intrace} e das anotações de
+  \citeonline{racebench}.}
+\end{quadro}
+
+
+\subsubsection{QP3, comparação com as ferramentas publicadas}
+
+\begin{table}[htb]
+  \centering
+  \caption{Comparação com o BMC4AV nos termos do BMC4AV}
+  \label{tab:qp3-bmc4av}
+  \small
+  \begin{tabular}{|l|l|c|c|c|}
+    \hline
+    Recorte e gabarito & Sistema & Defeitos & Armad. & Precisão \\
+    \hline
+    25 casos, sem $(R,W,W)$, 48/38 & BMC4AV (S0) & 38/38 & 0 & 1,000 \\
+    & S1 & 37/37 & 13 & 0,740 \\
+    & S2 & 37/37 & 7 & 0,841 \\
+    \hline
+    25 casos, sem $(R,W,W)$, 53/33 & S1 & 42/42 & 8 & 0,840 \\
+    & S2 & 42/42 & 2 & 0,955 \\
+    \hline
+    31 casos, todos os padrões, 48/38 & BMC4AV, recalculado & 38/48 & -- & -- \\
+    & S2 & 48/48 & 8 & 0,857 \\
+    \hline
+  \end{tabular}
+  \fonte{Elaborada pelos autores. BMC4AV: \citeonline{bmc4av}, medido pelo
+  próprio artigo; a última linha foi recalculada a partir do arquivo de
+  resultados publicado com a ferramenta. S1 e S2: execução mediana de três.}
+\end{table}
+
+A Tabela~\ref{tab:qp3-bmc4av} pede três leituras. A primeira é que 37 contra
+38 não é um defeito perdido. A errata deste trabalho corrige o tipo de acesso
+do defeito~2 do caso 022, anotado como $(R,W,R)$, para $(R,W,W)$. O BMC4AV o
+conta como $(R,W,R)$, dentro dos seus 38, e ao excluir $(R,W,W)$ pela
+classificação corrigida ele sai do recorte. S1 e S2 detectam esse defeito e os
+41 defeitos dos 25 casos, e pela classificação do próprio BMC4AV também ficam
+com 38 de 38. A segunda leitura é que as sete armadilhas de S2 sobre 48/38
+incluem as cinco triplas reetiquetadas (Seção~\ref{sec:reetiquetagem}), e sobre
+53/33 sobram duas. A terceira leitura é uma inferência sem medida direta. As cinco
+triplas reetiquetadas estão nos 25 casos do BMC4AV e nenhuma é $(R,W,W)$, e
+como o BMC4AV relata zero falsos positivos sobre 48/38, ele não as reportou.
+Sobre 53/33, no mesmo recorte, ele detectaria então 37 de 42 defeitos.
+Confirmar isso exigiria executar o artefato, o que não foi feito.
+
+O recorte do BMC4AV também esconde um padrão inteiro. Recalculado sobre os 31
+casos e os 48 defeitos, o seu 38 de 38 corresponde a 38 de 48, ou 79,2\%,
+porque ficam de fora os defeitos dos seis casos removidos e os três
+$(R,W,W)$ que estão dentro do próprio subconjunto \cite{bmc4av,racebench}. S1 e
+S2 detectam os onze defeitos desse padrão (Figura~\ref{fig:f4}).
+
+\begin{table}[htb]
+  \centering
+  \caption{Comparação com o NIChecker nos termos do NIChecker}
+  \label{tab:qp3-nichecker}
+  \begin{tabular}{|l|l|c|c|c|}
+    \hline
+    Gabarito & Sistema & Defeitos & Armadilhas ou FP & Precisão \\
+    \hline
+    54 do artigo & NIChecker (S0) & 54/54 & 2 & 0,964 \\
+    \hline
+    48/38 & S1 & 48/48 & 16 & 0,750 \\
+    & S2 & 48/48 & 8 & 0,857 \\
+    \hline
+    53/33 & S1 & 53/53 & 11 & 0,828 \\
+    & S2 & 53/53 & 3 & 0,946 \\
+    \hline
+  \end{tabular}
+  \fonte{Elaborada pelos autores. NIChecker: \citeonline{nichecker}, medido
+  pelo próprio artigo. S1 e S2: execução mediana de três. As linhas não estão
+  alinhadas, porque o gabarito de 54 não corresponde a nenhum dos dois conjuntos
+  de anotações.}
+\end{table}
+
+A Tabela~\ref{tab:qp3-nichecker} coloca as linhas lado a lado sem alinhá-las.
+O NIChecker supõe 54 violações nos 31 casos, seis a mais que as anotações, e o
+artigo não diz quais são. Ele conta como falso positivo um aviso seu que julga
+errado, enquanto S1 e S2 contam armadilhas plantadas que chegam ao topo, de
+modo que as duas precisões não medem a mesma coisa. O IntRace não recebe
+tabela. Ele detecta condições de corrida, outra classe de defeito, em 30 casos,
+com um caso excluído que o artigo não identifica, e relata taxa de detecção de
+90,7\% com cinco falsos positivos \cite{intrace}. A Figura~\ref{fig:f1} resume a
+comparação, com o recall contra as armadilhas reportadas e um marcador para o
+gabarito em que cada ponto foi medido.
+
+\begin{figure}[htb]
+  \centering
+  \caption{Recall contra armadilhas reportadas: ferramentas publicadas, etapa
+  estática e triagem}
+  \label{fig:f1}
+  \includegraphics[width=\textwidth]{figuras/F1-recall-armadilhas.pdf}
+  \fonte{Elaborada pelos autores. S0: \citeonline{bmc4av} e
+  \citeonline{nichecker}, cada um no próprio recorte e gabarito. S1 e S2: média,
+  mínimo e máximo de três execuções.}
+\end{figure}
+
+\begin{figure}[htb]
+  \centering
+  \caption{Recall por padrão de acesso}
+  \label{fig:f4}
+  \includegraphics[width=\textwidth]{figuras/F4-recall-por-padrao.pdf}
+  \fonte{Elaborada pelos autores. BMC4AV: \citeonline{bmc4av}, 25 casos,
+  gabarito do artigo.}
+\end{figure}
+
+Sobre a suíte de programas reais, os artigos também não se alinham entre si.
+O NIChecker relata 47 violações encontradas sem falsos positivos, numa contagem
+própria, e o BMC4AV conta 94 instâncias, das quais relata ter encontrado
+todas, e atribui ao NIChecker 37 \cite{nichecker,bmc4av}. Nenhuma das duas
+contagens corresponde às 45 entradas do gabarito distribuído, e nenhum artigo
+diz qual das duas cópias dos programas usou, que diferem no código e, em cinco
+programas, nas prioridades. Por isso nenhuma tabela compara S2 com eles nessa
+suíte.
+
+Em resumo, nos termos de qualquer um dos artigos, a etapa estática detecta
+todos os defeitos anotados, inclusive os do padrão $(R,W,W)$ que o BMC4AV
+exclui, e a triagem reduz as armadilhas reportadas sem perder nenhum defeito.
+O trabalho não sustenta que S2 supere o NIChecker, cujo gabarito não se alinha,
+nem uma ordenação por tempo de execução.
+
+\fi
+
+A comparação com a leitura direta usa como linha de base o que um usuário
+faria sem a ferramenta, pedindo ao mesmo modelo que leia o código e liste as
+violações de atomicidade. O modelo recebe o código-fonte numerado, os fluxos
+com suas prioridades, as primitivas de mascaramento e uma instrução curta com a
+definição dos quatro padrões, e responde com as triplas de linhas que
+considera defeitos, pontuadas pela mesma regra de casamento. A leitura é feita
+de duas formas, um arquivo por chamada e todos os arquivos numa única chamada,
+cada uma em três execuções. Como os dois \textit{benchmarks} são públicos, e o
+Racebench traz as respostas nos comentários do código, os arquivos entregues à
+leitura direta têm os comentários e o código inativo removidos e os nomes de
+variáveis, funções, macros e tipos de cada programa trocados por nomes
+neutros; no Racebench, as funções também são reordenadas. O objetivo é que o
+modelo analise o código em vez de reconhecê-lo. No Racebench, a etapa estática
+e a triagem chegam praticamente ao mesmo resultado sobre esses arquivos e
+sobre os originais.
 
 \ifparcial\else
 \subsection{Resultados}
 \label{sec:resultados}
 
-\pendente{Recall da etapa estática, tabela de ablação da triagem, rejeição de
-armadilhas, \textit{Inspection Ratio}, taxas de reparo, custo por candidato e
-resultados na suíte de programas reais.}
+\subsubsection{QP1, recall estático}
+
+A etapa estática encontra todos os defeitos anotados nas duas suítes. No
+Racebench, são 53 de 53 sobre o gabarito reetiquetado e 48 de 48 sobre o
+distribuído, e isso vale em cada padrão de acesso, com 27 de 27 em $(R,W,R)$,
+8 de 8 em $(W,W,R)$, 7 de 7 em $(W,R,W)$ e 11 de 11 em $(R,W,W)$. O estágio~1
+gera 316 candidatos, o estágio~2 deixa 202 e o estágio~3 deixa 166 para a
+triagem (Figura~\ref{fig:f2}). Nenhum estágio descarta um defeito anotado. Das
+33 armadilhas, três nunca viram candidato, cinco são descartadas no estágio~2
+e catorze são refutadas pelo solucionador. Dezenove saem, portanto, com prova
+de impossibilidade antes da triagem, e onze chegam a ela.
+
+\begin{figure}[htb]
+  \centering
+  \caption{Funil de candidatos por estágio no Racebench, gabarito reetiquetado}
+  \label{fig:f2}
+  \includegraphics[width=\textwidth]{figuras/F2-funil.pdf}
+  \fonte{Elaborada pelos autores.}
+\end{figure}
+
+Na suíte de programas reais, a etapa estática reduz 1.980 candidatos do
+estágio~1 a 587 após o estágio~2 e a 484 após o solucionador, e as 45
+violações anotadas continuam presentes (Tabela~\ref{tab:reais}). Das 14 falsas
+violações, oito chegam à triagem.
+
+\subsubsection{QP2, triagem}
+
+A triagem não custa recall, já que em nenhuma das execuções, nas duas suítes,
+o modelo classificou como inviável um defeito anotado. No Racebench, a execução
+mediana mantém os 53 defeitos no grupo provavelmente real e reduz as
+armadilhas de onze para três. Das onze, sete vão para o grupo provavelmente
+inviável e uma para o incerto. A pontuação NASAC passa de 73 para 97 de 106 no
+gabarito reetiquetado e de 48 para 72 de 96 no distribuído
+(Figura~\ref{fig:f5}). Nas três execuções, os defeitos no topo ficaram entre
+49 e 53 e as armadilhas entre zero e três. A execução com 49 deixou no grupo
+incerto todos os candidatos de uma mesma variável, entre eles quatro defeitos,
+que continuam no relatório. Na suíte de programas reais
+(Tabela~\ref{tab:reais}), as 45 violações verdadeiras ficam no grupo
+provavelmente real, e das oito falsas que chegam à triagem, seis continuam no
+topo, junto com 260 candidatos que o gabarito não anota.
+
+\begin{table}[htb]
+  \centering
+  \caption{Etapa estática e triagem na suíte de programas reais}
+  \label{tab:reais}
+  \small
+  \begin{tabular}{|l|c|c|c|c|r|c|}
+    \hline
+    Sistema & Reportados & Violações & Falsas & Chamadas & Entrada & Tempo \\
+    \hline
+    S1 & 484 & 45/45 & 8/14 & -- & -- & 13 min \\
+    S2 & 354 & 45/45 & 6/14 & 158 & 6,4 milhões & + 8 min \\
+    \hline
+  \end{tabular}
+  \fonte{Elaborada pelos autores. S1 reporta tudo o que chega à triagem; S2, o
+  grupo provavelmente real. Uma execução. Entrada em \textit{tokens}. Tempo de
+  S1: soma do processamento dos 18 programas; de S2: a triagem, que se soma ao
+  de S1.}
+\end{table}
+
+\begin{figure}[htb]
+  \centering
+  \caption{Pontuação NASAC da etapa estática e da triagem no Racebench}
+  \label{fig:f5}
+  \includegraphics[width=\textwidth]{figuras/F5-pontuacao.pdf}
+  \fonte{Elaborada pelos autores. Média, mínimo e máximo de três execuções.}
+\end{figure}
+
+A concordância entre as duas execuções que mantiveram os 53 defeitos no topo é
+de 99,4\%, com $\kappa$ de 0,979. Com a terceira, cai para cerca de 90\%, com
+$\kappa$ entre 0,70 e 0,73, quase toda por causa da variável mencionada acima.
+Dos 102 candidatos não anotados que chegam à triagem, entre 76 e 82 continuam
+no grupo provavelmente real. Eles não são falsos positivos pelo critério deste
+trabalho, porque o gabarito não se declara exaustivo, mas ocupam o topo da
+fila de leitura junto com os defeitos.
+
+Uma execução da triagem sobre o Racebench faz 84 chamadas ao modelo, lê cerca
+de 2,0 milhões de \textit{tokens} de entrada, gera cerca de 110 mil de saída e
+leva pouco mais de quatro minutos. O agrupamento dos candidatos por variável e
+a divisão das chamadas entre os programas, descritos na
+Seção~\ref{sec:agrupamento}, respondem por quase toda essa economia. Com uma conversa
+por candidato e os programas tratados um após o outro, a mesma triagem fazia
+307 chamadas, lia 3,5 milhões de \textit{tokens} e levava cerca de 16 minutos
+no mesmo equipamento, sem ganho de recall. Na suíte de programas reais, a
+triagem faz 158 chamadas, lê 6,4 milhões de \textit{tokens} e leva cerca de
+oito minutos. O registro de contexto desses programas é maior, e o volume de
+entrada cresce com ele.
+
+\subsubsection{QP3, comparação com a leitura direta}
+
+\begin{table}[htb]
+  \centering
+  \caption{Etapa estática com triagem contra a leitura direta pelo modelo, no
+  Racebench}
+  \label{tab:qp3-racebench}
+  \small
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{|l|c|c|c|c|r|r|}
+    \hline
+    Sistema & Defeitos & Armadilhas & Pontuação & Reportados & Entrada & Tempo \\
+    \hline
+    S2 & 53/53 & 3 & 97/106 & 137 & 2,0 milhões & 4 min 21 s \\
+    leitura por arquivo & 48/53 & 6 & 78/106 & 75 & 75 mil & 68 s \\
+    leitura única & 46/53 & 3 & 83/106 & 55 & 19 mil & 93 s \\
+    \hline
+  \end{tabular}
+  \fonte{Elaborada pelos autores. Gabarito reetiquetado (53/33); execução
+  mediana de três, para cada sistema. Reportados: tudo o que o sistema aponta,
+  anotado ou não. Entrada em \textit{tokens}. O tempo de S2 é o da triagem; a
+  etapa estática leva cerca de 18 s. Na leitura por arquivo,
+  cada chamada recebe um arquivo, e na leitura única, todos.}
+\end{table}
+
+No Racebench, a leitura direta custa uma fração mínima do que custa a ferramenta, mas
+encontra menos defeitos e pontua menos (Tabela~\ref{tab:qp3-racebench}), e
+seus resultados variam mais entre execuções. Nas três execuções, a leitura arquivo a arquivo
+encontrou entre 48 e 52 defeitos e reportou entre seis e dez armadilhas, com
+pontuação entre 70 e 86. A leitura única encontrou entre 46 e 52 defeitos, com
+três ou quatro armadilhas e pontuação entre 80 e 95. S2 manteve entre 49 e 53
+defeitos no topo, com no máximo três armadilhas e pontuação entre 97 e 98.
+
+A leitura direta também não oferece a garantia que a etapa estática oferece,
+porque um defeito que ela não aponta simplesmente não aparece, enquanto um defeito
+que a triagem classifica mal continua no relatório, num grupo inferior. Nas
+três execuções, a leitura arquivo a arquivo perdeu entre um e cinco defeitos, e
+a leitura única, entre um e sete.
+
+\begin{table}[htb]
+  \centering
+  \caption{Etapa estática com triagem contra a leitura direta pelo modelo, na
+  suíte de programas reais}
+  \label{tab:qp3-reais}
+  \small
+  \begin{tabular}{|l|c|c|c|r|r|}
+    \hline
+    Sistema & Violações & Falsas & Reportados & Entrada & Tempo \\
+    \hline
+    S2 & 45/45 & 6/14 & 354 & 6,4 milhões & 8 min 16 s \\
+    leitura por arquivo & 44/45 & 6/14 & 136 & 78 mil & 73 s \\
+    leitura única & 33/45 & 9/14 & 80 & 47 mil & 88 s \\
+    \hline
+  \end{tabular}
+  \fonte{Elaborada pelos autores. S2: uma execução. Leituras: execução mediana
+  de três, pelas violações encontradas. Entrada em \textit{tokens}. O tempo de
+  S2 é o da triagem; a etapa estática soma cerca de 13 minutos de processamento
+  nos 18 programas.}
+\end{table}
+
+Na suíte de programas reais, a leitura arquivo a arquivo fica muito perto de
+S2, com 44 ou 45 violações e entre cinco e sete falsas nas três execuções, e
+reporta menos itens, com uma entrada cerca de oitenta vezes menor
+(Tabela~\ref{tab:qp3-reais}). A leitura única encontrou entre 30 e 34
+violações.
+
+A comparação de custo favorece a leitura direta nas duas suítes porque os
+programas dos dois \textit{benchmarks} são pequenos, de algumas dezenas a pouco
+mais de mil linhas, e cabem inteiros numa chamada, enquanto a triagem envia a
+cada conversa o registro de contexto completo dos candidatos, com o código das
+funções envolvidas. Os dois custos crescem com grandezas diferentes, o da
+leitura direta com o tamanho do código lido e o da triagem com o número de
+candidatos, que depende das variáveis compartilhadas
+com rotinas de interrupção e não do tamanho do repositório. Num repositório
+grande, em que a maior parte do código não toca essas variáveis, a leitura
+direta precisaria percorrer tudo, e a diferença de custo tende a diminuir. As
+duas suítes avaliadas não chegam a mostrar esse efeito, com diferenças de
+cerca de 27 vezes no Racebench e de 80 vezes nos programas reais, e
+confirmá-lo exige um código de porte maior.
+
+\subsubsection{QP4, ablação e reparo}
+
+\pendente{Ablação das técnicas de \textit{prompt} sobre os registros
+integrados; taxas de reparo sintática e lógica e reverificação. Se não forem
+medidas, a lacuna vai para as ameaças à validade e para as perspectivas de
+continuidade.}
 \fi
 
 \subsection{Ameaças à validade}
 \label{sec:ameacas}
 
-Vinte candidatos e uma amostra por candidato tornam diferenças de um ou dois
-candidatos indistinguíveis de ruído, e é a medição de consistência com várias
-amostras que permite afirmar uma diferença. Quando o \textit{prompt} é
-corrigido depois de observar erros nos mesmos 20 casos, o número seguinte é
-otimista, e por isso as versões anteriores e posteriores são reportadas lado a
-lado. A errata corrige o que pode ser verificado no código, mas o rótulo de um
-caso cujas anotações descrevem outra versão do programa não pode ser corrigido
-sem decidir de novo o gabarito.
+Três execuções por configuração permitem afirmar uma diferença maior que a
+variação observada, mas não estimar essa variação com precisão. As tabelas
+trazem a execução mediana, e o texto a faixa das três. Na suíte de programas reais, a triagem foi
+executada uma única vez.
 
-Duas ameaças são estruturais. Depois da integração a população muda, pois o
-modelo passa a receber apenas o que o solucionador não decidiu, que são os
-casos mais difíceis, de modo que os números obtidos sobre os registros montados
-à mão não se transferem automaticamente. E todos os programas avaliados são de
-arquivo único, o que deixa a entrada com vários arquivos como capacidade
-exercida fora do gabarito. Por fim, a exclusão de reentrância da
-Seção~\ref{sec:premissas} é uma perda potencial de recall registrada, não
-medida.
+A semântica de defeito acrescentada ao \textit{prompt} não nomeia casos,
+programas nem identificadores e é a mesma nas duas suítes, mas sua noção de
+defeito, a de que a intercalação basta, foi escrita a partir da documentação do
+Racebench. Ela corresponde ao que os gabaritos das duas suítes contam como
+defeito, e não necessariamente ao que um desenvolvedor consideraria nocivo em
+código de produção.
+
+Duas decisões sobre os gabaritos foram tomadas depois de observar resultados e
+movem a medição na direção do que a ferramenta reporta. A reetiquetagem das
+cinco armadilhas se apoia numa intercalação concreta para cada item, lida
+contra o modelo de chegada do próprio \textit{benchmark}, e a pontuação do
+Racebench é dada também sob o gabarito distribuído. A exceção à semântica de
+mesma prioridade num dos programas reais foi feita porque o gabarito desse
+programa a exige, o que é circular. A alternativa, a semântica do artigo do
+NIChecker em todos os programas, levaria a etapa estática a 43 das 45
+violações.
+
+Os tempos de S2 dependem de um modelo acessado por assinatura, cuja versão e
+cuja latência o experimento não controla. Na leitura direta, o reconhecimento
+do código pode inflar os resultados, e por isso os arquivos lidos têm
+comentários removidos e nomes neutros. Esse cuidado reduz o problema, mas não
+garante que o modelo não reconheça a estrutura de um programa público.
+
+Os dois casos complexos do Racebench ficam fora dos experimentos.
+\pendente{Confirmar se os casos complexos entram nos experimentos.} Todos os
+programas avaliados são de arquivo único, o que deixa a entrada com vários
+arquivos sem gabarito que a exercite. E a exclusão de reentrância da
+Seção~\ref{sec:premissas} é uma perda potencial de recall que foi registrada
+sem ter sido medida.

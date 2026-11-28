@@ -1,0 +1,168 @@
+{
+  "case": "brake3",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_var1",
+        "a1_line": 289,
+        "a1_kind": "read",
+        "b_line": 355,
+        "b_kind": "write",
+        "a2_line": 290,
+        "a2_kind": "read",
+        "why": "The compute ISR (priority 6) can preempt the RR wheel ISR between the two reads in JudgeCondi and change var1."
+      },
+      {
+        "variable": "test_global_var2",
+        "a1_line": 292,
+        "a1_kind": "read",
+        "b_line": 356,
+        "b_kind": "write",
+        "a2_line": 293,
+        "a2_kind": "read",
+        "why": "The compute ISR can preempt the RR wheel ISR between the two reads of var2 and write it."
+      },
+      {
+        "variable": "test_global_array[TRIGGER]",
+        "a1_line": 589,
+        "a1_kind": "write",
+        "b_line": 354,
+        "b_kind": "write",
+        "a2_line": 592,
+        "a2_kind": "read",
+        "why": "The compute ISR can preempt the FL ISR between its write and its later read of the array element. The read then sees 999 instead of 1."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT_h",
+        "a1_line": 410,
+        "a1_kind": "write",
+        "b_line": 305,
+        "b_kind": "write",
+        "a2_line": 463,
+        "a2_kind": "read",
+        "why": "The compute ISR overwrites RT_h between the RR ISR's write and its later read."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT_h",
+        "a1_line": 410,
+        "a1_kind": "write",
+        "b_line": 305,
+        "b_kind": "write",
+        "a2_line": 469,
+        "a2_kind": "read",
+        "why": "The compute ISR overwrites RT_h between the RR ISR's write and its later read in the else branch."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+        "a1_line": 412,
+        "a1_kind": "write",
+        "b_line": 308,
+        "b_kind": "write",
+        "a2_line": 419,
+        "a2_kind": "read",
+        "why": "The compute ISR overwrites RT4 between the RR ISR's write and its read."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+        "a1_line": 419,
+        "a1_kind": "read",
+        "b_line": 308,
+        "b_kind": "write",
+        "a2_line": 454,
+        "a2_kind": "read",
+        "why": "The compute ISR can change RT4 between the two reads in the RR ISR."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+        "a1_line": 515,
+        "a1_kind": "write",
+        "b_line": 308,
+        "b_kind": "write",
+        "a2_line": 531,
+        "a2_kind": "read",
+        "why": "The compute ISR overwrites RT4 between the FL ISR's write and its read."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+        "a1_line": 531,
+        "a1_kind": "read",
+        "b_line": 308,
+        "b_kind": "write",
+        "a2_line": 567,
+        "a2_kind": "read",
+        "why": "The compute ISR can change RT4 between the two reads in the FL ISR."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+        "a1_line": 651,
+        "a1_kind": "write",
+        "b_line": 308,
+        "b_kind": "write",
+        "a2_line": 670,
+        "a2_kind": "read",
+        "why": "The compute ISR overwrites RT4 between the FR ISR's write and its read."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+        "a1_line": 670,
+        "a1_kind": "read",
+        "b_line": 308,
+        "b_kind": "write",
+        "a2_line": 706,
+        "a2_kind": "read",
+        "why": "The compute ISR can change RT4 between the two reads in the FR ISR."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT2",
+        "a1_line": 643,
+        "a1_kind": "write",
+        "b_line": 314,
+        "b_kind": "write",
+        "a2_line": 714,
+        "a2_kind": "read",
+        "why": "The compute ISR overwrites RT2 between the FR ISR's write and its read."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT2",
+        "a1_line": 643,
+        "a1_kind": "write",
+        "b_line": 314,
+        "b_kind": "write",
+        "a2_line": 720,
+        "a2_kind": "read",
+        "why": "The compute ISR overwrites RT2 between the FR ISR's write and its read in the else branch."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT3",
+        "a1_line": 505,
+        "a1_kind": "write",
+        "b_line": 317,
+        "b_kind": "write",
+        "a2_line": 575,
+        "a2_kind": "read",
+        "why": "The compute ISR overwrites RT3 between the FL ISR's write and its read."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT3",
+        "a1_line": 505,
+        "a1_kind": "write",
+        "b_line": 317,
+        "b_kind": "write",
+        "a2_line": 581,
+        "a2_kind": "read",
+        "why": "The compute ISR overwrites RT3 between the FL ISR's write and its read in the else branch."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":289,\"a1_kind\":\"read\",\"b_line\":355,\"b_kind\":\"write\",\"a2_line\":290,\"a2_kind\":\"read\",\"why\":\"The compute ISR (priority 6) can preempt the RR wheel ISR between the two reads in JudgeCondi and change var1.\"},{\"variable\":\"test_global_var2\",\"a1_line\":292,\"a1_kind\":\"read\",\"b_line\":356,\"b_kind\":\"write\",\"a2_line\":293,\"a2_kind\":\"read\",\"why\":\"The compute ISR can preempt the RR wheel ISR between the two reads of var2 and write it.\"},{\"variable\":\"test_global_array[TRIGGER]\",\"a1_line\":589,\"a1_kind\":\"write\",\"b_line\":354,\"b_kind\":\"write\",\"a2_line\":592,\"a2_kind\":\"read\",\"why\":\"The compute ISR can preempt the FL ISR between its write and its later read of the array element. The read then sees 999 instead of 1.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT_h\",\"a1_line\":410,\"a1_kind\":\"write\",\"b_line\":305,\"b_kind\":\"write\",\"a2_line\":463,\"a2_kind\":\"read\",\"why\":\"The compute ISR overwrites RT_h between the RR ISR's write and its later read.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT_h\",\"a1_line\":410,\"a1_kind\":\"write\",\"b_line\":305,\"b_kind\":\"write\",\"a2_line\":469,\"a2_kind\":\"read\",\"why\":\"The compute ISR overwrites RT_h between the RR ISR's write and its later read in the else branch.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":412,\"a1_kind\":\"write\",\"b_line\":308,\"b_kind\":\"write\",\"a2_line\":419,\"a2_kind\":\"read\",\"why\":\"The compute ISR overwrites RT4 between the RR ISR's write and its read.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":419,\"a1_kind\":\"read\",\"b_line\":308,\"b_kind\":\"write\",\"a2_line\":454,\"a2_kind\":\"read\",\"why\":\"The compute ISR can change RT4 between the two reads in the RR ISR.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":515,\"a1_kind\":\"write\",\"b_line\":308,\"b_kind\":\"write\",\"a2_line\":531,\"a2_kind\":\"read\",\"why\":\"The compute ISR overwrites RT4 between the FL ISR's write and its read.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":531,\"a1_kind\":\"read\",\"b_line\":308,\"b_kind\":\"write\",\"a2_line\":567,\"a2_kind\":\"read\",\"why\":\"The compute ISR can change RT4 between the two reads in the FL ISR.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":651,\"a1_kind\":\"write\",\"b_line\":308,\"b_kind\":\"write\",\"a2_line\":670,\"a2_kind\":\"read\",\"why\":\"The compute ISR overwrites RT4 between the FR ISR's write and its read.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":670,\"a1_kind\":\"read\",\"b_line\":308,\"b_kind\":\"write\",\"a2_line\":706,\"a2_kind\":\"read\",\"why\":\"The compute ISR can change RT4 between the two reads in the FR ISR.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT2\",\"a1_line\":643,\"a1_kind\":\"write\",\"b_line\":314,\"b_kind\":\"write\",\"a2_line\":714,\"a2_kind\":\"read\",\"why\":\"The compute ISR overwrites RT2 between the FR ISR's write and its read.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT2\",\"a1_line\":643,\"a1_kind\":\"write\",\"b_line\":314,\"b_kind\":\"write\",\"a2_line\":720,\"a2_kind\":\"read\",\"why\":\"The compute ISR overwrites RT2 between the FR ISR's write and its read in the else branch.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT3\",\"a1_line\":505,\"a1_kind\":\"write\",\"b_line\":317,\"b_kind\":\"write\",\"a2_line\":575,\"a2_kind\":\"read\",\"why\":\"The compute ISR overwrites RT3 between the FL ISR's write and its read.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT3\",\"a1_line\":505,\"a1_kind\":\"write\",\"b_line\":317,\"b_kind\":\"write\",\"a2_line\":581,\"a2_kind\":\"read\",\"why\":\"The compute ISR overwrites RT3 between the FL ISR's write and its read in the else branch.\"}]}",
+  "wall_s": 20.98638892173767,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 3206,
+    "cache_read": 18988,
+    "cache_write": 489,
+    "latency_s": 20.986157537001418
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

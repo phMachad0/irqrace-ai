@@ -1,0 +1,68 @@
+{
+  "case": "program_02",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_drift",
+        "a1_line": 109,
+        "a1_kind": "read",
+        "b_line": 135,
+        "b_kind": "write",
+        "a2_line": 110,
+        "a2_kind": "read",
+        "why": "Main reads v_drift twice in fn_garnet; irq_pebble can preempt in between and write it, since v_quarry is 1 after init."
+      },
+      {
+        "variable": "v_fjord",
+        "a1_line": 159,
+        "a1_kind": "write",
+        "b_line": 117,
+        "b_kind": "write",
+        "a2_line": 189,
+        "a2_kind": "read",
+        "why": "irq_pebble (higher priority) can preempt irq_crest after it writes v_fjord and overwrite it before crest reads it."
+      },
+      {
+        "variable": "v_summit",
+        "a1_line": 160,
+        "a1_kind": "write",
+        "b_line": 118,
+        "b_kind": "write",
+        "a2_line": 165,
+        "a2_kind": "read",
+        "why": "irq_pebble can overwrite v_summit between crest's write and its read."
+      },
+      {
+        "variable": "v_summit",
+        "a1_line": 165,
+        "a1_kind": "read",
+        "b_line": 118,
+        "b_kind": "write",
+        "a2_line": 185,
+        "a2_kind": "read",
+        "why": "irq_pebble can change v_summit between crest's two reads, so they may see different values."
+      },
+      {
+        "variable": "v_kiln",
+        "a1_line": 148,
+        "a1_kind": "write",
+        "b_line": 134,
+        "b_kind": "write",
+        "a2_line": 151,
+        "a2_kind": "read",
+        "why": "irq_pebble writes v_kiln[9000] between crest's write to it and its later read."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_drift\",\"a1_line\":109,\"a1_kind\":\"read\",\"b_line\":135,\"b_kind\":\"write\",\"a2_line\":110,\"a2_kind\":\"read\",\"why\":\"Main reads v_drift twice in fn_garnet; irq_pebble can preempt in between and write it, since v_quarry is 1 after init.\"},{\"variable\":\"v_fjord\",\"a1_line\":159,\"a1_kind\":\"write\",\"b_line\":117,\"b_kind\":\"write\",\"a2_line\":189,\"a2_kind\":\"read\",\"why\":\"irq_pebble (higher priority) can preempt irq_crest after it writes v_fjord and overwrite it before crest reads it.\"},{\"variable\":\"v_summit\",\"a1_line\":160,\"a1_kind\":\"write\",\"b_line\":118,\"b_kind\":\"write\",\"a2_line\":165,\"a2_kind\":\"read\",\"why\":\"irq_pebble can overwrite v_summit between crest's write and its read.\"},{\"variable\":\"v_summit\",\"a1_line\":165,\"a1_kind\":\"read\",\"b_line\":118,\"b_kind\":\"write\",\"a2_line\":185,\"a2_kind\":\"read\",\"why\":\"irq_pebble can change v_summit between crest's two reads, so they may see different values.\"},{\"variable\":\"v_kiln\",\"a1_line\":148,\"a1_kind\":\"write\",\"b_line\":134,\"b_kind\":\"write\",\"a2_line\":151,\"a2_kind\":\"read\",\"why\":\"irq_pebble writes v_kiln[9000] between crest's write to it and its later read.\"}]}",
+  "wall_s": 13.658890962600708,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1580,
+    "cache_read": 4378,
+    "cache_write": 487,
+    "latency_s": 13.658055646985304
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

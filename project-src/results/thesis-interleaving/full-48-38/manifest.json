@@ -1,0 +1,41 @@
+{
+  "scorer_version": "bench_metrics/1.0.0",
+  "date": "2026-11-23T00:59:28Z",
+  "tool_git_commit": "6de9b4c34581f31d3a43b88220f26bbf39d10434",
+  "scorer_git_commit": {
+    "commit": "6b0e060f1944cccb3a2f0e7812ed4578b0612427",
+    "dirty": false
+  },
+  "backend": [
+    "claude-cli:sonnet@low"
+  ],
+  "prompt_rows": [
+    "+interleaving"
+  ],
+  "label_set": "48/38",
+  "case_subset": {
+    "name": "all",
+    "cases": null,
+    "exclude_patterns": []
+  },
+  "input_run_roots": [
+    {
+      "path": "/home/pedro/Documentos/tcc/worktrees/runs-interleaving-rb-20261122/by-run/+interleaving/1",
+      "run_id": "+interleaving/1@1",
+      "status": "ok",
+      "cases": 31
+    },
+    {
+      "path": "/home/pedro/Documentos/tcc/worktrees/runs-interleaving-rb-20261122/by-run/+interleaving/2",
+      "run_id": "+interleaving/1@2",
+      "status": "ok",
+      "cases": 31
+    },
+    {
+      "path": "/home/pedro/Documentos/tcc/worktrees/runs-interleaving-rb-20261122/by-run/+interleaving/3",
+      "run_id": "+interleaving/1@3",
+      "status": "ok",
+      "cases": 31
+    }
+  ]
+}

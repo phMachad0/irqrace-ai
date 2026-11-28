@@ -1,0 +1,28 @@
+{
+  "case": "program_13",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_umber",
+        "a1_line": 16,
+        "a1_kind": "write",
+        "b_line": 9,
+        "b_kind": "read",
+        "a2_line": 18,
+        "a2_kind": "write",
+        "why": "ISR irq_falcon can preempt between the two writes to v_umber, causing a read of an intermediate value"
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_umber\",\"a1_line\":16,\"a1_kind\":\"write\",\"b_line\":9,\"b_kind\":\"read\",\"a2_line\":18,\"a2_kind\":\"write\",\"why\":\"ISR irq_falcon can preempt between the two writes to v_umber, causing a read of an intermediate value\"}]}",
+  "wall_s": 10.1734037399292,
+  "usage": {
+    "input_tokens": 764,
+    "output_tokens": 688,
+    "cache_read": 0,
+    "cache_write": 0,
+    "latency_s": 10.173254675988574
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

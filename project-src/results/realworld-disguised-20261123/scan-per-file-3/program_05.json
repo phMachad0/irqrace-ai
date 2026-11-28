@@ -1,0 +1,108 @@
+{
+  "case": "program_05",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_fern",
+        "a1_line": 150,
+        "a1_kind": "write",
+        "b_line": 116,
+        "b_kind": "write",
+        "a2_line": 181,
+        "a2_kind": "read",
+        "why": "irq_raptor can preempt irq_glacier between its write and later read of v_fern, so the read gets raptor's value."
+      },
+      {
+        "variable": "v_velvet",
+        "a1_line": 151,
+        "a1_kind": "write",
+        "b_line": 117,
+        "b_kind": "write",
+        "a2_line": 156,
+        "a2_kind": "read",
+        "why": "irq_raptor (higher priority) can overwrite v_velvet between glacier's write and read."
+      },
+      {
+        "variable": "v_velvet",
+        "a1_line": 200,
+        "a1_kind": "write",
+        "b_line": 117,
+        "b_kind": "write",
+        "a2_line": 204,
+        "a2_kind": "read",
+        "why": "irq_raptor can preempt irq_willow between its write and read of v_velvet."
+      },
+      {
+        "variable": "v_velvet",
+        "a1_line": 270,
+        "a1_kind": "write",
+        "b_line": 117,
+        "b_kind": "write",
+        "a2_line": 273,
+        "a2_kind": "read",
+        "why": "irq_raptor can preempt irq_urchin between its write and read of v_velvet."
+      },
+      {
+        "variable": "v_beacon",
+        "a1_line": 267,
+        "a1_kind": "write",
+        "b_line": 119,
+        "b_kind": "write",
+        "a2_line": 297,
+        "a2_kind": "read",
+        "why": "irq_raptor can overwrite v_beacon between urchin's write and later read."
+      },
+      {
+        "variable": "v_upland",
+        "a1_line": 196,
+        "a1_kind": "write",
+        "b_line": 120,
+        "b_kind": "write",
+        "a2_line": 228,
+        "a2_kind": "read",
+        "why": "irq_raptor can overwrite v_upland between willow's write and read."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 108,
+        "a1_kind": "read",
+        "b_line": 134,
+        "b_kind": "write",
+        "a2_line": 109,
+        "a2_kind": "read",
+        "why": "fn_orchid, called from glacier, reads v_lantern twice, and raptor can write it between the two reads."
+      },
+      {
+        "variable": "v_ember",
+        "a1_line": 110,
+        "a1_kind": "read",
+        "b_line": 135,
+        "b_kind": "write",
+        "a2_line": 111,
+        "a2_kind": "read",
+        "why": "Two reads of v_ember in fn_orchid can be split by raptor's write."
+      },
+      {
+        "variable": "v_husk",
+        "a1_line": 236,
+        "a1_kind": "write",
+        "b_line": 133,
+        "b_kind": "write",
+        "a2_line": 239,
+        "a2_kind": "read",
+        "why": "raptor can overwrite v_husk[K_ZINC1] between willow's write and its later read."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_fern\",\"a1_line\":150,\"a1_kind\":\"write\",\"b_line\":116,\"b_kind\":\"write\",\"a2_line\":181,\"a2_kind\":\"read\",\"why\":\"irq_raptor can preempt irq_glacier between its write and later read of v_fern, so the read gets raptor's value.\"},{\"variable\":\"v_velvet\",\"a1_line\":151,\"a1_kind\":\"write\",\"b_line\":117,\"b_kind\":\"write\",\"a2_line\":156,\"a2_kind\":\"read\",\"why\":\"irq_raptor (higher priority) can overwrite v_velvet between glacier's write and read.\"},{\"variable\":\"v_velvet\",\"a1_line\":200,\"a1_kind\":\"write\",\"b_line\":117,\"b_kind\":\"write\",\"a2_line\":204,\"a2_kind\":\"read\",\"why\":\"irq_raptor can preempt irq_willow between its write and read of v_velvet.\"},{\"variable\":\"v_velvet\",\"a1_line\":270,\"a1_kind\":\"write\",\"b_line\":117,\"b_kind\":\"write\",\"a2_line\":273,\"a2_kind\":\"read\",\"why\":\"irq_raptor can preempt irq_urchin between its write and read of v_velvet.\"},{\"variable\":\"v_beacon\",\"a1_line\":267,\"a1_kind\":\"write\",\"b_line\":119,\"b_kind\":\"write\",\"a2_line\":297,\"a2_kind\":\"read\",\"why\":\"irq_raptor can overwrite v_beacon between urchin's write and later read.\"},{\"variable\":\"v_upland\",\"a1_line\":196,\"a1_kind\":\"write\",\"b_line\":120,\"b_kind\":\"write\",\"a2_line\":228,\"a2_kind\":\"read\",\"why\":\"irq_raptor can overwrite v_upland between willow's write and read.\"},{\"variable\":\"v_lantern\",\"a1_line\":108,\"a1_kind\":\"read\",\"b_line\":134,\"b_kind\":\"write\",\"a2_line\":109,\"a2_kind\":\"read\",\"why\":\"fn_orchid, called from glacier, reads v_lantern twice, and raptor can write it between the two reads.\"},{\"variable\":\"v_ember\",\"a1_line\":110,\"a1_kind\":\"read\",\"b_line\":135,\"b_kind\":\"write\",\"a2_line\":111,\"a2_kind\":\"read\",\"why\":\"Two reads of v_ember in fn_orchid can be split by raptor's write.\"},{\"variable\":\"v_husk\",\"a1_line\":236,\"a1_kind\":\"write\",\"b_line\":133,\"b_kind\":\"write\",\"a2_line\":239,\"a2_kind\":\"read\",\"why\":\"raptor can overwrite v_husk[K_ZINC1] between willow's write and its later read.\"}]}",
+  "wall_s": 16.897659301757812,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 2325,
+    "cache_read": 6008,
+    "cache_write": 484,
+    "latency_s": 16.897497683006804
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

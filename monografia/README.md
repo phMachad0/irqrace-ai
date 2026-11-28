@@ -41,6 +41,28 @@ são baixados na primeira compilação.
 | `figuras/` | imagens |
 | `referencias.bib` | bibliografia |
 
+## Figuras dos resultados
+
+As figuras F1 a F11 da avaliação são geradas, nunca desenhadas à mão, por
+`project-src/scripts/thesis-figures.py`, a partir dos CSVs versionados das
+execuções (formato no docstring do script). Com o extra `figures` instalado
+(`pip install -e ".[figures]"`, dentro de `project-src`):
+
+```bash
+python scripts/thesis-figures.py --data results/thesis-interleaving/combined --only F1,F2,F3,F4,F5,F9
+```
+
+Desde 2026-11-22 as figuras saem da configuração final (linha `+interleaving`,
+triagem agrupada por variável com chamadas compartilhadas entre os programas,
+Claude Sonnet com esforço baixo, três execuções; `results/thesis-interleaving/`).
+O conjunto antigo, das execuções `+racebench` do M1/M2, continua em
+`results/thesis`.
+
+Os PDFs saem em `monografia/figuras/`, com `thesis-figures.json` registrando de
+que execuções saiu cada figura, o que o `\fonte{}` correspondente deve citar.
+Os dados de `project-src/tests/fixtures/thesis-figures/` são sintéticos e
+servem só ao teste: nada gerado a partir deles entra nesta pasta.
+
 ## Ficha catalográfica
 
 A folha de rosto sai sem ficha nesta versão. Para a entrega final, gere a ficha

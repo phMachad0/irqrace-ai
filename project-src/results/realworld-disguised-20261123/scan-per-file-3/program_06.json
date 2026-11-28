@@ -1,0 +1,78 @@
+{
+  "case": "program_06",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_falcon",
+        "a1_line": 20,
+        "a1_kind": "write",
+        "b_line": 35,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "irq_urchin preempts irq_yarrow between the increment and the check and resets v_falcon to 0, so the check sees a different value."
+      },
+      {
+        "variable": "v_falcon",
+        "a1_line": 20,
+        "a1_kind": "write",
+        "b_line": 34,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "irq_urchin can run between the increment and the check and overwrite v_falcon."
+      },
+      {
+        "variable": "v_falcon",
+        "a1_line": 20,
+        "a1_kind": "read",
+        "b_line": 35,
+        "b_kind": "write",
+        "a2_line": 20,
+        "a2_kind": "write",
+        "why": "The increment is a non-atomic read-modify-write. irq_urchin can write v_falcon in between, and that update is lost."
+      },
+      {
+        "variable": "v_falcon",
+        "a1_line": 20,
+        "a1_kind": "read",
+        "b_line": 34,
+        "b_kind": "write",
+        "a2_line": 20,
+        "a2_kind": "write",
+        "why": "irq_urchin's write can land between the read and write of the increment and be overwritten."
+      },
+      {
+        "variable": "v_falcon",
+        "a1_line": 27,
+        "a1_kind": "write",
+        "b_line": 35,
+        "b_kind": "write",
+        "a2_line": 28,
+        "a2_kind": "read",
+        "why": "irq_urchin preempts irq_grove after v_falcon=1 and sets it to 0, so the check at line 28 fails."
+      },
+      {
+        "variable": "v_falcon",
+        "a1_line": 27,
+        "a1_kind": "write",
+        "b_line": 34,
+        "b_kind": "write",
+        "a2_line": 28,
+        "a2_kind": "read",
+        "why": "irq_urchin can write v_falcon between irq_grove's write and its read."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_falcon\",\"a1_line\":20,\"a1_kind\":\"write\",\"b_line\":35,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"irq_urchin preempts irq_yarrow between the increment and the check and resets v_falcon to 0, so the check sees a different value.\"},{\"variable\":\"v_falcon\",\"a1_line\":20,\"a1_kind\":\"write\",\"b_line\":34,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"irq_urchin can run between the increment and the check and overwrite v_falcon.\"},{\"variable\":\"v_falcon\",\"a1_line\":20,\"a1_kind\":\"read\",\"b_line\":35,\"b_kind\":\"write\",\"a2_line\":20,\"a2_kind\":\"write\",\"why\":\"The increment is a non-atomic read-modify-write. irq_urchin can write v_falcon in between, and that update is lost.\"},{\"variable\":\"v_falcon\",\"a1_line\":20,\"a1_kind\":\"read\",\"b_line\":34,\"b_kind\":\"write\",\"a2_line\":20,\"a2_kind\":\"write\",\"why\":\"irq_urchin's write can land between the read and write of the increment and be overwritten.\"},{\"variable\":\"v_falcon\",\"a1_line\":27,\"a1_kind\":\"write\",\"b_line\":35,\"b_kind\":\"write\",\"a2_line\":28,\"a2_kind\":\"read\",\"why\":\"irq_urchin preempts irq_grove after v_falcon=1 and sets it to 0, so the check at line 28 fails.\"},{\"variable\":\"v_falcon\",\"a1_line\":27,\"a1_kind\":\"write\",\"b_line\":34,\"b_kind\":\"write\",\"a2_line\":28,\"a2_kind\":\"read\",\"why\":\"irq_urchin can write v_falcon between irq_grove's write and its read.\"}]}",
+  "wall_s": 11.409170389175415,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1370,
+    "cache_read": 2013,
+    "cache_write": 486,
+    "latency_s": 11.409001864958555
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

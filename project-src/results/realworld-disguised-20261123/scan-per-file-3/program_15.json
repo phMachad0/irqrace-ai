@@ -1,0 +1,68 @@
+{
+  "case": "program_15",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_falcon",
+        "a1_line": 56,
+        "a1_kind": "write",
+        "b_line": 61,
+        "b_kind": "write",
+        "a2_line": 57,
+        "a2_kind": "read",
+        "why": "irq_anchor (priority 6) can preempt irq_summit between its write and read of v_falcon, so the read may not see 0."
+      },
+      {
+        "variable": "v_prism",
+        "a1_line": 51,
+        "a1_kind": "read",
+        "b_line": 62,
+        "b_kind": "write",
+        "a2_line": 52,
+        "a2_kind": "read",
+        "why": "irq_anchor can preempt irq_kelp after it uses v_prism as an index and before the increment, so the increment reads a changed value."
+      },
+      {
+        "variable": "v_prism",
+        "a1_line": 52,
+        "a1_kind": "read",
+        "b_line": 62,
+        "b_kind": "write",
+        "a2_line": 52,
+        "a2_kind": "write",
+        "why": "irq_anchor can preempt the v_prism++ in irq_kelp between its read and write, so the anchor increment is lost."
+      },
+      {
+        "variable": "v_prism",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 62,
+        "b_kind": "write",
+        "a2_line": 101,
+        "a2_kind": "write",
+        "why": "irq_anchor can preempt irq_thorn between the read of v_prism at line 95 and the reset at line 101, so the earlier check is stale."
+      },
+      {
+        "variable": "v_prism",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 52,
+        "b_kind": "write",
+        "a2_line": 101,
+        "a2_kind": "write",
+        "why": "irq_kelp can preempt irq_thorn between the read of v_prism at line 95 and the reset at line 101, so the earlier check is stale."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_falcon\",\"a1_line\":56,\"a1_kind\":\"write\",\"b_line\":61,\"b_kind\":\"write\",\"a2_line\":57,\"a2_kind\":\"read\",\"why\":\"irq_anchor (priority 6) can preempt irq_summit between its write and read of v_falcon, so the read may not see 0.\"},{\"variable\":\"v_prism\",\"a1_line\":51,\"a1_kind\":\"read\",\"b_line\":62,\"b_kind\":\"write\",\"a2_line\":52,\"a2_kind\":\"read\",\"why\":\"irq_anchor can preempt irq_kelp after it uses v_prism as an index and before the increment, so the increment reads a changed value.\"},{\"variable\":\"v_prism\",\"a1_line\":52,\"a1_kind\":\"read\",\"b_line\":62,\"b_kind\":\"write\",\"a2_line\":52,\"a2_kind\":\"write\",\"why\":\"irq_anchor can preempt the v_prism++ in irq_kelp between its read and write, so the anchor increment is lost.\"},{\"variable\":\"v_prism\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":62,\"b_kind\":\"write\",\"a2_line\":101,\"a2_kind\":\"write\",\"why\":\"irq_anchor can preempt irq_thorn between the read of v_prism at line 95 and the reset at line 101, so the earlier check is stale.\"},{\"variable\":\"v_prism\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":52,\"b_kind\":\"write\",\"a2_line\":101,\"a2_kind\":\"write\",\"why\":\"irq_kelp can preempt irq_thorn between the read of v_prism at line 95 and the reset at line 101, so the earlier check is stale.\"}]}",
+  "wall_s": 14.630774021148682,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1646,
+    "cache_read": 2898,
+    "cache_write": 485,
+    "latency_s": 14.630604172998574
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

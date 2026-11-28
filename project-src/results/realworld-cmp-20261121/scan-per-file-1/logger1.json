@@ -1,0 +1,68 @@
+{
+  "case": "logger1",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 83,
+        "a1_kind": "read",
+        "b_line": 137,
+        "b_kind": "write",
+        "a2_line": 85,
+        "a2_kind": "write",
+        "why": "The measure ISR reads numberOfRecords as the index, then the communicate ISR resets it. The measure ISR then increments a stale value and overwrites the reset."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 83,
+        "a1_kind": "read",
+        "b_line": 137,
+        "b_kind": "write",
+        "a2_line": 85,
+        "a2_kind": "read",
+        "why": "The index read at line 83 and the read in the increment at line 85 can see different values if the higher-priority ISR resets the counter between them."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 76,
+        "a1_kind": "write",
+        "b_line": 136,
+        "b_kind": "write",
+        "a2_line": 77,
+        "a2_kind": "read",
+        "why": "After the measure ISR increments tickCounter, the communicate ISR can overwrite it. The measure ISR then reads a value it didn't write."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 77,
+        "a1_kind": "read",
+        "b_line": 136,
+        "b_kind": "write",
+        "a2_line": 81,
+        "a2_kind": "write",
+        "why": "The measure ISR reads tickCounter and later writes 0 to it. A reset by the communicate ISR in between is overwritten."
+      },
+      {
+        "variable": "intervalCounter",
+        "a1_line": 82,
+        "a1_kind": "read",
+        "b_line": 135,
+        "b_kind": "write",
+        "a2_line": 82,
+        "a2_kind": "write",
+        "why": "The non-atomic increment of intervalCounter can be preempted by the communicate ISR's reset. The measure ISR then writes back a stale value and loses the reset."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"numberOfRecords\",\"a1_line\":83,\"a1_kind\":\"read\",\"b_line\":137,\"b_kind\":\"write\",\"a2_line\":85,\"a2_kind\":\"write\",\"why\":\"The measure ISR reads numberOfRecords as the index, then the communicate ISR resets it. The measure ISR then increments a stale value and overwrites the reset.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":83,\"a1_kind\":\"read\",\"b_line\":137,\"b_kind\":\"write\",\"a2_line\":85,\"a2_kind\":\"read\",\"why\":\"The index read at line 83 and the read in the increment at line 85 can see different values if the higher-priority ISR resets the counter between them.\"},{\"variable\":\"tickCounter\",\"a1_line\":76,\"a1_kind\":\"write\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":77,\"a2_kind\":\"read\",\"why\":\"After the measure ISR increments tickCounter, the communicate ISR can overwrite it. The measure ISR then reads a value it didn't write.\"},{\"variable\":\"tickCounter\",\"a1_line\":77,\"a1_kind\":\"read\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":81,\"a2_kind\":\"write\",\"why\":\"The measure ISR reads tickCounter and later writes 0 to it. A reset by the communicate ISR in between is overwritten.\"},{\"variable\":\"intervalCounter\",\"a1_line\":82,\"a1_kind\":\"read\",\"b_line\":135,\"b_kind\":\"write\",\"a2_line\":82,\"a2_kind\":\"write\",\"why\":\"The non-atomic increment of intervalCounter can be preempted by the communicate ISR's reset. The measure ISR then writes back a stale value and loses the reset.\"}]}",
+  "wall_s": 10.838589668273926,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1182,
+    "cache_read": 986,
+    "cache_write": 2800,
+    "latency_s": 10.838423227978637
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

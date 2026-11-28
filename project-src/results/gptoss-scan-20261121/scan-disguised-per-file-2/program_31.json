@@ -1,0 +1,28 @@
+{
+  "case": "program_31",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_basalt",
+        "a1_line": 21,
+        "a1_kind": "read",
+        "b_line": 14,
+        "b_kind": "write",
+        "a2_line": 22,
+        "a2_kind": "write",
+        "why": "Interrupt 2 (irq_kestrel) remains enabled while interrupt 1 is disabled, so it can preempt the main task between the read of v_basalt at line 21 and the write at line 22, causing a read‑write‑write atomicity violation."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_basalt\",\"a1_line\":21,\"a1_kind\":\"read\",\"b_line\":14,\"b_kind\":\"write\",\"a2_line\":22,\"a2_kind\":\"write\",\"why\":\"Interrupt 2 (irq_kestrel) remains enabled while interrupt 1 is disabled, so it can preempt the main task between the read of v_basalt at line 21 and the write at line 22, causing a read‑write‑write atomicity violation.\"}]}",
+  "wall_s": 16.38380527496338,
+  "usage": {
+    "input_tokens": 341,
+    "output_tokens": 1229,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 16.383668423019117
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

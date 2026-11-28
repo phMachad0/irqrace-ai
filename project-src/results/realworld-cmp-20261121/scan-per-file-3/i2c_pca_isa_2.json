@@ -1,0 +1,78 @@
+{
+  "case": "i2c_pca_isa_2",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "irq",
+        "a1_line": 308,
+        "a1_kind": "write",
+        "b_line": 321,
+        "b_kind": "write",
+        "a2_line": 313,
+        "a2_kind": "read",
+        "why": "req3_isr (higher priority) can preempt req2_isr between its write and re-read of irq, changing the value."
+      },
+      {
+        "variable": "irq",
+        "a1_line": 308,
+        "a1_kind": "write",
+        "b_line": 331,
+        "b_kind": "write",
+        "a2_line": 313,
+        "a2_kind": "read",
+        "why": "req4_isr preempts req2_isr and overwrites irq before the check."
+      },
+      {
+        "variable": "irq",
+        "a1_line": 308,
+        "a1_kind": "write",
+        "b_line": 347,
+        "b_kind": "write",
+        "a2_line": 313,
+        "a2_kind": "read",
+        "why": "req5_isr preempts req2_isr and overwrites irq before the check."
+      },
+      {
+        "variable": "irq",
+        "a1_line": 331,
+        "a1_kind": "write",
+        "b_line": 347,
+        "b_kind": "write",
+        "a2_line": 336,
+        "a2_kind": "read",
+        "why": "req5_isr (higher priority) can preempt req4_isr between its write and its re-read of irq."
+      },
+      {
+        "variable": "test_global_var1",
+        "a1_line": 289,
+        "a1_kind": "read",
+        "b_line": 354,
+        "b_kind": "write",
+        "a2_line": 290,
+        "a2_kind": "read",
+        "why": "req5_isr can preempt req6_isr (via JudgeCondi) between the two reads of var1, so they may see different values."
+      },
+      {
+        "variable": "test_global_var2",
+        "a1_line": 292,
+        "a1_kind": "read",
+        "b_line": 338,
+        "b_kind": "write",
+        "a2_line": 293,
+        "a2_kind": "read",
+        "why": "req4_isr can preempt between the two reads of var2 in JudgeCondi. The write needs condition2==0, which holds if req4_isr runs before main sets it, since the initial masking state is unknown."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"irq\",\"a1_line\":308,\"a1_kind\":\"write\",\"b_line\":321,\"b_kind\":\"write\",\"a2_line\":313,\"a2_kind\":\"read\",\"why\":\"req3_isr (higher priority) can preempt req2_isr between its write and re-read of irq, changing the value.\"},{\"variable\":\"irq\",\"a1_line\":308,\"a1_kind\":\"write\",\"b_line\":331,\"b_kind\":\"write\",\"a2_line\":313,\"a2_kind\":\"read\",\"why\":\"req4_isr preempts req2_isr and overwrites irq before the check.\"},{\"variable\":\"irq\",\"a1_line\":308,\"a1_kind\":\"write\",\"b_line\":347,\"b_kind\":\"write\",\"a2_line\":313,\"a2_kind\":\"read\",\"why\":\"req5_isr preempts req2_isr and overwrites irq before the check.\"},{\"variable\":\"irq\",\"a1_line\":331,\"a1_kind\":\"write\",\"b_line\":347,\"b_kind\":\"write\",\"a2_line\":336,\"a2_kind\":\"read\",\"why\":\"req5_isr (higher priority) can preempt req4_isr between its write and its re-read of irq.\"},{\"variable\":\"test_global_var1\",\"a1_line\":289,\"a1_kind\":\"read\",\"b_line\":354,\"b_kind\":\"write\",\"a2_line\":290,\"a2_kind\":\"read\",\"why\":\"req5_isr can preempt req6_isr (via JudgeCondi) between the two reads of var1, so they may see different values.\"},{\"variable\":\"test_global_var2\",\"a1_line\":292,\"a1_kind\":\"read\",\"b_line\":338,\"b_kind\":\"write\",\"a2_line\":293,\"a2_kind\":\"read\",\"why\":\"req4_isr can preempt between the two reads of var2 in JudgeCondi. The write needs condition2==0, which holds if req4_isr runs before main sets it, since the initial masking state is unknown.\"}]}",
+  "wall_s": 13.92541217803955,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1624,
+    "cache_read": 6551,
+    "cache_write": 486,
+    "latency_s": 13.925198478013044
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

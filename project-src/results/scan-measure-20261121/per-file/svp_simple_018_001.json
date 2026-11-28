@@ -1,0 +1,58 @@
+{
+  "case": "svp_simple_018_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_018_001_para1",
+        "a1_line": 40,
+        "a1_kind": "read",
+        "b_line": 59,
+        "b_kind": "write",
+        "a2_line": 47,
+        "a2_kind": "read",
+        "why": "isr_1 can preempt main between the two reads of para1 (func1 and func2) and change it, so the two computations use different values."
+      },
+      {
+        "variable": "svp_simple_018_001_para2",
+        "a1_line": 41,
+        "a1_kind": "read",
+        "b_line": 54,
+        "b_kind": "write",
+        "a2_line": 48,
+        "a2_kind": "read",
+        "why": "isr_2 can preempt main between reads of para2 in func1 and func2 and change it."
+      },
+      {
+        "variable": "svp_simple_018_001_para2",
+        "a1_line": 48,
+        "a1_kind": "read",
+        "b_line": 54,
+        "b_kind": "write",
+        "a2_line": 49,
+        "a2_kind": "read",
+        "why": "isr_2 can fire between the two reads of para2 within the area expression, giving inconsistent values."
+      },
+      {
+        "variable": "svp_simple_018_001_para2",
+        "a1_line": 41,
+        "a1_kind": "read",
+        "b_line": 54,
+        "b_kind": "write",
+        "a2_line": 49,
+        "a2_kind": "read",
+        "why": "isr_2 can write para2 between the read in func1 and the later read in func2."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_018_001_para1\",\"a1_line\":40,\"a1_kind\":\"read\",\"b_line\":59,\"b_kind\":\"write\",\"a2_line\":47,\"a2_kind\":\"read\",\"why\":\"isr_1 can preempt main between the two reads of para1 (func1 and func2) and change it, so the two computations use different values.\"},{\"variable\":\"svp_simple_018_001_para2\",\"a1_line\":41,\"a1_kind\":\"read\",\"b_line\":54,\"b_kind\":\"write\",\"a2_line\":48,\"a2_kind\":\"read\",\"why\":\"isr_2 can preempt main between reads of para2 in func1 and func2 and change it.\"},{\"variable\":\"svp_simple_018_001_para2\",\"a1_line\":48,\"a1_kind\":\"read\",\"b_line\":54,\"b_kind\":\"write\",\"a2_line\":49,\"a2_kind\":\"read\",\"why\":\"isr_2 can fire between the two reads of para2 within the area expression, giving inconsistent values.\"},{\"variable\":\"svp_simple_018_001_para2\",\"a1_line\":41,\"a1_kind\":\"read\",\"b_line\":54,\"b_kind\":\"write\",\"a2_line\":49,\"a2_kind\":\"read\",\"why\":\"isr_2 can write para2 between the read in func1 and the later read in func2.\"}]}",
+  "wall_s": 6.524153470993042,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 707,
+    "cache_read": 975,
+    "cache_write": 2046,
+    "latency_s": 6.523911980009871
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

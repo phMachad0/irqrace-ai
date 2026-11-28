@@ -1,0 +1,28 @@
+{
+  "case": "i8xx_tco_1",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_array[9000]",
+        "a1_line": 791,
+        "a1_kind": "write",
+        "b_line": 780,
+        "b_kind": "write",
+        "a2_line": 794,
+        "a2_kind": "read",
+        "why": "writer1_isr (priority 2) writes array[9000] at line 791 and reads it back at line 794. The higher-priority closer1_isr can preempt between them and write 999 at line 780, so the read sees a value the writer did not store."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_array[9000]\",\"a1_line\":791,\"a1_kind\":\"write\",\"b_line\":780,\"b_kind\":\"write\",\"a2_line\":794,\"a2_kind\":\"read\",\"why\":\"writer1_isr (priority 2) writes array[9000] at line 791 and reads it back at line 794. The higher-priority closer1_isr can preempt between them and write 999 at line 780, so the read sees a value the writer did not store.\"}]}",
+  "wall_s": 7.2606565952301025,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 747,
+    "cache_read": 14191,
+    "cache_write": 489,
+    "latency_s": 7.260451416979777
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

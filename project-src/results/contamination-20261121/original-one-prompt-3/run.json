@@ -1,0 +1,6 @@
+{
+  "mode": "one-prompt",
+  "backend": "claude-cli:sonnet@low",
+  "suite": "original",
+  "wall_s": 87.04594659805298
+}

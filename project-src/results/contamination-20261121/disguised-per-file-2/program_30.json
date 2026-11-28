@@ -1,0 +1,38 @@
+{
+  "case": "program_30",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_vessel",
+        "a1_line": 27,
+        "a1_kind": "write",
+        "b_line": 20,
+        "b_kind": "read",
+        "a2_line": 28,
+        "a2_kind": "write",
+        "why": "Once interrupt 2 has been enabled (line 30 in an earlier zenith run), irq_indigo (higher priority) can preempt irq_zenith between its two writes and read the intermediate value 0."
+      },
+      {
+        "variable": "v_quartz[9999]",
+        "a1_line": 42,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "read",
+        "a2_line": 45,
+        "a2_kind": "write",
+        "why": "After irq_zenith enables interrupt 2 and sets v_willow, irq_indigo can preempt the task between its write of v_quartz[9999] at line 42 and the write at line 45, reading the intermediate value."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_vessel\",\"a1_line\":27,\"a1_kind\":\"write\",\"b_line\":20,\"b_kind\":\"read\",\"a2_line\":28,\"a2_kind\":\"write\",\"why\":\"Once interrupt 2 has been enabled (line 30 in an earlier zenith run), irq_indigo (higher priority) can preempt irq_zenith between its two writes and read the intermediate value 0.\"},{\"variable\":\"v_quartz[9999]\",\"a1_line\":42,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"read\",\"a2_line\":45,\"a2_kind\":\"write\",\"why\":\"After irq_zenith enables interrupt 2 and sets v_willow, irq_indigo can preempt the task between its write of v_quartz[9999] at line 42 and the write at line 45, reading the intermediate value.\"}]}",
+  "wall_s": 10.57728362083435,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1081,
+    "cache_read": 1951,
+    "cache_write": 486,
+    "latency_s": 10.577103393996367
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,38 @@
+{
+  "case": "program_03",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_fjord",
+        "a1_line": 25,
+        "a1_kind": "read",
+        "b_line": 48,
+        "b_kind": "write",
+        "a2_line": 30,
+        "a2_kind": "read",
+        "why": "irq_summit (priority 1) can preempt task_juniper between the two reads of v_fjord and writes v_fjord, so the read‑write‑read sequence is not atomic."
+      },
+      {
+        "variable": "v_nimbus",
+        "a1_line": 26,
+        "a1_kind": "read",
+        "b_line": 50,
+        "b_kind": "write",
+        "a2_line": 31,
+        "a2_kind": "read",
+        "why": "irq_summit can preempt task_juniper between the two reads of v_nimbus and writes v_nimbus, creating a read‑write‑read atomicity violation."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_fjord\",\"a1_line\":25,\"a1_kind\":\"read\",\"b_line\":48,\"b_kind\":\"write\",\"a2_line\":30,\"a2_kind\":\"read\",\"why\":\"irq_summit (priority 1) can preempt task_juniper between the two reads of v_fjord and writes v_fjord, so the read‑write‑read sequence is not atomic.\"},{\"variable\":\"v_nimbus\",\"a1_line\":26,\"a1_kind\":\"read\",\"b_line\":50,\"b_kind\":\"write\",\"a2_line\":31,\"a2_kind\":\"read\",\"why\":\"irq_summit can preempt task_juniper between the two reads of v_nimbus and writes v_nimbus, creating a read‑write‑read atomicity violation.\"}]}",
+  "wall_s": 19.568201303482056,
+  "usage": {
+    "input_tokens": 1084,
+    "output_tokens": 1852,
+    "cache_read": 0,
+    "cache_write": 0,
+    "latency_s": 19.568140318006044
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

@@ -1,0 +1,78 @@
+{
+  "case": "program_15",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_onyx",
+        "a1_line": 19,
+        "a1_kind": "write",
+        "b_line": 10,
+        "b_kind": "write",
+        "a2_line": 19,
+        "a2_kind": "read",
+        "why": "ISR sets v_onyx=50 between the loop init write and the loop condition read, so the task sees a value it did not write."
+      },
+      {
+        "variable": "v_onyx",
+        "a1_line": 19,
+        "a1_kind": "write",
+        "b_line": 10,
+        "b_kind": "write",
+        "a2_line": 22,
+        "a2_kind": "read",
+        "why": "ISR overwrites v_onyx after the init write, so the index used at line 22 is not the one the task wrote."
+      },
+      {
+        "variable": "v_onyx",
+        "a1_line": 19,
+        "a1_kind": "read",
+        "b_line": 10,
+        "b_kind": "write",
+        "a2_line": 22,
+        "a2_kind": "read",
+        "why": "The condition check and the array index use different values if the ISR writes v_onyx between them."
+      },
+      {
+        "variable": "v_onyx",
+        "a1_line": 20,
+        "a1_kind": "read",
+        "b_line": 10,
+        "b_kind": "write",
+        "a2_line": 20,
+        "a2_kind": "write",
+        "why": "The ISR write is lost or skewed by the non-atomic v_onyx++ read-modify-write."
+      },
+      {
+        "variable": "v_onyx",
+        "a1_line": 22,
+        "a1_kind": "read",
+        "b_line": 10,
+        "b_kind": "write",
+        "a2_line": 20,
+        "a2_kind": "read",
+        "why": "ISR changes v_onyx between the index read and the increment read, so the increment starts from a different value."
+      },
+      {
+        "variable": "v_onyx",
+        "a1_line": 20,
+        "a1_kind": "write",
+        "b_line": 10,
+        "b_kind": "write",
+        "a2_line": 19,
+        "a2_kind": "read",
+        "why": "The ISR overwrites the incremented value before the loop condition reads it."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_onyx\",\"a1_line\":19,\"a1_kind\":\"write\",\"b_line\":10,\"b_kind\":\"write\",\"a2_line\":19,\"a2_kind\":\"read\",\"why\":\"ISR sets v_onyx=50 between the loop init write and the loop condition read, so the task sees a value it did not write.\"},{\"variable\":\"v_onyx\",\"a1_line\":19,\"a1_kind\":\"write\",\"b_line\":10,\"b_kind\":\"write\",\"a2_line\":22,\"a2_kind\":\"read\",\"why\":\"ISR overwrites v_onyx after the init write, so the index used at line 22 is not the one the task wrote.\"},{\"variable\":\"v_onyx\",\"a1_line\":19,\"a1_kind\":\"read\",\"b_line\":10,\"b_kind\":\"write\",\"a2_line\":22,\"a2_kind\":\"read\",\"why\":\"The condition check and the array index use different values if the ISR writes v_onyx between them.\"},{\"variable\":\"v_onyx\",\"a1_line\":20,\"a1_kind\":\"read\",\"b_line\":10,\"b_kind\":\"write\",\"a2_line\":20,\"a2_kind\":\"write\",\"why\":\"The ISR write is lost or skewed by the non-atomic v_onyx++ read-modify-write.\"},{\"variable\":\"v_onyx\",\"a1_line\":22,\"a1_kind\":\"read\",\"b_line\":10,\"b_kind\":\"write\",\"a2_line\":20,\"a2_kind\":\"read\",\"why\":\"ISR changes v_onyx between the index read and the increment read, so the increment starts from a different value.\"},{\"variable\":\"v_onyx\",\"a1_line\":20,\"a1_kind\":\"write\",\"b_line\":10,\"b_kind\":\"write\",\"a2_line\":19,\"a2_kind\":\"read\",\"why\":\"The ISR overwrites the incremented value before the loop condition reads it.\"}]}",
+  "wall_s": 10.27659296989441,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1177,
+    "cache_read": 1738,
+    "cache_write": 487,
+    "latency_s": 10.276387168996735
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

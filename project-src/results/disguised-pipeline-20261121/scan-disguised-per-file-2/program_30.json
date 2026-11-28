@@ -1,0 +1,38 @@
+{
+  "case": "program_30",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_vessel",
+        "a1_line": 30,
+        "a1_kind": "write",
+        "b_line": 23,
+        "b_kind": "read",
+        "a2_line": 31,
+        "a2_kind": "write",
+        "why": "Once zenith has run once, interrupt 2 stays enabled (global mask state). On a later zenith run, irq_indigo (higher priority) can preempt between the two writes and read the intermediate value 0."
+      },
+      {
+        "variable": "v_quartz",
+        "a1_line": 45,
+        "a1_kind": "write",
+        "b_line": 14,
+        "b_kind": "read",
+        "a2_line": 48,
+        "a2_kind": "write",
+        "why": "After zenith sets v_willow and enables ISR 2, irq_indigo can preempt the task between its clearing write of v_quartz[9999] and the later write of 1. It reads the intermediate value 0, so the task's two writes are not atomic."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_vessel\",\"a1_line\":30,\"a1_kind\":\"write\",\"b_line\":23,\"b_kind\":\"read\",\"a2_line\":31,\"a2_kind\":\"write\",\"why\":\"Once zenith has run once, interrupt 2 stays enabled (global mask state). On a later zenith run, irq_indigo (higher priority) can preempt between the two writes and read the intermediate value 0.\"},{\"variable\":\"v_quartz\",\"a1_line\":45,\"a1_kind\":\"write\",\"b_line\":14,\"b_kind\":\"read\",\"a2_line\":48,\"a2_kind\":\"write\",\"why\":\"After zenith sets v_willow and enables ISR 2, irq_indigo can preempt the task between its clearing write of v_quartz[9999] and the later write of 1. It reads the intermediate value 0, so the task's two writes are not atomic.\"}]}",
+  "wall_s": 10.624304056167603,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1167,
+    "cache_read": 1983,
+    "cache_write": 487,
+    "latency_s": 10.624138157028938
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

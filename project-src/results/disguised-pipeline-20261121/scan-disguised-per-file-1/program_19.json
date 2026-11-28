@@ -1,0 +1,48 @@
+{
+  "case": "program_19",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_falcon",
+        "a1_line": 34,
+        "a1_kind": "read",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 37,
+        "a2_kind": "read",
+        "why": "After irq_jasper re-enables interrupt 2, irq_nimbus can preempt the task between the two reads and change v_falcon, so the two comparisons see different values."
+      },
+      {
+        "variable": "v_meadow",
+        "a1_line": 35,
+        "a1_kind": "read",
+        "b_line": 12,
+        "b_kind": "write",
+        "a2_line": 38,
+        "a2_kind": "read",
+        "why": "irq_nimbus, once enabled by irq_jasper, can write v_meadow between the task's two reads."
+      },
+      {
+        "variable": "v_meadow",
+        "a1_line": 35,
+        "a1_kind": "read",
+        "b_line": 17,
+        "b_kind": "write",
+        "a2_line": 38,
+        "a2_kind": "read",
+        "why": "irq_jasper can preempt the task between the reads and write v_meadow."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_falcon\",\"a1_line\":34,\"a1_kind\":\"read\",\"b_line\":11,\"b_kind\":\"write\",\"a2_line\":37,\"a2_kind\":\"read\",\"why\":\"After irq_jasper re-enables interrupt 2, irq_nimbus can preempt the task between the two reads and change v_falcon, so the two comparisons see different values.\"},{\"variable\":\"v_meadow\",\"a1_line\":35,\"a1_kind\":\"read\",\"b_line\":12,\"b_kind\":\"write\",\"a2_line\":38,\"a2_kind\":\"read\",\"why\":\"irq_nimbus, once enabled by irq_jasper, can write v_meadow between the task's two reads.\"},{\"variable\":\"v_meadow\",\"a1_line\":35,\"a1_kind\":\"read\",\"b_line\":17,\"b_kind\":\"write\",\"a2_line\":38,\"a2_kind\":\"read\",\"why\":\"irq_jasper can preempt the task between the reads and write v_meadow.\"}]}",
+  "wall_s": 9.22993516921997,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1016,
+    "cache_read": 975,
+    "cache_write": 1414,
+    "latency_s": 9.229761028982466
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

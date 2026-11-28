@@ -1,0 +1,58 @@
+{
+  "case": "program_21",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_lantern",
+        "a1_line": 18,
+        "a1_kind": "read",
+        "b_line": 32,
+        "b_kind": "write",
+        "a2_line": 19,
+        "a2_kind": "write",
+        "why": "Meadow ISR is enabled at line 17 and can preempt between the check and the reset, so its increment is overwritten by the reset."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 18,
+        "a1_kind": "read",
+        "b_line": 10,
+        "b_kind": "write",
+        "a2_line": 19,
+        "a2_kind": "write",
+        "why": "Once meadow has run, it enables ISR 2 globally, so vessel can preempt the task between the check and the reset."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 26,
+        "a1_kind": "write",
+        "b_line": 6,
+        "b_kind": "write",
+        "a2_line": 18,
+        "a2_kind": "read",
+        "why": "Before the interrupts are masked at line 16, ISRs can modify v_lantern after the task's write, so the task's read at line 18 sees a different value than it wrote."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 32,
+        "a1_kind": "read",
+        "b_line": 10,
+        "b_kind": "write",
+        "a2_line": 32,
+        "a2_kind": "write",
+        "why": "After ISR 2 is enabled, vessel (higher priority) can preempt a later meadow run in the middle of v_lantern++, and its update is lost."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_lantern\",\"a1_line\":18,\"a1_kind\":\"read\",\"b_line\":32,\"b_kind\":\"write\",\"a2_line\":19,\"a2_kind\":\"write\",\"why\":\"Meadow ISR is enabled at line 17 and can preempt between the check and the reset, so its increment is overwritten by the reset.\"},{\"variable\":\"v_lantern\",\"a1_line\":18,\"a1_kind\":\"read\",\"b_line\":10,\"b_kind\":\"write\",\"a2_line\":19,\"a2_kind\":\"write\",\"why\":\"Once meadow has run, it enables ISR 2 globally, so vessel can preempt the task between the check and the reset.\"},{\"variable\":\"v_lantern\",\"a1_line\":26,\"a1_kind\":\"write\",\"b_line\":6,\"b_kind\":\"write\",\"a2_line\":18,\"a2_kind\":\"read\",\"why\":\"Before the interrupts are masked at line 16, ISRs can modify v_lantern after the task's write, so the task's read at line 18 sees a different value than it wrote.\"},{\"variable\":\"v_lantern\",\"a1_line\":32,\"a1_kind\":\"read\",\"b_line\":10,\"b_kind\":\"write\",\"a2_line\":32,\"a2_kind\":\"write\",\"why\":\"After ISR 2 is enabled, vessel (higher priority) can preempt a later meadow run in the middle of v_lantern++, and its update is lost.\"}]}",
+  "wall_s": 12.82587456703186,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1452,
+    "cache_read": 975,
+    "cache_write": 1323,
+    "latency_s": 12.825519086996792
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

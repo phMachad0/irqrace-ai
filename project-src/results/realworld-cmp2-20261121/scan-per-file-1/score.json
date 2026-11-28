@@ -1,0 +1,222 @@
+{
+  "summary": {
+    "suite": "realworld",
+    "mode": "per-file",
+    "backend": "claude-cli:sonnet@low",
+    "wall_s": 75.20751905441284,
+    "calls": 18,
+    "errors": [],
+    "bugs": 45,
+    "bugs_found": 45,
+    "traps": 14,
+    "traps_found": 6,
+    "findings": 136,
+    "unmatched": 75,
+    "input_total": 204072,
+    "output_tokens": 32592,
+    "latency_sum_s": 258.37547729196376,
+    "models": [
+      "claude-sonnet-5-5"
+    ]
+  },
+  "programs": [
+    {
+      "program": "blink1",
+      "bugs": 3,
+      "bugs_found": 3,
+      "traps": 1,
+      "traps_found": 0,
+      "findings": 6,
+      "unmatched": 3,
+      "missed": "",
+      "traps_reported": ""
+    },
+    {
+      "program": "blink2",
+      "bugs": 4,
+      "bugs_found": 4,
+      "traps": 1,
+      "traps_found": 0,
+      "findings": 6,
+      "unmatched": 2,
+      "missed": "",
+      "traps_reported": ""
+    },
+    {
+      "program": "blink3",
+      "bugs": 4,
+      "bugs_found": 4,
+      "traps": 1,
+      "traps_found": 1,
+      "findings": 12,
+      "unmatched": 6,
+      "missed": "",
+      "traps_reported": "#5 false violation timerCount(93R,146W,93W)"
+    },
+    {
+      "program": "brake1",
+      "bugs": 2,
+      "bugs_found": 2,
+      "traps": 1,
+      "traps_found": 1,
+      "findings": 7,
+      "unmatched": 4,
+      "missed": "",
+      "traps_reported": "#2 false violation: int test_global_var2 rwr"
+    },
+    {
+      "program": "brake2",
+      "bugs": 2,
+      "bugs_found": 2,
+      "traps": 1,
+      "traps_found": 1,
+      "findings": 9,
+      "unmatched": 6,
+      "missed": "",
+      "traps_reported": "#3 false violation int test_global_var2 wrw"
+    },
+    {
+      "program": "brake3",
+      "bugs": 2,
+      "bugs_found": 2,
+      "traps": 2,
+      "traps_found": 0,
+      "findings": 14,
+      "unmatched": 12,
+      "missed": "",
+      "traps_reported": ""
+    },
+    {
+      "program": "i2c_pca_isa_1",
+      "bugs": 1,
+      "bugs_found": 1,
+      "traps": 2,
+      "traps_found": 0,
+      "findings": 1,
+      "unmatched": 0,
+      "missed": "",
+      "traps_reported": ""
+    },
+    {
+      "program": "i2c_pca_isa_2",
+      "bugs": 2,
+      "bugs_found": 2,
+      "traps": 1,
+      "traps_found": 1,
+      "findings": 6,
+      "unmatched": 0,
+      "missed": "",
+      "traps_reported": "#2 false violation int test_global_var2 rwr"
+    },
+    {
+      "program": "i2c_pca_isa_3",
+      "bugs": 3,
+      "bugs_found": 3,
+      "traps": 1,
+      "traps_found": 1,
+      "findings": 7,
+      "unmatched": 2,
+      "missed": "",
+      "traps_reported": "#2 false violation int test_global_var2 rwr"
+    },
+    {
+      "program": "i8xx_tco_1",
+      "bugs": 3,
+      "bugs_found": 3,
+      "traps": 1,
+      "traps_found": 1,
+      "findings": 7,
+      "unmatched": 2,
+      "missed": "",
+      "traps_reported": "#2 false violation int test_global_var2 rwr"
+    },
+    {
+      "program": "i8xx_tco_2",
+      "bugs": 3,
+      "bugs_found": 3,
+      "traps": 0,
+      "traps_found": 0,
+      "findings": 6,
+      "unmatched": 2,
+      "missed": "",
+      "traps_reported": ""
+    },
+    {
+      "program": "i8xx_tco_3",
+      "bugs": 3,
+      "bugs_found": 3,
+      "traps": 0,
+      "traps_found": 0,
+      "findings": 3,
+      "unmatched": 0,
+      "missed": "",
+      "traps_reported": ""
+    },
+    {
+      "program": "logger1",
+      "bugs": 3,
+      "bugs_found": 3,
+      "traps": 0,
+      "traps_found": 0,
+      "findings": 5,
+      "unmatched": 2,
+      "missed": "",
+      "traps_reported": ""
+    },
+    {
+      "program": "logger2",
+      "bugs": 0,
+      "bugs_found": 0,
+      "traps": 0,
+      "traps_found": 0,
+      "findings": 6,
+      "unmatched": 6,
+      "missed": "",
+      "traps_reported": ""
+    },
+    {
+      "program": "logger3",
+      "bugs": 2,
+      "bugs_found": 2,
+      "traps": 0,
+      "traps_found": 0,
+      "findings": 6,
+      "unmatched": 1,
+      "missed": "",
+      "traps_reported": ""
+    },
+    {
+      "program": "wdt_pci_1",
+      "bugs": 2,
+      "bugs_found": 2,
+      "traps": 1,
+      "traps_found": 0,
+      "findings": 14,
+      "unmatched": 12,
+      "missed": "",
+      "traps_reported": ""
+    },
+    {
+      "program": "wdt_pci_2",
+      "bugs": 2,
+      "bugs_found": 2,
+      "traps": 1,
+      "traps_found": 0,
+      "findings": 7,
+      "unmatched": 5,
+      "missed": "",
+      "traps_reported": ""
+    },
+    {
+      "program": "wdt_pci_3",
+      "bugs": 4,
+      "bugs_found": 4,
+      "traps": 0,
+      "traps_found": 0,
+      "findings": 14,
+      "unmatched": 10,
+      "missed": "",
+      "traps_reported": ""
+    }
+  ]
+}

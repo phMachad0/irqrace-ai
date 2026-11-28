@@ -1,0 +1,38 @@
+{
+  "case": "program_08",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_amber",
+        "a1_line": 23,
+        "a1_kind": "read",
+        "b_line": 27,
+        "b_kind": "write",
+        "a2_line": 23,
+        "a2_kind": "write",
+        "why": "The ISR can preempt between the read and the write in *ptr_var = *ptr_var + 1, so it may overwrite v_amber before the original write stores the incremented value."
+      },
+      {
+        "variable": "v_amber",
+        "a1_line": 12,
+        "a1_kind": "write",
+        "b_line": 27,
+        "b_kind": "write",
+        "a2_line": 23,
+        "a2_kind": "read",
+        "why": "The ISR can write v_amber after fn_raptor sets it but before fn_fjord reads it, causing fn_fjord to read the ISR‑written value instead of the one set by fn_raptor."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_amber\",\n      \"a1_line\": 23,\n      \"a1_kind\": \"read\",\n      \"b_line\": 27,\n      \"b_kind\": \"write\",\n      \"a2_line\": 23,\n      \"a2_kind\": \"write\",\n      \"why\": \"The ISR can preempt between the read and the write in *ptr_var = *ptr_var + 1, so it may overwrite v_amber before the original write stores the incremented value.\"\n    },\n    {\n      \"variable\": \"v_amber\",\n      \"a1_line\": 12,\n      \"a1_kind\": \"write\",\n      \"b_line\": 27,\n      \"b_kind\": \"write\",\n      \"a2_line\": 23,\n      \"a2_kind\": \"read\",\n      \"why\": \"The ISR can write v_amber after fn_raptor sets it but before fn_fjord reads it, causing fn_fjord to read the ISR‑written value instead of the one set by fn_raptor.\"\n    }\n  ]\n}",
+  "wall_s": 36.58524179458618,
+  "usage": {
+    "input_tokens": 832,
+    "output_tokens": 1835,
+    "cache_read": 0,
+    "cache_write": 0,
+    "latency_s": 36.58508396599791
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

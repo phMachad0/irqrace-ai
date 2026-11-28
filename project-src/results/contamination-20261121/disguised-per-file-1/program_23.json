@@ -1,0 +1,48 @@
+{
+  "case": "program_23",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_tundra",
+        "a1_line": 26,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 28,
+        "a2_kind": "read",
+        "why": "The ISR can preempt the task between line 26 and line 28 and repoint v_tundra to its own local. The task's read at line 28 then sees the ISR's value instead of &v_quartz."
+      },
+      {
+        "variable": "v_tundra",
+        "a1_line": 28,
+        "a1_kind": "read",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "read",
+        "why": "The ISR can change v_tundra between the task's two reads at lines 28 and 29, so the two dereferences can go to different targets."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 23,
+        "a1_kind": "write",
+        "b_line": 9,
+        "b_kind": "read",
+        "a2_line": 24,
+        "a2_kind": "write",
+        "why": "v_timber and v_indigo both point to v_vessel. The ISR can read it at line 9 between the task's writes at lines 23 and 24 and see the intermediate value 2 instead of the final 3."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_tundra\",\"a1_line\":26,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"write\",\"a2_line\":28,\"a2_kind\":\"read\",\"why\":\"The ISR can preempt the task between line 26 and line 28 and repoint v_tundra to its own local. The task's read at line 28 then sees the ISR's value instead of &v_quartz.\"},{\"variable\":\"v_tundra\",\"a1_line\":28,\"a1_kind\":\"read\",\"b_line\":11,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"read\",\"why\":\"The ISR can change v_tundra between the task's two reads at lines 28 and 29, so the two dereferences can go to different targets.\"},{\"variable\":\"v_vessel\",\"a1_line\":23,\"a1_kind\":\"write\",\"b_line\":9,\"b_kind\":\"read\",\"a2_line\":24,\"a2_kind\":\"write\",\"why\":\"v_timber and v_indigo both point to v_vessel. The ISR can read it at line 9 between the task's writes at lines 23 and 24 and see the intermediate value 2 instead of the final 3.\"}]}",
+  "wall_s": 10.620203256607056,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1201,
+    "cache_read": 975,
+    "cache_write": 1323,
+    "latency_s": 10.620018769026501
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

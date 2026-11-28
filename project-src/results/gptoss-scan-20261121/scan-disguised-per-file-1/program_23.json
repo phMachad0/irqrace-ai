@@ -1,0 +1,28 @@
+{
+  "case": "program_23",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_vessel",
+        "a1_line": 25,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "read",
+        "a2_line": 26,
+        "a2_kind": "write",
+        "why": "Task writes to *v_tundra (v_vessel) at line 25, ISR can read the same location at line 11 before the second write at line 26, creating a write‑write‑read atomicity violation."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_vessel\",\"a1_line\":25,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"read\",\"a2_line\":26,\"a2_kind\":\"write\",\"why\":\"Task writes to *v_tundra (v_vessel) at line 25, ISR can read the same location at line 11 before the second write at line 26, creating a write‑write‑read atomicity violation.\"}]}",
+  "wall_s": 28.56818723678589,
+  "usage": {
+    "input_tokens": 897,
+    "output_tokens": 1321,
+    "cache_read": 0,
+    "cache_write": 0,
+    "latency_s": 28.568081671983236
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

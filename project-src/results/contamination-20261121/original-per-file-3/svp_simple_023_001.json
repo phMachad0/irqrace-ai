@@ -1,0 +1,38 @@
+{
+  "case": "svp_simple_023_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_023_001_global_var",
+        "a1_line": 25,
+        "a1_kind": "read",
+        "b_line": 39,
+        "b_kind": "write",
+        "a2_line": 35,
+        "a2_kind": "read",
+        "why": "Main reads global_var at line 25 as the argument, the ISR can write 0 at line 39, then line 35 reads the variable again, so the checked value and the used value differ."
+      },
+      {
+        "variable": "svp_simple_023_001_global_var",
+        "a1_line": 35,
+        "a1_kind": "read",
+        "b_line": 39,
+        "b_kind": "write",
+        "a2_line": 35,
+        "a2_kind": "write",
+        "why": "Main reads global_var at line 35 for the increment, the ISR can write 0 at line 39, then main writes the stale value plus 1 back at line 35, overwriting the ISR's write."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_023_001_global_var\",\"a1_line\":25,\"a1_kind\":\"read\",\"b_line\":39,\"b_kind\":\"write\",\"a2_line\":35,\"a2_kind\":\"read\",\"why\":\"Main reads global_var at line 25 as the argument, the ISR can write 0 at line 39, then line 35 reads the variable again, so the checked value and the used value differ.\"},{\"variable\":\"svp_simple_023_001_global_var\",\"a1_line\":35,\"a1_kind\":\"read\",\"b_line\":39,\"b_kind\":\"write\",\"a2_line\":35,\"a2_kind\":\"write\",\"why\":\"Main reads global_var at line 35 for the increment, the ISR can write 0 at line 39, then main writes the stale value plus 1 back at line 35, overwriting the ISR's write.\"}]}",
+  "wall_s": 4.614065647125244,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 315,
+    "cache_read": 2292,
+    "cache_write": 485,
+    "latency_s": 4.613853232003748
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

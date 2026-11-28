@@ -1,0 +1,48 @@
+{
+  "case": "program_22",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_quiver",
+        "a1_line": 33,
+        "a1_kind": "read",
+        "b_line": 16,
+        "b_kind": "write",
+        "a2_line": 35,
+        "a2_kind": "read",
+        "why": "Task reads v_quiver at line 33, ISR can write it at line 16 before the second read at line 35 because interrupts are enabled, creating a read‑write‑read race."
+      },
+      {
+        "variable": "v_willow",
+        "a1_line": 38,
+        "a1_kind": "read",
+        "b_line": 20,
+        "b_kind": "write",
+        "a2_line": 44,
+        "a2_kind": "read",
+        "why": "Task reads v_willow at line 38, ISR may write it at line 20 after the interrupt is re‑enabled at line 43 and before the task reads it again at line 44, forming a read‑write‑read violation."
+      },
+      {
+        "variable": "v_willow",
+        "a1_line": 38,
+        "a1_kind": "read",
+        "b_line": 20,
+        "b_kind": "write",
+        "a2_line": 52,
+        "a2_kind": "read",
+        "why": "Task’s first read of v_willow (line 38) can be separated from the later read at line 52 by an ISR write at line 20, which is possible after the interrupt is re‑enabled at line 51."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_quiver\",\"a1_line\":33,\"a1_kind\":\"read\",\"b_line\":16,\"b_kind\":\"write\",\"a2_line\":35,\"a2_kind\":\"read\",\"why\":\"Task reads v_quiver at line 33, ISR can write it at line 16 before the second read at line 35 because interrupts are enabled, creating a read‑write‑read race.\"},{\"variable\":\"v_willow\",\"a1_line\":38,\"a1_kind\":\"read\",\"b_line\":20,\"b_kind\":\"write\",\"a2_line\":44,\"a2_kind\":\"read\",\"why\":\"Task reads v_willow at line 38, ISR may write it at line 20 after the interrupt is re‑enabled at line 43 and before the task reads it again at line 44, forming a read‑write‑read violation.\"},{\"variable\":\"v_willow\",\"a1_line\":38,\"a1_kind\":\"read\",\"b_line\":20,\"b_kind\":\"write\",\"a2_line\":52,\"a2_kind\":\"read\",\"why\":\"Task’s first read of v_willow (line 38) can be separated from the later read at line 52 by an ISR write at line 20, which is possible after the interrupt is re‑enabled at line 51.\"}]}",
+  "wall_s": 30.436699151992798,
+  "usage": {
+    "input_tokens": 571,
+    "output_tokens": 4000,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 30.436558484012494
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

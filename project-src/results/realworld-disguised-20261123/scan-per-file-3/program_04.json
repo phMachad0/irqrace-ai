@@ -1,0 +1,148 @@
+{
+  "case": "program_04",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_fern",
+        "a1_line": 244,
+        "a1_kind": "write",
+        "b_line": 156,
+        "b_kind": "write",
+        "a2_line": 245,
+        "a2_kind": "read",
+        "why": "irq_umbra (prio 5) can preempt irq_bluff between its write and read of v_fern."
+      },
+      {
+        "variable": "v_fern",
+        "a1_line": 245,
+        "a1_kind": "read",
+        "b_line": 156,
+        "b_kind": "write",
+        "a2_line": 246,
+        "a2_kind": "read",
+        "why": "irq_umbra can preempt irq_bluff between its two reads, so they can return different values."
+      },
+      {
+        "variable": "v_sable",
+        "a1_line": 226,
+        "a1_kind": "write",
+        "b_line": 191,
+        "b_kind": "read",
+        "a2_line": 227,
+        "a2_kind": "write",
+        "why": "irq_falcon (prio 3) can preempt irq_ember (prio 1) between its two writes to v_sable and read the intermediate value."
+      },
+      {
+        "variable": "v_saffron",
+        "a1_line": 259,
+        "a1_kind": "read",
+        "b_line": 277,
+        "b_kind": "write",
+        "a2_line": 259,
+        "a2_kind": "write",
+        "why": "irq_ermine (prio 4) can preempt the v_saffron++ in irq_prism (prio 2), and its write is lost."
+      },
+      {
+        "variable": "v_nectar",
+        "a1_line": 177,
+        "a1_kind": "write",
+        "b_line": 278,
+        "b_kind": "write",
+        "a2_line": 178,
+        "a2_kind": "read",
+        "why": "irq_ermine can preempt irq_falcon after it sets v_nectar=1 and overwrite it with 0 before the check."
+      },
+      {
+        "variable": "v_nectar",
+        "a1_line": 197,
+        "a1_kind": "write",
+        "b_line": 278,
+        "b_kind": "write",
+        "a2_line": 198,
+        "a2_kind": "read",
+        "why": "irq_ermine can preempt irq_rust and overwrite v_nectar before the check."
+      },
+      {
+        "variable": "v_nectar",
+        "a1_line": 215,
+        "a1_kind": "write",
+        "b_line": 278,
+        "b_kind": "write",
+        "a2_line": 216,
+        "a2_kind": "read",
+        "why": "irq_ermine can preempt irq_ember and overwrite v_nectar before the check."
+      },
+      {
+        "variable": "v_nectar",
+        "a1_line": 233,
+        "a1_kind": "write",
+        "b_line": 159,
+        "b_kind": "write",
+        "a2_line": 235,
+        "a2_kind": "read",
+        "why": "irq_umbra can preempt irq_bluff and set v_nectar=1 before the check."
+      },
+      {
+        "variable": "v_nectar",
+        "a1_line": 250,
+        "a1_kind": "write",
+        "b_line": 159,
+        "b_kind": "write",
+        "a2_line": 252,
+        "a2_kind": "read",
+        "why": "irq_umbra can preempt irq_prism and set v_nectar=1 before the check."
+      },
+      {
+        "variable": "v_nectar",
+        "a1_line": 278,
+        "a1_kind": "write",
+        "b_line": 159,
+        "b_kind": "write",
+        "a2_line": 280,
+        "a2_kind": "read",
+        "why": "irq_umbra can preempt irq_ermine and set v_nectar=1 before the check."
+      },
+      {
+        "variable": "v_birch",
+        "a1_line": 176,
+        "a1_kind": "write",
+        "b_line": 279,
+        "b_kind": "write",
+        "a2_line": 185,
+        "a2_kind": "read",
+        "why": "irq_ermine can preempt irq_falcon and reset v_birch to 0 before the check against 42."
+      },
+      {
+        "variable": "v_birch",
+        "a1_line": 196,
+        "a1_kind": "write",
+        "b_line": 279,
+        "b_kind": "write",
+        "a2_line": 205,
+        "a2_kind": "read",
+        "why": "irq_ermine can preempt irq_rust and reset v_birch before the check."
+      },
+      {
+        "variable": "v_birch",
+        "a1_line": 214,
+        "a1_kind": "write",
+        "b_line": 279,
+        "b_kind": "write",
+        "a2_line": 223,
+        "a2_kind": "read",
+        "why": "irq_ermine can preempt irq_ember and reset v_birch before the check."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_fern\",\"a1_line\":244,\"a1_kind\":\"write\",\"b_line\":156,\"b_kind\":\"write\",\"a2_line\":245,\"a2_kind\":\"read\",\"why\":\"irq_umbra (prio 5) can preempt irq_bluff between its write and read of v_fern.\"},{\"variable\":\"v_fern\",\"a1_line\":245,\"a1_kind\":\"read\",\"b_line\":156,\"b_kind\":\"write\",\"a2_line\":246,\"a2_kind\":\"read\",\"why\":\"irq_umbra can preempt irq_bluff between its two reads, so they can return different values.\"},{\"variable\":\"v_sable\",\"a1_line\":226,\"a1_kind\":\"write\",\"b_line\":191,\"b_kind\":\"read\",\"a2_line\":227,\"a2_kind\":\"write\",\"why\":\"irq_falcon (prio 3) can preempt irq_ember (prio 1) between its two writes to v_sable and read the intermediate value.\"},{\"variable\":\"v_saffron\",\"a1_line\":259,\"a1_kind\":\"read\",\"b_line\":277,\"b_kind\":\"write\",\"a2_line\":259,\"a2_kind\":\"write\",\"why\":\"irq_ermine (prio 4) can preempt the v_saffron++ in irq_prism (prio 2), and its write is lost.\"},{\"variable\":\"v_nectar\",\"a1_line\":177,\"a1_kind\":\"write\",\"b_line\":278,\"b_kind\":\"write\",\"a2_line\":178,\"a2_kind\":\"read\",\"why\":\"irq_ermine can preempt irq_falcon after it sets v_nectar=1 and overwrite it with 0 before the check.\"},{\"variable\":\"v_nectar\",\"a1_line\":197,\"a1_kind\":\"write\",\"b_line\":278,\"b_kind\":\"write\",\"a2_line\":198,\"a2_kind\":\"read\",\"why\":\"irq_ermine can preempt irq_rust and overwrite v_nectar before the check.\"},{\"variable\":\"v_nectar\",\"a1_line\":215,\"a1_kind\":\"write\",\"b_line\":278,\"b_kind\":\"write\",\"a2_line\":216,\"a2_kind\":\"read\",\"why\":\"irq_ermine can preempt irq_ember and overwrite v_nectar before the check.\"},{\"variable\":\"v_nectar\",\"a1_line\":233,\"a1_kind\":\"write\",\"b_line\":159,\"b_kind\":\"write\",\"a2_line\":235,\"a2_kind\":\"read\",\"why\":\"irq_umbra can preempt irq_bluff and set v_nectar=1 before the check.\"},{\"variable\":\"v_nectar\",\"a1_line\":250,\"a1_kind\":\"write\",\"b_line\":159,\"b_kind\":\"write\",\"a2_line\":252,\"a2_kind\":\"read\",\"why\":\"irq_umbra can preempt irq_prism and set v_nectar=1 before the check.\"},{\"variable\":\"v_nectar\",\"a1_line\":278,\"a1_kind\":\"write\",\"b_line\":159,\"b_kind\":\"write\",\"a2_line\":280,\"a2_kind\":\"read\",\"why\":\"irq_umbra can preempt irq_ermine and set v_nectar=1 before the check.\"},{\"variable\":\"v_birch\",\"a1_line\":176,\"a1_kind\":\"write\",\"b_line\":279,\"b_kind\":\"write\",\"a2_line\":185,\"a2_kind\":\"read\",\"why\":\"irq_ermine can preempt irq_falcon and reset v_birch to 0 before the check against 42.\"},{\"variable\":\"v_birch\",\"a1_line\":196,\"a1_kind\":\"write\",\"b_line\":279,\"b_kind\":\"write\",\"a2_line\":205,\"a2_kind\":\"read\",\"why\":\"irq_ermine can preempt irq_rust and reset v_birch before the check.\"},{\"variable\":\"v_birch\",\"a1_line\":214,\"a1_kind\":\"write\",\"b_line\":279,\"b_kind\":\"write\",\"a2_line\":223,\"a2_kind\":\"read\",\"why\":\"irq_ermine can preempt irq_ember and reset v_birch before the check.\"}]}",
+  "wall_s": 22.247657299041748,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 2990,
+    "cache_read": 6072,
+    "cache_write": 491,
+    "latency_s": 22.246809125004802
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

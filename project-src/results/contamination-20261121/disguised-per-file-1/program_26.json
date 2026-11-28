@@ -1,0 +1,48 @@
+{
+  "case": "program_26",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_glacier",
+        "a1_line": 25,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "read",
+        "a2_line": 27,
+        "a2_kind": "write",
+        "why": "The ISR can preempt the task between the writes at 25 and 27 and read the intermediate value 0x09, which the task then overwrites."
+      },
+      {
+        "variable": "v_glacier",
+        "a1_line": 19,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "read",
+        "a2_line": 27,
+        "a2_kind": "write",
+        "why": "The ISR can run after the write at 19 and before the write at 27, and the task never masks the interrupt."
+      },
+      {
+        "variable": "v_glacier",
+        "a1_line": 19,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "read",
+        "a2_line": 25,
+        "a2_kind": "write",
+        "why": "If v_meadow is 1, the ISR can read v_glacier between the writes at 19 and 25."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_glacier\",\"a1_line\":25,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"read\",\"a2_line\":27,\"a2_kind\":\"write\",\"why\":\"The ISR can preempt the task between the writes at 25 and 27 and read the intermediate value 0x09, which the task then overwrites.\"},{\"variable\":\"v_glacier\",\"a1_line\":19,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"read\",\"a2_line\":27,\"a2_kind\":\"write\",\"why\":\"The ISR can run after the write at 19 and before the write at 27, and the task never masks the interrupt.\"},{\"variable\":\"v_glacier\",\"a1_line\":19,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"read\",\"a2_line\":25,\"a2_kind\":\"write\",\"why\":\"If v_meadow is 1, the ISR can read v_glacier between the writes at 19 and 25.\"}]}",
+  "wall_s": 6.856692790985107,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 666,
+    "cache_read": 975,
+    "cache_write": 1304,
+    "latency_s": 6.856398061005166
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

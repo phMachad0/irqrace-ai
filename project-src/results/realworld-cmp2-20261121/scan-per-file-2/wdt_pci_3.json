@@ -1,0 +1,138 @@
+{
+  "case": "wdt_pci_3",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_var1",
+        "a1_line": 1140,
+        "a1_kind": "write",
+        "b_line": 987,
+        "b_kind": "write",
+        "a2_line": 1141,
+        "a2_kind": "read",
+        "why": "closer1_isr (prio 5) can preempt writer1_isr between its write and read of test_global_var1, so the read can return 1 instead of 0."
+      },
+      {
+        "variable": "test_global_var1",
+        "a1_line": 1141,
+        "a1_kind": "read",
+        "b_line": 987,
+        "b_kind": "write",
+        "a2_line": 1142,
+        "a2_kind": "read",
+        "why": "closer1_isr can preempt writer1_isr between its two reads, so the reads can return different values."
+      },
+      {
+        "variable": "test_global_var3",
+        "a1_line": 1164,
+        "a1_kind": "read",
+        "b_line": 1193,
+        "b_kind": "write",
+        "a2_line": 1164,
+        "a2_kind": "write",
+        "why": "The increment in writer2_isr is a read followed by a write. writer4_isr (prio 4) can preempt it in between, and its write of 10 is lost."
+      },
+      {
+        "variable": "test_global_var2",
+        "a1_line": 1111,
+        "a1_kind": "write",
+        "b_line": 1048,
+        "b_kind": "read",
+        "a2_line": 1112,
+        "a2_kind": "write",
+        "why": "closer2_isr (prio 3) can preempt closer4_isr (prio 1) between its two writes to test_global_var2 and read an intermediate state."
+      },
+      {
+        "variable": "count",
+        "a1_line": 1023,
+        "a1_kind": "write",
+        "b_line": 1194,
+        "b_kind": "write",
+        "a2_line": 1025,
+        "a2_kind": "read",
+        "why": "writer4_isr (prio 4) can preempt closer2_isr after it sets count=1 and reset it to 0, so the later check sees 0."
+      },
+      {
+        "variable": "count",
+        "a1_line": 1023,
+        "a1_kind": "write",
+        "b_line": 990,
+        "b_kind": "write",
+        "a2_line": 1025,
+        "a2_kind": "read",
+        "why": "closer1_isr (prio 5) can preempt closer2_isr between its write and read of count."
+      },
+      {
+        "variable": "count",
+        "a1_line": 1172,
+        "a1_kind": "write",
+        "b_line": 990,
+        "b_kind": "write",
+        "a2_line": 1175,
+        "a2_kind": "read",
+        "why": "closer1_isr can preempt writer3_isr between its write and read of count."
+      },
+      {
+        "variable": "count",
+        "a1_line": 1122,
+        "a1_kind": "write",
+        "b_line": 990,
+        "b_kind": "write",
+        "a2_line": 1125,
+        "a2_kind": "read",
+        "why": "closer1_isr can preempt writer1_isr between its write and read of count."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1022,
+        "a1_kind": "write",
+        "b_line": 1195,
+        "b_kind": "write",
+        "a2_line": 1038,
+        "a2_kind": "read",
+        "why": "writer4_isr can preempt closer2_isr and overwrite expect_close, so the check at line 1038 sees 0 instead of 42."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1038,
+        "a1_kind": "read",
+        "b_line": 989,
+        "b_kind": "write",
+        "a2_line": 1044,
+        "a2_kind": "write",
+        "why": "closer1_isr can preempt closer2_isr between its read and its write of expect_close."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1057,
+        "a1_kind": "write",
+        "b_line": 1173,
+        "b_kind": "write",
+        "a2_line": 1074,
+        "a2_kind": "read",
+        "why": "writer3_isr (prio 3) can preempt closer3_isr (prio 2) and reset expect_close before the check."
+      },
+      {
+        "variable": "wdtpci_write_buf",
+        "a1_line": 1021,
+        "a1_kind": "write",
+        "b_line": 988,
+        "b_kind": "write",
+        "a2_line": 1031,
+        "a2_kind": "read",
+        "why": "closer1_isr can preempt closer2_isr between its write and read of the buffer. Both write 'V', so the check is unaffected and this is a weaker case."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":1140,\"a1_kind\":\"write\",\"b_line\":987,\"b_kind\":\"write\",\"a2_line\":1141,\"a2_kind\":\"read\",\"why\":\"closer1_isr (prio 5) can preempt writer1_isr between its write and read of test_global_var1, so the read can return 1 instead of 0.\"},{\"variable\":\"test_global_var1\",\"a1_line\":1141,\"a1_kind\":\"read\",\"b_line\":987,\"b_kind\":\"write\",\"a2_line\":1142,\"a2_kind\":\"read\",\"why\":\"closer1_isr can preempt writer1_isr between its two reads, so the reads can return different values.\"},{\"variable\":\"test_global_var3\",\"a1_line\":1164,\"a1_kind\":\"read\",\"b_line\":1193,\"b_kind\":\"write\",\"a2_line\":1164,\"a2_kind\":\"write\",\"why\":\"The increment in writer2_isr is a read followed by a write. writer4_isr (prio 4) can preempt it in between, and its write of 10 is lost.\"},{\"variable\":\"test_global_var2\",\"a1_line\":1111,\"a1_kind\":\"write\",\"b_line\":1048,\"b_kind\":\"read\",\"a2_line\":1112,\"a2_kind\":\"write\",\"why\":\"closer2_isr (prio 3) can preempt closer4_isr (prio 1) between its two writes to test_global_var2 and read an intermediate state.\"},{\"variable\":\"count\",\"a1_line\":1023,\"a1_kind\":\"write\",\"b_line\":1194,\"b_kind\":\"write\",\"a2_line\":1025,\"a2_kind\":\"read\",\"why\":\"writer4_isr (prio 4) can preempt closer2_isr after it sets count=1 and reset it to 0, so the later check sees 0.\"},{\"variable\":\"count\",\"a1_line\":1023,\"a1_kind\":\"write\",\"b_line\":990,\"b_kind\":\"write\",\"a2_line\":1025,\"a2_kind\":\"read\",\"why\":\"closer1_isr (prio 5) can preempt closer2_isr between its write and read of count.\"},{\"variable\":\"count\",\"a1_line\":1172,\"a1_kind\":\"write\",\"b_line\":990,\"b_kind\":\"write\",\"a2_line\":1175,\"a2_kind\":\"read\",\"why\":\"closer1_isr can preempt writer3_isr between its write and read of count.\"},{\"variable\":\"count\",\"a1_line\":1122,\"a1_kind\":\"write\",\"b_line\":990,\"b_kind\":\"write\",\"a2_line\":1125,\"a2_kind\":\"read\",\"why\":\"closer1_isr can preempt writer1_isr between its write and read of count.\"},{\"variable\":\"expect_close\",\"a1_line\":1022,\"a1_kind\":\"write\",\"b_line\":1195,\"b_kind\":\"write\",\"a2_line\":1038,\"a2_kind\":\"read\",\"why\":\"writer4_isr can preempt closer2_isr and overwrite expect_close, so the check at line 1038 sees 0 instead of 42.\"},{\"variable\":\"expect_close\",\"a1_line\":1038,\"a1_kind\":\"read\",\"b_line\":989,\"b_kind\":\"write\",\"a2_line\":1044,\"a2_kind\":\"write\",\"why\":\"closer1_isr can preempt closer2_isr between its read and its write of expect_close.\"},{\"variable\":\"expect_close\",\"a1_line\":1057,\"a1_kind\":\"write\",\"b_line\":1173,\"b_kind\":\"write\",\"a2_line\":1074,\"a2_kind\":\"read\",\"why\":\"writer3_isr (prio 3) can preempt closer3_isr (prio 2) and reset expect_close before the check.\"},{\"variable\":\"wdtpci_write_buf\",\"a1_line\":1021,\"a1_kind\":\"write\",\"b_line\":988,\"b_kind\":\"write\",\"a2_line\":1031,\"a2_kind\":\"read\",\"why\":\"closer1_isr can preempt closer2_isr between its write and read of the buffer. Both write 'V', so the check is unaffected and this is a weaker case.\"}]}",
+  "wall_s": 17.009769678115845,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 2398,
+    "cache_read": 21387,
+    "cache_write": 488,
+    "latency_s": 17.00956090501859
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

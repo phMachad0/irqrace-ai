@@ -1,0 +1,38 @@
+{
+  "case": "program_08",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_amber",
+        "a1_line": 19,
+        "a1_kind": "read",
+        "b_line": 23,
+        "b_kind": "write",
+        "a2_line": 19,
+        "a2_kind": "write",
+        "why": "ISR can reset v_amber between the task's read and write in the increment, so the reset is lost (read-write-write)."
+      },
+      {
+        "variable": "v_amber",
+        "a1_line": 8,
+        "a1_kind": "write",
+        "b_line": 23,
+        "b_kind": "write",
+        "a2_line": 19,
+        "a2_kind": "read",
+        "why": "The ISR can overwrite the value the task wrote at line 8 before the task reads it at line 19 (write-write-read)."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_amber\",\"a1_line\":19,\"a1_kind\":\"read\",\"b_line\":23,\"b_kind\":\"write\",\"a2_line\":19,\"a2_kind\":\"write\",\"why\":\"ISR can reset v_amber between the task's read and write in the increment, so the reset is lost (read-write-write).\"},{\"variable\":\"v_amber\",\"a1_line\":8,\"a1_kind\":\"write\",\"b_line\":23,\"b_kind\":\"write\",\"a2_line\":19,\"a2_kind\":\"read\",\"why\":\"The ISR can overwrite the value the task wrote at line 8 before the task reads it at line 19 (write-write-read).\"}]}",
+  "wall_s": 8.19172477722168,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 501,
+    "cache_read": 1713,
+    "cache_write": 488,
+    "latency_s": 8.191426574980142
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

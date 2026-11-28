@@ -1,0 +1,78 @@
+{
+  "case": "logger3",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 89,
+        "a1_kind": "read",
+        "b_line": 110,
+        "b_kind": "write",
+        "a2_line": 91,
+        "a2_kind": "write",
+        "why": "measure3 (prio 6) preempts measure1 between using numberOfRecords as the index and incrementing it, so the increment loses an update and the record slot is wrong."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 89,
+        "a1_kind": "read",
+        "b_line": 110,
+        "b_kind": "write",
+        "a2_line": 91,
+        "a2_kind": "read",
+        "why": "measure3 changes numberOfRecords between the index read and the read in the increment."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 159,
+        "a1_kind": "read",
+        "b_line": 91,
+        "b_kind": "write",
+        "a2_line": 165,
+        "a2_kind": "write",
+        "why": "measure1 (prio 5) preempts communicate (prio 3) after it reads numberOfRecords. The later reset to 0 is based on a stale value."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 159,
+        "a1_kind": "read",
+        "b_line": 110,
+        "b_kind": "write",
+        "a2_line": 165,
+        "a2_kind": "write",
+        "why": "measure3 preempts communicate between the read and the reset, so the check on the value is stale."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 99,
+        "a1_kind": "write",
+        "b_line": 109,
+        "b_kind": "write",
+        "a2_line": 100,
+        "a2_kind": "read",
+        "why": "measure3 preempts measure2 between the write of 0 and the check, so the check can see a nonzero value."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 99,
+        "a1_kind": "write",
+        "b_line": 164,
+        "b_kind": "write",
+        "a2_line": 100,
+        "a2_kind": "read",
+        "why": "communicate (prio 3) preempts measure2 (prio 2) between the write and the read-back of tickCounter."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"numberOfRecords\",\"a1_line\":89,\"a1_kind\":\"read\",\"b_line\":110,\"b_kind\":\"write\",\"a2_line\":91,\"a2_kind\":\"write\",\"why\":\"measure3 (prio 6) preempts measure1 between using numberOfRecords as the index and incrementing it, so the increment loses an update and the record slot is wrong.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":89,\"a1_kind\":\"read\",\"b_line\":110,\"b_kind\":\"write\",\"a2_line\":91,\"a2_kind\":\"read\",\"why\":\"measure3 changes numberOfRecords between the index read and the read in the increment.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":159,\"a1_kind\":\"read\",\"b_line\":91,\"b_kind\":\"write\",\"a2_line\":165,\"a2_kind\":\"write\",\"why\":\"measure1 (prio 5) preempts communicate (prio 3) after it reads numberOfRecords. The later reset to 0 is based on a stale value.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":159,\"a1_kind\":\"read\",\"b_line\":110,\"b_kind\":\"write\",\"a2_line\":165,\"a2_kind\":\"write\",\"why\":\"measure3 preempts communicate between the read and the reset, so the check on the value is stale.\"},{\"variable\":\"tickCounter\",\"a1_line\":99,\"a1_kind\":\"write\",\"b_line\":109,\"b_kind\":\"write\",\"a2_line\":100,\"a2_kind\":\"read\",\"why\":\"measure3 preempts measure2 between the write of 0 and the check, so the check can see a nonzero value.\"},{\"variable\":\"tickCounter\",\"a1_line\":99,\"a1_kind\":\"write\",\"b_line\":164,\"b_kind\":\"write\",\"a2_line\":100,\"a2_kind\":\"read\",\"why\":\"communicate (prio 3) preempts measure2 (prio 2) between the write and the read-back of tickCounter.\"}]}",
+  "wall_s": 14.01651930809021,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1760,
+    "cache_read": 1011,
+    "cache_write": 3198,
+    "latency_s": 14.01628644001903
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,7 @@
+{
+  "mode": "one-prompt",
+  "backend": "claude-cli:sonnet@low",
+  "suite": "realworld",
+  "max_tokens": 16000,
+  "wall_s": 43.631144523620605
+}

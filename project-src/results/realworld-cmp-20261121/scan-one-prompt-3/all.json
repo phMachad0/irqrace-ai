@@ -1,0 +1,285 @@
+{
+  "parsed": {
+    "cases": [
+      {
+        "case": "blink1",
+        "violations": [
+          {
+            "variable": "timerCount",
+            "a1_line": 95,
+            "a1_kind": "write",
+            "b_line": 120,
+            "b_kind": "write",
+            "a2_line": 96,
+            "a2_kind": "read",
+            "why": "Force ISR (prio 3) preempts Timer_A between the increment and the check."
+          },
+          {
+            "variable": "timerCount",
+            "a1_line": 95,
+            "a1_kind": "write",
+            "b_line": 108,
+            "b_kind": "write",
+            "a2_line": 96,
+            "a2_kind": "read",
+            "why": "Timer_B has equal priority and can preempt Timer_A between the increment and the check."
+          },
+          {
+            "variable": "timerCount",
+            "a1_line": 108,
+            "a1_kind": "write",
+            "b_line": 120,
+            "b_kind": "write",
+            "a2_line": 109,
+            "a2_kind": "read",
+            "why": "Force ISR preempts Timer_B between its write and its check."
+          },
+          {
+            "variable": "timerCount",
+            "a1_line": 108,
+            "a1_kind": "write",
+            "b_line": 95,
+            "b_kind": "write",
+            "a2_line": 109,
+            "a2_kind": "read",
+            "why": "Timer_A can preempt Timer_B between its write and its check."
+          }
+        ]
+      },
+      {
+        "case": "blink2",
+        "violations": [
+          {
+            "variable": "timerCount",
+            "a1_line": 93,
+            "a1_kind": "write",
+            "b_line": 119,
+            "b_kind": "write",
+            "a2_line": 95,
+            "a2_kind": "read",
+            "why": "Timer_C (prio 4) preempts Timer_A between the update and the check."
+          },
+          {
+            "variable": "timerCount",
+            "a1_line": 93,
+            "a1_kind": "write",
+            "b_line": 132,
+            "b_kind": "write",
+            "a2_line": 95,
+            "a2_kind": "read",
+            "why": "Force ISR has equal priority and can preempt Timer_A between the update and the check."
+          },
+          {
+            "variable": "timerCount",
+            "a1_line": 93,
+            "a1_kind": "read",
+            "b_line": 119,
+            "b_kind": "write",
+            "a2_line": 93,
+            "a2_kind": "write",
+            "why": "The read-modify-write increment can be interrupted by Timer_C's write, which is then lost."
+          },
+          {
+            "variable": "timerCount",
+            "a1_line": 106,
+            "a1_kind": "write",
+            "b_line": 119,
+            "b_kind": "write",
+            "a2_line": 108,
+            "a2_kind": "read",
+            "why": "Timer_C preempts Timer_B between its write and its check."
+          }
+        ]
+      },
+      {
+        "case": "blink3",
+        "violations": [
+          {
+            "variable": "timerCount",
+            "a1_line": 95,
+            "a1_kind": "write",
+            "b_line": 146,
+            "b_kind": "write",
+            "a2_line": 97,
+            "a2_kind": "read",
+            "why": "Reset ISR (prio 5) preempts Timer_A between the increment and the check."
+          },
+          {
+            "variable": "timerCount",
+            "a1_line": 109,
+            "a1_kind": "write",
+            "b_line": 146,
+            "b_kind": "write",
+            "a2_line": 111,
+            "a2_kind": "read",
+            "why": "Reset ISR preempts Timer_B between its write and its check."
+          },
+          {
+            "variable": "timerCount",
+            "a1_line": 123,
+            "a1_kind": "write",
+            "b_line": 146,
+            "b_kind": "write",
+            "a2_line": 125,
+            "a2_kind": "read",
+            "why": "Reset ISR preempts Timer_C between its write and its check."
+          }
+        ]
+      },
+      {
+        "case": "brake1",
+        "violations": [
+          {
+            "variable": "test_global_array",
+            "a1_line": 387,
+            "a1_kind": "write",
+            "b_line": 347,
+            "b_kind": "write",
+            "a2_line": 390,
+            "a2_kind": "read",
+            "why": "Compute ISR (prio 6) overwrites the element between the RR ISR's write and read."
+          },
+          {
+            "variable": "test_global_var1",
+            "a1_line": 284,
+            "a1_kind": "read",
+            "b_line": 348,
+            "b_kind": "write",
+            "a2_line": 285,
+            "a2_kind": "read",
+            "why": "Compute ISR writes between the two reads in main's JudgeCondi."
+          },
+          {
+            "variable": "test_global_var2",
+            "a1_line": 287,
+            "a1_kind": "read",
+            "b_line": 349,
+            "b_kind": "write",
+            "a2_line": 288,
+            "a2_kind": "read",
+            "why": "Compute ISR writes between the two reads in main's JudgeCondi."
+          }
+        ]
+      },
+      {
+        "case": "brake2",
+        "violations": [
+          {
+            "variable": "test_global_var1",
+            "a1_line": 459,
+            "a1_kind": "write",
+            "b_line": 285,
+            "b_kind": "write",
+            "a2_line": 460,
+            "a2_kind": "read",
+            "why": "Compute ISR (prio 6) writes between the RR ISR's write and read."
+          },
+          {
+            "variable": "test_global_var1",
+            "a1_line": 460,
+            "a1_kind": "read",
+            "b_line": 285,
+            "b_kind": "write",
+            "a2_line": 461,
+            "a2_kind": "read",
+            "why": "Compute ISR writes between the two consecutive reads in the RR ISR."
+          }
+        ]
+      },
+      {
+        "case": "brake3",
+        "violations": [
+          {
+            "variable": "test_global_var1",
+            "a1_line": 289,
+            "a1_kind": "read",
+            "b_line": 355,
+            "b_kind": "write",
+            "a2_line": 290,
+            "a2_kind": "read",
+            "why": "Compute ISR (prio 6) writes between the two reads in JudgeCondi, which the RR ISR calls."
+          },
+          {
+            "variable": "test_global_var2",
+            "a1_line": 292,
+            "a1_kind": "read",
+            "b_line": 356,
+            "b_kind": "write",
+            "a2_line": 293,
+            "a2_kind": "read",
+            "why": "Compute ISR writes between the two reads in JudgeCondi."
+          },
+          {
+            "variable": "test_global_array",
+            "a1_line": 589,
+            "a1_kind": "write",
+            "b_line": 354,
+            "b_kind": "write",
+            "a2_line": 592,
+            "a2_kind": "read",
+            "why": "Compute ISR overwrites the element between the FL ISR's write and read."
+          }
+        ]
+      },
+      {
+        "case": "i2c_pca_isa_1",
+        "violations": []
+      },
+      {
+        "case": "i2c_pca_isa_2",
+        "violations": []
+      },
+      {
+        "case": "i2c_pca_isa_3",
+        "violations": []
+      },
+      {
+        "case": "i8xx_tco_1",
+        "violations": []
+      },
+      {
+        "case": "i8xx_tco_2",
+        "violations": []
+      },
+      {
+        "case": "i8xx_tco_3",
+        "violations": []
+      },
+      {
+        "case": "logger1",
+        "violations": []
+      },
+      {
+        "case": "logger2",
+        "violations": []
+      },
+      {
+        "case": "logger3",
+        "violations": []
+      },
+      {
+        "case": "wdt_pci_1",
+        "violations": []
+      },
+      {
+        "case": "wdt_pci_2",
+        "violations": []
+      },
+      {
+        "case": "wdt_pci_3",
+        "violations": []
+      }
+    ]
+  },
+  "text": "{\"cases\":[{\"case\":\"blink1\",\"violations\":[{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":120,\"b_kind\":\"write\",\"a2_line\":96,\"a2_kind\":\"read\",\"why\":\"Force ISR (prio 3) preempts Timer_A between the increment and the check.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":108,\"b_kind\":\"write\",\"a2_line\":96,\"a2_kind\":\"read\",\"why\":\"Timer_B has equal priority and can preempt Timer_A between the increment and the check.\"},{\"variable\":\"timerCount\",\"a1_line\":108,\"a1_kind\":\"write\",\"b_line\":120,\"b_kind\":\"write\",\"a2_line\":109,\"a2_kind\":\"read\",\"why\":\"Force ISR preempts Timer_B between its write and its check.\"},{\"variable\":\"timerCount\",\"a1_line\":108,\"a1_kind\":\"write\",\"b_line\":95,\"b_kind\":\"write\",\"a2_line\":109,\"a2_kind\":\"read\",\"why\":\"Timer_A can preempt Timer_B between its write and its check.\"}]},{\"case\":\"blink2\",\"violations\":[{\"variable\":\"timerCount\",\"a1_line\":93,\"a1_kind\":\"write\",\"b_line\":119,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"read\",\"why\":\"Timer_C (prio 4) preempts Timer_A between the update and the check.\"},{\"variable\":\"timerCount\",\"a1_line\":93,\"a1_kind\":\"write\",\"b_line\":132,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"read\",\"why\":\"Force ISR has equal priority and can preempt Timer_A between the update and the check.\"},{\"variable\":\"timerCount\",\"a1_line\":93,\"a1_kind\":\"read\",\"b_line\":119,\"b_kind\":\"write\",\"a2_line\":93,\"a2_kind\":\"write\",\"why\":\"The read-modify-write increment can be interrupted by Timer_C's write, which is then lost.\"},{\"variable\":\"timerCount\",\"a1_line\":106,\"a1_kind\":\"write\",\"b_line\":119,\"b_kind\":\"write\",\"a2_line\":108,\"a2_kind\":\"read\",\"why\":\"Timer_C preempts Timer_B between its write and its check.\"}]},{\"case\":\"blink3\",\"violations\":[{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":97,\"a2_kind\":\"read\",\"why\":\"Reset ISR (prio 5) preempts Timer_A between the increment and the check.\"},{\"variable\":\"timerCount\",\"a1_line\":109,\"a1_kind\":\"write\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":111,\"a2_kind\":\"read\",\"why\":\"Reset ISR preempts Timer_B between its write and its check.\"},{\"variable\":\"timerCount\",\"a1_line\":123,\"a1_kind\":\"write\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":125,\"a2_kind\":\"read\",\"why\":\"Reset ISR preempts Timer_C between its write and its check.\"}]},{\"case\":\"brake1\",\"violations\":[{\"variable\":\"test_global_array\",\"a1_line\":387,\"a1_kind\":\"write\",\"b_line\":347,\"b_kind\":\"write\",\"a2_line\":390,\"a2_kind\":\"read\",\"why\":\"Compute ISR (prio 6) overwrites the element between the RR ISR's write and read.\"},{\"variable\":\"test_global_var1\",\"a1_line\":284,\"a1_kind\":\"read\",\"b_line\":348,\"b_kind\":\"write\",\"a2_line\":285,\"a2_kind\":\"read\",\"why\":\"Compute ISR writes between the two reads in main's JudgeCondi.\"},{\"variable\":\"test_global_var2\",\"a1_line\":287,\"a1_kind\":\"read\",\"b_line\":349,\"b_kind\":\"write\",\"a2_line\":288,\"a2_kind\":\"read\",\"why\":\"Compute ISR writes between the two reads in main's JudgeCondi.\"}]},{\"case\":\"brake2\",\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":459,\"a1_kind\":\"write\",\"b_line\":285,\"b_kind\":\"write\",\"a2_line\":460,\"a2_kind\":\"read\",\"why\":\"Compute ISR (prio 6) writes between the RR ISR's write and read.\"},{\"variable\":\"test_global_var1\",\"a1_line\":460,\"a1_kind\":\"read\",\"b_line\":285,\"b_kind\":\"write\",\"a2_line\":461,\"a2_kind\":\"read\",\"why\":\"Compute ISR writes between the two consecutive reads in the RR ISR.\"}]},{\"case\":\"brake3\",\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":289,\"a1_kind\":\"read\",\"b_line\":355,\"b_kind\":\"write\",\"a2_line\":290,\"a2_kind\":\"read\",\"why\":\"Compute ISR (prio 6) writes between the two reads in JudgeCondi, which the RR ISR calls.\"},{\"variable\":\"test_global_var2\",\"a1_line\":292,\"a1_kind\":\"read\",\"b_line\":356,\"b_kind\":\"write\",\"a2_line\":293,\"a2_kind\":\"read\",\"why\":\"Compute ISR writes between the two reads in JudgeCondi.\"},{\"variable\":\"test_global_array\",\"a1_line\":589,\"a1_kind\":\"write\",\"b_line\":354,\"b_kind\":\"write\",\"a2_line\":592,\"a2_kind\":\"read\",\"why\":\"Compute ISR overwrites the element between the FL ISR's write and read.\"}]},{\"case\":\"i2c_pca_isa_1\",\"violations\":[]},{\"case\":\"i2c_pca_isa_2\",\"violations\":[]},{\"case\":\"i2c_pca_isa_3\",\"violations\":[]},{\"case\":\"i8xx_tco_1\",\"violations\":[]},{\"case\":\"i8xx_tco_2\",\"violations\":[]},{\"case\":\"i8xx_tco_3\",\"violations\":[]},{\"case\":\"logger1\",\"violations\":[]},{\"case\":\"logger2\",\"violations\":[]},{\"case\":\"logger3\",\"violations\":[]},{\"case\":\"wdt_pci_1\",\"violations\":[]},{\"case\":\"wdt_pci_2\",\"violations\":[]},{\"case\":\"wdt_pci_3\",\"violations\":[]}]}",
+  "wall_s": 21.170759916305542,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 3231,
+    "cache_read": 172197,
+    "cache_write": 484,
+    "latency_s": 21.170517200022005
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

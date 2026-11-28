@@ -1,0 +1,38 @@
+{
+  "case": "program_11",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_umber",
+        "a1_line": 18,
+        "a1_kind": "read",
+        "b_line": 46,
+        "b_kind": "write",
+        "a2_line": 19,
+        "a2_kind": "write",
+        "why": "After enabling interrupt 1 at line 17, irq_quiver can preempt the task between the read of v_umber at line 18 and its write at line 19."
+      },
+      {
+        "variable": "v_umber",
+        "a1_line": 35,
+        "a1_kind": "write",
+        "b_line": 46,
+        "b_kind": "write",
+        "a2_line": 18,
+        "a2_kind": "read",
+        "why": "Interrupts are still enabled when the task writes v_umber at line 35, allowing irq_quiver to run before the task later reads v_umber at line 18."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_umber\",\n      \"a1_line\": 18,\n      \"a1_kind\": \"read\",\n      \"b_line\": 46,\n      \"b_kind\": \"write\",\n      \"a2_line\": 19,\n      \"a2_kind\": \"write\",\n      \"why\": \"After enabling interrupt 1 at line 17, irq_quiver can preempt the task between the read of v_umber at line 18 and its write at line 19.\"\n    },\n    {\n      \"variable\": \"v_umber\",\n      \"a1_line\": 35,\n      \"a1_kind\": \"write\",\n      \"b_line\": 46,\n      \"b_kind\": \"write\",\n      \"a2_line\": 18,\n      \"a2_kind\": \"read\",\n      \"why\": \"Interrupts are still enabled when the task writes v_umber at line 35, allowing irq_quiver to run before the task later reads v_umber at line 18.\"\n    }\n  ]\n}",
+  "wall_s": 14.680721044540405,
+  "usage": {
+    "input_tokens": 959,
+    "output_tokens": 2957,
+    "cache_read": 0,
+    "cache_write": 0,
+    "latency_s": 14.680612487980397
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

@@ -9,20 +9,21 @@ comportamentos que melhorariam os números finais ao custo do recall.
 \section{Princípio que governa a especificação}
 \label{sec:principio}
 
-Uma única regra atravessa todos os requisitos. Um solucionador pode descartar
-um candidato; o modelo de linguagem, não. Um veredicto de insatisfazibilidade é
-uma prova de que a intercalação não existe, e o julgamento de um \llm\ não é
-prova alguma. A consequência é que as etapas automáticas de filtragem
+Todos os requisitos obedecem a uma única regra, segundo a qual um solucionador
+pode descartar um candidato e o modelo de linguagem não pode. Um veredicto de
+insatisfazibilidade é uma prova de que a intercalação não existe, ao passo que
+o julgamento de um \llm\ não é prova alguma. Em consequência, as etapas automáticas de filtragem
 podem reduzir o conjunto, enquanto a etapa de triagem apenas o ordena e o
 explica, mantendo tudo no relatório final.
 
-A regra não decorre apenas de prudência. A literatura mede o efeito das duas
-políticas no mesmo ponto de integração, e os filtros que descartam candidatos
+Além de prudente, a regra tem respaldo na literatura, que mede o efeito das duas
+políticas no mesmo ponto de integração. Os filtros que descartam candidatos
 perdem de 6 a 25 pontos de recall \cite{reducing-fp,adataint}, ao passo que a
 política conservadora do LLift alcança recall de 1,00 \cite{llift}. Dela decorre
 também a escolha das métricas, uma vez que a precisão deixa de ser a medida
-principal e cede lugar ao recall, que precisa ser de 100\%, acompanhado do
-\textit{Inspection Ratio} (Seção~\ref{sec:soundness}).
+principal e cede lugar ao recall, que precisa ser de 100\%, acompanhado de
+medidas que não melhoram com o descarte de candidatos, como as armadilhas que
+chegam ao topo da fila de leitura (Seção~\ref{sec:soundness}).
 
 \section{Requisitos funcionais}
 \label{sec:rf}
@@ -62,29 +63,29 @@ principal e cede lugar ao recall, que precisa ser de 100\%, acompanhado do
   \fonte{Elaborado pelos autores.}
 \end{quadro}
 
-Três requisitos merecem comentário, porque neles está a diferença em relação às
+Quatro requisitos merecem comentário, por concentrarem a diferença em relação às
 ferramentas existentes.
 
 O RF5 e o RF6 são requisitos de descarte, e ambos são condicionados a uma
 prova. No RF5, a prova é estrutural, pois um fluxo de prioridade estritamente
 menor não interrompe outro, e uma interrupção mascarada em todos os caminhos
-não ocorre. No RF6, a prova é o veredicto de insatisfazibilidade do
+não ocorre. No RF6, ela é o veredicto de insatisfazibilidade do
 solucionador. Um resultado inconclusivo, por limite de tempo ou por construção
 não suportada, nunca é tratado como descarte, e o candidato segue adiante
 carregando a informação de até onde o solucionador chegou.
 
 O RF9 fixa o papel do modelo de linguagem, que ordena e explica sem alterar a
-composição do relatório. Nisso reside a diferença entre reduzir o esforço de
-revisão e reduzir o recall, e é também o que permite à avaliação adotar o
-\textit{Inspection Ratio} como medida de custo.
+composição do relatório. Essa restrição separa a redução do esforço de revisão
+da redução do \textit{recall} e permite, além disso, que a avaliação meça o
+esforço de revisão pelo que chega ao topo da fila, com o \textit{recall} inalterado.
 
 O RF12, comumente tratado como acessório em trabalhos acadêmicos, é aqui parte
-da contribuição. A comparação do Quadro~\ref{quadro:capacidades} mostra que a
-automação é o eixo em que as ferramentas dessa literatura efetivamente
-competem, com o NIChecker exigindo que o usuário indique variável e padrão a
-cada execução e o IntRace exigindo um arquivo de configuração escrito
-manualmente. Uma ferramenta que produz bons candidatos, mas não pode ser
-operada, não atende ao objetivo a que se propõe.
+da contribuição, já que uma ferramenta que produz bons candidatos mas não pode
+ser operada não atende ao objetivo a que se propõe. A comparação do
+Quadro~\ref{quadro:capacidades} mostra que a automação é o eixo em que as
+ferramentas dessa literatura efetivamente competem, com o NIChecker exigindo
+que o usuário indique variável e padrão a cada execução e o IntRace exigindo
+um arquivo de configuração escrito manualmente.
 
 \section{Requisitos não funcionais}
 \label{sec:rnf}
@@ -106,7 +107,7 @@ operada, não atende ao objetivo a que se propõe.
     \hline
     RNF5 & A etapa de triagem deve ser independente do provedor do modelo, permitindo trocar de modelo sem alterar os \textit{prompts}. \\
     \hline
-    RNF6 & Toda medição deve registrar o modelo, a data e a configuração de \textit{prompt} que a produziram, e as respostas do modelo devem ser guardadas em cache para que uma medição possa ser recalculada sem nova chamada. \\
+    RNF6 & Toda medição deve registrar o modelo, a data e a configuração de \textit{prompt} que a produziram, e cada conversa com o modelo deve ser guardada junto com a medição, para que qualquer veredicto possa ser conferido depois. \\
     \hline
     RNF7 & O código analisado deve entrar no \textit{prompt} delimitado e declarado como dado, nunca como instrução. \\
     \hline
@@ -144,8 +145,9 @@ Elas valem tanto como especificação quanto como declaração de limites.
     correção da análise de ponteiros usada é herdada, não reverificada.
   \item Uma função sem corpo disponível pode ler e escrever qualquer variável
     global.
-  \item Fluxos de mesma prioridade podem se interromper mutuamente, e o
-    aninhamento é permitido.
+  \item Fluxos de mesma prioridade podem se interromper mutuamente, a menos que
+    a configuração declare que a plataforma não o permite, e o aninhamento é
+    permitido.
   \item Uma interrupção só está mascarada num intervalo se estiver mascarada em
     todos os caminhos e se nenhum outro fluxo puder reabilitá-la ali dentro.
   \item Apenas uma prova descarta um candidato, de modo que nem o resultado

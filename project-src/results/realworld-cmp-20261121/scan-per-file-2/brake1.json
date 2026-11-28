@@ -1,0 +1,88 @@
+{
+  "case": "brake1",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_var1",
+        "a1_line": 284,
+        "a1_kind": "read",
+        "b_line": 348,
+        "b_kind": "write",
+        "a2_line": 285,
+        "a2_kind": "read",
+        "why": "The ISR can preempt JudgeCondi between its two reads of test_global_var1 and change the value, so the two reads can disagree."
+      },
+      {
+        "variable": "test_global_var2",
+        "a1_line": 287,
+        "a1_kind": "read",
+        "b_line": 349,
+        "b_kind": "write",
+        "a2_line": 288,
+        "a2_kind": "read",
+        "why": "task_compute_isr can write test_global_var2 between the two consecutive reads in main, so they can see different values."
+      },
+      {
+        "variable": "test_global_array",
+        "a1_line": 387,
+        "a1_kind": "write",
+        "b_line": 347,
+        "b_kind": "write",
+        "a2_line": 390,
+        "a2_kind": "read",
+        "why": "The higher-priority compute ISR can preempt the RR ISR after its write to array[TRIGGER] and overwrite it. The RR ISR then reads the changed value."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT_h",
+        "a1_line": 409,
+        "a1_kind": "write",
+        "b_line": 299,
+        "b_kind": "write",
+        "a2_line": 460,
+        "a2_kind": "read",
+        "why": "The compute ISR can overwrite RT_h after the RR ISR stores it and before the RR ISR uses it."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT_h",
+        "a1_line": 409,
+        "a1_kind": "write",
+        "b_line": 299,
+        "b_kind": "write",
+        "a2_line": 466,
+        "a2_kind": "read",
+        "why": "The compute ISR can overwrite RT_h between the RR ISR's store and its later read in the else branch."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+        "a1_line": 411,
+        "a1_kind": "write",
+        "b_line": 302,
+        "b_kind": "write",
+        "a2_line": 418,
+        "a2_kind": "read",
+        "why": "The compute ISR can overwrite RT4 after the RR ISR stores it and before the RR ISR reads it."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+        "a1_line": 418,
+        "a1_kind": "read",
+        "b_line": 302,
+        "b_kind": "write",
+        "a2_line": 451,
+        "a2_kind": "read",
+        "why": "The compute ISR can change RT4 between the RR ISR's two reads, so the computation and the threshold check use different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":284,\"a1_kind\":\"read\",\"b_line\":348,\"b_kind\":\"write\",\"a2_line\":285,\"a2_kind\":\"read\",\"why\":\"The ISR can preempt JudgeCondi between its two reads of test_global_var1 and change the value, so the two reads can disagree.\"},{\"variable\":\"test_global_var2\",\"a1_line\":287,\"a1_kind\":\"read\",\"b_line\":349,\"b_kind\":\"write\",\"a2_line\":288,\"a2_kind\":\"read\",\"why\":\"task_compute_isr can write test_global_var2 between the two consecutive reads in main, so they can see different values.\"},{\"variable\":\"test_global_array\",\"a1_line\":387,\"a1_kind\":\"write\",\"b_line\":347,\"b_kind\":\"write\",\"a2_line\":390,\"a2_kind\":\"read\",\"why\":\"The higher-priority compute ISR can preempt the RR ISR after its write to array[TRIGGER] and overwrite it. The RR ISR then reads the changed value.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT_h\",\"a1_line\":409,\"a1_kind\":\"write\",\"b_line\":299,\"b_kind\":\"write\",\"a2_line\":460,\"a2_kind\":\"read\",\"why\":\"The compute ISR can overwrite RT_h after the RR ISR stores it and before the RR ISR uses it.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT_h\",\"a1_line\":409,\"a1_kind\":\"write\",\"b_line\":299,\"b_kind\":\"write\",\"a2_line\":466,\"a2_kind\":\"read\",\"why\":\"The compute ISR can overwrite RT_h between the RR ISR's store and its later read in the else branch.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":411,\"a1_kind\":\"write\",\"b_line\":302,\"b_kind\":\"write\",\"a2_line\":418,\"a2_kind\":\"read\",\"why\":\"The compute ISR can overwrite RT4 after the RR ISR stores it and before the RR ISR reads it.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":418,\"a1_kind\":\"read\",\"b_line\":302,\"b_kind\":\"write\",\"a2_line\":451,\"a2_kind\":\"read\",\"why\":\"The compute ISR can change RT4 between the RR ISR's two reads, so the computation and the threshold check use different values.\"}]}",
+  "wall_s": 12.92937159538269,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1663,
+    "cache_read": 12276,
+    "cache_write": 484,
+    "latency_s": 12.929078489978565
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

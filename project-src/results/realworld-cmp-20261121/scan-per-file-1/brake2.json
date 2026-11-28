@@ -1,0 +1,98 @@
+{
+  "case": "brake2",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_var1",
+        "a1_line": 459,
+        "a1_kind": "write",
+        "b_line": 285,
+        "b_kind": "write",
+        "a2_line": 460,
+        "a2_kind": "read",
+        "why": "Compute ISR (prio 6) can preempt the RR ISR between its write and read-back of the variable, so the RR ISR reads the compute ISR's value."
+      },
+      {
+        "variable": "test_global_var1",
+        "a1_line": 460,
+        "a1_kind": "read",
+        "b_line": 285,
+        "b_kind": "write",
+        "a2_line": 461,
+        "a2_kind": "read",
+        "why": "Compute ISR can preempt between the two reads in the RR ISR and change the value, so the two reads can differ."
+      },
+      {
+        "variable": "test_global_var1",
+        "a1_line": 459,
+        "a1_kind": "write",
+        "b_line": 285,
+        "b_kind": "write",
+        "a2_line": 461,
+        "a2_kind": "read",
+        "why": "Compute ISR can preempt after the RR ISR's write and overwrite the value before the RR ISR reads it at line 461."
+      },
+      {
+        "variable": "test_global_var2",
+        "a1_line": 592,
+        "a1_kind": "write",
+        "b_line": 287,
+        "b_kind": "read",
+        "a2_line": 593,
+        "a2_kind": "write",
+        "why": "Compute ISR (prio 6) can preempt the FL ISR between its two writes, so it can read the intermediate value."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+        "a1_line": 386,
+        "a1_kind": "write",
+        "b_line": 296,
+        "b_kind": "write",
+        "a2_line": 393,
+        "a2_kind": "read",
+        "why": "Compute ISR can preempt the RR ISR after it stores RT4 and overwrite it before RR uses it."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+        "a1_line": 488,
+        "a1_kind": "write",
+        "b_line": 296,
+        "b_kind": "write",
+        "a2_line": 505,
+        "a2_kind": "read",
+        "why": "Compute ISR can preempt the FL ISR after it stores RT4 and overwrite it before FL uses it."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT_h",
+        "a1_line": 384,
+        "a1_kind": "write",
+        "b_line": 293,
+        "b_kind": "write",
+        "a2_line": 435,
+        "a2_kind": "read",
+        "why": "Compute ISR can preempt the RR ISR after it stores RT_h and overwrite it before RR reads it."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT3",
+        "a1_line": 478,
+        "a1_kind": "write",
+        "b_line": 305,
+        "b_kind": "write",
+        "a2_line": 549,
+        "a2_kind": "read",
+        "why": "Compute ISR can preempt the FL ISR after it stores RT3 and overwrite it before FL reads it."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":459,\"a1_kind\":\"write\",\"b_line\":285,\"b_kind\":\"write\",\"a2_line\":460,\"a2_kind\":\"read\",\"why\":\"Compute ISR (prio 6) can preempt the RR ISR between its write and read-back of the variable, so the RR ISR reads the compute ISR's value.\"},{\"variable\":\"test_global_var1\",\"a1_line\":460,\"a1_kind\":\"read\",\"b_line\":285,\"b_kind\":\"write\",\"a2_line\":461,\"a2_kind\":\"read\",\"why\":\"Compute ISR can preempt between the two reads in the RR ISR and change the value, so the two reads can differ.\"},{\"variable\":\"test_global_var1\",\"a1_line\":459,\"a1_kind\":\"write\",\"b_line\":285,\"b_kind\":\"write\",\"a2_line\":461,\"a2_kind\":\"read\",\"why\":\"Compute ISR can preempt after the RR ISR's write and overwrite the value before the RR ISR reads it at line 461.\"},{\"variable\":\"test_global_var2\",\"a1_line\":592,\"a1_kind\":\"write\",\"b_line\":287,\"b_kind\":\"read\",\"a2_line\":593,\"a2_kind\":\"write\",\"why\":\"Compute ISR (prio 6) can preempt the FL ISR between its two writes, so it can read the intermediate value.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":386,\"a1_kind\":\"write\",\"b_line\":296,\"b_kind\":\"write\",\"a2_line\":393,\"a2_kind\":\"read\",\"why\":\"Compute ISR can preempt the RR ISR after it stores RT4 and overwrite it before RR uses it.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":488,\"a1_kind\":\"write\",\"b_line\":296,\"b_kind\":\"write\",\"a2_line\":505,\"a2_kind\":\"read\",\"why\":\"Compute ISR can preempt the FL ISR after it stores RT4 and overwrite it before FL uses it.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT_h\",\"a1_line\":384,\"a1_kind\":\"write\",\"b_line\":293,\"b_kind\":\"write\",\"a2_line\":435,\"a2_kind\":\"read\",\"why\":\"Compute ISR can preempt the RR ISR after it stores RT_h and overwrite it before RR reads it.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT3\",\"a1_line\":478,\"a1_kind\":\"write\",\"b_line\":305,\"b_kind\":\"write\",\"a2_line\":549,\"a2_kind\":\"read\",\"why\":\"Compute ISR can preempt the FL ISR after it stores RT3 and overwrite it before FL reads it.\"}]}",
+  "wall_s": 15.130222797393799,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1940,
+    "cache_read": 986,
+    "cache_write": 14895,
+    "latency_s": 15.129955921991495
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

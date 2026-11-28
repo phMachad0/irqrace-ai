@@ -1,0 +1,58 @@
+{
+  "case": "blink1",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 120,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "write",
+        "why": "Timer_Force_isr (priority 3) can preempt Timer_A_isr between the read and write of timerCount++, so its write is lost."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "write",
+        "b_line": 121,
+        "b_kind": "write",
+        "a2_line": 96,
+        "a2_kind": "read",
+        "why": "Timer_Force_isr can preempt Timer_A_isr after the increment and set timerCount to 0. The check at line 96 then reads 0, not the value just written."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 121,
+        "b_kind": "write",
+        "a2_line": 96,
+        "a2_kind": "read",
+        "why": "Timer_Force_isr can preempt Timer_A_isr between its reads and change timerCount, so the two reads see different values."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 108,
+        "a1_kind": "write",
+        "b_line": 121,
+        "b_kind": "write",
+        "a2_line": 109,
+        "a2_kind": "read",
+        "why": "Timer_Force_isr can preempt Timer_B_isr after it writes 1 and set timerCount to 0. The check at line 109 then fails."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":120,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"Timer_Force_isr (priority 3) can preempt Timer_A_isr between the read and write of timerCount++, so its write is lost.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":121,\"b_kind\":\"write\",\"a2_line\":96,\"a2_kind\":\"read\",\"why\":\"Timer_Force_isr can preempt Timer_A_isr after the increment and set timerCount to 0. The check at line 96 then reads 0, not the value just written.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":121,\"b_kind\":\"write\",\"a2_line\":96,\"a2_kind\":\"read\",\"why\":\"Timer_Force_isr can preempt Timer_A_isr between its reads and change timerCount, so the two reads see different values.\"},{\"variable\":\"timerCount\",\"a1_line\":108,\"a1_kind\":\"write\",\"b_line\":121,\"b_kind\":\"write\",\"a2_line\":109,\"a2_kind\":\"read\",\"why\":\"Timer_Force_isr can preempt Timer_B_isr after it writes 1 and set timerCount to 0. The check at line 109 then fails.\"}]}",
+  "wall_s": 9.44047498703003,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1053,
+    "cache_read": 3473,
+    "cache_write": 487,
+    "latency_s": 9.431015540001681
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

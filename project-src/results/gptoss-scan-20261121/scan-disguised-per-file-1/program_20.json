@@ -1,0 +1,28 @@
+{
+  "case": "program_20",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_beacon[1]",
+        "a1_line": 50,
+        "a1_kind": "read",
+        "b_line": 24,
+        "b_kind": "write",
+        "a2_line": 51,
+        "a2_kind": "read",
+        "why": "ISR irq_delta can write v_beacon[1] between the two reads of v_beacon[1] in task_quiver, breaking atomicity."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_beacon[1]\",\"a1_line\":50,\"a1_kind\":\"read\",\"b_line\":24,\"b_kind\":\"write\",\"a2_line\":51,\"a2_kind\":\"read\",\"why\":\"ISR irq_delta can write v_beacon[1] between the two reads of v_beacon[1] in task_quiver, breaking atomicity.\"}]}",
+  "wall_s": 20.054903745651245,
+  "usage": {
+    "input_tokens": 571,
+    "output_tokens": 1912,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 20.054816254007164
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

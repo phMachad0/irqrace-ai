@@ -1,0 +1,78 @@
+{
+  "case": "i2c_pca_isa_2",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "irq",
+        "a1_line": 308,
+        "a1_kind": "write",
+        "b_line": 321,
+        "b_kind": "write",
+        "a2_line": 313,
+        "a2_kind": "read",
+        "why": "req2_isr writes irq then re-reads it; higher-priority req3_isr (also req4/req5) can preempt in between and overwrite irq, so the check at 313 sees a different value."
+      },
+      {
+        "variable": "irq",
+        "a1_line": 308,
+        "a1_kind": "write",
+        "b_line": 331,
+        "b_kind": "write",
+        "a2_line": 313,
+        "a2_kind": "read",
+        "why": "Higher-priority req4_isr can preempt req2_isr between its write and read of irq and overwrite it."
+      },
+      {
+        "variable": "irq",
+        "a1_line": 308,
+        "a1_kind": "write",
+        "b_line": 347,
+        "b_kind": "write",
+        "a2_line": 313,
+        "a2_kind": "read",
+        "why": "Higher-priority req5_isr can preempt req2_isr between its write and read of irq and overwrite it."
+      },
+      {
+        "variable": "irq",
+        "a1_line": 331,
+        "a1_kind": "write",
+        "b_line": 347,
+        "b_kind": "write",
+        "a2_line": 336,
+        "a2_kind": "read",
+        "why": "req5_isr (higher priority) can preempt req4_isr between its write of irq and the later check, changing the value."
+      },
+      {
+        "variable": "test_global_var1",
+        "a1_line": 289,
+        "a1_kind": "read",
+        "b_line": 354,
+        "b_kind": "write",
+        "a2_line": 290,
+        "a2_kind": "read",
+        "why": "req6_isr reads test_global_var1 twice in JudgeCondi; higher-priority req5_isr can write it between the two reads, so the reads see different values."
+      },
+      {
+        "variable": "test_global_var2",
+        "a1_line": 292,
+        "a1_kind": "read",
+        "b_line": 338,
+        "b_kind": "write",
+        "a2_line": 293,
+        "a2_kind": "read",
+        "why": "req6_isr reads test_global_var2 twice; higher-priority req4_isr can write it between the two reads, so the reads see different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"irq\",\"a1_line\":308,\"a1_kind\":\"write\",\"b_line\":321,\"b_kind\":\"write\",\"a2_line\":313,\"a2_kind\":\"read\",\"why\":\"req2_isr writes irq then re-reads it; higher-priority req3_isr (also req4/req5) can preempt in between and overwrite irq, so the check at 313 sees a different value.\"},{\"variable\":\"irq\",\"a1_line\":308,\"a1_kind\":\"write\",\"b_line\":331,\"b_kind\":\"write\",\"a2_line\":313,\"a2_kind\":\"read\",\"why\":\"Higher-priority req4_isr can preempt req2_isr between its write and read of irq and overwrite it.\"},{\"variable\":\"irq\",\"a1_line\":308,\"a1_kind\":\"write\",\"b_line\":347,\"b_kind\":\"write\",\"a2_line\":313,\"a2_kind\":\"read\",\"why\":\"Higher-priority req5_isr can preempt req2_isr between its write and read of irq and overwrite it.\"},{\"variable\":\"irq\",\"a1_line\":331,\"a1_kind\":\"write\",\"b_line\":347,\"b_kind\":\"write\",\"a2_line\":336,\"a2_kind\":\"read\",\"why\":\"req5_isr (higher priority) can preempt req4_isr between its write of irq and the later check, changing the value.\"},{\"variable\":\"test_global_var1\",\"a1_line\":289,\"a1_kind\":\"read\",\"b_line\":354,\"b_kind\":\"write\",\"a2_line\":290,\"a2_kind\":\"read\",\"why\":\"req6_isr reads test_global_var1 twice in JudgeCondi; higher-priority req5_isr can write it between the two reads, so the reads see different values.\"},{\"variable\":\"test_global_var2\",\"a1_line\":292,\"a1_kind\":\"read\",\"b_line\":338,\"b_kind\":\"write\",\"a2_line\":293,\"a2_kind\":\"read\",\"why\":\"req6_isr reads test_global_var2 twice; higher-priority req4_isr can write it between the two reads, so the reads see different values.\"}]}",
+  "wall_s": 12.735595941543579,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1563,
+    "cache_read": 6551,
+    "cache_write": 489,
+    "latency_s": 12.735430956003256
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

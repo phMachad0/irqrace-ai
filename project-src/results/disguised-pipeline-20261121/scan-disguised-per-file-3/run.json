@@ -1,0 +1,7 @@
+{
+  "mode": "per-file",
+  "backend": "claude-cli:sonnet@low",
+  "workers": 4,
+  "suite": "/home/pedro/Documentos/tcc/worktrees/racebench-disguised-c",
+  "wall_s": 68.07679438591003
+}

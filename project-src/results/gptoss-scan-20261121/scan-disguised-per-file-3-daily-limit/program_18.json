@@ -1,0 +1,128 @@
+{
+  "case": "program_18",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_vessel",
+        "a1_line": 33,
+        "a1_kind": "read",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 57,
+        "a2_kind": "read",
+        "why": "irq_quiver can interrupt between the two reads of v_vessel, inserting its write and breaking atomicity."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 33,
+        "a1_kind": "read",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "read",
+        "why": "irq_quiver can interrupt between the two reads of v_vessel, inserting its write and breaking atomicity."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 57,
+        "a1_kind": "read",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "read",
+        "why": "irq_quiver can interrupt between the two reads of v_vessel, inserting its write and breaking atomicity."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 49,
+        "a1_kind": "write",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 33,
+        "a2_kind": "read",
+        "why": "irq_quiver can interrupt between a write and a later read of v_vessel, breaking atomicity."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 49,
+        "a1_kind": "write",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 57,
+        "a2_kind": "read",
+        "why": "irq_quiver can interrupt between a write and a later read of v_vessel, breaking atomicity."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 49,
+        "a1_kind": "write",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "read",
+        "why": "irq_quiver can interrupt between a write and a later read of v_vessel, breaking atomicity."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 22,
+        "a1_kind": "write",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 33,
+        "a2_kind": "read",
+        "why": "irq_quiver can interrupt between a write and a later read of v_vessel, breaking atomicity."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 22,
+        "a1_kind": "write",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 57,
+        "a2_kind": "read",
+        "why": "irq_quiver can interrupt between a write and a later read of v_vessel, breaking atomicity."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 22,
+        "a1_kind": "write",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "read",
+        "why": "irq_quiver can interrupt between a write and a later read of v_vessel, breaking atomicity."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 34,
+        "a1_kind": "write",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 57,
+        "a2_kind": "read",
+        "why": "irq_quiver can interrupt between a write and a later read of v_vessel, breaking atomicity."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 34,
+        "a1_kind": "write",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "read",
+        "why": "irq_quiver can interrupt between a write and a later read of v_vessel, breaking atomicity."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_vessel\",\n      \"a1_line\": 33,\n      \"a1_kind\": \"read\",\n      \"b_line\": 41,\n      \"b_kind\": \"write\",\n      \"a2_line\": 57,\n      \"a2_kind\": \"read\",\n      \"why\": \"irq_quiver can interrupt between the two reads of v_vessel, inserting its write and breaking atomicity.\"\n    },\n    {\n      \"variable\": \"v_vessel\",\n      \"a1_line\": 33,\n      \"a1_kind\": \"read\",\n      \"b_line\": 41,\n      \"b_kind\": \"write\",\n      \"a2_line\": 29,\n      \"a2_kind\": \"read\",\n      \"why\": \"irq_quiver can interrupt between the two reads of v_vessel, inserting its write and breaking atomicity.\"\n    },\n    {\n      \"variable\": \"v_vessel\",\n      \"a1_line\": 57,\n      \"a1_kind\": \"read\",\n      \"b_line\": 41,\n      \"b_kind\": \"write\",\n      \"a2_line\": 29,\n      \"a2_kind\": \"read\",\n      \"why\": \"irq_quiver can interrupt between the two reads of v_vessel, inserting its write and breaking atomicity.\"\n    },\n    {\n      \"variable\": \"v_vessel\",\n      \"a1_line\": 49,\n      \"a1_kind\": \"write\",\n      \"b_line\": 41,\n      \"b_kind\": \"write\",\n      \"a2_line\": 33,\n      \"a2_kind\": \"read\",\n      \"why\": \"irq_quiver can interrupt between a write and a later read of v_vessel, breaking atomicity.\"\n    },\n    {\n      \"variable\": \"v_vessel\",\n      \"a1_line\": 49,\n      \"a1_kind\": \"write\",\n      \"b_line\": 41,\n      \"b_kind\": \"write\",\n      \"a2_line\": 57,\n      \"a2_kind\": \"read\",\n      \"why\": \"irq_quiver can interrupt between a write and a later read of v_vessel, breaking atomicity.\"\n    },\n    {\n      \"variable\": \"v_vessel\",\n      \"a1_line\": 49,\n      \"a1_kind\": \"write\",\n      \"b_line\": 41,\n      \"b_kind\": \"write\",\n      \"a2_line\": 29,\n      \"a2_kind\": \"read\",\n      \"why\": \"irq_quiver can interrupt between a write and a later read of v_vessel, breaking atomicity.\"\n    },\n    {\n      \"variable\": \"v_vessel\",\n      \"a1_line\": 22,\n      \"a1_kind\": \"write\",\n      \"b_line\": 41,\n      \"b_kind\": \"write\",\n      \"a2_line\": 33,\n      \"a2_kind\": \"read\",\n      \"why\": \"irq_quiver can interrupt between a write and a later read of v_vessel, breaking atomicity.\"\n    },\n    {\n      \"variable\": \"v_vessel\",\n      \"a1_line\": 22,\n      \"a1_kind\": \"write\",\n      \"b_line\": 41,\n      \"b_kind\": \"write\",\n      \"a2_line\": 57,\n      \"a2_kind\": \"read\",\n      \"why\": \"irq_quiver can interrupt between a write and a later read of v_vessel, breaking atomicity.\"\n    },\n    {\n      \"variable\": \"v_vessel\",\n      \"a1_line\": 22,\n      \"a1_kind\": \"write\",\n      \"b_line\": 41,\n      \"b_kind\": \"write\",\n      \"a2_line\": 29,\n      \"a2_kind\": \"read\",\n      \"why\": \"irq_quiver can interrupt between a write and a later read of v_vessel, breaking atomicity.\"\n    },\n    {\n      \"variable\": \"v_vessel\",\n      \"a1_line\": 34,\n      \"a1_kind\": \"write\",\n      \"b_line\": 41,\n      \"b_kind\": \"write\",\n      \"a2_line\": 57,\n      \"a2_kind\": \"read\",\n      \"why\": \"irq_quiver can interrupt between a write and a later read of v_vessel, breaking atomicity.\"\n    },\n    {\n      \"variable\": \"v_vessel\",\n      \"a1_line\": 34,\n      \"a1_kind\": \"write\",\n      \"b_line\": 41,\n      \"b_kind\": \"write\",\n      \"a2_line\": 29,\n      \"a2_kind\": \"read\",\n      \"why\": \"irq_quiver can interrupt between a write and a later read of v_vessel, breaking atomicity.\"\n    }]}",
+  "wall_s": 9.84732460975647,
+  "usage": {
+    "input_tokens": 531,
+    "output_tokens": 4000,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 9.847176907001995
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

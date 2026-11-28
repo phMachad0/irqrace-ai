@@ -1,0 +1,38 @@
+{
+  "case": "program_08",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_amber",
+        "a1_line": 12,
+        "a1_kind": "write",
+        "b_line": 27,
+        "b_kind": "write",
+        "a2_line": 23,
+        "a2_kind": "read",
+        "why": "ISR can write v_amber between the task's write at line 12 and the subsequent read in fn_fjord at line 23, forming a write‑write‑read pattern."
+      },
+      {
+        "variable": "v_amber",
+        "a1_line": 23,
+        "a1_kind": "read",
+        "b_line": 27,
+        "b_kind": "write",
+        "a2_line": 23,
+        "a2_kind": "write",
+        "why": "ISR can interrupt between the read and write of *ptr_var in fn_fjord, yielding a read‑write‑write sequence on v_amber."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_amber\",\"a1_line\":12,\"a1_kind\":\"write\",\"b_line\":27,\"b_kind\":\"write\",\"a2_line\":23,\"a2_kind\":\"read\",\"why\":\"ISR can write v_amber between the task's write at line 12 and the subsequent read in fn_fjord at line 23, forming a write‑write‑read pattern.\"},{\"variable\":\"v_amber\",\"a1_line\":23,\"a1_kind\":\"read\",\"b_line\":27,\"b_kind\":\"write\",\"a2_line\":23,\"a2_kind\":\"write\",\"why\":\"ISR can interrupt between the read and write of *ptr_var in fn_fjord, yielding a read‑write‑write sequence on v_amber.\"}]}",
+  "wall_s": 20.528897285461426,
+  "usage": {
+    "input_tokens": 832,
+    "output_tokens": 1477,
+    "cache_read": 0,
+    "cache_write": 0,
+    "latency_s": 20.528842020983575
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

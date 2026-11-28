@@ -1,0 +1,48 @@
+{
+  "case": "svp_simple_020_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_020_001_global_para",
+        "a1_line": 36,
+        "a1_kind": "read",
+        "b_line": 52,
+        "b_kind": "write",
+        "a2_line": 39,
+        "a2_kind": "read",
+        "why": "isr_1 can preempt main and enable ISR 2 (masking is global). ISR 2 can then write para between main's two reads, so the two comparisons can see different values."
+      },
+      {
+        "variable": "svp_simple_020_001_global_var",
+        "a1_line": 37,
+        "a1_kind": "read",
+        "b_line": 53,
+        "b_kind": "write",
+        "a2_line": 40,
+        "a2_kind": "read",
+        "why": "After isr_1 enables ISR 2, ISR 2 can preempt main between its two reads of global_var and write it."
+      },
+      {
+        "variable": "svp_simple_020_001_global_var",
+        "a1_line": 37,
+        "a1_kind": "read",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 40,
+        "a2_kind": "read",
+        "why": "isr_1 is not masked and can preempt main between its two reads of global_var and write it."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_020_001_global_para\",\"a1_line\":36,\"a1_kind\":\"read\",\"b_line\":52,\"b_kind\":\"write\",\"a2_line\":39,\"a2_kind\":\"read\",\"why\":\"isr_1 can preempt main and enable ISR 2 (masking is global). ISR 2 can then write para between main's two reads, so the two comparisons can see different values.\"},{\"variable\":\"svp_simple_020_001_global_var\",\"a1_line\":37,\"a1_kind\":\"read\",\"b_line\":53,\"b_kind\":\"write\",\"a2_line\":40,\"a2_kind\":\"read\",\"why\":\"After isr_1 enables ISR 2, ISR 2 can preempt main between its two reads of global_var and write it.\"},{\"variable\":\"svp_simple_020_001_global_var\",\"a1_line\":37,\"a1_kind\":\"read\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":40,\"a2_kind\":\"read\",\"why\":\"isr_1 is not masked and can preempt main between its two reads of global_var and write it.\"}]}",
+  "wall_s": 8.098966598510742,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 882,
+    "cache_read": 2483,
+    "cache_write": 489,
+    "latency_s": 8.098762798006646
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

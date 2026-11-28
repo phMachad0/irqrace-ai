@@ -1,0 +1,48 @@
+{
+  "case": "program_15",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_onyx",
+        "a1_line": 21,
+        "a1_kind": "read",
+        "b_line": 12,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "The ISR can write v_onyx between two reads of the loop condition in task_nimbus, breaking atomicity (read‑write‑read)."
+      },
+      {
+        "variable": "v_onyx",
+        "a1_line": 21,
+        "a1_kind": "write",
+        "b_line": 12,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "The ISR can write v_onyx between the task's initialization write and the subsequent condition read, yielding a write‑write‑read violation."
+      },
+      {
+        "variable": "v_onyx",
+        "a1_line": 21,
+        "a1_kind": "read",
+        "b_line": 12,
+        "b_kind": "write",
+        "a2_line": 22,
+        "a2_kind": "write",
+        "why": "The ISR can write v_onyx between the task's condition read and the later increment write, forming a read‑write‑write atomicity violation."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_onyx\",\n      \"a1_line\": 21,\n      \"a1_kind\": \"read\",\n      \"b_line\": 12,\n      \"b_kind\": \"write\",\n      \"a2_line\": 21,\n      \"a2_kind\": \"read\",\n      \"why\": \"The ISR can write v_onyx between two reads of the loop condition in task_nimbus, breaking atomicity (read‑write‑read).\"\n    },\n    {\n      \"variable\": \"v_onyx\",\n      \"a1_line\": 21,\n      \"a1_kind\": \"write\",\n      \"b_line\": 12,\n      \"b_kind\": \"write\",\n      \"a2_line\": 21,\n      \"a2_kind\": \"read\",\n      \"why\": \"The ISR can write v_onyx between the task's initialization write and the subsequent condition read, yielding a write‑write‑read violation.\"\n    },\n    {\n      \"variable\": \"v_onyx\",\n      \"a1_line\": 21,\n      \"a1_kind\": \"read\",\n      \"b_line\": 12,\n      \"b_kind\": \"write\",\n      \"a2_line\": 22,\n      \"a2_kind\": \"write\",\n      \"why\": \"The ISR can write v_onyx between the task's condition read and the later increment write, forming a read‑write‑write atomicity violation.\"\n    }\n  ]\n}",
+  "wall_s": 21.941293239593506,
+  "usage": {
+    "input_tokens": 309,
+    "output_tokens": 2350,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 21.94117130700033
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

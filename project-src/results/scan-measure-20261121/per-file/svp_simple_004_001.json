@@ -1,0 +1,28 @@
+{
+  "case": "svp_simple_004_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_004_001_global_var1",
+        "a1_line": 41,
+        "a1_kind": "read",
+        "b_line": 59,
+        "b_kind": "write",
+        "a2_line": 46,
+        "a2_kind": "read",
+        "why": "ISR1 (priority 1) is never masked in main and can preempt between the two reads of var1, so main may see different values. The write at line 59 runs because condition3 is always 1."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_004_001_global_var1\",\"a1_line\":41,\"a1_kind\":\"read\",\"b_line\":59,\"b_kind\":\"write\",\"a2_line\":46,\"a2_kind\":\"read\",\"why\":\"ISR1 (priority 1) is never masked in main and can preempt between the two reads of var1, so main may see different values. The write at line 59 runs because condition3 is always 1.\"}]}",
+  "wall_s": 7.19143009185791,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 691,
+    "cache_read": 0,
+    "cache_write": 3232,
+    "latency_s": 7.1908219210163224
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

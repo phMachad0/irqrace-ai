@@ -1,0 +1,78 @@
+{
+  "case": "program_03",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_ember",
+        "a1_line": 20,
+        "a1_kind": "read",
+        "b_line": 36,
+        "b_kind": "write",
+        "a2_line": 20,
+        "a2_kind": "write",
+        "why": "irq_velvet (priority 4) can preempt irq_loom between its read and write of v_ember, so the increment is lost."
+      },
+      {
+        "variable": "v_ember",
+        "a1_line": 20,
+        "a1_kind": "write",
+        "b_line": 36,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "irq_velvet can preempt irq_loom after it writes v_ember and reset it to 0, so the check at line 21 sees a different value."
+      },
+      {
+        "variable": "v_ember",
+        "a1_line": 20,
+        "a1_kind": "read",
+        "b_line": 36,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "irq_velvet can change v_ember between the read at line 20 and the read at line 21."
+      },
+      {
+        "variable": "v_ember",
+        "a1_line": 28,
+        "a1_kind": "write",
+        "b_line": 20,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "read",
+        "why": "irq_loom (priority 3) can preempt irq_bluff (priority 2) between its write and its check, and it changes v_ember."
+      },
+      {
+        "variable": "v_ember",
+        "a1_line": 28,
+        "a1_kind": "write",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "read",
+        "why": "irq_reef (priority 3) can preempt irq_bluff after its write and set v_ember to 1, so the check at line 29 fails."
+      },
+      {
+        "variable": "v_ember",
+        "a1_line": 28,
+        "a1_kind": "write",
+        "b_line": 36,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "read",
+        "why": "irq_velvet (priority 4) can preempt irq_bluff between its write and its check and write v_ember."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_ember\",\"a1_line\":20,\"a1_kind\":\"read\",\"b_line\":36,\"b_kind\":\"write\",\"a2_line\":20,\"a2_kind\":\"write\",\"why\":\"irq_velvet (priority 4) can preempt irq_loom between its read and write of v_ember, so the increment is lost.\"},{\"variable\":\"v_ember\",\"a1_line\":20,\"a1_kind\":\"write\",\"b_line\":36,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"irq_velvet can preempt irq_loom after it writes v_ember and reset it to 0, so the check at line 21 sees a different value.\"},{\"variable\":\"v_ember\",\"a1_line\":20,\"a1_kind\":\"read\",\"b_line\":36,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"irq_velvet can change v_ember between the read at line 20 and the read at line 21.\"},{\"variable\":\"v_ember\",\"a1_line\":28,\"a1_kind\":\"write\",\"b_line\":20,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"read\",\"why\":\"irq_loom (priority 3) can preempt irq_bluff (priority 2) between its write and its check, and it changes v_ember.\"},{\"variable\":\"v_ember\",\"a1_line\":28,\"a1_kind\":\"write\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"read\",\"why\":\"irq_reef (priority 3) can preempt irq_bluff after its write and set v_ember to 1, so the check at line 29 fails.\"},{\"variable\":\"v_ember\",\"a1_line\":28,\"a1_kind\":\"write\",\"b_line\":36,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"read\",\"why\":\"irq_velvet (priority 4) can preempt irq_bluff between its write and its check and write v_ember.\"}]}",
+  "wall_s": 12.917065620422363,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1505,
+    "cache_read": 2136,
+    "cache_write": 485,
+    "latency_s": 12.916912114014849
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,28 @@
+{
+  "case": "program_01",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_pebble",
+        "a1_line": 21,
+        "a1_kind": "read",
+        "b_line": 9,
+        "b_kind": "write",
+        "a2_line": 22,
+        "a2_kind": "read",
+        "why": "ISR writes v_pebble between two reads in task, causing a read‑write‑read race."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_pebble\",\"a1_line\":21,\"a1_kind\":\"read\",\"b_line\":9,\"b_kind\":\"write\",\"a2_line\":22,\"a2_kind\":\"read\",\"why\":\"ISR writes v_pebble between two reads in task, causing a read‑write‑read race.\"}]}",
+  "wall_s": 2.234527587890625,
+  "usage": {
+    "input_tokens": 818,
+    "output_tokens": 894,
+    "cache_read": 0,
+    "cache_write": 0,
+    "latency_s": 2.2344775490055326
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

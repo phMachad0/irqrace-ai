@@ -1598,3 +1598,501 @@ the desktop stepper takes the common directory of all `.c` files as the root. Sa
 working directory and any copy of the suite; **every id changed once** (ids quoted before
 2026-10-29 are the old ones; the LLM cache starts cold). Static recall gate unchanged: 316 → 202 →
 166, 53/53, traps 30 → 25 → 11 of 33. 594 tests pass.
+
+## [2026-10-29] direction | supported platforms: native Ubuntu and Windows + WSL2
+
+The human's direction: the tool must run on native Ubuntu and on Windows + WSL2, both first-class.
+Recorded in [[Reimplementation Assessment]] ("Technology stack", new "Platforms" item) with the rules
+it implies: every toolchain call goes through `run_toolchain_cmd`, toolchain paths are absolute, and
+files the binaries read are written with LF. [[Semana 1 — Contratos e Toolchain]] §8 gets a dated
+note in Portuguese. Prompted by two Windows failures in the desktop app. The first was
+`irqrace-probe` never having been built: it was built under WSL, after working around CRLF in
+`build-analysis.sh`. The second was stage 3 calling its ELF binary with a bare `subprocess.run`
+(`WinError 193`). `stage3.run_stage3` now uses `run_toolchain_cmd` and writes its query with LF.
+Re-run on the failed run's query: 10 verdicts (6 sat, 4 unsat). Open: no `.gitattributes`
+pinning `*.sh` to LF yet.
+
+## [2026-10-29] direction | desktop app: home screen, Racebench mode, generic mode with C1 wizard
+
+The human's direction: the desktop app opens on a home screen with two modes. The first runs the
+Racebench cases unattended. The second configures the program under analysis without ever editing
+the C1 YAML by hand: the file is imported, or written by a wizard. The wizard
+(`ui/c1_wizard.py`) has five pages: project, flows, masking, semantics, review. It validates
+through the same `Config.from_dict` the pipeline uses, offers the recall-safe defaults and flags
+every unsound option. The benchmark screen (`ui/benchmark_screen.py`) runs the selected cases at
+static (1–4) or full (1–6) depth and scores each with `evaluate_run`. A failing case becomes a row
+in the table and the batch continues; the summary goes to `runs/benchmarks/`. Also fixed:
+`resolve_c_source_files` resolved a relative `source_root` against the working directory, so from
+the vault root it read the old `../racebench` checkout instead of the vendored suite. Diary:
+[[Semana 8 — Integração das Trilhas A e B]] §3.15. Tests: 8 new in `test_desktop_modes.py`. On
+Windows the suite is 389 passed / 37 failed, and all 37 failures predate this change.
+
+## [2026-10-29] direction | LLM history tab highlights every code read; no C4 request ever issued
+
+The human's direction: the desktop's LLM history must show and highlight every request the model
+makes to read code, because what it read has to be evaluated. `ui/llm_history.py` separates code
+*given* in the C2 record's `<source>` blocks from code *requested* through C4, and renders a
+"what the LLM read" summary followed by the colour-tagged transcript. `TriageClient` now records the
+parsed requests and the resolver's replies as structured fields of `turns.jsonl`; older runs are
+reconstructed from the text. C4 is the project's own textual protocol, not MCP. Finding: none of
+the 164 existing transcripts contains a single C4 request. No main ablation row (`simple`,
+`+domain`, `+decomposition`, `+self-validation`) enables `progressive`; only the deferred
+`+progressive` row does. Every verdict so far rests only on the code the C2 record handed over, and
+the D#2 request distribution has never been measured ([[LLM Stage Design]]). Diary:
+[[Semana 8 — Integração das Trilhas A e B]] §3.16.
+
+## [2026-10-29] direction | LLM cache hits made visible; transcript stored with the cache
+The desktop "Completo" Racebench depth looked static-only, with no LLM conversation. Steps 5–6 did
+run, but the result cache (`.llm-cache/`) answered silently: `TriageClient.triage` and
+`RepairClient.repair` returned the cached verdict or patch without writing any transcript or log line.
+In `svp_simple_030_001` only 2 of 11 candidates have a `turns.jsonl`. Fix:
+- the cache now stores the transcript beside each entry;
+- a hit writes a `cache_hit` marker turn followed by the original conversation into the run;
+- the stage log and `log.ndjson` (`llm-cache-hit`) count API vs cache answers;
+- the history tab shows a cache banner;
+- a "Reutilizar respostas em cache" checkbox on the LLM screen forces fresh API calls.
+
+The 306 pre-existing entries have no transcript, and the tab says so. Diary:
+[[Semana 8 — Integração das Trilhas A e B]] §3.17.
+
+## [2026-10-29] result | first real-firmware run — rastro-robot (ESP32, C++, FreeRTOS), planted ISR×task race
+
+On the human's direction, a lost update was planted in their line-following robot firmware
+(`tasks.cpp`: `irTimerIsr` does `g_ir_ticks_pending++`, `taskLineSensor` reads it at 240 and zeroes
+it at 244) and the tool run on the whole `firmware` build: 13 C++ TUs, compiled by clang-14 against
+the real ESP-IDF 4.4.5 headers with no source change, and 9 flows (mangled entry names). **Found and
+kept to the end**: stage 1 2770 → stage 2 10 → solver 10 sat → triage puts it first (`claude-cli:sonnet`,
+`+self-validation`: feasible 0.93, harmful 0.80). Triage buckets 9/10 as `likely_real`. The criterion
+fires on "feeds a branch" for benign-by-design counters, so the ranking discriminates and the
+buckets do not.
+
+Three problems Racebench could not show, recorded in [[Soundness Assumptions]] (B2 note, C2b note,
+**new E6**), [[Soundness and False Negatives]] §1 and §6, and [[Open Questions]]. Issues opened on
+GitHub: arity-only indirect-call matching explodes on C++ virtual calls (~15.9M triples; the run
+only finished with the unsound `points-to-only`, [#4](https://github.com/phMachad0/irqrace-ai/issues/4));
+context-insensitive `this` makes two task-local `RateMeter`s one shared object (98% of stage-1
+candidates, [#5](https://github.com/phMachad0/irqrace-ai/issues/5)); the stage-2 priority check
+assumes one core, giving 25 unsound drops across the ESP32's two cores
+([#6](https://github.com/phMachad0/irqrace-ai/issues/6)). A fourth issue records a direction from the
+human: declare the target hardware in C1 and pass it to the LLM
+([#7](https://github.com/phMachad0/irqrace-ai/issues/7)). It is now in [[Open Questions]] (LLM side).
+The model had to guess "the 32-bit volatile read is probably atomic". Filed as
+[[Rastro-Robot Firmware]]. The C1 files used are kept outside the vault, in the human's Downloads.
+
+## [2026-10-29] result | real-world suite vendored and run — 1980 → 1005 → 941, gate 40/45 (45/45 with BMC4AV's priorities)
+
+Roadmap W9 started on a new branch, `bench/real-world`, cut from `main` (`55d25eb`). On the human's
+direction, NIChecker's copy of the 18 programs is vendored at `project-src/bench/realworld`
+(`zhvngyuan/NIChecker` `40267c0`, inputs only, unchanged, commit `8afcf8b`). Vendoring showed the
+two shipped copies are different programs: `main.c` differs in all 18, priorities in five, and
+`violation.info` in `i8xx_tco_1`. The wiki's "byte-identical" claim is corrected in [[Contradictions]]
+#1 and the difference recorded as **#9**. Six programs do not compile as shipped. They build from
+`-D` definitions and one `-Wno-error` flag in their C1, with the files untouched
+(`bench/realworld-errata.yaml`). `logger2`'s ground truth is unlabelled and names absent variables,
+so it is read as zero entries. `blink2`/`blink3` carry per-instance lines copied from `blink1`
+without the shift from an inserted ISR. They get six line errata, `likely`, which the recall gate
+surfaced (40/45 at stage 1 before them, 45/45 after).
+
+New: `src/irqrace/realworld.py`, `irqrace realworld gen-configs|run` (`-j` for parallel programs,
+`--raw` for the shipped ground truth), 23 C1 files (18 + 5 with BMC4AV's priorities) and 12 tests.
+First full run, stages 1→3: **1980 → 1005 → 941**, solver 842 sat / 99 inconclusive / 64 unsat.
+Gate **40/45**. All five misses are correct stage-2 priority drops: NIChecker's own `priority.info`
+makes its own annotated violations unreachable in `logger3`, `wdt_pci_1` and `wdt_pci_2`. Mirroring
+the convention gives 18/45, so the inversion is not global. With BMC4AV's priorities the five
+disputed programs are 9/9 and the suite 45/45. Which priorities to adopt is the human's decision.
+Diary: [[Semana 9 — O Benchmark de Programas Reais]].
+
+## [2026-10-30] direction | Racebench batch in two lanes: the LLM no longer waits for the static steps
+On the human's direction, "Executar todos" at full depth no longer runs each case end to end before
+the next. `run_batch` (`ui/benchmark_screen.py`) keeps the static steps on one thread, one case at a
+time, and hands each case that clears them to a pool for its LLM steps. The pool size is set on screen
+(1–16, default 4). Parallelism is per case; candidates inside a case stay in order. Also:
+- a failing LLM step keeps the case's static figures;
+- `write_manifest` retries `os.replace` on `PermissionError`, because the static lane now scans
+  manifests while LLM threads write them (a hazard read from the code, not observed in a run);
+- the batch JSON records `llm_workers`, `batch_wall_s` and `not_triaged`, because a rate-limited
+  candidate stays `uncertain`: recall does not show it, triage quality does.
+
+Verified end to end on the real screen with all 31 cases against a local fake endpoint (53/53 bugs,
+at most 4 calls in flight). Time saved and rate-limit behaviour remain unmeasured. Diary: [[Semana 8 — Integração das Trilhas A e B]] §3.18.
+
+## [2026-10-30] direction | Racebench LLM progress made visible; dropped connections retried; +progressive findings
+The screen looked stuck on `🤖 LLM`. The runs show it was not: with `claude-cli` cases ran in parallel,
+but the stuck-looking batch had the pool at 1 and about 26 s per candidate, with nothing moving on the
+row. Rows now show `🤖 Triagem 3/6` and the summary line shows the batch. Also:
+- `RemoteDisconnected` escaped `_post_once` and ended a whole case; it is now a retried transient;
+- no real transcript from the 2026-10-30 `+progressive` runs has a C4 request (small, interrupted sample);
+- `claude-sonnet-5-5` under `+progressive` failed on several candidates with a `reasoning_extraction`
+  safeguard error, also on a run without parallelism. Suspected cause, unverified: the transcript
+  `_render_messages` builds for the second call.
+
+Diary: [[Semana 8 — Integração das Trilhas A e B]] §3.18.
+
+## [2026-10-30] direction | LLM result cache removed from the project
+On the human's direction, no LLM answer is reused: every triage and repair is a new model call. This
+reverses the W2 decision. Removed: `llm/cache.py`, the `cache=` parameters, `--no-cache`, `--cache-only`,
+the cache-key hashes, the `sample` parameter of `triage()` and `repair()`, the checkbox and the
+`llm-cache-hit` event, plus the desktop's "Cache / Simulado (Offline)" mode, which copied verdicts and
+patches from an earlier run. Without the API, steps 5 and 6 are now `skipped`.
+
+Kept: provider prompt caching (the model still answers), `PromptConfig.hash`, the fingerprint, and the
+`.llm-cache/` directory on disk, unread by anything and left in place because deleting it cannot be
+undone. Cost: re-running a row pays again, and re-scoring without any call is no longer possible unless
+from saved JSON. Diary: [[Semana 8 — Integração das Trilhas A e B]] §3.19.
+
+## [2026-10-30] direction | Live read-only inspection of a running Racebench case
+A case can now be opened from the Racebench table as soon as it starts. The Pipeline tab follows the
+run's files without a stepper attached and with its buttons disabled, because a stepper on a run the
+benchmark threads are writing would be a second writer. It redraws only on change and keeps the
+selection and scroll. `Conversation` now writes the transcript turn by turn, so a watched conversation
+is visible as it happens and a failed one leaves what was said, which the Sonnet safeguard errors of
+this date did not. The test found a defect: the table was emptied before reading, so a half-written
+`triage.jsonl` left it blank. Diary: [[Semana 8 — Integração das Trilhas A e B]] §3.20.
+
+## [2026-10-30] direction | Prompt options: bugs were `likely_benign`, not infeasible; C4 made real
+Counted against the ground truth, the 33 real bugs ranked `likely_benign` on 2026-10-30 were all judged
+`feasible`: dead readers, per `harmfulness.md`. New rows `+c4` and `+racebench+c4`; the Racebench screen
+has its own selector (default `+racebench+c4`) and a "LLM: reais" column. C4 had never worked in the
+desktop: wrong source root (31/31 cases on `RecordBackedResolver`), `common.c` never loaded, and
+`all_call_paths` raising `ContractError`. `claude -p` no longer replays the model's prose, which removed
+the Sonnet safeguard error. Real calls: Haiku 4/6 bugs `likely_real`, Sonnet 3/3, 0 `benign`, and the
+first 4 real C4 requests of the project. Unresolved: 4 of 14 Haiku candidates failed with `unknown error`
+on the second call, cause unknown. Diary: [[Semana 8 — Integração das Trilhas A e B]] §3.21.
+
+## [2026-10-30] direction + result | real-world gate 45/45; branch renamed semana-9; triage cost and cross-file questions
+
+On the human's direction, BMC4AV's priorities are adopted as `priority_corrections` errata for the
+three programs where NIChecker's contradict NIChecker's own ground truth (`logger3`, `wdt_pci_1`,
+`wdt_pci_2`). `logger2` and `i8xx_tco_1` keep BMC4AV's as side configurations;
+`gen-configs --raw` reproduces the shipped priorities. Official run: **1980 → 1037 → 972, gate
+45/45**, solver 846 sat / 126 inconclusive / 65 unsat. The solver split is load-dependent, with a
+wall-clock timeout (`brake3`: 3/49 unsat/inconclusive on 10-29, 0/73 on 10-30). The branch
+`bench/real-world` is renamed `semana-9`, where all W9 work lands.
+
+Two questions from the human, investigated with data. **Does the static side filter too
+little?** 972 triples are 280 intervals and 119 (variable, pattern) pairs, the ground truth's
+grain, and 65 of those pairs are on variables the non-exhaustive ground truth does not annotate.
+Disabling equal-priority preemption (which NIChecker's paper says its semantics forbid) cuts stage
+2 by 44% but loses 2 annotated violations, so the default stays. The LLM never discards, so its
+cost can be bounded by triaging per interval (−71% calls) and by a budget without touching
+recall. **Are cross-file globals detected?** Yes: a two-TU fixture (task in `task.c`, ISR in
+`isr.c`, `extern`) yields the RWW, and the C2 record and fingerprint carry each access's file.
+Five consumers use lines only: `stage3 -v`, the C3 drop record schema, the gate matchers, the
+Streamlit step 1 (highlights the wrong file) and the repair compile check (patches and builds A₁'s
+file alone). Both recorded in [[Open Questions]] and in the diary,
+[[Semana 9 — O Benchmark de Programas Reais]] §3.9–3.10.
+
+## [2026-10-30] direction | issues #8–#17: Semana 9 follow-ups and the desktop app
+
+Ten issues opened on the human's request. Four come from the investigations of the same day:
+**#8** the file travels with the line everywhere (C3 drop record, gate matchers, `stage3 -v`,
+Streamlit step 1, the repair compile check, the desktop candidate list, where the human proposes an
+asterisk when the accesses span files); **#9** triage per interval and under a budget; **#10** a
+deterministic solver limit (`rlimit`); **#11** running triage on the 18 programs. Six come from
+the human's review of the desktop app: **#12** `obj_N` names, which the stage 1 takes from LLVM
+value names that clang discards for locals (recoverable from `DILocalVariable`); **#13** group
+candidates by variable; **#14** undiscarded candidates first and sort by column; **#15** a VS
+Code-style layout with a bottom panel showing a status per tab and a candidate-detail panel on
+the right; **#16** parallel triage calls, and triage and repair in one prompt, to be measured as a
+new ablation row; **#17** the repair pane's `wrap=tk.NONE`. Referenced from [[Open Questions]] and
+the diary's §6.
+
+## [2026-10-31] direction | Issue #8: the file travels with the line; patches can no longer land blind
+`apply_unified_diff` ignored file names and context, so a diff for one file silently overwrote lines of
+another, and "Aplicar patch" writes to disk. Hunks now go where their lines are, ignoring whitespace,
+or are refused; measured on 244 real patches. Also: `Patch.file`, compile check on the named file,
+`access_locations` in every list, per-file marks in both UIs, `c3/1.1.0` drop records with
+`accesses: [{file, line}]`, optional `Access.file` in matching. `realworld.py` lives on `semana-9` and
+needs the same change at integration. No link step in the compile check. Syntax Rate before this change
+is not comparable. Diary: [[Semana 8 — Integração das Trilhas A e B]] §3.22.
+
+## [2026-11-09] lint | Track B issues #8–#17 checked against the code; #8 residue fixed
+All ten are still open on GitHub, because the `Closes #N` commits on `track-b/issues-8-17` have no PR
+into `main` yet. In the code: #8, #13, #14, #15 and #17 are done. #9 and #16 part 1 are built but not
+measured. #16 part 2 and #11 (the W9 LLM run on the 18 programs, which needs `realworld.py` from
+`semana-9`) have not started. On Track A, #10 (Z3 rlimit) and #12 (debug-info names, stack/heap only)
+are done.
+
+Fixed: three outputs still printed only the line, so they now go through
+`candidate.drop_locations`/`access_locations`. They are the desktop's stage-2 drop log,
+`irqrace stage2 -v` and `irqrace llm report`. Also fixed: a desktop test that read a stale `c1/1.0.0`
+file outside the repo now skips. Windows suite: 494 passed, 1 failed. The failure is
+`config_for` writing backslashes, which is Track A code and was left untouched.
+
+#10 had no diary entry, so it now has one. Diary:
+[[Semana 8 — Integração das Trilhas A e B]] §3.22, §3.26 and §6.
+
+## [2026-11-12] direction | Lucas Tasks page; T1 three-way Racebench comparison
+New page [[Lucas Tasks]], a backlog of Lucas's TCC tasks after the Roadmap. T1 compares three
+systems on Racebench: S0 is the published results by the tools' authors, S1 is our static stages
+alone, S2 is static + LLM triage. Two things are recorded there. First, S0 is not one number:
+NIChecker counts 54, BMC4AV 38 on 25 cases, IntRace 50 on 30, and the annotations now hold 53/33
+(48/38 before the relabel). So each baseline is compared on its own subset and ground truth. Second,
+the page lists the metrics (recall and per-pattern recall first; traps, precision, NASAC score,
+Inspection Ratio, cost, variance) and the 2026-10-28 numbers as the table's shape only, since the
+code has changed since. `../BMC4AV` and `../NIChecker` were not found next to the vault today.
+
+## [2026-11-12] direction | T2: Racebench 2.2, the ground truth extended with unannotated bugs
+Added to [[Lucas Tasks]]. The tool reports candidates the authors left unannotated, and the ones
+looked at so far appear correct. T2 builds an extended ground truth, using the same witness
+standard as the 2026-10-28 relabel. Three things guard against circularity: the tool proposes and a
+human adjudicates blind, rejections are recorded as well as acceptances, and 2.1 stays the headline
+for comparisons with the published tools. An equivalence rule for sibling triples is fixed before
+counting. Whether to name it "2.2" and whether to send it upstream are left open.
+
+## [2026-11-12] direction | T3: prompt comparison; Racebench selector narrowed to two rows
+The Racebench screen now offers only `+racebench` and `+racebench+c4` (`BENCH_PROMPTS`, with a test
+on it; 25/25 pass). No row was deleted from `irqrace.llm.prompts`: both Racebench rows derive from
+`+self-validation`, the ablation needs its four rows, and real code needs the production prompt.
+Five variants are designed in [[Lucas Tasks]] T3, each one change relative to `+racebench`:
+−selfval, +witness, +location, +effectfree (measured for its recall cost only), and +rubric. None
+is built yet. `+racebench+c4` has never been run on all 31 cases, so the first comparison is
+between the two baselines.
+
+## [2026-11-12] direction | T4: consolidate T1–T3 into the monograph, with comparative figures
+Added to [[Lucas Tasks]]. The results go into `05-desenvolvimento.tex` §"Testes e Avaliação" (its
+`\pendente` results subsection), one subsection per research question, with three questions added
+for T1–T3. The chapter is outdated in three places: it still says 48/38, it says only feasibility
+is scored on Racebench, and it lists four research questions. Eleven figures are planned (F1–F11),
+generated from versioned CSVs by one script. `matplotlib` is not installed in `venv/`, and
+`pgfplots` is not loaded.
+
+## [2026-11-12] direction | C1 wizard: flow id derived from the entry function; manual field removed
+The flow `id` is only a key. Stage 1 and the records name flows by it and it enters the candidate
+fingerprint, so it must be unique and stable, but nothing reads its spelling. The entry function is
+already unique per flow, so `flow_id_for` derives the id from it (with a numeric suffix on a clash),
+and the form no longer has the field. The entry is the edit key, and existing flows keep their id,
+including `isr_1` from a loaded C1. Test added. Full suite with `PYTHONUTF8=1`: 494 passed, 2 failed.
+Both failures happen without the change too (`test_generated_configs_on_disk_are_current` and the
+Streamlit walkthrough). Diary: [[Semana 8 — Integração das Trilhas A e B]] §3.27.
+
+## [2026-11-12] direction | Execution plan for T1–T4: milestones M0–M5 with alignment gates
+Approved and recorded in [[Lucas Tasks]] §"Execution plan". The plan:
+- PR #18 merges first, and branches start from `main`.
+- Agents push and open PRs, Lucas merges, and no Claude attribution goes in commits.
+- Measurements use `claude-cli:sonnet` with n = 3 independent runs.
+- T2 is adjudicated by humans, from blind dossiers.
+
+Found while planning: `--samples` is majority voting, and triage writes into the run, so each
+(prompt, run) pair triages its own copy of one frozen static run. T1 and T3 share the baseline runs.
+
+## [2026-11-16] direction | M0 and M1 done; gate M1 closed: S2 = +racebench, likely_real headline
+PRs #18 and #19 merged, and #19–#22 opened from the agent branches. The static stages were frozen
+from `main` at `a639158` (`runs/frozen-20261115`, clean tree). The frozen run reproduces the M0
+check: 53/53 bug points, 11/33 traps and 166 records reaching the LLM (S1 = 73/106). Then
+`+racebench` and `+racebench+c4` were each triaged × 3 with `claude-cli:sonnet`, on independent
+copies of the frozen root.
+
+Results:
+- Both rows keep 53/53 in every run.
+- `+racebench` scores 100/100/100, with 2/33 traps each time, κ 0.96–0.98, about 304 calls and
+  3.5 M input tokens per run.
+- `+c4` scores 100/97/100, with κ 0.89–0.91, at twice the calls and tokens.
+- The same two case-022 traps survive in all six runs.
+
+Lucas closed the gate: S2 = `+racebench`, `likely_real` is the headline, and the ±3-point noise
+holds as a ceiling.
+
+Incidents:
+- The 5-hour subscription limit was hit five times. Each pair was moved aside and re-run whole.
+- One safeguard refusal (unannotated candidate, kept as `uncertain`) was accepted as is.
+- The WSL freeze needed `python3-tk` and `pymupdf`, because `irqrace pipeline` imports the desktop UI.
+- WSL git needed `core.autocrlf` for an honest dirty flag.
+
+Results in `project-src/results/m1/`. Summary in [[Lucas Tasks]] §"M0 and M1 — done".
+
+## [2026-11-16] query | T1 comparison on each baseline's terms; the 48/38 label set; contradiction #9
+The scorer gains the **48/38** label set. It is the current annotations with the relabel's five
+triples back as traps, checked against a reconstruction of the pre-relabel suite (3d77421 + the 006
+patch + errata at 87437bc: 48/38, differing in exactly those five). S2 (`+racebench`, n = 3, zero
+spread) was then scored on five views (`project-src/results/m2/`). Filed as
+[[Racebench Comparison 2026-11-16]]:
+- On 53/33, S2 detects 53/53 bug points and reports 2/33 traps (100/106).
+- On BMC4AV's 25 cases with `(R,W,W)` excluded, S2 gets 37/37 on 48/38 (7 traps, five of them the
+  relabelled triples) and 42/42 with 2 traps on 53/33.
+- On 48/38, S2 gets 48/48 with 7 traps.
+
+New contradiction #9: the errata reclassify `022` bug 2 from `(R,W,R)` to `(R,W,W)`, so BMC4AV's 38
+is 37 by the corrected kinds. irqrace finds all 41 bug points of the subset under either
+classification. It is an inference, unconfirmed because `../BMC4AV` is not on this machine, that
+BMC4AV, with zero false positives on 48/38, did not report the five relabelled triples, which would
+put it at 37 of 42 under 53/33. Gate M2 is open on the page.
+
+## [2026-11-17] direction | Gate M2 closed: one table per baseline, justified from the papers
+Lucas accepted the per-baseline framing for T1, provided the papers support it. They do. Each
+paper declares its own ground truth for Racebench: NIChecker 54, BMC4AV 25 cases with
+`(R,W,W)` excluded as benign, IntRace 30 cases of data races. Two of them also restrict a
+comparison to the competitor's conditions: IntRace drops the case Rchecker failed on "to ensure
+comparison", and BMC4AV argues validity from running "on the same configuration as intAtom".
+Quotations are in [[Racebench Comparison 2026-11-16]] §"Why one table per baseline".
+
+NIChecker stays in its table, marked unaligned. The BMC4AV artifact is not fetched, so the
+37/42 inference goes into the thesis as declared. T1 is done; it goes into the monograph in M5.
+
+## [2026-11-17] direction | Gate M4a closed: Racebench 2.2 protocol in force; blind dossiers frozen
+Lucas approved the 2.2 protocol as drafted. Rule E and the witness template stand. `not-a-defect`
+stays out of both denominators. Every unannotated triple is adjudicated (`--all`, no sample).
+The candidate set is frozen from the T1 run `runs/frozen-20261115`: 166 records reach the LLM,
+96 of them unannotated, on 91 triples in 31 dossiers (`project-src/results/t2/dossiers/`).
+These are the same figures the draft measured on `m0-check`.
+
+Pitfall: WSL exports `IRQRACE_RACEBENCH` pointing at the upstream `../racebench`, which predates
+the relabel. With it set, `ground_truth("2.1")` reads 48/38, 8 of the T2 tests fail, and the
+dossier script returns the relabelled triples as unannotated (96 triples, 34 dossiers). With it
+unset, all 28 T2 tests pass. Still open: the name, the size of Pedro's second check, and whether
+the complex cases are included. Next: the human adjudication.
+
+
+## [2026-11-21] direction | semana-9 merged onto the PR #27 line; real-world contradiction renumbered #10
+The `semana-9` branch (real-world suite, rastro-robot test, Semana 9 diary) was merged into
+`tcc/t3-model-speed`, which sits on PR #27. Both lines had added a contradiction #9. Lucas's
+(BMC4AV's 38 is 37 under the errata) keeps #9, because the monograph, the T1 comparison page and
+PR #27 already cite it. The two copies of the real-world programs become **#10**. Its citations in
+`index.md`, [[Real-World Program Benchmark]], [[Contradictions]] and the Semana 9 diary are
+updated. Log entries above that call it #9 are left as they were written.
+
+## [2026-11-21] result | triage cost and speed: model, effort, pool, checklist by variable, LLM-only scan
+New page [[Triage Cost and Speed 2026-11-21]]; data in `project-src/results/speed-pilot-20261119/`,
+`speed-20261121/`, `scan-estimate-20261121/`, `scan-measure-20261121/` and `m3/`. All n = 1,
+`+racebench`, 53/33, on one frozen root that reproduces M1's (53/53, 11/33, 166 records).
+- Haiku and Sonnet at low effort are not faster (Haiku: 47/53 in `likely_real`, 5 schema failures).
+- A global pool of four conversations: wall −9%. One checklist conversation per shared variable:
+  calls −72%, input −44%, output −55%. Both together at low effort, with omitted items re-asked:
+  53/53, score 97, **1,079 → 263 s**. One low-effort checklist answer left 14 of 15 items out; they
+  stayed `uncertain`, and the re-ask was added.
+- An LLM-only scan (simple prompt, one call per file): 50/53, 1 trap, 99 k input tokens; one prompt
+  for all 31 files: 48/53, 33 k. On the published 48/38 labels the per-file scan finds 48/48: its
+  misses are exactly the relabel's bug points, which is what memorisation would look like. Added to
+  [[Open Questions]] with the scale of the checklist on real code.
+- Lucas's two completed T3 runs scored: `+effectfree` 53/53, 1 trap, score 103; `+rubric` 100.
+- Pedro's direction: continue with Sonnet at low effort; a free non-Anthropic model
+  (`gpt-oss-120b` through Groq) later.
+
+## [2026-11-21] result | contamination test: the LLM-only scan on a disguised Racebench
+`scripts/racebench-disguise.py` (seed 2026) writes a copy of the 31 cases without comments or
+header, with neutral identifiers, `program_NN` names and reordered functions; all 258 annotated
+lines move and are mapped back for scoring. n = 3 per arm, Sonnet at low effort, same prompt as the
+scan (`project-src/results/contamination-20261121/`).
+- Per file: bug points 50–51/53 disguised against 49–51 original; traps 6–8 against 1–4; NASAC
+  76–84 against 86–99. One prompt: 44–49 against 48–51, traps 2–6 against 0–1.
+- A by-name recall probe, no source: 31 of 31 answers empty.
+- Reading: the scan's recall does not depend on recognising the suite; its precision does, through
+  memory or meaningful names (not separated). The earlier reading that its misses were exactly the
+  relabel's bug points was one draw, and is corrected in `scan-measure-20261121/NOTES.md`.
+- Not yet like for like with irqrace, whose triage also read the original names. Updated
+  [[Triage Cost and Speed 2026-11-21]] and [[Open Questions]].
+
+## [2026-11-21] result | irqrace on the disguised Racebench: precision holds, one union bug point lost to the name
+`racebench-disguise.py` made deterministic (names depended on the hash seed) and given
+`--compilable` (prototypes, `common.c`, C1 configs). irqrace's whole pipeline and the scan ran on
+the same disguised files, n = 3 each, Sonnet at low effort
+(`project-src/results/disguised-pipeline-20261121/`).
+- Static stages identical on both copies: 316 → 202 → 166, 53/53, 11/33.
+- Triage (pool + by variable): 51–52 bug points in `likely_real`, 3–4 traps (the same items as on
+  the original), score 90–95, against 52–53, 3–4 and 94–97 on the original.
+- `010` bug#1, on a union, is `likely_infeasible` in all three disguised runs and `likely_real` in
+  every original run: without the name `global_union` the model read `.header` and `.data` as
+  different locations. A recall-veto event for this configuration; new question in
+  [[Open Questions]] (resolve typedefs in the context record).
+- The scan on the same copy: per file 48–52 bug points, 6–10 traps, score 70–86; one prompt 46–52,
+  3–4, 80–95. Copy A of the first contamination test agrees.
+- One pair lost two checklist groups to `claude -p` timeouts (600 s); moved aside, re-run whole.
+
+## [2026-11-21] result | gpt-oss-120b on Groq's free tier: the per-file scan only, partial
+Pedro's direction: record it, keep it out of the monograph for now (`project-src/results/gptoss-scan-20261121/`).
+Free tier: 8,000 tokens per minute, and the run stopped being served at 200,616 tokens for the day.
+Per-file scan on the disguised copy: 28/53 and 34/53 bug points, 5 and 10 traps, scores 41 and 38
+(Sonnet low: 48–52, 6–10, 70–86). Run 3 stopped at 19/31 on the daily cap and is scheduled to be
+re-run whole on 2026-11-22. The one-prompt scan (~15 k tokens in one request) and irqrace (every
+prompt above 8,000 tokens; 1.4–2.7 M per run) cannot run on this tier.
+
+## [2026-11-21] result | real-world suite: irqrace (pool + by variable) against the LLM-only scan
+`project-src/results/realworld-cmp-20261121/`, Sonnet at low effort, scored per `violation.info`
+entry with the recall gate's matcher. irqrace n = 1 with the production row `+self-validation`;
+scans n = 3 (answer comments cut from `blink1`–3; files not disguised).
+- irqrace: static 45/45; triage puts 21 entries in `likely_real` and 24 in `likely_benign` (the
+  planted `test_global_*` reads feed nothing), none infeasible; 2 of 14 false violations on top,
+  9 in the not-infeasible view. 215 calls, 13.1 M input tokens, 813 s.
+- Scan per file: 43–45/45, 5–10 false violations, ~0.2 M input tokens, ~78 s. One prompt: 9–36/45.
+- New question in [[Open Questions]]: which row for this suite.
+
+## [2026-11-21] query | are the real-world static candidates right?
+Examined the 972 candidates (`results/realworld-cmp-20261121/NOTES.md`). Priority logic is
+consistent in all of them. 476 (49%) come only from `equal_priority_preemption: true`, which 2
+entries need (`i8xx_tco_1`); off everywhere gives 496 candidates and 43/45. 972 records are 794
+distinct line triples (handlers sharing code); about 60 are covered by an adjacent triple. All
+three together, keeping `i8xx_tco_1`'s equal priority: 448 candidates, 45/45. Decision pending
+(Pedro); added to [[Open Questions]].
+
+## [2026-11-21] direction + result | real-world: equal priority off but i8xx_tco_1; the +interleaving row
+Pedro's direction: a generic prompt in the Racebench model, not tied to the real-world programs, and
+equal-priority preemption off on that suite except `i8xx_tco_1`.
+- New row `+interleaving` (`prompts/interleaving_semantics.md`): the Racebench defect notion, the
+  execution model read from the record, a typedef-hides-a-union rule; a test checks it names no
+  suite, program, variable or line.
+- New errata section `semantics` (`bench/realworld-errata.yaml`): default false, exception
+  `i8xx_tco_1`; `--raw` unchanged. Static: 1980 → 587 → 484, gate 45/45.
+- irqrace (pool + by variable, Sonnet low, n = 1): 45/45 in `likely_real`, 6 false violations,
+  6.43 M input tokens, 496 s (`results/realworld-cmp2-20261121/`). Scan per file (n = 3): 44–45,
+  5–7; one prompt 12–34. [[Open Questions]] updated.
+
+## [2026-11-22] result | +interleaving on Racebench: one generic row for both suites
+n = 3 per arm, original and disguised, pool + by variable, Sonnet low
+(`project-src/results/interleaving-racebench-20261122/`). Original: 49–53 bug points on top, 0–3
+traps, score 97–98 (`+racebench`: 52–53, 3–4, 94–97). Disguised: 51–52, 2–3, 95–98, and **no bug
+point called infeasible** (`+racebench`: `010` bug#1 infeasible in 3 of 3; now `uncertain`). Same
+cost (≈2 M input tokens, ≈255 s). The main checkout's venv broke mid-session (python3 linked to a
+removed PlatformIO interpreter); measurements now use `../worktrees/.venv-irqrace`. Run 1 of both
+arms was re-run after `claude -p` timeouts.
+
+## [2026-11-22] direction | monograph reviewed; results replaced by the final configuration
+Pedro's direction: review what Lucas wrote, cut implementation narrative and empty sections, and
+replace the benchmark numbers by the final configuration's (`+interleaving`, triage grouped by
+variable with calls shared across programs, Sonnet at low effort), with the LLM-only reading as a
+comparison. Chapter 5's evaluation was rewritten: five research questions (static recall, triage,
+published tools, direct reading by the model, ablation and repair pending); repository paths,
+commit hashes and run directories removed from the text; the Racebench 2.2 extension, the
+prompt-variant protocol and the ablation protocol removed as unexecuted; the disguised-copy test
+added. Tables give the best of three runs (most bug points on top, then score), the text the range.
+Figures F1–F5 and F9 regenerated from `project-src/results/thesis-interleaving/combined`.
+Stale statements fixed: the response cache (removed 2026-10-30) in Tecnologias and RNF6, and
+equal-priority preemption as a fixed rule (now declared by the configuration). The abstract still
+calls the document partial; left for Pedro.
+
+## [2026-11-23] code | the measured triage integrated: by variable, pool across programs, omission retry
+`tmp-combo.patch` (the triage behind the final numbers) moved into the code with tests:
+`llm triage --by-variable` (`irqrace/llm/checklist.py`, asset `prompts/checklist.md`),
+`freeze-and-triage.py triage --case-parallel N --by-variable`, `IRQRACE_CLAUDE_TIMEOUT`, and
+`llm.checklist_sha256` in the manifest. The environment hook `IRQRACE_TRIAGE_EXTRA` is gone. Fixed:
+a retried lead (omitted item, or rejected answer) rewrote the checklist's `turns.jsonl`; it now
+appends. No measured run was affected (scan in `results/realworld-cmp2-20261121/NOTES.md`). Both
+groupings stay opt-in; whether `+interleaving` and `--by-variable` become the defaults is Pedro's call.
+
+## [2026-11-24] result | S1 on the Racebench copy IntRace analysed
+IntRace's Table 3 (size, #ISR, #Race per row) matches the `2.1` directory (files headed
+`racebench2.0`), not `2.1_remarks`; the excluded case is most likely `001` (inferred: row 13, 72
+lines, matches no file). Its 49 races are the distributed bug points plus one in `009` and one in
+`017`; its rows sum to 53/4, not the stated 54/5, and "90.7%" is precision. S1 run on pristine
+`2.1` (`ec1d828`, no 006 patch), annotations moved to 2.1 lines: **46/47** bug points on IntRace's
+30 cases, 15/36 traps reported, 152 triples (IntRace: 54 items). The one loss is `006`, whose A2 is
+dead code in that copy (`j < 5` written `i < 5`); Z3 `unsat`, correct. Funnel 286 → 186 → 152.
+`results/intrace-terms-20261124/NOTES.md`; [[IntRace (paper)]], [[Racebench]].
+
+## [2026-11-25] result | S2 on the Racebench copy IntRace analysed
+Final configuration (`+interleaving`, by variable, pool of 4, Sonnet low), three runs on pristine
+`2.1`, 48/38 moved to 2.1 lines, IntRace's 30 cases: **46/47** bug points on top in every run (the
+47th is `006`'s dead code, refuted before triage), no bug point called infeasible, 5–7 annotated
+traps on top (3 of them reachable per the 2026-10-28 relabel, 2 the annotator's hedged ones in
+`022`), 126–130 items reported against IntRace's 54, ~1.8 M input tokens and ~250 s per run.
+Five attempts were lost to `claude -p` stalling at the 1,200 s timeout on the largest checklist
+calls (not reproduced in isolation); set aside and repeated per protocol.
+`results/intrace-terms-20261124/NOTES.md`.
+
+## [2026-11-25] query | are the traps and unannotated items S2 keeps on top false?
+Filed in `results/intrace-terms-20261124/NOTES.md`. On IntRace's copy, of the 7 traps S2 put on top
+over three runs, 4 are reachable violations (019 ×2, 020, 022's malformed "R56") and 3 are false
+(022's two dominated ones, 009 `*m`). IntRace's 5 false positives are almost certainly the suite's
+traps (its own examples are traps 2 of 004 and 007), some of them true races as pairs. Of the 75
+unannotated items on top: 12 real violations missing from the ground truth, 18 real variants, 28
+initialisation writes (debatable), 14 false (11 dominated, 2 B reading its own ISR's write, 1
+impossible path), 3 possible only in theory.

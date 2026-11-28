@@ -1,0 +1,148 @@
+{
+  "case": "program_11",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_quiver",
+        "a1_line": 159,
+        "a1_kind": "read",
+        "b_line": 228,
+        "b_kind": "write",
+        "a2_line": 160,
+        "a2_kind": "read",
+        "why": "irq_upland (prio 4) can preempt irq_drift (prio 2) between the two reads of v_quiver in fn_north and change the value."
+      },
+      {
+        "variable": "v_orchid",
+        "a1_line": 161,
+        "a1_kind": "read",
+        "b_line": 229,
+        "b_kind": "write",
+        "a2_line": 162,
+        "a2_kind": "read",
+        "why": "irq_upland can preempt irq_drift between the two reads of v_orchid and write it."
+      },
+      {
+        "variable": "v_yew",
+        "a1_line": 256,
+        "a1_kind": "write",
+        "b_line": 215,
+        "b_kind": "write",
+        "a2_line": 259,
+        "a2_kind": "read",
+        "why": "irq_kestrel (prio 4) can preempt irq_ermine (prio 1) between its write and read of v_yew[K_CORAL] and overwrite the element."
+      },
+      {
+        "variable": "v_wisp",
+        "a1_line": 166,
+        "a1_kind": "write",
+        "b_line": 219,
+        "b_kind": "write",
+        "a2_line": 176,
+        "a2_kind": "read",
+        "why": "irq_upland can preempt irq_drift between its write of 42 and the check, so the check can see a different value."
+      },
+      {
+        "variable": "v_wisp",
+        "a1_line": 166,
+        "a1_kind": "write",
+        "b_line": 233,
+        "b_kind": "write",
+        "a2_line": 176,
+        "a2_kind": "read",
+        "why": "irq_falcon can preempt irq_drift between its write of v_wisp and the check, and write 0 in between."
+      },
+      {
+        "variable": "v_wisp",
+        "a1_line": 166,
+        "a1_kind": "write",
+        "b_line": 201,
+        "b_kind": "write",
+        "a2_line": 176,
+        "a2_kind": "read",
+        "why": "irq_kestrel (prio 4) can preempt irq_drift between its write and read of v_wisp and write it."
+      },
+      {
+        "variable": "v_wisp",
+        "a1_line": 184,
+        "a1_kind": "write",
+        "b_line": 219,
+        "b_kind": "write",
+        "a2_line": 193,
+        "a2_kind": "read",
+        "why": "irq_upland can preempt irq_reef between its write and read of v_wisp and change it."
+      },
+      {
+        "variable": "v_wisp",
+        "a1_line": 184,
+        "a1_kind": "write",
+        "b_line": 233,
+        "b_kind": "write",
+        "a2_line": 193,
+        "a2_kind": "read",
+        "why": "irq_falcon can preempt irq_reef between its write and read of v_wisp and change it."
+      },
+      {
+        "variable": "v_wisp",
+        "a1_line": 184,
+        "a1_kind": "write",
+        "b_line": 201,
+        "b_kind": "write",
+        "a2_line": 193,
+        "a2_kind": "read",
+        "why": "irq_kestrel can preempt irq_reef between its write and read of v_wisp and change it."
+      },
+      {
+        "variable": "v_acorn",
+        "a1_line": 167,
+        "a1_kind": "write",
+        "b_line": 218,
+        "b_kind": "write",
+        "a2_line": 168,
+        "a2_kind": "read",
+        "why": "irq_upland can preempt irq_drift between its write of v_acorn=1 and the check, and set it to 0."
+      },
+      {
+        "variable": "v_acorn",
+        "a1_line": 167,
+        "a1_kind": "write",
+        "b_line": 232,
+        "b_kind": "write",
+        "a2_line": 168,
+        "a2_kind": "read",
+        "why": "irq_falcon can preempt irq_drift between its write of v_acorn and the check, and set it to 0."
+      },
+      {
+        "variable": "v_acorn",
+        "a1_line": 185,
+        "a1_kind": "write",
+        "b_line": 218,
+        "b_kind": "write",
+        "a2_line": 186,
+        "a2_kind": "read",
+        "why": "irq_upland can preempt irq_reef between its write of v_acorn and the check, and set it to 0."
+      },
+      {
+        "variable": "v_acorn",
+        "a1_line": 185,
+        "a1_kind": "write",
+        "b_line": 232,
+        "b_kind": "write",
+        "a2_line": 186,
+        "a2_kind": "read",
+        "why": "irq_falcon can preempt irq_reef between its write of v_acorn and the check, and set it to 0."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_quiver\",\"a1_line\":159,\"a1_kind\":\"read\",\"b_line\":228,\"b_kind\":\"write\",\"a2_line\":160,\"a2_kind\":\"read\",\"why\":\"irq_upland (prio 4) can preempt irq_drift (prio 2) between the two reads of v_quiver in fn_north and change the value.\"},{\"variable\":\"v_orchid\",\"a1_line\":161,\"a1_kind\":\"read\",\"b_line\":229,\"b_kind\":\"write\",\"a2_line\":162,\"a2_kind\":\"read\",\"why\":\"irq_upland can preempt irq_drift between the two reads of v_orchid and write it.\"},{\"variable\":\"v_yew\",\"a1_line\":256,\"a1_kind\":\"write\",\"b_line\":215,\"b_kind\":\"write\",\"a2_line\":259,\"a2_kind\":\"read\",\"why\":\"irq_kestrel (prio 4) can preempt irq_ermine (prio 1) between its write and read of v_yew[K_CORAL] and overwrite the element.\"},{\"variable\":\"v_wisp\",\"a1_line\":166,\"a1_kind\":\"write\",\"b_line\":219,\"b_kind\":\"write\",\"a2_line\":176,\"a2_kind\":\"read\",\"why\":\"irq_upland can preempt irq_drift between its write of 42 and the check, so the check can see a different value.\"},{\"variable\":\"v_wisp\",\"a1_line\":166,\"a1_kind\":\"write\",\"b_line\":233,\"b_kind\":\"write\",\"a2_line\":176,\"a2_kind\":\"read\",\"why\":\"irq_falcon can preempt irq_drift between its write of v_wisp and the check, and write 0 in between.\"},{\"variable\":\"v_wisp\",\"a1_line\":166,\"a1_kind\":\"write\",\"b_line\":201,\"b_kind\":\"write\",\"a2_line\":176,\"a2_kind\":\"read\",\"why\":\"irq_kestrel (prio 4) can preempt irq_drift between its write and read of v_wisp and write it.\"},{\"variable\":\"v_wisp\",\"a1_line\":184,\"a1_kind\":\"write\",\"b_line\":219,\"b_kind\":\"write\",\"a2_line\":193,\"a2_kind\":\"read\",\"why\":\"irq_upland can preempt irq_reef between its write and read of v_wisp and change it.\"},{\"variable\":\"v_wisp\",\"a1_line\":184,\"a1_kind\":\"write\",\"b_line\":233,\"b_kind\":\"write\",\"a2_line\":193,\"a2_kind\":\"read\",\"why\":\"irq_falcon can preempt irq_reef between its write and read of v_wisp and change it.\"},{\"variable\":\"v_wisp\",\"a1_line\":184,\"a1_kind\":\"write\",\"b_line\":201,\"b_kind\":\"write\",\"a2_line\":193,\"a2_kind\":\"read\",\"why\":\"irq_kestrel can preempt irq_reef between its write and read of v_wisp and change it.\"},{\"variable\":\"v_acorn\",\"a1_line\":167,\"a1_kind\":\"write\",\"b_line\":218,\"b_kind\":\"write\",\"a2_line\":168,\"a2_kind\":\"read\",\"why\":\"irq_upland can preempt irq_drift between its write of v_acorn=1 and the check, and set it to 0.\"},{\"variable\":\"v_acorn\",\"a1_line\":167,\"a1_kind\":\"write\",\"b_line\":232,\"b_kind\":\"write\",\"a2_line\":168,\"a2_kind\":\"read\",\"why\":\"irq_falcon can preempt irq_drift between its write of v_acorn and the check, and set it to 0.\"},{\"variable\":\"v_acorn\",\"a1_line\":185,\"a1_kind\":\"write\",\"b_line\":218,\"b_kind\":\"write\",\"a2_line\":186,\"a2_kind\":\"read\",\"why\":\"irq_upland can preempt irq_reef between its write of v_acorn and the check, and set it to 0.\"},{\"variable\":\"v_acorn\",\"a1_line\":185,\"a1_kind\":\"write\",\"b_line\":232,\"b_kind\":\"write\",\"a2_line\":186,\"a2_kind\":\"read\",\"why\":\"irq_falcon can preempt irq_reef between its write of v_acorn and the check, and set it to 0.\"}]}",
+  "wall_s": 19.55902910232544,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 2681,
+    "cache_read": 4835,
+    "cache_write": 487,
+    "latency_s": 19.558809227950405
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

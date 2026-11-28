@@ -1,0 +1,168 @@
+{
+  "case": "program_18",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_ridge",
+        "a1_line": 170,
+        "a1_kind": "write",
+        "b_line": 207,
+        "b_kind": "write",
+        "a2_line": 171,
+        "a2_kind": "read",
+        "why": "irq_tundra (prio 4) can preempt irq_loom and reset v_ridge between its write and check."
+      },
+      {
+        "variable": "v_ridge",
+        "a1_line": 170,
+        "a1_kind": "write",
+        "b_line": 220,
+        "b_kind": "write",
+        "a2_line": 171,
+        "a2_kind": "read",
+        "why": "irq_iris can preempt irq_loom between the write and the read."
+      },
+      {
+        "variable": "v_glacier",
+        "a1_line": 169,
+        "a1_kind": "write",
+        "b_line": 208,
+        "b_kind": "write",
+        "a2_line": 178,
+        "a2_kind": "read",
+        "why": "irq_tundra can overwrite v_glacier between loom's write and its check."
+      },
+      {
+        "variable": "v_glacier",
+        "a1_line": 169,
+        "a1_kind": "write",
+        "b_line": 221,
+        "b_kind": "write",
+        "a2_line": 178,
+        "a2_kind": "read",
+        "why": "irq_iris can overwrite v_glacier between loom's write and its check."
+      },
+      {
+        "variable": "v_glacier",
+        "a1_line": 178,
+        "a1_kind": "read",
+        "b_line": 208,
+        "b_kind": "write",
+        "a2_line": 182,
+        "a2_kind": "write",
+        "why": "irq_tundra can write v_glacier between loom's read and its write."
+      },
+      {
+        "variable": "v_glacier",
+        "a1_line": 178,
+        "a1_kind": "read",
+        "b_line": 221,
+        "b_kind": "write",
+        "a2_line": 182,
+        "a2_kind": "write",
+        "why": "irq_iris can write v_glacier between loom's read and its write."
+      },
+      {
+        "variable": "v_ridge",
+        "a1_line": 190,
+        "a1_kind": "write",
+        "b_line": 207,
+        "b_kind": "write",
+        "a2_line": 191,
+        "a2_kind": "read",
+        "why": "irq_tundra can preempt irq_harbor between the write and the read."
+      },
+      {
+        "variable": "v_ridge",
+        "a1_line": 190,
+        "a1_kind": "write",
+        "b_line": 220,
+        "b_kind": "write",
+        "a2_line": 191,
+        "a2_kind": "read",
+        "why": "irq_iris can preempt irq_harbor between the write and the read."
+      },
+      {
+        "variable": "v_glacier",
+        "a1_line": 189,
+        "a1_kind": "write",
+        "b_line": 208,
+        "b_kind": "write",
+        "a2_line": 200,
+        "a2_kind": "read",
+        "why": "irq_tundra can overwrite v_glacier between harbor's write and its check."
+      },
+      {
+        "variable": "v_glacier",
+        "a1_line": 189,
+        "a1_kind": "write",
+        "b_line": 221,
+        "b_kind": "write",
+        "a2_line": 200,
+        "a2_kind": "read",
+        "why": "irq_iris can overwrite v_glacier between harbor's write and its check."
+      },
+      {
+        "variable": "v_glacier",
+        "a1_line": 200,
+        "a1_kind": "read",
+        "b_line": 208,
+        "b_kind": "write",
+        "a2_line": 203,
+        "a2_kind": "write",
+        "why": "irq_tundra can write v_glacier between harbor's read and its write."
+      },
+      {
+        "variable": "v_glacier",
+        "a1_line": 200,
+        "a1_kind": "read",
+        "b_line": 221,
+        "b_kind": "write",
+        "a2_line": 203,
+        "a2_kind": "write",
+        "why": "irq_iris can write v_glacier between harbor's read and its write."
+      },
+      {
+        "variable": "v_mesa",
+        "a1_line": 163,
+        "a1_kind": "read",
+        "b_line": 230,
+        "b_kind": "write",
+        "a2_line": 164,
+        "a2_kind": "read",
+        "why": "irq_iris (v_umber is 0 only if... it writes v_mesa) can preempt irq_loom between its two reads of v_mesa."
+      },
+      {
+        "variable": "v_velvet",
+        "a1_line": 161,
+        "a1_kind": "read",
+        "b_line": 216,
+        "b_kind": "write",
+        "a2_line": 162,
+        "a2_kind": "read",
+        "why": "irq_tundra can write v_velvet between loom's two reads in fn_saffron."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 197,
+        "a1_kind": "read",
+        "b_line": 231,
+        "b_kind": "write",
+        "a2_line": 198,
+        "a2_kind": "read",
+        "why": "irq_iris can write v_lantern between harbor's two reads."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_ridge\",\"a1_line\":170,\"a1_kind\":\"write\",\"b_line\":207,\"b_kind\":\"write\",\"a2_line\":171,\"a2_kind\":\"read\",\"why\":\"irq_tundra (prio 4) can preempt irq_loom and reset v_ridge between its write and check.\"},{\"variable\":\"v_ridge\",\"a1_line\":170,\"a1_kind\":\"write\",\"b_line\":220,\"b_kind\":\"write\",\"a2_line\":171,\"a2_kind\":\"read\",\"why\":\"irq_iris can preempt irq_loom between the write and the read.\"},{\"variable\":\"v_glacier\",\"a1_line\":169,\"a1_kind\":\"write\",\"b_line\":208,\"b_kind\":\"write\",\"a2_line\":178,\"a2_kind\":\"read\",\"why\":\"irq_tundra can overwrite v_glacier between loom's write and its check.\"},{\"variable\":\"v_glacier\",\"a1_line\":169,\"a1_kind\":\"write\",\"b_line\":221,\"b_kind\":\"write\",\"a2_line\":178,\"a2_kind\":\"read\",\"why\":\"irq_iris can overwrite v_glacier between loom's write and its check.\"},{\"variable\":\"v_glacier\",\"a1_line\":178,\"a1_kind\":\"read\",\"b_line\":208,\"b_kind\":\"write\",\"a2_line\":182,\"a2_kind\":\"write\",\"why\":\"irq_tundra can write v_glacier between loom's read and its write.\"},{\"variable\":\"v_glacier\",\"a1_line\":178,\"a1_kind\":\"read\",\"b_line\":221,\"b_kind\":\"write\",\"a2_line\":182,\"a2_kind\":\"write\",\"why\":\"irq_iris can write v_glacier between loom's read and its write.\"},{\"variable\":\"v_ridge\",\"a1_line\":190,\"a1_kind\":\"write\",\"b_line\":207,\"b_kind\":\"write\",\"a2_line\":191,\"a2_kind\":\"read\",\"why\":\"irq_tundra can preempt irq_harbor between the write and the read.\"},{\"variable\":\"v_ridge\",\"a1_line\":190,\"a1_kind\":\"write\",\"b_line\":220,\"b_kind\":\"write\",\"a2_line\":191,\"a2_kind\":\"read\",\"why\":\"irq_iris can preempt irq_harbor between the write and the read.\"},{\"variable\":\"v_glacier\",\"a1_line\":189,\"a1_kind\":\"write\",\"b_line\":208,\"b_kind\":\"write\",\"a2_line\":200,\"a2_kind\":\"read\",\"why\":\"irq_tundra can overwrite v_glacier between harbor's write and its check.\"},{\"variable\":\"v_glacier\",\"a1_line\":189,\"a1_kind\":\"write\",\"b_line\":221,\"b_kind\":\"write\",\"a2_line\":200,\"a2_kind\":\"read\",\"why\":\"irq_iris can overwrite v_glacier between harbor's write and its check.\"},{\"variable\":\"v_glacier\",\"a1_line\":200,\"a1_kind\":\"read\",\"b_line\":208,\"b_kind\":\"write\",\"a2_line\":203,\"a2_kind\":\"write\",\"why\":\"irq_tundra can write v_glacier between harbor's read and its write.\"},{\"variable\":\"v_glacier\",\"a1_line\":200,\"a1_kind\":\"read\",\"b_line\":221,\"b_kind\":\"write\",\"a2_line\":203,\"a2_kind\":\"write\",\"why\":\"irq_iris can write v_glacier between harbor's read and its write.\"},{\"variable\":\"v_mesa\",\"a1_line\":163,\"a1_kind\":\"read\",\"b_line\":230,\"b_kind\":\"write\",\"a2_line\":164,\"a2_kind\":\"read\",\"why\":\"irq_iris (v_umber is 0 only if... it writes v_mesa) can preempt irq_loom between its two reads of v_mesa.\"},{\"variable\":\"v_velvet\",\"a1_line\":161,\"a1_kind\":\"read\",\"b_line\":216,\"b_kind\":\"write\",\"a2_line\":162,\"a2_kind\":\"read\",\"why\":\"irq_tundra can write v_velvet between loom's two reads in fn_saffron.\"},{\"variable\":\"v_lantern\",\"a1_line\":197,\"a1_kind\":\"read\",\"b_line\":231,\"b_kind\":\"write\",\"a2_line\":198,\"a2_kind\":\"read\",\"why\":\"irq_iris can write v_lantern between harbor's two reads.\"}]}",
+  "wall_s": 17.487343072891235,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 2615,
+    "cache_read": 5620,
+    "cache_write": 487,
+    "latency_s": 17.48715707298834
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

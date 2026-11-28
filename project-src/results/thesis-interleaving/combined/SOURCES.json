@@ -1,0 +1,12 @@
+{
+ "combined_from": [
+  "results/thesis-interleaving/full-53-33",
+  "results/thesis-interleaving/full-48-38",
+  "results/thesis-interleaving/bmc4av-terms-48-38",
+  "results/thesis-interleaving/bmc4av-terms-53-33",
+  "results/thesis-interleaving/bmc4av-25-allpatterns-48-38"
+ ],
+ "published_from": "results/thesis/published.csv (S0, unchanged)",
+ "runs": "+interleaving x3, pool + by variable, claude-cli:sonnet@low, frozen-20261121",
+ "note": "runs.csv and patterns.csv are the de-duplicated union; items, agreement, cases from full-53-33"
+}

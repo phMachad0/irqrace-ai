@@ -1,0 +1,28 @@
+{
+  "case": "program_31",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_basalt",
+        "a1_line": 21,
+        "a1_kind": "read",
+        "b_line": 14,
+        "b_kind": "write",
+        "a2_line": 22,
+        "a2_kind": "write",
+        "why": "The task reads v_basalt at line 21, then disables only interrupt 1, leaving interrupt 2 (irq_kestrel) enabled. irq_kestrel can pre‑empt between line 21 and line 22 and performs v_basalt-- (a write), breaking the atomic read‑write sequence."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_basalt\",\n      \"a1_line\": 21,\n      \"a1_kind\": \"read\",\n      \"b_line\": 14,\n      \"b_kind\": \"write\",\n      \"a2_line\": 22,\n      \"a2_kind\": \"write\",\n      \"why\": \"The task reads v_basalt at line 21, then disables only interrupt 1, leaving interrupt 2 (irq_kestrel) enabled. irq_kestrel can pre‑empt between line 21 and line 22 and performs v_basalt-- (a write), breaking the atomic read‑write sequence.\"\n    }\n  ]\n}",
+  "wall_s": 12.068243265151978,
+  "usage": {
+    "input_tokens": 853,
+    "output_tokens": 1141,
+    "cache_read": 0,
+    "cache_write": 0,
+    "latency_s": 12.068172465980751
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

@@ -1,0 +1,28 @@
+{
+  "case": "program_06",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_meadow",
+        "a1_line": 26,
+        "a1_kind": "read",
+        "b_line": 14,
+        "b_kind": "write",
+        "a2_line": 28,
+        "a2_kind": "read",
+        "why": "The task reads v_meadow at i=0 (line 26) and again at i=4 (line 28) with interrupts enabled. The higher-priority ISR can write v_meadow at line 14 between the two reads, so they can see different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_meadow\",\"a1_line\":26,\"a1_kind\":\"read\",\"b_line\":14,\"b_kind\":\"write\",\"a2_line\":28,\"a2_kind\":\"read\",\"why\":\"The task reads v_meadow at i=0 (line 26) and again at i=4 (line 28) with interrupts enabled. The higher-priority ISR can write v_meadow at line 14 between the two reads, so they can see different values.\"}]}",
+  "wall_s": 5.370023012161255,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 427,
+    "cache_read": 975,
+    "cache_write": 1418,
+    "latency_s": 5.369782452005893
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

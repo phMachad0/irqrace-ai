@@ -1,0 +1,78 @@
+{
+  "case": "blink2",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "timerCount",
+        "a1_line": 93,
+        "a1_kind": "read",
+        "b_line": 119,
+        "b_kind": "write",
+        "a2_line": 93,
+        "a2_kind": "write",
+        "why": "Timer_C (prio 4) can preempt Timer_A between its read and write in the increment, so the write-back overwrites C's value (lost update)."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 93,
+        "a1_kind": "read",
+        "b_line": 119,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "read",
+        "why": "Timer_C can preempt Timer_A between the read at 93 and the check at 95 and change timerCount, so the two reads see different values."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 93,
+        "a1_kind": "write",
+        "b_line": 119,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "read",
+        "why": "Timer_C can overwrite timerCount after Timer_A writes it and before Timer_A's check at 95, so the check doesn't see A's own value."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 106,
+        "a1_kind": "write",
+        "b_line": 93,
+        "b_kind": "write",
+        "a2_line": 108,
+        "a2_kind": "read",
+        "why": "Timer_A (prio 3) preempts Timer_B (prio 2) between its write of 0 and its check, which makes the check see A's value instead of 0."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 106,
+        "a1_kind": "write",
+        "b_line": 119,
+        "b_kind": "write",
+        "a2_line": 108,
+        "a2_kind": "read",
+        "why": "Timer_C (prio 4) preempts Timer_B between its write and its read and writes timerCount. Since C writes 0, the stored value doesn't change, but the interleaving is a write-write-read pattern."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 106,
+        "a1_kind": "write",
+        "b_line": 132,
+        "b_kind": "write",
+        "a2_line": 108,
+        "a2_kind": "read",
+        "why": "Timer_Force (prio 3) preempts Timer_B between its write of 0 and its check and sets timerCount to 1, so the check at 108 fails."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"timerCount\",\"a1_line\":93,\"a1_kind\":\"read\",\"b_line\":119,\"b_kind\":\"write\",\"a2_line\":93,\"a2_kind\":\"write\",\"why\":\"Timer_C (prio 4) can preempt Timer_A between its read and write in the increment, so the write-back overwrites C's value (lost update).\"},{\"variable\":\"timerCount\",\"a1_line\":93,\"a1_kind\":\"read\",\"b_line\":119,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"read\",\"why\":\"Timer_C can preempt Timer_A between the read at 93 and the check at 95 and change timerCount, so the two reads see different values.\"},{\"variable\":\"timerCount\",\"a1_line\":93,\"a1_kind\":\"write\",\"b_line\":119,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"read\",\"why\":\"Timer_C can overwrite timerCount after Timer_A writes it and before Timer_A's check at 95, so the check doesn't see A's own value.\"},{\"variable\":\"timerCount\",\"a1_line\":106,\"a1_kind\":\"write\",\"b_line\":93,\"b_kind\":\"write\",\"a2_line\":108,\"a2_kind\":\"read\",\"why\":\"Timer_A (prio 3) preempts Timer_B (prio 2) between its write of 0 and its check, which makes the check see A's value instead of 0.\"},{\"variable\":\"timerCount\",\"a1_line\":106,\"a1_kind\":\"write\",\"b_line\":119,\"b_kind\":\"write\",\"a2_line\":108,\"a2_kind\":\"read\",\"why\":\"Timer_C (prio 4) preempts Timer_B between its write and its read and writes timerCount. Since C writes 0, the stored value doesn't change, but the interleaving is a write-write-read pattern.\"},{\"variable\":\"timerCount\",\"a1_line\":106,\"a1_kind\":\"write\",\"b_line\":132,\"b_kind\":\"write\",\"a2_line\":108,\"a2_kind\":\"read\",\"why\":\"Timer_Force (prio 3) preempts Timer_B between its write of 0 and its check and sets timerCount to 1, so the check at 108 fails.\"}]}",
+  "wall_s": 11.961847305297852,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1383,
+    "cache_read": 3628,
+    "cache_write": 486,
+    "latency_s": 11.952836162992753
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,78 @@
+{
+  "case": "program_25",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_amber",
+        "a1_line": 14,
+        "a1_kind": "write",
+        "b_line": 8,
+        "b_kind": "write",
+        "a2_line": 15,
+        "a2_kind": "read",
+        "why": "ISR can preempt the task between the write at line 14 and the read at line 15, breaking atomicity."
+      },
+      {
+        "variable": "v_amber",
+        "a1_line": 14,
+        "a1_kind": "write",
+        "b_line": 8,
+        "b_kind": "write",
+        "a2_line": 16,
+        "a2_kind": "read",
+        "why": "ISR can run after line 14 and before line 16, interleaving a write between two task accesses."
+      },
+      {
+        "variable": "v_amber",
+        "a1_line": 14,
+        "a1_kind": "write",
+        "b_line": 8,
+        "b_kind": "write",
+        "a2_line": 17,
+        "a2_kind": "read",
+        "why": "ISR may interrupt after the initial write and before the final read, violating atomicity."
+      },
+      {
+        "variable": "v_amber",
+        "a1_line": 15,
+        "a1_kind": "read",
+        "b_line": 8,
+        "b_kind": "write",
+        "a2_line": 16,
+        "a2_kind": "read",
+        "why": "A read at line 15 can be followed by an ISR write before the next read at line 16."
+      },
+      {
+        "variable": "v_amber",
+        "a1_line": 15,
+        "a1_kind": "read",
+        "b_line": 8,
+        "b_kind": "write",
+        "a2_line": 17,
+        "a2_kind": "read",
+        "why": "The ISR write can occur between the reads on lines 15 and 17."
+      },
+      {
+        "variable": "v_amber",
+        "a1_line": 16,
+        "a1_kind": "read",
+        "b_line": 8,
+        "b_kind": "write",
+        "a2_line": 17,
+        "a2_kind": "read",
+        "why": "An ISR write can interpose between the reads on lines 16 and 17."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_amber\",\n      \"a1_line\": 14,\n      \"a1_kind\": \"write\",\n      \"b_line\": 8,\n      \"b_kind\": \"write\",\n      \"a2_line\": 15,\n      \"a2_kind\": \"read\",\n      \"why\": \"ISR can preempt the task between the write at line 14 and the read at line 15, breaking atomicity.\"\n    },\n    {\n      \"variable\": \"v_amber\",\n      \"a1_line\": 14,\n      \"a1_kind\": \"write\",\n      \"b_line\": 8,\n      \"b_kind\": \"write\",\n      \"a2_line\": 16,\n      \"a2_kind\": \"read\",\n      \"why\": \"ISR can run after line 14 and before line 16, interleaving a write between two task accesses.\"\n    },\n    {\n      \"variable\": \"v_amber\",\n      \"a1_line\": 14,\n      \"a1_kind\": \"write\",\n      \"b_line\": 8,\n      \"b_kind\": \"write\",\n      \"a2_line\": 17,\n      \"a2_kind\": \"read\",\n      \"why\": \"ISR may interrupt after the initial write and before the final read, violating atomicity.\"\n    },\n    {\n      \"variable\": \"v_amber\",\n      \"a1_line\": 15,\n      \"a1_kind\": \"read\",\n      \"b_line\": 8,\n      \"b_kind\": \"write\",\n      \"a2_line\": 16,\n      \"a2_kind\": \"read\",\n      \"why\": \"A read at line 15 can be followed by an ISR write before the next read at line 16.\"\n    },\n    {\n      \"variable\": \"v_amber\",\n      \"a1_line\": 15,\n      \"a1_kind\": \"read\",\n      \"b_line\": 8,\n      \"b_kind\": \"write\",\n      \"a2_line\": 17,\n      \"a2_kind\": \"read\",\n      \"why\": \"The ISR write can occur between the reads on lines 15 and 17.\"\n    },\n    {\n      \"variable\": \"v_amber\",\n      \"a1_line\": 16,\n      \"a1_kind\": \"read\",\n      \"b_line\": 8,\n      \"b_kind\": \"write\",\n      \"a2_line\": 17,\n      \"a2_kind\": \"read\",\n      \"why\": \"An ISR write can interpose between the reads on lines 16 and 17.\"\n    }\n  ]\n}",
+  "wall_s": 11.760935544967651,
+  "usage": {
+    "input_tokens": 763,
+    "output_tokens": 1562,
+    "cache_read": 0,
+    "cache_write": 0,
+    "latency_s": 11.760765753977466
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

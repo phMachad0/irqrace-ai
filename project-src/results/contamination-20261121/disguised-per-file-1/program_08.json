@@ -1,0 +1,38 @@
+{
+  "case": "program_08",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_amber",
+        "a1_line": 19,
+        "a1_kind": "read",
+        "b_line": 23,
+        "b_kind": "write",
+        "a2_line": 19,
+        "a2_kind": "write",
+        "why": "ISR can reset v_amber between the task's read and its write-back in the increment, so the ISR's write is overwritten by a stale value plus 1."
+      },
+      {
+        "variable": "v_amber",
+        "a1_line": 8,
+        "a1_kind": "write",
+        "b_line": 23,
+        "b_kind": "write",
+        "a2_line": 19,
+        "a2_kind": "read",
+        "why": "ISR can overwrite the rand() value with 0 after the task's write at line 8 and before the read at line 19, so the task reads a value it did not write."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_amber\",\"a1_line\":19,\"a1_kind\":\"read\",\"b_line\":23,\"b_kind\":\"write\",\"a2_line\":19,\"a2_kind\":\"write\",\"why\":\"ISR can reset v_amber between the task's read and its write-back in the increment, so the ISR's write is overwritten by a stale value plus 1.\"},{\"variable\":\"v_amber\",\"a1_line\":8,\"a1_kind\":\"write\",\"b_line\":23,\"b_kind\":\"write\",\"a2_line\":19,\"a2_kind\":\"read\",\"why\":\"ISR can overwrite the rand() value with 0 after the task's write at line 8 and before the read at line 19, so the task reads a value it did not write.\"}]}",
+  "wall_s": 9.54708218574524,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 592,
+    "cache_read": 975,
+    "cache_write": 1227,
+    "latency_s": 9.546892265003407
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

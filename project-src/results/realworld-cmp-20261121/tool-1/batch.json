@@ -1,0 +1,15 @@
+{
+  "run_id": "+self-validation/1",
+  "row": "+self-validation",
+  "sample": 1,
+  "backend": "claude-cli:sonnet@low",
+  "workers": 2,
+  "case_parallel": 2,
+  "case_timeout_s": 7200.0,
+  "frozen_root": "/home/pedro/Documentos/tcc/worktrees/runs-realworld-20261121-official",
+  "triaged_with_commit": "6de9b4c34581f31d3a43b88220f26bbf39d10434",
+  "status": "ok",
+  "started": "2026-11-21T19:29:41Z",
+  "failures": [],
+  "finished": "2026-11-21T19:43:13Z"
+}

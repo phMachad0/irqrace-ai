@@ -1,0 +1,78 @@
+{
+  "case": "program_04",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_tundra",
+        "a1_line": 24,
+        "a1_kind": "read",
+        "b_line": 73,
+        "b_kind": "write",
+        "a2_line": 26,
+        "a2_kind": "read",
+        "why": "The ISR can change v_tundra between the check and the argument read, so the value used differs from the one checked."
+      },
+      {
+        "variable": "v_tundra",
+        "a1_line": 24,
+        "a1_kind": "read",
+        "b_line": 73,
+        "b_kind": "write",
+        "a2_line": 48,
+        "a2_kind": "read",
+        "why": "The ISR can change v_tundra between the check at line 24 and the read in fn_dune, which is reached when a>=b."
+      },
+      {
+        "variable": "v_tundra",
+        "a1_line": 26,
+        "a1_kind": "read",
+        "b_line": 73,
+        "b_kind": "write",
+        "a2_line": 48,
+        "a2_kind": "read",
+        "why": "The ISR can change v_tundra between the argument read and the read in fn_dune, so the two reads are inconsistent."
+      },
+      {
+        "variable": "v_tundra",
+        "a1_line": 31,
+        "a1_kind": "write",
+        "b_line": 73,
+        "b_kind": "write",
+        "a2_line": 24,
+        "a2_kind": "read",
+        "why": "The ISR can overwrite the value the task just wrote, so the task reads the ISR's value rather than its own."
+      },
+      {
+        "variable": "v_tundra",
+        "a1_line": 31,
+        "a1_kind": "write",
+        "b_line": 73,
+        "b_kind": "write",
+        "a2_line": 63,
+        "a2_kind": "read",
+        "why": "The ISR can overwrite the value the task just wrote before the task copies it to v_harbor."
+      },
+      {
+        "variable": "v_tundra",
+        "a1_line": 63,
+        "a1_kind": "read",
+        "b_line": 73,
+        "b_kind": "write",
+        "a2_line": 24,
+        "a2_kind": "read",
+        "why": "The ISR can change v_tundra between the read that copies it to v_harbor and the later read at line 24, so the two reads disagree."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_tundra\",\"a1_line\":24,\"a1_kind\":\"read\",\"b_line\":73,\"b_kind\":\"write\",\"a2_line\":26,\"a2_kind\":\"read\",\"why\":\"The ISR can change v_tundra between the check and the argument read, so the value used differs from the one checked.\"},{\"variable\":\"v_tundra\",\"a1_line\":24,\"a1_kind\":\"read\",\"b_line\":73,\"b_kind\":\"write\",\"a2_line\":48,\"a2_kind\":\"read\",\"why\":\"The ISR can change v_tundra between the check at line 24 and the read in fn_dune, which is reached when a>=b.\"},{\"variable\":\"v_tundra\",\"a1_line\":26,\"a1_kind\":\"read\",\"b_line\":73,\"b_kind\":\"write\",\"a2_line\":48,\"a2_kind\":\"read\",\"why\":\"The ISR can change v_tundra between the argument read and the read in fn_dune, so the two reads are inconsistent.\"},{\"variable\":\"v_tundra\",\"a1_line\":31,\"a1_kind\":\"write\",\"b_line\":73,\"b_kind\":\"write\",\"a2_line\":24,\"a2_kind\":\"read\",\"why\":\"The ISR can overwrite the value the task just wrote, so the task reads the ISR's value rather than its own.\"},{\"variable\":\"v_tundra\",\"a1_line\":31,\"a1_kind\":\"write\",\"b_line\":73,\"b_kind\":\"write\",\"a2_line\":63,\"a2_kind\":\"read\",\"why\":\"The ISR can overwrite the value the task just wrote before the task copies it to v_harbor.\"},{\"variable\":\"v_tundra\",\"a1_line\":63,\"a1_kind\":\"read\",\"b_line\":73,\"b_kind\":\"write\",\"a2_line\":24,\"a2_kind\":\"read\",\"why\":\"The ISR can change v_tundra between the read that copies it to v_harbor and the later read at line 24, so the two reads disagree.\"}]}",
+  "wall_s": 9.869904518127441,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1153,
+    "cache_read": 975,
+    "cache_write": 1798,
+    "latency_s": 9.86964408197673
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

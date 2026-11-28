@@ -1,0 +1,28 @@
+{
+  "case": "program_12",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_ridge",
+        "a1_line": 32,
+        "a1_kind": "write",
+        "b_line": 19,
+        "b_kind": "read",
+        "a2_line": 33,
+        "a2_kind": "write",
+        "why": "v_ridge is a union, so header and data overlap. The ISR can preempt the task between its two writes and read the header while the union is half-updated."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_ridge\",\"a1_line\":32,\"a1_kind\":\"write\",\"b_line\":19,\"b_kind\":\"read\",\"a2_line\":33,\"a2_kind\":\"write\",\"why\":\"v_ridge is a union, so header and data overlap. The ISR can preempt the task between its two writes and read the header while the union is half-updated.\"}]}",
+  "wall_s": 5.18901515007019,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 396,
+    "cache_read": 975,
+    "cache_write": 1392,
+    "latency_s": 5.188850765989628
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,38 @@
+{
+  "case": "program_08",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_amber",
+        "a1_line": 23,
+        "a1_kind": "read",
+        "b_line": 27,
+        "b_kind": "write",
+        "a2_line": 23,
+        "a2_kind": "write",
+        "why": "The ISR can fire between the read and the write-back of the increment. Its reset to 0 is then overwritten by the stale value plus 1, so the update is lost."
+      },
+      {
+        "variable": "v_amber",
+        "a1_line": 12,
+        "a1_kind": "write",
+        "b_line": 27,
+        "b_kind": "write",
+        "a2_line": 23,
+        "a2_kind": "read",
+        "why": "The ISR can write 0 after the task stores rand() and before the task reads the value for the increment. The task then reads 0 instead of the value it wrote."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_amber\",\"a1_line\":23,\"a1_kind\":\"read\",\"b_line\":27,\"b_kind\":\"write\",\"a2_line\":23,\"a2_kind\":\"write\",\"why\":\"The ISR can fire between the read and the write-back of the increment. Its reset to 0 is then overwritten by the stale value plus 1, so the update is lost.\"},{\"variable\":\"v_amber\",\"a1_line\":12,\"a1_kind\":\"write\",\"b_line\":27,\"b_kind\":\"write\",\"a2_line\":23,\"a2_kind\":\"read\",\"why\":\"The ISR can write 0 after the task stores rand() and before the task reads the value for the increment. The task then reads 0 instead of the value it wrote.\"}]}",
+  "wall_s": 5.928356885910034,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 498,
+    "cache_read": 975,
+    "cache_write": 1272,
+    "latency_s": 5.928172587999143
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

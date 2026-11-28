@@ -1,0 +1,68 @@
+{
+  "case": "i8xx_tco_3",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "tco_expect_close",
+        "a1_line": 764,
+        "a1_kind": "write",
+        "b_line": 421,
+        "b_kind": "write",
+        "a2_line": 765,
+        "a2_kind": "read",
+        "why": "closer2_isr writes 42 then re-reads it. An equal-priority closer ISR can preempt in between and reset it to 0 through i8xx_tco_write."
+      },
+      {
+        "variable": "tco_expect_close",
+        "a1_line": 777,
+        "a1_kind": "write",
+        "b_line": 421,
+        "b_kind": "write",
+        "a2_line": 778,
+        "a2_kind": "read",
+        "why": "closer3_isr writes 42 then checks it. Another closer ISR running i8xx_tco_write can write 0 in between."
+      },
+      {
+        "variable": "test_global_var1",
+        "a1_line": 741,
+        "a1_kind": "read",
+        "b_line": 791,
+        "b_kind": "write",
+        "a2_line": 742,
+        "a2_kind": "read",
+        "why": "JudgeCondi in closer2_isr reads var1 twice. The higher-priority writer1_isr can write it between the two reads."
+      },
+      {
+        "variable": "test_global_var2",
+        "a1_line": 744,
+        "a1_kind": "read",
+        "b_line": 801,
+        "b_kind": "write",
+        "a2_line": 745,
+        "a2_kind": "read",
+        "why": "JudgeCondi reads var2 twice. The higher-priority writer2_isr can write it between the two reads."
+      },
+      {
+        "variable": "test_global_var3",
+        "a1_line": 779,
+        "a1_kind": "read",
+        "b_line": 810,
+        "b_kind": "write",
+        "a2_line": 779,
+        "a2_kind": "write",
+        "why": "var3++ in closer3_isr is a non-atomic read-modify-write. The higher-priority writer3_isr can preempt it, and its write is then lost."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"tco_expect_close\",\"a1_line\":764,\"a1_kind\":\"write\",\"b_line\":421,\"b_kind\":\"write\",\"a2_line\":765,\"a2_kind\":\"read\",\"why\":\"closer2_isr writes 42 then re-reads it. An equal-priority closer ISR can preempt in between and reset it to 0 through i8xx_tco_write.\"},{\"variable\":\"tco_expect_close\",\"a1_line\":777,\"a1_kind\":\"write\",\"b_line\":421,\"b_kind\":\"write\",\"a2_line\":778,\"a2_kind\":\"read\",\"why\":\"closer3_isr writes 42 then checks it. Another closer ISR running i8xx_tco_write can write 0 in between.\"},{\"variable\":\"test_global_var1\",\"a1_line\":741,\"a1_kind\":\"read\",\"b_line\":791,\"b_kind\":\"write\",\"a2_line\":742,\"a2_kind\":\"read\",\"why\":\"JudgeCondi in closer2_isr reads var1 twice. The higher-priority writer1_isr can write it between the two reads.\"},{\"variable\":\"test_global_var2\",\"a1_line\":744,\"a1_kind\":\"read\",\"b_line\":801,\"b_kind\":\"write\",\"a2_line\":745,\"a2_kind\":\"read\",\"why\":\"JudgeCondi reads var2 twice. The higher-priority writer2_isr can write it between the two reads.\"},{\"variable\":\"test_global_var3\",\"a1_line\":779,\"a1_kind\":\"read\",\"b_line\":810,\"b_kind\":\"write\",\"a2_line\":779,\"a2_kind\":\"write\",\"why\":\"var3++ in closer3_isr is a non-atomic read-modify-write. The higher-priority writer3_isr can preempt it, and its write is then lost.\"}]}",
+  "wall_s": 15.483727931976318,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1859,
+    "cache_read": 15535,
+    "cache_write": 484,
+    "latency_s": 15.483524487004615
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

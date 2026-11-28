@@ -1,0 +1,28 @@
+{
+  "case": "program_20",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_beacon",
+        "a1_line": 46,
+        "a1_kind": "read",
+        "b_line": 20,
+        "b_kind": "write",
+        "a2_line": 47,
+        "a2_kind": "read",
+        "why": "irq_delta can preempt the task between the two reads in v_glacier and zero the v_beacon entries. The result then mixes old and new values, for example array[1] before the ISR and array[0] after it."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_beacon\",\"a1_line\":46,\"a1_kind\":\"read\",\"b_line\":20,\"b_kind\":\"write\",\"a2_line\":47,\"a2_kind\":\"read\",\"why\":\"irq_delta can preempt the task between the two reads in v_glacier and zero the v_beacon entries. The result then mixes old and new values, for example array[1] before the ISR and array[0] after it.\"}]}",
+  "wall_s": 6.0861241817474365,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 526,
+    "cache_read": 975,
+    "cache_write": 1565,
+    "latency_s": 6.085982648015488
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

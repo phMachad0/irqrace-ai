@@ -1,0 +1,58 @@
+{
+  "case": "program_24",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_fjord",
+        "a1_line": 22,
+        "a1_kind": "write",
+        "b_line": 18,
+        "b_kind": "write",
+        "a2_line": 8,
+        "a2_kind": "read",
+        "why": "The ISR can reset v_fjord to 0 during init() after the task wrote a random value. The task then reads 0 instead of its own value."
+      },
+      {
+        "variable": "v_fjord",
+        "a1_line": 8,
+        "a1_kind": "read",
+        "b_line": 18,
+        "b_kind": "write",
+        "a2_line": 13,
+        "a2_kind": "read",
+        "why": "The range check uses the value read on line 8. The ISR can zero v_fjord before line 13 re-reads it, so the check no longer matches the value used."
+      },
+      {
+        "variable": "v_fjord",
+        "a1_line": 13,
+        "a1_kind": "read",
+        "b_line": 18,
+        "b_kind": "write",
+        "a2_line": 13,
+        "a2_kind": "write",
+        "why": "The increment on line 13 is a non-atomic read-modify-write. The ISR's reset can fall between the read and the write, and the write then stores a stale value plus one."
+      },
+      {
+        "variable": "v_fjord",
+        "a1_line": 22,
+        "a1_kind": "write",
+        "b_line": 18,
+        "b_kind": "write",
+        "a2_line": 13,
+        "a2_kind": "read",
+        "why": "The ISR can overwrite the value written on line 22 before the increment on line 13 reads it. The increment then starts from 0 rather than the task's value."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_fjord\",\"a1_line\":22,\"a1_kind\":\"write\",\"b_line\":18,\"b_kind\":\"write\",\"a2_line\":8,\"a2_kind\":\"read\",\"why\":\"The ISR can reset v_fjord to 0 during init() after the task wrote a random value. The task then reads 0 instead of its own value.\"},{\"variable\":\"v_fjord\",\"a1_line\":8,\"a1_kind\":\"read\",\"b_line\":18,\"b_kind\":\"write\",\"a2_line\":13,\"a2_kind\":\"read\",\"why\":\"The range check uses the value read on line 8. The ISR can zero v_fjord before line 13 re-reads it, so the check no longer matches the value used.\"},{\"variable\":\"v_fjord\",\"a1_line\":13,\"a1_kind\":\"read\",\"b_line\":18,\"b_kind\":\"write\",\"a2_line\":13,\"a2_kind\":\"write\",\"why\":\"The increment on line 13 is a non-atomic read-modify-write. The ISR's reset can fall between the read and the write, and the write then stores a stale value plus one.\"},{\"variable\":\"v_fjord\",\"a1_line\":22,\"a1_kind\":\"write\",\"b_line\":18,\"b_kind\":\"write\",\"a2_line\":13,\"a2_kind\":\"read\",\"why\":\"The ISR can overwrite the value written on line 22 before the increment on line 13 reads it. The increment then starts from 0 rather than the task's value.\"}]}",
+  "wall_s": 11.631342649459839,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 959,
+    "cache_read": 1710,
+    "cache_write": 481,
+    "latency_s": 11.631117732002167
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

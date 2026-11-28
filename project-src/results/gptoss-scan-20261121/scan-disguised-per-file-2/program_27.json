@@ -1,0 +1,28 @@
+{
+  "case": "program_27",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_fjord",
+        "a1_line": 24,
+        "a1_kind": "write",
+        "b_line": 17,
+        "b_kind": "write",
+        "a2_line": 28,
+        "a2_kind": "read",
+        "why": "irq_lantern writes v_fjord[TRIGGER] then reads it later; irq_kelp, a higher‑priority ISR, can run in between and also writes the same location, breaking atomicity."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_fjord\",\"a1_line\":24,\"a1_kind\":\"write\",\"b_line\":17,\"b_kind\":\"write\",\"a2_line\":28,\"a2_kind\":\"read\",\"why\":\"irq_lantern writes v_fjord[TRIGGER] then reads it later; irq_kelp, a higher‑priority ISR, can run in between and also writes the same location, breaking atomicity.\"}]}",
+  "wall_s": 16.380863666534424,
+  "usage": {
+    "input_tokens": 399,
+    "output_tokens": 1337,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 16.38072335801553
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

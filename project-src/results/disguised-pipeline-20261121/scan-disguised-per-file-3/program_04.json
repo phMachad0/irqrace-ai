@@ -1,0 +1,58 @@
+{
+  "case": "program_04",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_cedar",
+        "a1_line": 30,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 32,
+        "a2_kind": "read",
+        "why": "The ISR can update v_cedar between the range check and the value passed to fn_willow, so the checked value and the used value can differ."
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 32,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 54,
+        "a2_kind": "read",
+        "why": "The ISR can change v_cedar between the read at line 32, which is used in the comparison, and the re-read at line 54 in fn_dune. The branch decision and the later check can then be inconsistent."
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 37,
+        "a1_kind": "write",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 69,
+        "a2_kind": "read",
+        "why": "The task initializes v_cedar, the ISR overwrites it, and the task then reads it at line 69. The task gets the ISR's value instead of the one it wrote."
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 69,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 30,
+        "a2_kind": "read",
+        "why": "The ISR can change v_cedar between the task's two reads, at line 69 (copied to v_harbor) and at line 30 (the check). The two reads can then see different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_cedar\",\"a1_line\":30,\"a1_kind\":\"read\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":32,\"a2_kind\":\"read\",\"why\":\"The ISR can update v_cedar between the range check and the value passed to fn_willow, so the checked value and the used value can differ.\"},{\"variable\":\"v_cedar\",\"a1_line\":32,\"a1_kind\":\"read\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":54,\"a2_kind\":\"read\",\"why\":\"The ISR can change v_cedar between the read at line 32, which is used in the comparison, and the re-read at line 54 in fn_dune. The branch decision and the later check can then be inconsistent.\"},{\"variable\":\"v_cedar\",\"a1_line\":37,\"a1_kind\":\"write\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":69,\"a2_kind\":\"read\",\"why\":\"The task initializes v_cedar, the ISR overwrites it, and the task then reads it at line 69. The task gets the ISR's value instead of the one it wrote.\"},{\"variable\":\"v_cedar\",\"a1_line\":69,\"a1_kind\":\"read\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":30,\"a2_kind\":\"read\",\"why\":\"The ISR can change v_cedar between the task's two reads, at line 69 (copied to v_harbor) and at line 30 (the check). The two reads can then see different values.\"}]}",
+  "wall_s": 8.497755289077759,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 925,
+    "cache_read": 2353,
+    "cache_write": 489,
+    "latency_s": 8.497582721000072
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

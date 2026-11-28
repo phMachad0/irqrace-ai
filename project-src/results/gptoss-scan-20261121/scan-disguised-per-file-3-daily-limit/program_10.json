@@ -1,0 +1,28 @@
+{
+  "case": "program_10",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_amber",
+        "a1_line": 19,
+        "a1_kind": "read",
+        "b_line": 29,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "irq_upland reads v_amber, irq_vessel preempts and enables irq_nimbus, which then writes v_amber before irq_upland reads it again, creating a read‑write‑read atomicity violation."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_amber\",\n      \"a1_line\": 19,\n      \"a1_kind\": \"read\",\n      \"b_line\": 29,\n      \"b_kind\": \"write\",\n      \"a2_line\": 21,\n      \"a2_kind\": \"read\",\n      \"why\": \"irq_upland reads v_amber, irq_vessel preempts and enables irq_nimbus, which then writes v_amber before irq_upland reads it again, creating a read‑write‑read atomicity violation.\"\n    }\n  ]\n}",
+  "wall_s": 21.444209098815918,
+  "usage": {
+    "input_tokens": 490,
+    "output_tokens": 2287,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 21.444062778988155
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

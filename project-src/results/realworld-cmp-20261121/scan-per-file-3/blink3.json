@@ -1,0 +1,168 @@
+{
+  "case": "blink3",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 109,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "write",
+        "why": "timerCount++ in Timer_A is non-atomic; Timer_B (equal priority) can preempt and set it, and the increment overwrites it."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 123,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "write",
+        "why": "Higher-priority Timer_C can write between the read and write of the increment."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 146,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "write",
+        "why": "Reset ISR can zero timerCount between the increment's read and write; the reset is lost."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 136,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "write",
+        "why": "Force ISR's increment can be lost when it preempts Timer_A's read-modify-write."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "write",
+        "b_line": 146,
+        "b_kind": "write",
+        "a2_line": 97,
+        "a2_kind": "read",
+        "why": "Reset can change timerCount after the increment, so the check at line 97 sees a different value."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "write",
+        "b_line": 123,
+        "b_kind": "write",
+        "a2_line": 97,
+        "a2_kind": "read",
+        "why": "Timer_C can overwrite timerCount between the increment and the check."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "write",
+        "b_line": 109,
+        "b_kind": "write",
+        "a2_line": 97,
+        "a2_kind": "read",
+        "why": "Timer_B can overwrite timerCount between the increment and the check."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "write",
+        "b_line": 136,
+        "b_kind": "write",
+        "a2_line": 97,
+        "a2_kind": "read",
+        "why": "Force ISR increments timerCount between the write and the check, so the ==1 test fails."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 109,
+        "a1_kind": "write",
+        "b_line": 95,
+        "b_kind": "write",
+        "a2_line": 111,
+        "a2_kind": "read",
+        "why": "Timer_A (equal priority) can modify timerCount between Timer_B's write and its check."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 109,
+        "a1_kind": "write",
+        "b_line": 136,
+        "b_kind": "write",
+        "a2_line": 111,
+        "a2_kind": "read",
+        "why": "Force ISR can increment timerCount before the check at line 111."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 109,
+        "a1_kind": "write",
+        "b_line": 123,
+        "b_kind": "write",
+        "a2_line": 111,
+        "a2_kind": "read",
+        "why": "Timer_C can write timerCount between line 109 and the check."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 109,
+        "a1_kind": "write",
+        "b_line": 146,
+        "b_kind": "write",
+        "a2_line": 111,
+        "a2_kind": "read",
+        "why": "Reset can zero timerCount before the check at line 111."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 123,
+        "a1_kind": "write",
+        "b_line": 146,
+        "b_kind": "write",
+        "a2_line": 125,
+        "a2_kind": "read",
+        "why": "Higher-priority Reset can preempt Timer_C and zero timerCount before the check."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 136,
+        "a1_kind": "read",
+        "b_line": 123,
+        "b_kind": "write",
+        "a2_line": 136,
+        "a2_kind": "write",
+        "why": "Timer_C can preempt Force's non-atomic increment, and its write is overwritten."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 136,
+        "a1_kind": "read",
+        "b_line": 146,
+        "b_kind": "write",
+        "a2_line": 136,
+        "a2_kind": "write",
+        "why": "Reset can preempt Force's increment, and the stale increment overwrites the reset."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":109,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"timerCount++ in Timer_A is non-atomic; Timer_B (equal priority) can preempt and set it, and the increment overwrites it.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":123,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"Higher-priority Timer_C can write between the read and write of the increment.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"Reset ISR can zero timerCount between the increment's read and write; the reset is lost.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"Force ISR's increment can be lost when it preempts Timer_A's read-modify-write.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":97,\"a2_kind\":\"read\",\"why\":\"Reset can change timerCount after the increment, so the check at line 97 sees a different value.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":123,\"b_kind\":\"write\",\"a2_line\":97,\"a2_kind\":\"read\",\"why\":\"Timer_C can overwrite timerCount between the increment and the check.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":109,\"b_kind\":\"write\",\"a2_line\":97,\"a2_kind\":\"read\",\"why\":\"Timer_B can overwrite timerCount between the increment and the check.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":97,\"a2_kind\":\"read\",\"why\":\"Force ISR increments timerCount between the write and the check, so the ==1 test fails.\"},{\"variable\":\"timerCount\",\"a1_line\":109,\"a1_kind\":\"write\",\"b_line\":95,\"b_kind\":\"write\",\"a2_line\":111,\"a2_kind\":\"read\",\"why\":\"Timer_A (equal priority) can modify timerCount between Timer_B's write and its check.\"},{\"variable\":\"timerCount\",\"a1_line\":109,\"a1_kind\":\"write\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":111,\"a2_kind\":\"read\",\"why\":\"Force ISR can increment timerCount before the check at line 111.\"},{\"variable\":\"timerCount\",\"a1_line\":109,\"a1_kind\":\"write\",\"b_line\":123,\"b_kind\":\"write\",\"a2_line\":111,\"a2_kind\":\"read\",\"why\":\"Timer_C can write timerCount between line 109 and the check.\"},{\"variable\":\"timerCount\",\"a1_line\":109,\"a1_kind\":\"write\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":111,\"a2_kind\":\"read\",\"why\":\"Reset can zero timerCount before the check at line 111.\"},{\"variable\":\"timerCount\",\"a1_line\":123,\"a1_kind\":\"write\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":125,\"a2_kind\":\"read\",\"why\":\"Higher-priority Reset can preempt Timer_C and zero timerCount before the check.\"},{\"variable\":\"timerCount\",\"a1_line\":136,\"a1_kind\":\"read\",\"b_line\":123,\"b_kind\":\"write\",\"a2_line\":136,\"a2_kind\":\"write\",\"why\":\"Timer_C can preempt Force's non-atomic increment, and its write is overwritten.\"},{\"variable\":\"timerCount\",\"a1_line\":136,\"a1_kind\":\"read\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":136,\"a2_kind\":\"write\",\"why\":\"Reset can preempt Force's increment, and the stale increment overwrites the reset.\"}]}",
+  "wall_s": 16.328852653503418,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 2337,
+    "cache_read": 3759,
+    "cache_write": 487,
+    "latency_s": 16.328619731997605
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

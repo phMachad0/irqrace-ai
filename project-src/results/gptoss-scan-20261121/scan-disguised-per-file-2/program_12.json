@@ -1,0 +1,28 @@
+{
+  "case": "program_12",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_ridge",
+        "a1_line": 32,
+        "a1_kind": "write",
+        "b_line": 19,
+        "b_kind": "read",
+        "a2_line": 33,
+        "a2_kind": "write",
+        "why": "The ISR (higher priority) can preempt the task between writes to the overlapping fields of the union v_ridge, reading the header while the data field is being updated, breaking atomicity."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_ridge\",\n      \"a1_line\": 32,\n      \"a1_kind\": \"write\",\n      \"b_line\": 19,\n      \"b_kind\": \"read\",\n      \"a2_line\": 33,\n      \"a2_kind\": \"write\",\n      \"why\": \"The ISR (higher priority) can preempt the task between writes to the overlapping fields of the union v_ridge, reading the header while the data field is being updated, breaking atomicity.\"\n    }\n  ]\n}",
+  "wall_s": 21.555113554000854,
+  "usage": {
+    "input_tokens": 912,
+    "output_tokens": 911,
+    "cache_read": 0,
+    "cache_write": 0,
+    "latency_s": 21.555002106004395
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

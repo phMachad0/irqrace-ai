@@ -1,0 +1,78 @@
+{
+  "case": "program_04",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_cedar",
+        "a1_line": 37,
+        "a1_kind": "write",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 68,
+        "a2_kind": "read",
+        "why": "Task writes v_cedar then ISR overwrites it before the task later reads v_cedar for v_harbor, creating a write‑write‑read race."
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 37,
+        "a1_kind": "write",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 30,
+        "a2_kind": "read",
+        "why": "Task writes v_cedar, ISR can preempt and write a new value before the task later reads v_cedar in the fn_walnut condition, forming a write‑write‑read violation."
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 37,
+        "a1_kind": "write",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 32,
+        "a2_kind": "read",
+        "why": "Task’s initial write to v_cedar may be overwritten by the ISR before the task reads v_cedar as an argument to fn_willow, yielding a write‑write‑read race."
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 30,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 32,
+        "a2_kind": "read",
+        "why": "The task reads v_cedar in the if‑condition, ISR can modify it, then the task reads v_cedar again for the fn_willow call, a read‑write‑read atomicity breach."
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 30,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 68,
+        "a2_kind": "read",
+        "why": "After the task reads v_cedar in fn_walnut, the ISR may change it before the later read for v_harbor, producing a read‑write‑read violation."
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 32,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 68,
+        "a2_kind": "read",
+        "why": "The task reads v_cedar as a fn_willow argument; ISR could write a new value before the subsequent read for v_harbor, creating a read‑write‑read race."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_cedar\",\"a1_line\":37,\"a1_kind\":\"write\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":68,\"a2_kind\":\"read\",\"why\":\"Task writes v_cedar then ISR overwrites it before the task later reads v_cedar for v_harbor, creating a write‑write‑read race.\"},{\"variable\":\"v_cedar\",\"a1_line\":37,\"a1_kind\":\"write\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":30,\"a2_kind\":\"read\",\"why\":\"Task writes v_cedar, ISR can preempt and write a new value before the task later reads v_cedar in the fn_walnut condition, forming a write‑write‑read violation.\"},{\"variable\":\"v_cedar\",\"a1_line\":37,\"a1_kind\":\"write\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":32,\"a2_kind\":\"read\",\"why\":\"Task’s initial write to v_cedar may be overwritten by the ISR before the task reads v_cedar as an argument to fn_willow, yielding a write‑write‑read race.\"},{\"variable\":\"v_cedar\",\"a1_line\":30,\"a1_kind\":\"read\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":32,\"a2_kind\":\"read\",\"why\":\"The task reads v_cedar in the if‑condition, ISR can modify it, then the task reads v_cedar again for the fn_willow call, a read‑write‑read atomicity breach.\"},{\"variable\":\"v_cedar\",\"a1_line\":30,\"a1_kind\":\"read\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":68,\"a2_kind\":\"read\",\"why\":\"After the task reads v_cedar in fn_walnut, the ISR may change it before the later read for v_harbor, producing a read‑write‑read violation.\"},{\"variable\":\"v_cedar\",\"a1_line\":32,\"a1_kind\":\"read\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":68,\"a2_kind\":\"read\",\"why\":\"The task reads v_cedar as a fn_willow argument; ISR could write a new value before the subsequent read for v_harbor, creating a read‑write‑read race.\"}]}",
+  "wall_s": 22.599324464797974,
+  "usage": {
+    "input_tokens": 1235,
+    "output_tokens": 1875,
+    "cache_read": 0,
+    "cache_write": 0,
+    "latency_s": 22.599179923010524
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

@@ -11,7 +11,7 @@ Catalog of the wiki. Start at [[Overview]]; read [[Thesis Goal]] for what this v
 the LLM per `CLAUDE.md` — update on every ingest.
 
 **Counts**: 12 sources (5 concurrency, 7 LLM) · 4 tool pages + 7 baseline/infrastructure ·
-20 concepts · 4 benchmarks · 7 comparisons · 7 project pages · 9 implementation diary pages.
+20 concepts · 5 benchmarks · 7 comparisons · 7 project pages · 10 implementation diary pages.
 
 ## Navigation
 
@@ -25,6 +25,7 @@ the LLM per `CLAUDE.md` — update on every ingest.
 | [[Dashboard Design]] | the UI: Streamlit over a headless core, 45 numbered requirements, run store layout |
 | [[Soundness Assumptions]] | **the list the no-false-negatives claim is relative to** — 56 entries, each with how it could hide a defect; W5 added F6–F9, H1d, I4; W6–W7 the solver's group J and A4; H1e states the defect class |
 | [[Roadmap]] | 10-week plan to 6 Nov: static / LLM / UI tracks, four contracts, five milestones, de-scoping ladder; status callout as of 22 Oct |
+| [[Lucas Tasks]] | post-Roadmap TCC backlog. T1: three-way Racebench comparison (published results vs our static stages vs static + LLM): metrics, the comparability protocol, steps. T2: "Racebench 2.2", the ground truth extended with adjudicated unannotated bugs, with the guards against circularity. T3: comparative analysis of the prompts, starting from `+racebench` vs `+racebench+c4`, with five one-change variants and a paired protocol. T4: consolidation into the monograph, with a results structure per research question and 11 planned comparative figures |
 | [[Synthesis]] | what the four sources collectively say; working thesis statement |
 | [[Open Questions]] | sources to acquire, empirical questions a TCC could answer |
 
@@ -45,6 +46,7 @@ Criada e revisada ao fim de cada semana de implementação (ver `CLAUDE.md`).
 | [[Semana 7 — O Stage 3, Busca e Verificação]] | W7 · planejada 12–16 out, feita 22 out | a busca, a projeção de endereços, três bugs pegos e testados por mutação, a auditoria dos `unsat`, **funil 316 → 202 → 166 e 48/48** |
 | [[Semana 5 a 8 — Trilha B (Triagem, Ablação, Reparo e Integração C3-C4)]] | W1–W8 (Trilha B) · 26 set–20 out | os 20 *fixtures*, M1 (GO), *backends* agnósticos, 5 linhas de ablação, `SourceBackedResolver`, reparo com testemunha (W7) e integração C3/CLI (W8) |
 | [[Semana 8 — Integração das Trilhas A e B]] | W8 · planejada 19–23 out, feita 23–26 out | código-fonte nos registros, chave do *cache* pela evidência, triagem que não descarta, `claude-cli`, *merge* da `main`, só trincas na Trilha B, stages 2 e 3 reais no desktop e a remoção de tudo que fingia a análise estática |
+| [[Semana 9 — O Benchmark de Programas Reais]] | W9 · 26–30 out, em andamento (29–30 out) | o firmware do robô (3 problemas, issues #4–#7); o benchmark de 18 programas vendorizado; duas cópias que não são o mesmo programa; errata sem tocar no fonte; o *recall gate* que separou um erro de modelo de um erro da ferramenta |
 
 ## Implementation (`project-src/`)
 
@@ -141,9 +143,10 @@ Raw clippings live in `Clippings/`, PDFs in `raw/`. Both are immutable.
 | Page | Summary |
 | --- | --- |
 | [[Racebench]] | 33 aerospace-derived C programs; **53 bug points and 33 traps** in the 31 simple cases since the 2026-10-28 relabel (48/38 before); four incompatible annotation grammars; vendored at `project-src/bench/racebench` since 2026-10-29 |
-| [[Real-World Program Benchmark]] | 18 extracted driver/firmware programs; the shipped ground truth says 45, BMC4AV says 94 — a counting-unit mismatch |
+| [[Real-World Program Benchmark]] | 18 extracted driver/firmware programs; the shipped ground truth says 45, BMC4AV says 94 — a counting-unit mismatch. Two copies that differ ([[Contradictions]] #10); vendored at `project-src/bench/realworld` (NIChecker's). Official run (2026-10-30): 1980 → 1037 → 972, **gate 45/45** with three priority errata |
 | [[NASAC 2019 Prototype Competition]] | where Racebench came from: five teams, asymmetric scoring, and why this field prizes precision |
 | [[Candidate Evaluation Subjects]] | Linux drivers vs RTOS vs firmware for tier-3 evaluation, and whether huge codebases fit |
+| [[Rastro-Robot Firmware]] | the human's own ESP32/FreeRTOS C++ firmware with one planted ISR×task lost update: found and kept 2770 → 10 → 10 → LLM; exposed three problems Racebench cannot (C++ virtual calls, context-insensitive `this`, dual-core priority) |
 
 ## Comparisons (`wiki/comparisons/`)
 
@@ -152,7 +155,9 @@ Raw clippings live in `Clippings/`, PDFs in `raw/`. Both are immutable.
 | [[Tool Capability Matrix]] | all four tools side by side, feature by feature |
 | [[Reported Results Across Papers]] | every headline number with its ground truth, hardware, and whether it was re-run |
 | [[Contradictions]] | seven open conflicts, chief among them 37/47 vs 94 violations; #7 two Racebench traps their own README makes reachable |
-| [[Reimplementation Assessment]] | study order, what to reimplement, the stack, and verified artifact availability |
+| [[Reimplementation Assessment]] | study order, what to reimplement, the stack, supported platforms (Ubuntu, Windows + WSL2), and verified artifact availability |
 | [[LLM Integration Patterns]] | seven LLM sources by attach point; what each buys and costs |
 | [[Triage Study 2026-10-26]] | why triage underperforms on real records: missing deciding code (12/16 uncertain vs 78/85 feasible), unexplained fields, a ground-truth leak; fixes 1–6 and a Racebench-semantics row (IR 0.67 → 0.42) |
 | [[Racebench Full Run 2026-10-28]] | the whole pipeline on all 31 cases, sonnet, `+racebench`; after the relabel (53 bugs / 33 traps): 53/53 bugs, 97 and 100 of 106 in two runs, 98.2% agreement (κ 0.93); verdict on every disputed item |
+| [[Racebench Comparison 2026-11-16]] | T1: S0 (published) vs S1 (static) vs S2 (`+racebench`, n = 3) on each baseline's own terms; 53/53 everywhere, 2/33 traps, 100/106; BMC4AV's 38 is 37 under the errata (#9); NIChecker's 54 unaligned |
+| [[Triage Cost and Speed 2026-11-21]] | cost of the triage and four ways to cut it (n = 1): Haiku and low effort no faster; by-variable checklist calls −72%; with a global pool 1,079 → 263 s at 53/53; an LLM-only scan finds 50/53 at 1/20 the input; on a disguised copy (n = 3) the scan's traps rise 1–4 → 6–10 and irqrace's stay 3–4, but one union bug point goes infeasible |

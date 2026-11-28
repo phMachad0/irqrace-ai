@@ -1,0 +1,28 @@
+{
+  "case": "svp_simple_026_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_026_001_gloable_var",
+        "a1_line": 26,
+        "a1_kind": "read",
+        "b_line": 43,
+        "b_kind": "write",
+        "a2_line": 27,
+        "a2_kind": "write",
+        "why": "Main only masks interrupt 1, so higher-priority ISR 2 can still preempt between the check at line 26 and the store at line 27. It changes the variable, so main's write rests on a stale read. ISR 1 is masked there, so it cannot interleave."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_026_001_gloable_var\",\"a1_line\":26,\"a1_kind\":\"read\",\"b_line\":43,\"b_kind\":\"write\",\"a2_line\":27,\"a2_kind\":\"write\",\"why\":\"Main only masks interrupt 1, so higher-priority ISR 2 can still preempt between the check at line 26 and the store at line 27. It changes the variable, so main's write rests on a stale read. ISR 1 is masked there, so it cannot interleave.\"}]}",
+  "wall_s": 6.007771253585815,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 469,
+    "cache_read": 2355,
+    "cache_write": 484,
+    "latency_s": 6.007630487001734
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

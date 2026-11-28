@@ -1,0 +1,48 @@
+{
+  "case": "svp_simple_019_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_019_001_global_var1",
+        "a1_line": 45,
+        "a1_kind": "read",
+        "b_line": 71,
+        "b_kind": "write",
+        "a2_line": 51,
+        "a2_kind": "read",
+        "why": "ISR can preempt main between the read at 45 and the read at 51 (idlerun/before disable_isr at 47), changing var1."
+      },
+      {
+        "variable": "svp_simple_019_001_global_var1",
+        "a1_line": 51,
+        "a1_kind": "read",
+        "b_line": 71,
+        "b_kind": "write",
+        "a2_line": 59,
+        "a2_kind": "read",
+        "why": "After enable_isr(1) at line 50, the ISR can run during idlerun at 54 before the interrupt is disabled at 55, changing var1 between the reads."
+      },
+      {
+        "variable": "svp_simple_019_001_global_var1",
+        "a1_line": 45,
+        "a1_kind": "read",
+        "b_line": 71,
+        "b_kind": "write",
+        "a2_line": 59,
+        "a2_kind": "read",
+        "why": "ISR can run during idlerun at 46 (interrupt enabled); it sets condition3=0 so line 59 is reachable, and var1 changed between the reads."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_019_001_global_var1\",\"a1_line\":45,\"a1_kind\":\"read\",\"b_line\":71,\"b_kind\":\"write\",\"a2_line\":51,\"a2_kind\":\"read\",\"why\":\"ISR can preempt main between the read at 45 and the read at 51 (idlerun/before disable_isr at 47), changing var1.\"},{\"variable\":\"svp_simple_019_001_global_var1\",\"a1_line\":51,\"a1_kind\":\"read\",\"b_line\":71,\"b_kind\":\"write\",\"a2_line\":59,\"a2_kind\":\"read\",\"why\":\"After enable_isr(1) at line 50, the ISR can run during idlerun at 54 before the interrupt is disabled at 55, changing var1 between the reads.\"},{\"variable\":\"svp_simple_019_001_global_var1\",\"a1_line\":45,\"a1_kind\":\"read\",\"b_line\":71,\"b_kind\":\"write\",\"a2_line\":59,\"a2_kind\":\"read\",\"why\":\"ISR can run during idlerun at 46 (interrupt enabled); it sets condition3=0 so line 59 is reachable, and var1 changed between the reads.\"}]}",
+  "wall_s": 10.723946809768677,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1150,
+    "cache_read": 2799,
+    "cache_write": 492,
+    "latency_s": 10.723762740992242
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

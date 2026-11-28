@@ -1,0 +1,28 @@
+{
+  "case": "svp_simple_030_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_030_001_gloable_var",
+        "a1_line": 29,
+        "a1_kind": "read",
+        "b_line": 43,
+        "b_kind": "write",
+        "a2_line": 30,
+        "a2_kind": "write",
+        "why": "ISR1 is enabled before the check in main, so it can preempt between the read at 29 and the write at 30 and increment the variable via addData. The main write at 30 then acts on a stale check."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_030_001_gloable_var\",\"a1_line\":29,\"a1_kind\":\"read\",\"b_line\":43,\"b_kind\":\"write\",\"a2_line\":30,\"a2_kind\":\"write\",\"why\":\"ISR1 is enabled before the check in main, so it can preempt between the read at 29 and the write at 30 and increment the variable via addData. The main write at 30 then acts on a stale check.\"}]}",
+  "wall_s": 6.021686792373657,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 472,
+    "cache_read": 2629,
+    "cache_write": 480,
+    "latency_s": 6.021482965006726
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

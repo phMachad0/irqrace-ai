@@ -1,0 +1,48 @@
+{
+  "case": "svp_simple_016_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_016_001_global_var1",
+        "a1_line": 24,
+        "a1_kind": "write",
+        "b_line": 33,
+        "b_kind": "write",
+        "a2_line": 25,
+        "a2_kind": "read",
+        "why": "The ISR can preempt main after its write of 0x01 and overwrite the value with 0x09 before main reads it."
+      },
+      {
+        "variable": "svp_simple_016_001_global_var1",
+        "a1_line": 25,
+        "a1_kind": "read",
+        "b_line": 33,
+        "b_kind": "write",
+        "a2_line": 26,
+        "a2_kind": "read",
+        "why": "The ISR can write between the first and second reads in the sum, so the two reads can return different values."
+      },
+      {
+        "variable": "svp_simple_016_001_global_var1",
+        "a1_line": 26,
+        "a1_kind": "read",
+        "b_line": 33,
+        "b_kind": "write",
+        "a2_line": 27,
+        "a2_kind": "read",
+        "why": "The ISR can write between the second and third reads in the sum, so the two reads can return different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_016_001_global_var1\",\"a1_line\":24,\"a1_kind\":\"write\",\"b_line\":33,\"b_kind\":\"write\",\"a2_line\":25,\"a2_kind\":\"read\",\"why\":\"The ISR can preempt main after its write of 0x01 and overwrite the value with 0x09 before main reads it.\"},{\"variable\":\"svp_simple_016_001_global_var1\",\"a1_line\":25,\"a1_kind\":\"read\",\"b_line\":33,\"b_kind\":\"write\",\"a2_line\":26,\"a2_kind\":\"read\",\"why\":\"The ISR can write between the first and second reads in the sum, so the two reads can return different values.\"},{\"variable\":\"svp_simple_016_001_global_var1\",\"a1_line\":26,\"a1_kind\":\"read\",\"b_line\":33,\"b_kind\":\"write\",\"a2_line\":27,\"a2_kind\":\"read\",\"why\":\"The ISR can write between the second and third reads in the sum, so the two reads can return different values.\"}]}",
+  "wall_s": 5.996352910995483,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 588,
+    "cache_read": 2097,
+    "cache_write": 490,
+    "latency_s": 5.996202357986476
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

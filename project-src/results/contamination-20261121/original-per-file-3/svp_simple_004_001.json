@@ -1,0 +1,28 @@
+{
+  "case": "svp_simple_004_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_004_001_global_var1",
+        "a1_line": 41,
+        "a1_kind": "read",
+        "b_line": 59,
+        "b_kind": "write",
+        "a2_line": 46,
+        "a2_kind": "read",
+        "why": "ISR 1 is never masked, so it can preempt main between its two reads of global_var1. condition3 is always 1, so the write at line 59 executes."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_004_001_global_var1\",\"a1_line\":41,\"a1_kind\":\"read\",\"b_line\":59,\"b_kind\":\"write\",\"a2_line\":46,\"a2_kind\":\"read\",\"why\":\"ISR 1 is never masked, so it can preempt main between its two reads of global_var1. condition3 is always 1, so the write at line 59 executes.\"}]}",
+  "wall_s": 7.837802410125732,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 653,
+    "cache_read": 2747,
+    "cache_write": 485,
+    "latency_s": 7.837583074986469
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,98 @@
+{
+  "case": "program_17",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_meadow",
+        "a1_line": 41,
+        "a1_kind": "write",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 45,
+        "a2_kind": "read",
+        "why": "irq_vine (higher priority) can preempt irq_shoal between its write of 0 and the check, setting -1 so the check fails."
+      },
+      {
+        "variable": "v_umbra",
+        "a1_line": 18,
+        "a1_kind": "write",
+        "b_line": 14,
+        "b_kind": "write",
+        "a2_line": 60,
+        "a2_kind": "read",
+        "why": "Higher-priority ermine/crest/kiln run fn_jade between irq_grove's reset to -1 and its test, so the test sees a different value."
+      },
+      {
+        "variable": "v_marble",
+        "a1_line": 35,
+        "a1_kind": "read",
+        "b_line": 61,
+        "b_kind": "write",
+        "a2_line": 36,
+        "a2_kind": "read",
+        "why": "irq_grove (higher than shoal) can write v_marble between the two reads in fn_north."
+      },
+      {
+        "variable": "v_ivory",
+        "a1_line": 37,
+        "a1_kind": "read",
+        "b_line": 63,
+        "b_kind": "write",
+        "a2_line": 38,
+        "a2_kind": "read",
+        "why": "irq_grove can write v_ivory between the two reads in fn_north called from irq_shoal."
+      },
+      {
+        "variable": "v_knoll",
+        "a1_line": 93,
+        "a1_kind": "write",
+        "b_line": 105,
+        "b_kind": "write",
+        "a2_line": 96,
+        "a2_kind": "read",
+        "why": "irq_kiln (higher than crest) overwrites v_knoll[9000] between crest's write and its read."
+      },
+      {
+        "variable": "v_meadow",
+        "a1_line": 79,
+        "a1_kind": "write",
+        "b_line": 73,
+        "b_kind": "write",
+        "a2_line": 80,
+        "a2_kind": "read",
+        "why": "irq_ermine, which has higher priority, can set v_meadow to 0 between vine's write of -1 and its check."
+      },
+      {
+        "variable": "v_meadow",
+        "a1_line": 79,
+        "a1_kind": "write",
+        "b_line": 86,
+        "b_kind": "write",
+        "a2_line": 80,
+        "a2_kind": "read",
+        "why": "irq_crest can preempt irq_vine and set v_meadow to 0 before the check."
+      },
+      {
+        "variable": "v_meadow",
+        "a1_line": 79,
+        "a1_kind": "write",
+        "b_line": 100,
+        "b_kind": "write",
+        "a2_line": 80,
+        "a2_kind": "read",
+        "why": "irq_kiln can preempt irq_vine and set v_meadow to 0 before the check."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_meadow\",\"a1_line\":41,\"a1_kind\":\"write\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":45,\"a2_kind\":\"read\",\"why\":\"irq_vine (higher priority) can preempt irq_shoal between its write of 0 and the check, setting -1 so the check fails.\"},{\"variable\":\"v_umbra\",\"a1_line\":18,\"a1_kind\":\"write\",\"b_line\":14,\"b_kind\":\"write\",\"a2_line\":60,\"a2_kind\":\"read\",\"why\":\"Higher-priority ermine/crest/kiln run fn_jade between irq_grove's reset to -1 and its test, so the test sees a different value.\"},{\"variable\":\"v_marble\",\"a1_line\":35,\"a1_kind\":\"read\",\"b_line\":61,\"b_kind\":\"write\",\"a2_line\":36,\"a2_kind\":\"read\",\"why\":\"irq_grove (higher than shoal) can write v_marble between the two reads in fn_north.\"},{\"variable\":\"v_ivory\",\"a1_line\":37,\"a1_kind\":\"read\",\"b_line\":63,\"b_kind\":\"write\",\"a2_line\":38,\"a2_kind\":\"read\",\"why\":\"irq_grove can write v_ivory between the two reads in fn_north called from irq_shoal.\"},{\"variable\":\"v_knoll\",\"a1_line\":93,\"a1_kind\":\"write\",\"b_line\":105,\"b_kind\":\"write\",\"a2_line\":96,\"a2_kind\":\"read\",\"why\":\"irq_kiln (higher than crest) overwrites v_knoll[9000] between crest's write and its read.\"},{\"variable\":\"v_meadow\",\"a1_line\":79,\"a1_kind\":\"write\",\"b_line\":73,\"b_kind\":\"write\",\"a2_line\":80,\"a2_kind\":\"read\",\"why\":\"irq_ermine, which has higher priority, can set v_meadow to 0 between vine's write of -1 and its check.\"},{\"variable\":\"v_meadow\",\"a1_line\":79,\"a1_kind\":\"write\",\"b_line\":86,\"b_kind\":\"write\",\"a2_line\":80,\"a2_kind\":\"read\",\"why\":\"irq_crest can preempt irq_vine and set v_meadow to 0 before the check.\"},{\"variable\":\"v_meadow\",\"a1_line\":79,\"a1_kind\":\"write\",\"b_line\":100,\"b_kind\":\"write\",\"a2_line\":80,\"a2_kind\":\"read\",\"why\":\"irq_kiln can preempt irq_vine and set v_meadow to 0 before the check.\"}]}",
+  "wall_s": 16.301175594329834,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1996,
+    "cache_read": 3038,
+    "cache_write": 487,
+    "latency_s": 16.30099226301536
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

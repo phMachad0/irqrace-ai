@@ -1,0 +1,17 @@
+{
+  "case": "program_17",
+  "parsed": {
+    "violations": []
+  },
+  "text": "{\n  \"violations\": []\n}",
+  "wall_s": 12.701698780059814,
+  "usage": {
+    "input_tokens": 1427,
+    "output_tokens": 1284,
+    "cache_read": 0,
+    "cache_write": 0,
+    "latency_s": 12.70162921102019
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

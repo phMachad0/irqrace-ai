@@ -1,0 +1,48 @@
+{
+  "case": "program_03",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_fjord",
+        "a1_line": 22,
+        "a1_kind": "read",
+        "b_line": 45,
+        "b_kind": "write",
+        "a2_line": 27,
+        "a2_kind": "read",
+        "why": "irq_summit is not masked and can preempt the task between the two reads, so they can return different values."
+      },
+      {
+        "variable": "v_nimbus",
+        "a1_line": 23,
+        "a1_kind": "read",
+        "b_line": 47,
+        "b_kind": "write",
+        "a2_line": 28,
+        "a2_kind": "read",
+        "why": "irq_summit can preempt the task between the two reads and change v_nimbus."
+      },
+      {
+        "variable": "v_anchor",
+        "a1_line": 31,
+        "a1_kind": "read",
+        "b_line": 38,
+        "b_kind": "write",
+        "a2_line": 33,
+        "a2_kind": "read",
+        "why": "If irq_summit ran earlier and re-enabled interrupt 2 at line 49, irq_vessel can preempt the task between the reads at 31 and 33 and write v_anchor."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_fjord\",\"a1_line\":22,\"a1_kind\":\"read\",\"b_line\":45,\"b_kind\":\"write\",\"a2_line\":27,\"a2_kind\":\"read\",\"why\":\"irq_summit is not masked and can preempt the task between the two reads, so they can return different values.\"},{\"variable\":\"v_nimbus\",\"a1_line\":23,\"a1_kind\":\"read\",\"b_line\":47,\"b_kind\":\"write\",\"a2_line\":28,\"a2_kind\":\"read\",\"why\":\"irq_summit can preempt the task between the two reads and change v_nimbus.\"},{\"variable\":\"v_anchor\",\"a1_line\":31,\"a1_kind\":\"read\",\"b_line\":38,\"b_kind\":\"write\",\"a2_line\":33,\"a2_kind\":\"read\",\"why\":\"If irq_summit ran earlier and re-enabled interrupt 2 at line 49, irq_vessel can preempt the task between the reads at 31 and 33 and write v_anchor.\"}]}",
+  "wall_s": 9.830085277557373,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 977,
+    "cache_read": 975,
+    "cache_write": 1588,
+    "latency_s": 9.827740941982483
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

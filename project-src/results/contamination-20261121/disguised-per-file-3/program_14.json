@@ -1,0 +1,48 @@
+{
+  "case": "program_14",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_velvet",
+        "a1_line": 48,
+        "a1_kind": "read",
+        "b_line": 40,
+        "b_kind": "write",
+        "a2_line": 49,
+        "a2_kind": "write",
+        "why": "The task checks v_velvet >= 16, the ISR can overwrite it, and the task then writes 0 based on the stale check."
+      },
+      {
+        "variable": "v_velvet",
+        "a1_line": 49,
+        "a1_kind": "write",
+        "b_line": 40,
+        "b_kind": "write",
+        "a2_line": 26,
+        "a2_kind": "read",
+        "why": "The task zeroes v_velvet, the ISR overwrites it, and the task later reads it at line 26 and gets the ISR value instead of 0."
+      },
+      {
+        "variable": "v_velvet",
+        "a1_line": 48,
+        "a1_kind": "read",
+        "b_line": 40,
+        "b_kind": "write",
+        "a2_line": 26,
+        "a2_kind": "read",
+        "why": "The task reads v_velvet at line 48, the ISR changes it, and the task reads it again at line 26 and gets a different value."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_velvet\",\"a1_line\":48,\"a1_kind\":\"read\",\"b_line\":40,\"b_kind\":\"write\",\"a2_line\":49,\"a2_kind\":\"write\",\"why\":\"The task checks v_velvet >= 16, the ISR can overwrite it, and the task then writes 0 based on the stale check.\"},{\"variable\":\"v_velvet\",\"a1_line\":49,\"a1_kind\":\"write\",\"b_line\":40,\"b_kind\":\"write\",\"a2_line\":26,\"a2_kind\":\"read\",\"why\":\"The task zeroes v_velvet, the ISR overwrites it, and the task later reads it at line 26 and gets the ISR value instead of 0.\"},{\"variable\":\"v_velvet\",\"a1_line\":48,\"a1_kind\":\"read\",\"b_line\":40,\"b_kind\":\"write\",\"a2_line\":26,\"a2_kind\":\"read\",\"why\":\"The task reads v_velvet at line 48, the ISR changes it, and the task reads it again at line 26 and gets a different value.\"}]}",
+  "wall_s": 7.669315338134766,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 794,
+    "cache_read": 2188,
+    "cache_write": 484,
+    "latency_s": 7.6691328329907265
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

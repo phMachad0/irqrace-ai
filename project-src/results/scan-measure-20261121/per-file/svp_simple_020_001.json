@@ -1,0 +1,48 @@
+{
+  "case": "svp_simple_020_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_020_001_global_var",
+        "a1_line": 37,
+        "a1_kind": "read",
+        "b_line": 53,
+        "b_kind": "write",
+        "a2_line": 40,
+        "a2_kind": "read",
+        "why": "After isr_1 unmasks interrupt 2, isr_2 can preempt main between its two reads of global_var and change the value."
+      },
+      {
+        "variable": "svp_simple_020_001_global_var",
+        "a1_line": 37,
+        "a1_kind": "read",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 40,
+        "a2_kind": "read",
+        "why": "isr_1 is not masked and can preempt main between the two reads and write global_var."
+      },
+      {
+        "variable": "svp_simple_020_001_global_para",
+        "a1_line": 36,
+        "a1_kind": "read",
+        "b_line": 52,
+        "b_kind": "write",
+        "a2_line": 39,
+        "a2_kind": "read",
+        "why": "Once isr_1 enables interrupt 2, isr_2 can preempt main between the two reads of global_para and write it."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_020_001_global_var\",\"a1_line\":37,\"a1_kind\":\"read\",\"b_line\":53,\"b_kind\":\"write\",\"a2_line\":40,\"a2_kind\":\"read\",\"why\":\"After isr_1 unmasks interrupt 2, isr_2 can preempt main between its two reads of global_var and change the value.\"},{\"variable\":\"svp_simple_020_001_global_var\",\"a1_line\":37,\"a1_kind\":\"read\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":40,\"a2_kind\":\"read\",\"why\":\"isr_1 is not masked and can preempt main between the two reads and write global_var.\"},{\"variable\":\"svp_simple_020_001_global_para\",\"a1_line\":36,\"a1_kind\":\"read\",\"b_line\":52,\"b_kind\":\"write\",\"a2_line\":39,\"a2_kind\":\"read\",\"why\":\"Once isr_1 enables interrupt 2, isr_2 can preempt main between the two reads of global_para and write it.\"}]}",
+  "wall_s": 8.057182550430298,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 896,
+    "cache_read": 975,
+    "cache_write": 1998,
+    "latency_s": 8.057001883018529
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

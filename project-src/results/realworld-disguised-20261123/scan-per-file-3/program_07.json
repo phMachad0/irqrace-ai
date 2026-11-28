@@ -1,0 +1,78 @@
+{
+  "case": "program_07",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_harbor",
+        "a1_line": 144,
+        "a1_kind": "write",
+        "b_line": 159,
+        "b_kind": "write",
+        "a2_line": 145,
+        "a2_kind": "read",
+        "why": "Acorn has equal priority and can preempt ridge between its write and read, so the check can see a different value."
+      },
+      {
+        "variable": "v_harbor",
+        "a1_line": 113,
+        "a1_kind": "write",
+        "b_line": 145,
+        "b_kind": "read",
+        "a2_line": 115,
+        "a2_kind": "write",
+        "why": "Acorn is running fn_cobalt when ridge preempts it and reads v_harbor. Ridge sees the intermediate value 0."
+      },
+      {
+        "variable": "v_harbor",
+        "a1_line": 159,
+        "a1_kind": "write",
+        "b_line": 145,
+        "b_kind": "read",
+        "a2_line": 106,
+        "a2_kind": "write",
+        "why": "Ridge preempts acorn between its write and the fn_bluff reset, and reads the intermediate value."
+      },
+      {
+        "variable": "v_velvet",
+        "a1_line": 136,
+        "a1_kind": "read",
+        "b_line": 153,
+        "b_kind": "write",
+        "a2_line": 137,
+        "a2_kind": "read",
+        "why": "Acorn has higher priority and can write v_velvet between ridge's two reads. The reads can then see different values."
+      },
+      {
+        "variable": "v_quill",
+        "a1_line": 170,
+        "a1_kind": "write",
+        "b_line": 162,
+        "b_kind": "write",
+        "a2_line": 173,
+        "a2_kind": "read",
+        "why": "Acorn can preempt north in its loop and overwrite v_quill[9000]. North then reads a value it did not write."
+      },
+      {
+        "variable": "v_wharf",
+        "a1_line": 142,
+        "a1_kind": "write",
+        "b_line": 157,
+        "b_kind": "write",
+        "a2_line": 114,
+        "a2_kind": "read",
+        "why": "Acorn can preempt ridge between its write of v_wharf and the read in fn_cobalt, and write it in between."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_harbor\",\"a1_line\":144,\"a1_kind\":\"write\",\"b_line\":159,\"b_kind\":\"write\",\"a2_line\":145,\"a2_kind\":\"read\",\"why\":\"Acorn has equal priority and can preempt ridge between its write and read, so the check can see a different value.\"},{\"variable\":\"v_harbor\",\"a1_line\":113,\"a1_kind\":\"write\",\"b_line\":145,\"b_kind\":\"read\",\"a2_line\":115,\"a2_kind\":\"write\",\"why\":\"Acorn is running fn_cobalt when ridge preempts it and reads v_harbor. Ridge sees the intermediate value 0.\"},{\"variable\":\"v_harbor\",\"a1_line\":159,\"a1_kind\":\"write\",\"b_line\":145,\"b_kind\":\"read\",\"a2_line\":106,\"a2_kind\":\"write\",\"why\":\"Ridge preempts acorn between its write and the fn_bluff reset, and reads the intermediate value.\"},{\"variable\":\"v_velvet\",\"a1_line\":136,\"a1_kind\":\"read\",\"b_line\":153,\"b_kind\":\"write\",\"a2_line\":137,\"a2_kind\":\"read\",\"why\":\"Acorn has higher priority and can write v_velvet between ridge's two reads. The reads can then see different values.\"},{\"variable\":\"v_quill\",\"a1_line\":170,\"a1_kind\":\"write\",\"b_line\":162,\"b_kind\":\"write\",\"a2_line\":173,\"a2_kind\":\"read\",\"why\":\"Acorn can preempt north in its loop and overwrite v_quill[9000]. North then reads a value it did not write.\"},{\"variable\":\"v_wharf\",\"a1_line\":142,\"a1_kind\":\"write\",\"b_line\":157,\"b_kind\":\"write\",\"a2_line\":114,\"a2_kind\":\"read\",\"why\":\"Acorn can preempt ridge between its write of v_wharf and the read in fn_cobalt, and write it in between.\"}]}",
+  "wall_s": 16.074684619903564,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1957,
+    "cache_read": 3878,
+    "cache_write": 488,
+    "latency_s": 16.07419023499824
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

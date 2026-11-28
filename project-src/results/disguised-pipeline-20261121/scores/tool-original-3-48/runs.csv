@@ -1,0 +1,4 @@
+run_id,system,prompt_row,sample,labels,case_subset,view,bug_points_total,bug_points_detected,traps_total,traps_reported,unannotated_reported,uncertain,score,score_max,recall,precision,inspection_ratio_mean,llm_calls,tokens_in,tokens_out,backend_failures,wall_s,static_s,llm_s
++racebench/1,S2,+racebench,1,48/38,all,likely_real,48,48,38,9,85,0,69,96,1.0,0.842105,0.641911,84,1850355,107546,0,258.609,17.556,979.163
++racebench/1,S2,+racebench,1,48/38,all,not_infeasible,48,48,38,9,85,0,69,96,1.0,0.842105,0.641911,84,1850355,107546,0,258.609,17.556,979.163
++racebench/1,S1,+racebench,1,48/38,all,static_only,48,48,38,16,102,,48,96,1.0,0.75,0.685182,,,,,,17.556,

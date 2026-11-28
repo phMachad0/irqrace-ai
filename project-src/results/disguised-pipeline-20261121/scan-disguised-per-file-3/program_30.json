@@ -1,0 +1,38 @@
+{
+  "case": "program_30",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_quartz",
+        "a1_line": 45,
+        "a1_kind": "write",
+        "b_line": 14,
+        "b_kind": "read",
+        "a2_line": 48,
+        "a2_kind": "write",
+        "why": "The task masks interrupt 2, but irq_zenith preempts it and calls enable_isr(2). irq_indigo can then run between the task's write at 45 and its write at 48, and it reads v_quartz[TRIGGER] when v_willow is 1. It sees the 0 from line 45 instead of the 1 from line 48."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 30,
+        "a1_kind": "write",
+        "b_line": 23,
+        "b_kind": "read",
+        "a2_line": 31,
+        "a2_kind": "write",
+        "why": "Once interrupt 2 has been enabled, for example by an earlier run of irq_zenith, irq_indigo (priority 2) can preempt irq_zenith between its two writes. It then reads the intermediate value 0 instead of 1."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_quartz\",\"a1_line\":45,\"a1_kind\":\"write\",\"b_line\":14,\"b_kind\":\"read\",\"a2_line\":48,\"a2_kind\":\"write\",\"why\":\"The task masks interrupt 2, but irq_zenith preempts it and calls enable_isr(2). irq_indigo can then run between the task's write at 45 and its write at 48, and it reads v_quartz[TRIGGER] when v_willow is 1. It sees the 0 from line 45 instead of the 1 from line 48.\"},{\"variable\":\"v_vessel\",\"a1_line\":30,\"a1_kind\":\"write\",\"b_line\":23,\"b_kind\":\"read\",\"a2_line\":31,\"a2_kind\":\"write\",\"why\":\"Once interrupt 2 has been enabled, for example by an earlier run of irq_zenith, irq_indigo (priority 2) can preempt irq_zenith between its two writes. It then reads the intermediate value 0 instead of 1.\"}]}",
+  "wall_s": 11.582627534866333,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1096,
+    "cache_read": 1983,
+    "cache_write": 487,
+    "latency_s": 11.582408521004254
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

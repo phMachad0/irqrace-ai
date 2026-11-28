@@ -1,0 +1,98 @@
+{
+  "case": "i2c_pca_isa_1",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_var1",
+        "a1_line": 291,
+        "a1_kind": "read",
+        "b_line": 342,
+        "b_kind": "write",
+        "a2_line": 292,
+        "a2_kind": "read",
+        "why": "req4_isr can preempt main between the two reads of test_global_var1 in JudgeCondi, so they can see different values."
+      },
+      {
+        "variable": "test_global_var2",
+        "a1_line": 294,
+        "a1_kind": "read",
+        "b_line": 328,
+        "b_kind": "write",
+        "a2_line": 295,
+        "a2_kind": "read",
+        "why": "req3_isr can write test_global_var2 between main's two reads."
+      },
+      {
+        "variable": "test_global_var3",
+        "a1_line": 302,
+        "a1_kind": "write",
+        "b_line": 320,
+        "b_kind": "read",
+        "a2_line": 308,
+        "a2_kind": "write",
+        "why": "req2_isr can preempt req1_isr between its two writes and read the intermediate value 0x33."
+      },
+      {
+        "variable": "irq",
+        "a1_line": 326,
+        "a1_kind": "write",
+        "b_line": 340,
+        "b_kind": "write",
+        "a2_line": 327,
+        "a2_kind": "read",
+        "why": "Another ISR (req4) can preempt req3 and overwrite irq between its write and the check, so the check can fail."
+      },
+      {
+        "variable": "irq",
+        "a1_line": 340,
+        "a1_kind": "write",
+        "b_line": 326,
+        "b_kind": "write",
+        "a2_line": 341,
+        "a2_kind": "read",
+        "why": "req3_isr or another ISR can overwrite irq between req4's write and its check."
+      },
+      {
+        "variable": "irq",
+        "a1_line": 303,
+        "a1_kind": "write",
+        "b_line": 314,
+        "b_kind": "write",
+        "a2_line": 199,
+        "a2_kind": "read",
+        "why": "req2_isr can change irq between req1's write and the read in pca_isa_probe."
+      },
+      {
+        "variable": "global_id",
+        "a1_line": 231,
+        "a1_kind": "write",
+        "b_line": 236,
+        "b_kind": "write",
+        "a2_line": 200,
+        "a2_kind": "read",
+        "why": "Another ISR's init or exit can overwrite global_id between this ISR's init and the compare in probe."
+      },
+      {
+        "variable": "global_dev",
+        "a1_line": 232,
+        "a1_kind": "write",
+        "b_line": 237,
+        "b_kind": "write",
+        "a2_line": 196,
+        "a2_kind": "read",
+        "why": "Another ISR can overwrite global_dev between init and the compare in probe."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":291,\"a1_kind\":\"read\",\"b_line\":342,\"b_kind\":\"write\",\"a2_line\":292,\"a2_kind\":\"read\",\"why\":\"req4_isr can preempt main between the two reads of test_global_var1 in JudgeCondi, so they can see different values.\"},{\"variable\":\"test_global_var2\",\"a1_line\":294,\"a1_kind\":\"read\",\"b_line\":328,\"b_kind\":\"write\",\"a2_line\":295,\"a2_kind\":\"read\",\"why\":\"req3_isr can write test_global_var2 between main's two reads.\"},{\"variable\":\"test_global_var3\",\"a1_line\":302,\"a1_kind\":\"write\",\"b_line\":320,\"b_kind\":\"read\",\"a2_line\":308,\"a2_kind\":\"write\",\"why\":\"req2_isr can preempt req1_isr between its two writes and read the intermediate value 0x33.\"},{\"variable\":\"irq\",\"a1_line\":326,\"a1_kind\":\"write\",\"b_line\":340,\"b_kind\":\"write\",\"a2_line\":327,\"a2_kind\":\"read\",\"why\":\"Another ISR (req4) can preempt req3 and overwrite irq between its write and the check, so the check can fail.\"},{\"variable\":\"irq\",\"a1_line\":340,\"a1_kind\":\"write\",\"b_line\":326,\"b_kind\":\"write\",\"a2_line\":341,\"a2_kind\":\"read\",\"why\":\"req3_isr or another ISR can overwrite irq between req4's write and its check.\"},{\"variable\":\"irq\",\"a1_line\":303,\"a1_kind\":\"write\",\"b_line\":314,\"b_kind\":\"write\",\"a2_line\":199,\"a2_kind\":\"read\",\"why\":\"req2_isr can change irq between req1's write and the read in pca_isa_probe.\"},{\"variable\":\"global_id\",\"a1_line\":231,\"a1_kind\":\"write\",\"b_line\":236,\"b_kind\":\"write\",\"a2_line\":200,\"a2_kind\":\"read\",\"why\":\"Another ISR's init or exit can overwrite global_id between this ISR's init and the compare in probe.\"},{\"variable\":\"global_dev\",\"a1_line\":232,\"a1_kind\":\"write\",\"b_line\":237,\"b_kind\":\"write\",\"a2_line\":196,\"a2_kind\":\"read\",\"why\":\"Another ISR can overwrite global_dev between init and the compare in probe.\"}]}",
+  "wall_s": 13.365198135375977,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1667,
+    "cache_read": 6310,
+    "cache_write": 493,
+    "latency_s": 13.364879446016857
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

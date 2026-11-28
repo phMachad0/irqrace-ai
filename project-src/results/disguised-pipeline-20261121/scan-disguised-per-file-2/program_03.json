@@ -1,0 +1,48 @@
+{
+  "case": "program_03",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_fjord",
+        "a1_line": 25,
+        "a1_kind": "read",
+        "b_line": 48,
+        "b_kind": "write",
+        "a2_line": 30,
+        "a2_kind": "read",
+        "why": "irq_summit can preempt the task between the two reads of v_fjord and change it, so the reads may see different values."
+      },
+      {
+        "variable": "v_nimbus",
+        "a1_line": 26,
+        "a1_kind": "read",
+        "b_line": 50,
+        "b_kind": "write",
+        "a2_line": 31,
+        "a2_kind": "read",
+        "why": "irq_summit can preempt the task between the two reads of v_nimbus and write it, so the reads may disagree."
+      },
+      {
+        "variable": "v_anchor",
+        "a1_line": 34,
+        "a1_kind": "read",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 36,
+        "a2_kind": "read",
+        "why": "Once irq_summit has run and called enable_isr(2), irq_vessel is unmasked and can preempt the task between the two reads of v_anchor and write it."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_fjord\",\"a1_line\":25,\"a1_kind\":\"read\",\"b_line\":48,\"b_kind\":\"write\",\"a2_line\":30,\"a2_kind\":\"read\",\"why\":\"irq_summit can preempt the task between the two reads of v_fjord and change it, so the reads may see different values.\"},{\"variable\":\"v_nimbus\",\"a1_line\":26,\"a1_kind\":\"read\",\"b_line\":50,\"b_kind\":\"write\",\"a2_line\":31,\"a2_kind\":\"read\",\"why\":\"irq_summit can preempt the task between the two reads of v_nimbus and write it, so the reads may disagree.\"},{\"variable\":\"v_anchor\",\"a1_line\":34,\"a1_kind\":\"read\",\"b_line\":41,\"b_kind\":\"write\",\"a2_line\":36,\"a2_kind\":\"read\",\"why\":\"Once irq_summit has run and called enable_isr(2), irq_vessel is unmasked and can preempt the task between the two reads of v_anchor and write it.\"}]}",
+  "wall_s": 7.455441474914551,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 824,
+    "cache_read": 2107,
+    "cache_write": 486,
+    "latency_s": 7.453993381001055
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

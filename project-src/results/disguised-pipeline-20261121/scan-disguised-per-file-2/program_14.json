@@ -1,0 +1,68 @@
+{
+  "case": "program_14",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_pylon",
+        "a1_line": 52,
+        "a1_kind": "read",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 53,
+        "a2_kind": "write",
+        "why": "The ISR can update v_pylon between the check (>=16) and the reset to 0, so the reset overwrites the newer value."
+      },
+      {
+        "variable": "v_pylon",
+        "a1_line": 52,
+        "a1_kind": "read",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 30,
+        "a2_kind": "read",
+        "why": "The ISR can change v_pylon after the check in v_lantern and before it is read again at line 30, so the two reads see different values."
+      },
+      {
+        "variable": "v_pylon",
+        "a1_line": 63,
+        "a1_kind": "write",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 52,
+        "a2_kind": "read",
+        "why": "The ISR can overwrite the value written in fn_lagoon before v_lantern reads it."
+      },
+      {
+        "variable": "v_pylon",
+        "a1_line": 63,
+        "a1_kind": "write",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 30,
+        "a2_kind": "read",
+        "why": "The ISR can overwrite the value written in fn_lagoon before line 30 reads it."
+      },
+      {
+        "variable": "v_pylon",
+        "a1_line": 53,
+        "a1_kind": "write",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 30,
+        "a2_kind": "read",
+        "why": "The ISR can overwrite the reset value of 0 before line 30 reads it."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_pylon\",\"a1_line\":52,\"a1_kind\":\"read\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":53,\"a2_kind\":\"write\",\"why\":\"The ISR can update v_pylon between the check (>=16) and the reset to 0, so the reset overwrites the newer value.\"},{\"variable\":\"v_pylon\",\"a1_line\":52,\"a1_kind\":\"read\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":30,\"a2_kind\":\"read\",\"why\":\"The ISR can change v_pylon after the check in v_lantern and before it is read again at line 30, so the two reads see different values.\"},{\"variable\":\"v_pylon\",\"a1_line\":63,\"a1_kind\":\"write\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":52,\"a2_kind\":\"read\",\"why\":\"The ISR can overwrite the value written in fn_lagoon before v_lantern reads it.\"},{\"variable\":\"v_pylon\",\"a1_line\":63,\"a1_kind\":\"write\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":30,\"a2_kind\":\"read\",\"why\":\"The ISR can overwrite the value written in fn_lagoon before line 30 reads it.\"},{\"variable\":\"v_pylon\",\"a1_line\":53,\"a1_kind\":\"write\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":30,\"a2_kind\":\"read\",\"why\":\"The ISR can overwrite the reset value of 0 before line 30 reads it.\"}]}",
+  "wall_s": 9.038191795349121,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1077,
+    "cache_read": 2231,
+    "cache_write": 483,
+    "latency_s": 9.038005815003999
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

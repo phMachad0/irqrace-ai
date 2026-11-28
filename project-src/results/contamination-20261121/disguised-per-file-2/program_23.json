@@ -1,0 +1,48 @@
+{
+  "case": "program_23",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_tundra",
+        "a1_line": 26,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 28,
+        "a2_kind": "read",
+        "why": "The ISR can overwrite v_tundra with &v_kelp between the task's write and its read, so the task dereferences a different pointer than it set."
+      },
+      {
+        "variable": "v_tundra",
+        "a1_line": 28,
+        "a1_kind": "read",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "read",
+        "why": "The ISR can change v_tundra between the task's two reads, so the second read sees a different pointer from the first."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 23,
+        "a1_kind": "write",
+        "b_line": 9,
+        "b_kind": "read",
+        "a2_line": 24,
+        "a2_kind": "write",
+        "why": "v_timber and v_indigo both point to v_vessel. The ISR can read it through v_timber between the task's two writes and see the intermediate value 2."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_tundra\",\"a1_line\":26,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"write\",\"a2_line\":28,\"a2_kind\":\"read\",\"why\":\"The ISR can overwrite v_tundra with &v_kelp between the task's write and its read, so the task dereferences a different pointer than it set.\"},{\"variable\":\"v_tundra\",\"a1_line\":28,\"a1_kind\":\"read\",\"b_line\":11,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"read\",\"why\":\"The ISR can change v_tundra between the task's two reads, so the second read sees a different pointer from the first.\"},{\"variable\":\"v_vessel\",\"a1_line\":23,\"a1_kind\":\"write\",\"b_line\":9,\"b_kind\":\"read\",\"a2_line\":24,\"a2_kind\":\"write\",\"why\":\"v_timber and v_indigo both point to v_vessel. The ISR can read it through v_timber between the task's two writes and see the intermediate value 2.\"}]}",
+  "wall_s": 10.295179605484009,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1072,
+    "cache_read": 1811,
+    "cache_write": 486,
+    "latency_s": 10.295015848008916
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

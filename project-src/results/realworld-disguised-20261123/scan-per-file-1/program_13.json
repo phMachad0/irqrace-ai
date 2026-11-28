@@ -1,0 +1,48 @@
+{
+  "case": "program_13",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_coral",
+        "a1_line": 149,
+        "a1_kind": "read",
+        "b_line": 183,
+        "b_kind": "write",
+        "a2_line": 150,
+        "a2_kind": "read",
+        "why": "irq_inlet (priority 3) can preempt irq_umbra (priority 2) between the two reads of v_coral and change it, so the reads may see different values."
+      },
+      {
+        "variable": "v_onyx",
+        "a1_line": 151,
+        "a1_kind": "read",
+        "b_line": 190,
+        "b_kind": "write",
+        "a2_line": 152,
+        "a2_kind": "read",
+        "why": "irq_raptor (priority 4) can preempt irq_umbra between the two reads of v_onyx and write it, so the reads may differ."
+      },
+      {
+        "variable": "v_sable",
+        "a1_line": 174,
+        "a1_kind": "read",
+        "b_line": 196,
+        "b_kind": "write",
+        "a2_line": 174,
+        "a2_kind": "write",
+        "why": "v_sable++ in irq_delta is a read followed by a write. irq_ridge (priority 5) can preempt between them and write v_sable, and that write is then overwritten (lost update)."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_coral\",\"a1_line\":149,\"a1_kind\":\"read\",\"b_line\":183,\"b_kind\":\"write\",\"a2_line\":150,\"a2_kind\":\"read\",\"why\":\"irq_inlet (priority 3) can preempt irq_umbra (priority 2) between the two reads of v_coral and change it, so the reads may see different values.\"},{\"variable\":\"v_onyx\",\"a1_line\":151,\"a1_kind\":\"read\",\"b_line\":190,\"b_kind\":\"write\",\"a2_line\":152,\"a2_kind\":\"read\",\"why\":\"irq_raptor (priority 4) can preempt irq_umbra between the two reads of v_onyx and write it, so the reads may differ.\"},{\"variable\":\"v_sable\",\"a1_line\":174,\"a1_kind\":\"read\",\"b_line\":196,\"b_kind\":\"write\",\"a2_line\":174,\"a2_kind\":\"write\",\"why\":\"v_sable++ in irq_delta is a read followed by a write. irq_ridge (priority 5) can preempt between them and write v_sable, and that write is then overwritten (lost update).\"}]}",
+  "wall_s": 9.783202171325684,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1095,
+    "cache_read": 1011,
+    "cache_write": 4667,
+    "latency_s": 9.783041586051695
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,28 @@
+{
+  "case": "program_06",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_meadow",
+        "a1_line": 26,
+        "a1_kind": "read",
+        "b_line": 14,
+        "b_kind": "write",
+        "a2_line": 28,
+        "a2_kind": "read",
+        "why": "The task reads v_meadow at line 26, then can be pre‑empted by irq_iris which writes v_meadow at line 14, and the task reads v_meadow again at line 28; the ISR can intervene between the two reads, creating a read‑write‑read atomicity violation."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_meadow\",\n      \"a1_line\": 26,\n      \"a1_kind\": \"read\",\n      \"b_line\": 14,\n      \"b_kind\": \"write\",\n      \"a2_line\": 28,\n      \"a2_kind\": \"read\",\n      \"why\": \"The task reads v_meadow at line 26, then can be pre‑empted by irq_iris which writes v_meadow at line 14, and the task reads v_meadow again at line 28; the ISR can intervene between the two reads, creating a read‑write‑read atomicity violation.\"\n    }\n  ]\n}",
+  "wall_s": 14.093441724777222,
+  "usage": {
+    "input_tokens": 452,
+    "output_tokens": 1171,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 14.0933367650141
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

@@ -1,0 +1,58 @@
+{
+  "case": "program_16",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_kestrel",
+        "a1_line": 17,
+        "a1_kind": "read",
+        "b_line": 49,
+        "b_kind": "write",
+        "a2_line": 24,
+        "a2_kind": "read",
+        "why": "irq_fjord (priority 1) can pre‑empt task_timber between the read of v_kestrel in fn_indigo and the later read in fn_saffron, so the ISR write may change the value seen by the second read."
+      },
+      {
+        "variable": "v_iris",
+        "a1_line": 18,
+        "a1_kind": "read",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 25,
+        "a2_kind": "read",
+        "why": "irq_beacon (priority 2) may interrupt after the first read of v_iris in fn_indigo and before the first read in fn_saffron, causing the ISR write to v_iris to be observed by the second read."
+      },
+      {
+        "variable": "v_iris",
+        "a1_line": 18,
+        "a1_kind": "read",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 26,
+        "a2_kind": "read",
+        "why": "Same as above, but the ISR write can occur between the first read in fn_indigo and the second read of v_iris within fn_saffron."
+      },
+      {
+        "variable": "v_iris",
+        "a1_line": 25,
+        "a1_kind": "read",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 26,
+        "a2_kind": "read",
+        "why": "irq_beacon can interrupt between the two consecutive reads of v_iris inside fn_saffron, so the ISR write may change the value between them."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_kestrel\",\"a1_line\":17,\"a1_kind\":\"read\",\"b_line\":49,\"b_kind\":\"write\",\"a2_line\":24,\"a2_kind\":\"read\",\"why\":\"irq_fjord (priority 1) can pre‑empt task_timber between the read of v_kestrel in fn_indigo and the later read in fn_saffron, so the ISR write may change the value seen by the second read.\"},{\"variable\":\"v_iris\",\"a1_line\":18,\"a1_kind\":\"read\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":25,\"a2_kind\":\"read\",\"why\":\"irq_beacon (priority 2) may interrupt after the first read of v_iris in fn_indigo and before the first read in fn_saffron, causing the ISR write to v_iris to be observed by the second read.\"},{\"variable\":\"v_iris\",\"a1_line\":18,\"a1_kind\":\"read\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":26,\"a2_kind\":\"read\",\"why\":\"Same as above, but the ISR write can occur between the first read in fn_indigo and the second read of v_iris within fn_saffron.\"},{\"variable\":\"v_iris\",\"a1_line\":25,\"a1_kind\":\"read\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":26,\"a2_kind\":\"read\",\"why\":\"irq_beacon can interrupt between the two consecutive reads of v_iris inside fn_saffron, so the ISR write may change the value between them.\"}]}",
+  "wall_s": 28.773285627365112,
+  "usage": {
+    "input_tokens": 483,
+    "output_tokens": 2345,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 28.77311774698319
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

@@ -1,0 +1,8 @@
+{
+  "mode": "per-file",
+  "backend": "openai:openai/gpt-oss-120b",
+  "workers": 1,
+  "suite": "/home/pedro/Documentos/tcc/worktrees/racebench-disguised-c",
+  "max_tokens": 4000,
+  "wall_s": 577.5304987430573
+}

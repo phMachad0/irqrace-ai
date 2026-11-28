@@ -1,0 +1,88 @@
+{
+  "case": "i8xx_tco_1",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_array[9000]",
+        "a1_line": 791,
+        "a1_kind": "write",
+        "b_line": 780,
+        "b_kind": "write",
+        "a2_line": 794,
+        "a2_kind": "read",
+        "why": "closer1_isr (higher priority) can preempt writer1_isr between its write and read of array[9000] and overwrite the value."
+      },
+      {
+        "variable": "test_global_var1",
+        "a1_line": 747,
+        "a1_kind": "read",
+        "b_line": 771,
+        "b_kind": "write",
+        "a2_line": 748,
+        "a2_kind": "read",
+        "why": "closer1_isr can preempt closer2_isr between its two reads of var1 and change the value."
+      },
+      {
+        "variable": "test_global_var2",
+        "a1_line": 750,
+        "a1_kind": "read",
+        "b_line": 773,
+        "b_kind": "write",
+        "a2_line": 751,
+        "a2_kind": "read",
+        "why": "closer1_isr can preempt closer2_isr between its two reads of var2 and change the value."
+      },
+      {
+        "variable": "tco_expect_close",
+        "a1_line": 759,
+        "a1_kind": "write",
+        "b_line": 777,
+        "b_kind": "write",
+        "a2_line": 760,
+        "a2_kind": "read",
+        "why": "closer1_isr can preempt closer2_isr between its write of 42 and the check, and overwrite the value. Equal priority is preemptible."
+      },
+      {
+        "variable": "tco_expect_close",
+        "a1_line": 777,
+        "a1_kind": "write",
+        "b_line": 760,
+        "b_kind": "read",
+        "a2_line": 380,
+        "a2_kind": "write",
+        "why": "closer2_isr can preempt closer1_isr between its write and the release clear, and read the intermediate value."
+      },
+      {
+        "variable": "tco_write_buf",
+        "a1_line": 757,
+        "a1_kind": "write",
+        "b_line": 775,
+        "b_kind": "write",
+        "a2_line": 429,
+        "a2_kind": "read",
+        "why": "closer1_isr can preempt closer2_isr between it storing the buffer and reading it in i8xx_tco_write, and overwrite the buffer."
+      },
+      {
+        "variable": "tco_write_buf",
+        "a1_line": 775,
+        "a1_kind": "write",
+        "b_line": 757,
+        "b_kind": "write",
+        "a2_line": 429,
+        "a2_kind": "read",
+        "why": "closer2_isr can preempt closer1_isr between its store of tco_write_buf and the read in i8xx_tco_write, and overwrite the buffer."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_array[9000]\",\"a1_line\":791,\"a1_kind\":\"write\",\"b_line\":780,\"b_kind\":\"write\",\"a2_line\":794,\"a2_kind\":\"read\",\"why\":\"closer1_isr (higher priority) can preempt writer1_isr between its write and read of array[9000] and overwrite the value.\"},{\"variable\":\"test_global_var1\",\"a1_line\":747,\"a1_kind\":\"read\",\"b_line\":771,\"b_kind\":\"write\",\"a2_line\":748,\"a2_kind\":\"read\",\"why\":\"closer1_isr can preempt closer2_isr between its two reads of var1 and change the value.\"},{\"variable\":\"test_global_var2\",\"a1_line\":750,\"a1_kind\":\"read\",\"b_line\":773,\"b_kind\":\"write\",\"a2_line\":751,\"a2_kind\":\"read\",\"why\":\"closer1_isr can preempt closer2_isr between its two reads of var2 and change the value.\"},{\"variable\":\"tco_expect_close\",\"a1_line\":759,\"a1_kind\":\"write\",\"b_line\":777,\"b_kind\":\"write\",\"a2_line\":760,\"a2_kind\":\"read\",\"why\":\"closer1_isr can preempt closer2_isr between its write of 42 and the check, and overwrite the value. Equal priority is preemptible.\"},{\"variable\":\"tco_expect_close\",\"a1_line\":777,\"a1_kind\":\"write\",\"b_line\":760,\"b_kind\":\"read\",\"a2_line\":380,\"a2_kind\":\"write\",\"why\":\"closer2_isr can preempt closer1_isr between its write and the release clear, and read the intermediate value.\"},{\"variable\":\"tco_write_buf\",\"a1_line\":757,\"a1_kind\":\"write\",\"b_line\":775,\"b_kind\":\"write\",\"a2_line\":429,\"a2_kind\":\"read\",\"why\":\"closer1_isr can preempt closer2_isr between it storing the buffer and reading it in i8xx_tco_write, and overwrite the buffer.\"},{\"variable\":\"tco_write_buf\",\"a1_line\":775,\"a1_kind\":\"write\",\"b_line\":757,\"b_kind\":\"write\",\"a2_line\":429,\"a2_kind\":\"read\",\"why\":\"closer2_isr can preempt closer1_isr between its store of tco_write_buf and the read in i8xx_tco_write, and overwrite the buffer.\"}]}",
+  "wall_s": 13.52087116241455,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1748,
+    "cache_read": 14233,
+    "cache_write": 485,
+    "latency_s": 13.520648645004258
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

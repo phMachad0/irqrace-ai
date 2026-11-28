@@ -1,0 +1,68 @@
+{
+  "case": "i8xx_tco_2",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_var1",
+        "a1_line": 744,
+        "a1_kind": "read",
+        "b_line": 771,
+        "b_kind": "write",
+        "a2_line": 745,
+        "a2_kind": "read",
+        "why": "closer2_isr (higher priority) can preempt main between the two reads of test_global_var1 and change it, so they can see different values."
+      },
+      {
+        "variable": "test_global_var2",
+        "a1_line": 747,
+        "a1_kind": "read",
+        "b_line": 787,
+        "b_kind": "write",
+        "a2_line": 748,
+        "a2_kind": "read",
+        "why": "writer2_isr can preempt main between the two reads of test_global_var2 and write it, so the reads can differ."
+      },
+      {
+        "variable": "tco_expect_close",
+        "a1_line": 755,
+        "a1_kind": "write",
+        "b_line": 423,
+        "b_kind": "write",
+        "a2_line": 756,
+        "a2_kind": "read",
+        "why": "closer2_isr preempts closer1_isr after its write of 42. It resets tco_expect_close to 0 in i8xx_tco_write, so the check at line 756 can fail."
+      },
+      {
+        "variable": "tco_expect_close",
+        "a1_line": 755,
+        "a1_kind": "write",
+        "b_line": 376,
+        "b_kind": "write",
+        "a2_line": 756,
+        "a2_kind": "read",
+        "why": "closer2_isr's i8xx_tco_release sets tco_expect_close to 0 between closer1_isr's write and its read."
+      },
+      {
+        "variable": "tco_write_buf",
+        "a1_line": 753,
+        "a1_kind": "write",
+        "b_line": 766,
+        "b_kind": "write",
+        "a2_line": 425,
+        "a2_kind": "read",
+        "why": "closer2_isr can preempt closer1_isr between its write of tco_write_buf and the read in i8xx_tco_write, and overwrite the buffer."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":744,\"a1_kind\":\"read\",\"b_line\":771,\"b_kind\":\"write\",\"a2_line\":745,\"a2_kind\":\"read\",\"why\":\"closer2_isr (higher priority) can preempt main between the two reads of test_global_var1 and change it, so they can see different values.\"},{\"variable\":\"test_global_var2\",\"a1_line\":747,\"a1_kind\":\"read\",\"b_line\":787,\"b_kind\":\"write\",\"a2_line\":748,\"a2_kind\":\"read\",\"why\":\"writer2_isr can preempt main between the two reads of test_global_var2 and write it, so the reads can differ.\"},{\"variable\":\"tco_expect_close\",\"a1_line\":755,\"a1_kind\":\"write\",\"b_line\":423,\"b_kind\":\"write\",\"a2_line\":756,\"a2_kind\":\"read\",\"why\":\"closer2_isr preempts closer1_isr after its write of 42. It resets tco_expect_close to 0 in i8xx_tco_write, so the check at line 756 can fail.\"},{\"variable\":\"tco_expect_close\",\"a1_line\":755,\"a1_kind\":\"write\",\"b_line\":376,\"b_kind\":\"write\",\"a2_line\":756,\"a2_kind\":\"read\",\"why\":\"closer2_isr's i8xx_tco_release sets tco_expect_close to 0 between closer1_isr's write and its read.\"},{\"variable\":\"tco_write_buf\",\"a1_line\":753,\"a1_kind\":\"write\",\"b_line\":766,\"b_kind\":\"write\",\"a2_line\":425,\"a2_kind\":\"read\",\"why\":\"closer2_isr can preempt closer1_isr between its write of tco_write_buf and the read in i8xx_tco_write, and overwrite the buffer.\"}]}",
+  "wall_s": 13.232563257217407,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1589,
+    "cache_read": 15897,
+    "cache_write": 485,
+    "latency_s": 13.232367692980915
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

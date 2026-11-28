@@ -1,0 +1,48 @@
+{
+  "case": "program_22",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_willow",
+        "a1_line": 38,
+        "a1_kind": "read",
+        "b_line": 20,
+        "b_kind": "write",
+        "a2_line": 44,
+        "a2_kind": "read",
+        "why": "After enable_isr(1) at line 43 the ISR can fire before the read at line 44 (garnet was still 1). It then writes v_willow between the two task reads."
+      },
+      {
+        "variable": "v_willow",
+        "a1_line": 44,
+        "a1_kind": "read",
+        "b_line": 20,
+        "b_kind": "write",
+        "a2_line": 52,
+        "a2_kind": "read",
+        "why": "The ISR can run during idlerun at line 47 or after enable_isr at line 51. It sets garnet to 0 and writes v_willow between the reads at lines 44 and 52."
+      },
+      {
+        "variable": "v_willow",
+        "a1_line": 38,
+        "a1_kind": "read",
+        "b_line": 20,
+        "b_kind": "write",
+        "a2_line": 52,
+        "a2_kind": "read",
+        "why": "The ISR can run between the reads at lines 38 and 52, for example during idlerun at line 39 or 47. It writes v_willow, and it also makes the garnet==0 condition at line 49 true."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_willow\",\"a1_line\":38,\"a1_kind\":\"read\",\"b_line\":20,\"b_kind\":\"write\",\"a2_line\":44,\"a2_kind\":\"read\",\"why\":\"After enable_isr(1) at line 43 the ISR can fire before the read at line 44 (garnet was still 1). It then writes v_willow between the two task reads.\"},{\"variable\":\"v_willow\",\"a1_line\":44,\"a1_kind\":\"read\",\"b_line\":20,\"b_kind\":\"write\",\"a2_line\":52,\"a2_kind\":\"read\",\"why\":\"The ISR can run during idlerun at line 47 or after enable_isr at line 51. It sets garnet to 0 and writes v_willow between the reads at lines 44 and 52.\"},{\"variable\":\"v_willow\",\"a1_line\":38,\"a1_kind\":\"read\",\"b_line\":20,\"b_kind\":\"write\",\"a2_line\":52,\"a2_kind\":\"read\",\"why\":\"The ISR can run between the reads at lines 38 and 52, for example during idlerun at line 39 or 47. It writes v_willow, and it also makes the garnet==0 condition at line 49 true.\"}]}",
+  "wall_s": 14.089359521865845,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1602,
+    "cache_read": 2081,
+    "cache_write": 489,
+    "latency_s": 14.089179026021156
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

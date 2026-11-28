@@ -1,0 +1,28 @@
+{
+  "case": "program_13",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_umber",
+        "a1_line": 16,
+        "a1_kind": "write",
+        "b_line": 9,
+        "b_kind": "read",
+        "a2_line": 18,
+        "a2_kind": "write",
+        "why": "The ISR irq_falcon can preempt task_garnet between the two writes to v_umber, reading the variable while it is being updated, creating a write‑read‑write atomicity violation."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_umber\",\n      \"a1_line\": 16,\n      \"a1_kind\": \"write\",\n      \"b_line\": 9,\n      \"b_kind\": \"read\",\n      \"a2_line\": 18,\n      \"a2_kind\": \"write\",\n      \"why\": \"The ISR irq_falcon can preempt task_garnet between the two writes to v_umber, reading the variable while it is being updated, creating a write‑read‑write atomicity violation.\"\n    }\n  ]\n}",
+  "wall_s": 6.9920618534088135,
+  "usage": {
+    "input_tokens": 252,
+    "output_tokens": 588,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 6.991997750010341
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

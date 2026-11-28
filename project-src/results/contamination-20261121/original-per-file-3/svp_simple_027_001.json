@@ -1,0 +1,38 @@
+{
+  "case": "svp_simple_027_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_027_001_gloable_var",
+        "a1_line": 27,
+        "a1_kind": "read",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 28,
+        "a2_kind": "write",
+        "why": "ISR1 is enabled in main and can preempt between the check at 27 and the reset at 28, so the write at 41 is overwritten by a decision based on a stale read."
+      },
+      {
+        "variable": "svp_simple_027_001_gloable_var",
+        "a1_line": 27,
+        "a1_kind": "read",
+        "b_line": 45,
+        "b_kind": "write",
+        "a2_line": 28,
+        "a2_kind": "write",
+        "why": "ISR1 enables interrupt 2, so ISR2 can run between lines 27 and 28 and update the variable, and main then overwrites it based on the stale read."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_027_001_gloable_var\",\"a1_line\":27,\"a1_kind\":\"read\",\"b_line\":41,\"b_kind\":\"write\",\"a2_line\":28,\"a2_kind\":\"write\",\"why\":\"ISR1 is enabled in main and can preempt between the check at 27 and the reset at 28, so the write at 41 is overwritten by a decision based on a stale read.\"},{\"variable\":\"svp_simple_027_001_gloable_var\",\"a1_line\":27,\"a1_kind\":\"read\",\"b_line\":45,\"b_kind\":\"write\",\"a2_line\":28,\"a2_kind\":\"write\",\"why\":\"ISR1 enables interrupt 2, so ISR2 can run between lines 27 and 28 and update the variable, and main then overwrites it based on the stale read.\"}]}",
+  "wall_s": 6.110174179077148,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 563,
+    "cache_read": 2508,
+    "cache_write": 484,
+    "latency_s": 6.109945323987631
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

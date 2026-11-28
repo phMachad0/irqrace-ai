@@ -1,0 +1,38 @@
+{
+  "case": "program_30",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_vessel",
+        "a1_line": 27,
+        "a1_kind": "write",
+        "b_line": 20,
+        "b_kind": "read",
+        "a2_line": 28,
+        "a2_kind": "write",
+        "why": "Once isr 2 has been enabled by an earlier zenith run, indigo (higher priority) can preempt a later zenith run between the two writes and read the intermediate value 0."
+      },
+      {
+        "variable": "v_quartz",
+        "a1_line": 42,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "read",
+        "a2_line": 45,
+        "a2_kind": "write",
+        "why": "After zenith enables isr 2, indigo can preempt the task between the clear of v_quartz[9999] and the later write of 1. It then reads the intermediate value, because v_willow is 1."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_vessel\",\"a1_line\":27,\"a1_kind\":\"write\",\"b_line\":20,\"b_kind\":\"read\",\"a2_line\":28,\"a2_kind\":\"write\",\"why\":\"Once isr 2 has been enabled by an earlier zenith run, indigo (higher priority) can preempt a later zenith run between the two writes and read the intermediate value 0.\"},{\"variable\":\"v_quartz\",\"a1_line\":42,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"read\",\"a2_line\":45,\"a2_kind\":\"write\",\"why\":\"After zenith enables isr 2, indigo can preempt the task between the clear of v_quartz[9999] and the later write of 1. It then reads the intermediate value, because v_willow is 1.\"}]}",
+  "wall_s": 11.389529943466187,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1129,
+    "cache_read": 1951,
+    "cache_write": 486,
+    "latency_s": 11.38937130701379
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

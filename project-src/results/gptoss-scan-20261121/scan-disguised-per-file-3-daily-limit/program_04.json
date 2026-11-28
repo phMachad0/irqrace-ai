@@ -1,0 +1,78 @@
+{
+  "case": "program_04",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_cedar",
+        "a1_line": 37,
+        "a1_kind": "write",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 70,
+        "a2_kind": "read",
+        "why": "ISR irq_basalt can write v_cedar between the task's write at line 37 and its later read at line 70, breaking atomicity."
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 37,
+        "a1_kind": "write",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 30,
+        "a2_kind": "read",
+        "why": "ISR irq_basalt can write v_cedar between the task's write at line 37 and its subsequent read at line 30, causing a non‑atomic read‑modify sequence."
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 37,
+        "a1_kind": "write",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 54,
+        "a2_kind": "read",
+        "why": "If fn_dune is called, the ISR can intervene between the task's write at line 37 and the read inside fn_dune at line 54."
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 70,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 30,
+        "a2_kind": "read",
+        "why": "The ISR can modify v_cedar after it is read at line 70 but before the later read at line 30."
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 70,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 54,
+        "a2_kind": "read",
+        "why": "The ISR may write v_cedar between the read at line 70 and the read inside fn_dune at line 54."
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 30,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 54,
+        "a2_kind": "read",
+        "why": "If fn_dune is invoked, the ISR can change v_cedar between the two reads at lines 30 and 54."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_cedar\",\n      \"a1_line\": 37,\n      \"a1_kind\": \"write\",\n      \"b_line\": 79,\n      \"b_kind\": \"write\",\n      \"a2_line\": 70,\n      \"a2_kind\": \"read\",\n      \"why\": \"ISR irq_basalt can write v_cedar between the task's write at line 37 and its later read at line 70, breaking atomicity.\"\n    },\n    {\n      \"variable\": \"v_cedar\",\n      \"a1_line\": 37,\n      \"a1_kind\": \"write\",\n      \"b_line\": 79,\n      \"b_kind\": \"write\",\n      \"a2_line\": 30,\n      \"a2_kind\": \"read\",\n      \"why\": \"ISR irq_basalt can write v_cedar between the task's write at line 37 and its subsequent read at line 30, causing a non‑atomic read‑modify sequence.\"\n    },\n    {\n      \"variable\": \"v_cedar\",\n      \"a1_line\": 37,\n      \"a1_kind\": \"write\",\n      \"b_line\": 79,\n      \"b_kind\": \"write\",\n      \"a2_line\": 54,\n      \"a2_kind\": \"read\",\n      \"why\": \"If fn_dune is called, the ISR can intervene between the task's write at line 37 and the read inside fn_dune at line 54.\"\n    },\n    {\n      \"variable\": \"v_cedar\",\n      \"a1_line\": 70,\n      \"a1_kind\": \"read\",\n      \"b_line\": 79,\n      \"b_kind\": \"write\",\n      \"a2_line\": 30,\n      \"a2_kind\": \"read\",\n      \"why\": \"The ISR can modify v_cedar after it is read at line 70 but before the later read at line 30.\"\n    },\n    {\n      \"variable\": \"v_cedar\",\n      \"a1_line\": 70,\n      \"a1_kind\": \"read\",\n      \"b_line\": 79,\n      \"b_kind\": \"write\",\n      \"a2_line\": 54,\n      \"a2_kind\": \"read\",\n      \"why\": \"The ISR may write v_cedar between the read at line 70 and the read inside fn_dune at line 54.\"\n    },\n    {\n      \"variable\": \"v_cedar\",\n      \"a1_line\": 30,\n      \"a1_kind\": \"read\",\n      \"b_line\": 79,\n      \"b_kind\": \"write\",\n      \"a2_line\": 54,\n      \"a2_kind\": \"read\",\n      \"why\": \"If fn_dune is invoked, the ISR can change v_cedar between the two reads at lines 30 and 54.\"\n    }\n  ]\n}",
+  "wall_s": 21.196487188339233,
+  "usage": {
+    "input_tokens": 723,
+    "output_tokens": 2560,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 21.196341984003084
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

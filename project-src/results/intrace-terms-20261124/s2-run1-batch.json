@@ -1,0 +1,16 @@
+{
+  "run_id": "+interleaving/1",
+  "row": "+interleaving",
+  "sample": 1,
+  "backend": "claude-cli:sonnet@low",
+  "workers": 1,
+  "case_parallel": 4,
+  "by_variable": true,
+  "case_timeout_s": 3600.0,
+  "frozen_root": "/home/pedro/Documentos/tcc/worktrees/intrace-cmp/runs-2.1",
+  "triaged_with_commit": "2829a9b56c66f4138a1cc96376b5b0a535c48cc5",
+  "status": "ok",
+  "started": "2026-11-25T00:38:41Z",
+  "failures": [],
+  "finished": "2026-11-25T00:42:54Z"
+}

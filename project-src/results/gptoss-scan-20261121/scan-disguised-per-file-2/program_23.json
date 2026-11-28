@@ -1,0 +1,28 @@
+{
+  "case": "program_23",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_vessel",
+        "a1_line": 25,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "read",
+        "a2_line": 26,
+        "a2_kind": "write",
+        "why": "ISR irq_lantern can preempt task_anchor between the two writes to v_vessel, causing a read of a partially updated value."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_vessel\",\"a1_line\":25,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"read\",\"a2_line\":26,\"a2_kind\":\"write\",\"why\":\"ISR irq_lantern can preempt task_anchor between the two writes to v_vessel, causing a read of a partially updated value.\"}]}",
+  "wall_s": 28.954819679260254,
+  "usage": {
+    "input_tokens": 385,
+    "output_tokens": 2054,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 28.9547062299971
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

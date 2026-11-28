@@ -1,0 +1,48 @@
+{
+  "case": "i8xx_tco_3",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_var1",
+        "a1_line": 741,
+        "a1_kind": "read",
+        "b_line": 791,
+        "b_kind": "write",
+        "a2_line": 742,
+        "a2_kind": "read",
+        "why": "closer2_isr (prio 2) reads var1 twice in JudgeCondi; writer1_isr (prio 3) can preempt in between and write it, so the two reads may differ."
+      },
+      {
+        "variable": "test_global_var2",
+        "a1_line": 744,
+        "a1_kind": "read",
+        "b_line": 801,
+        "b_kind": "write",
+        "a2_line": 745,
+        "a2_kind": "read",
+        "why": "writer2_isr (prio 4) can preempt closer2_isr between the two reads of var2 and change the value."
+      },
+      {
+        "variable": "test_global_var3",
+        "a1_line": 779,
+        "a1_kind": "read",
+        "b_line": 810,
+        "b_kind": "write",
+        "a2_line": 779,
+        "a2_kind": "write",
+        "why": "closer3_isr's var3++ is a non-atomic read-modify-write. writer3_isr (prio 5) can preempt it and write 0x33, and the increment then overwrites that write."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":741,\"a1_kind\":\"read\",\"b_line\":791,\"b_kind\":\"write\",\"a2_line\":742,\"a2_kind\":\"read\",\"why\":\"closer2_isr (prio 2) reads var1 twice in JudgeCondi; writer1_isr (prio 3) can preempt in between and write it, so the two reads may differ.\"},{\"variable\":\"test_global_var2\",\"a1_line\":744,\"a1_kind\":\"read\",\"b_line\":801,\"b_kind\":\"write\",\"a2_line\":745,\"a2_kind\":\"read\",\"why\":\"writer2_isr (prio 4) can preempt closer2_isr between the two reads of var2 and change the value.\"},{\"variable\":\"test_global_var3\",\"a1_line\":779,\"a1_kind\":\"read\",\"b_line\":810,\"b_kind\":\"write\",\"a2_line\":779,\"a2_kind\":\"write\",\"why\":\"closer3_isr's var3++ is a non-atomic read-modify-write. writer3_isr (prio 5) can preempt it and write 0x33, and the increment then overwrites that write.\"}]}",
+  "wall_s": 10.842692136764526,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1241,
+    "cache_read": 1011,
+    "cache_write": 15051,
+    "latency_s": 10.84244538799976
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

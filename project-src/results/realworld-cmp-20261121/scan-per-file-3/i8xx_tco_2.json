@@ -1,0 +1,58 @@
+{
+  "case": "i8xx_tco_2",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_var1",
+        "a1_line": 744,
+        "a1_kind": "read",
+        "b_line": 771,
+        "b_kind": "write",
+        "a2_line": 745,
+        "a2_kind": "read",
+        "why": "closer2_isr can preempt main between its two reads of test_global_var1 in JudgeCondi, so the reads can return different values."
+      },
+      {
+        "variable": "test_global_var2",
+        "a1_line": 747,
+        "a1_kind": "read",
+        "b_line": 787,
+        "b_kind": "write",
+        "a2_line": 748,
+        "a2_kind": "read",
+        "why": "writer2_isr can preempt main between the two reads of test_global_var2, so the reads can return different values."
+      },
+      {
+        "variable": "tco_expect_close",
+        "a1_line": 755,
+        "a1_kind": "write",
+        "b_line": 376,
+        "b_kind": "write",
+        "a2_line": 756,
+        "a2_kind": "read",
+        "why": "closer2_isr has higher priority and can preempt closer1_isr after it writes 42. Its release routine resets the flag to 0, so closer1_isr's check at line 756 fails."
+      },
+      {
+        "variable": "tco_expect_close",
+        "a1_line": 423,
+        "a1_kind": "write",
+        "b_line": 369,
+        "b_kind": "read",
+        "a2_line": 426,
+        "a2_kind": "write",
+        "why": "closer2_isr can preempt closer1_isr between the write of 0 at line 423 and the write of 42 at line 426. closer2_isr's release check at line 369 then reads the intermediate value 0."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":744,\"a1_kind\":\"read\",\"b_line\":771,\"b_kind\":\"write\",\"a2_line\":745,\"a2_kind\":\"read\",\"why\":\"closer2_isr can preempt main between its two reads of test_global_var1 in JudgeCondi, so the reads can return different values.\"},{\"variable\":\"test_global_var2\",\"a1_line\":747,\"a1_kind\":\"read\",\"b_line\":787,\"b_kind\":\"write\",\"a2_line\":748,\"a2_kind\":\"read\",\"why\":\"writer2_isr can preempt main between the two reads of test_global_var2, so the reads can return different values.\"},{\"variable\":\"tco_expect_close\",\"a1_line\":755,\"a1_kind\":\"write\",\"b_line\":376,\"b_kind\":\"write\",\"a2_line\":756,\"a2_kind\":\"read\",\"why\":\"closer2_isr has higher priority and can preempt closer1_isr after it writes 42. Its release routine resets the flag to 0, so closer1_isr's check at line 756 fails.\"},{\"variable\":\"tco_expect_close\",\"a1_line\":423,\"a1_kind\":\"write\",\"b_line\":369,\"b_kind\":\"read\",\"a2_line\":426,\"a2_kind\":\"write\",\"why\":\"closer2_isr can preempt closer1_isr between the write of 0 at line 423 and the write of 42 at line 426. closer2_isr's release check at line 369 then reads the intermediate value 0.\"}]}",
+  "wall_s": 12.614128351211548,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1397,
+    "cache_read": 15855,
+    "cache_write": 486,
+    "latency_s": 12.613932634994853
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

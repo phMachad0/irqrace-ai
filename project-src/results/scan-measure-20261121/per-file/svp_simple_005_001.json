@@ -1,0 +1,28 @@
+{
+  "case": "svp_simple_005_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_005_001_global_var",
+        "a1_line": 32,
+        "a1_kind": "write",
+        "b_line": 46,
+        "b_kind": "read",
+        "a2_line": 40,
+        "a2_kind": "write",
+        "why": "The ISR can preempt main between the write of 0x01 and the later write of 0x05, so it reads an intermediate value that main did not intend to leave visible."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_005_001_global_var\",\"a1_line\":32,\"a1_kind\":\"write\",\"b_line\":46,\"b_kind\":\"read\",\"a2_line\":40,\"a2_kind\":\"write\",\"why\":\"The ISR can preempt main between the write of 0x01 and the later write of 0x05, so it reads an intermediate value that main did not intend to leave visible.\"}]}",
+  "wall_s": 5.750720024108887,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 402,
+    "cache_read": 975,
+    "cache_write": 1782,
+    "latency_s": 5.750508154014824
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

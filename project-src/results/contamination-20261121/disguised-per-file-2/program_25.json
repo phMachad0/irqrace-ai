@@ -1,0 +1,78 @@
+{
+  "case": "program_25",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_amber",
+        "a1_line": 12,
+        "a1_kind": "write",
+        "b_line": 6,
+        "b_kind": "write",
+        "a2_line": 13,
+        "a2_kind": "read",
+        "why": "ISR can overwrite v_amber between the task's write and its first read."
+      },
+      {
+        "variable": "v_amber",
+        "a1_line": 12,
+        "a1_kind": "write",
+        "b_line": 6,
+        "b_kind": "write",
+        "a2_line": 14,
+        "a2_kind": "read",
+        "why": "ISR can overwrite v_amber between the task's write and its second read."
+      },
+      {
+        "variable": "v_amber",
+        "a1_line": 12,
+        "a1_kind": "write",
+        "b_line": 6,
+        "b_kind": "write",
+        "a2_line": 15,
+        "a2_kind": "read",
+        "why": "ISR can overwrite v_amber between the task's write and its third read."
+      },
+      {
+        "variable": "v_amber",
+        "a1_line": 13,
+        "a1_kind": "read",
+        "b_line": 6,
+        "b_kind": "write",
+        "a2_line": 14,
+        "a2_kind": "read",
+        "why": "ISR write between two reads can make them return different values."
+      },
+      {
+        "variable": "v_amber",
+        "a1_line": 14,
+        "a1_kind": "read",
+        "b_line": 6,
+        "b_kind": "write",
+        "a2_line": 15,
+        "a2_kind": "read",
+        "why": "ISR write between two reads can make them return different values."
+      },
+      {
+        "variable": "v_amber",
+        "a1_line": 13,
+        "a1_kind": "read",
+        "b_line": 6,
+        "b_kind": "write",
+        "a2_line": 15,
+        "a2_kind": "read",
+        "why": "ISR write between the first and third reads can make them differ."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_amber\",\"a1_line\":12,\"a1_kind\":\"write\",\"b_line\":6,\"b_kind\":\"write\",\"a2_line\":13,\"a2_kind\":\"read\",\"why\":\"ISR can overwrite v_amber between the task's write and its first read.\"},{\"variable\":\"v_amber\",\"a1_line\":12,\"a1_kind\":\"write\",\"b_line\":6,\"b_kind\":\"write\",\"a2_line\":14,\"a2_kind\":\"read\",\"why\":\"ISR can overwrite v_amber between the task's write and its second read.\"},{\"variable\":\"v_amber\",\"a1_line\":12,\"a1_kind\":\"write\",\"b_line\":6,\"b_kind\":\"write\",\"a2_line\":15,\"a2_kind\":\"read\",\"why\":\"ISR can overwrite v_amber between the task's write and its third read.\"},{\"variable\":\"v_amber\",\"a1_line\":13,\"a1_kind\":\"read\",\"b_line\":6,\"b_kind\":\"write\",\"a2_line\":14,\"a2_kind\":\"read\",\"why\":\"ISR write between two reads can make them return different values.\"},{\"variable\":\"v_amber\",\"a1_line\":14,\"a1_kind\":\"read\",\"b_line\":6,\"b_kind\":\"write\",\"a2_line\":15,\"a2_kind\":\"read\",\"why\":\"ISR write between two reads can make them return different values.\"},{\"variable\":\"v_amber\",\"a1_line\":13,\"a1_kind\":\"read\",\"b_line\":6,\"b_kind\":\"write\",\"a2_line\":15,\"a2_kind\":\"read\",\"why\":\"ISR write between the first and third reads can make them differ.\"}]}",
+  "wall_s": 7.985901832580566,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 948,
+    "cache_read": 1624,
+    "cache_write": 489,
+    "latency_s": 7.985693834983977
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

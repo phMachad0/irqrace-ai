@@ -1,0 +1,38 @@
+{
+  "case": "program_07",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_pylon",
+        "a1_line": 23,
+        "a1_kind": "read",
+        "b_line": 13,
+        "b_kind": "write",
+        "a2_line": 25,
+        "a2_kind": "read",
+        "why": "The ISR can increment v_pylon between the task's two reads. The task then indexes v_vessel with two different values."
+      },
+      {
+        "variable": "v_vessel[2]",
+        "a1_line": 29,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 33,
+        "a2_kind": "read",
+        "why": "When i==2 the task writes v_vessel[2]. The ISR can overwrite it with 0x09 before the task reads it at line 33, so the task does not read back its own value."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_pylon\",\"a1_line\":23,\"a1_kind\":\"read\",\"b_line\":13,\"b_kind\":\"write\",\"a2_line\":25,\"a2_kind\":\"read\",\"why\":\"The ISR can increment v_pylon between the task's two reads. The task then indexes v_vessel with two different values.\"},{\"variable\":\"v_vessel[2]\",\"a1_line\":29,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"write\",\"a2_line\":33,\"a2_kind\":\"read\",\"why\":\"When i==2 the task writes v_vessel[2]. The ISR can overwrite it with 0x09 before the task reads it at line 33, so the task does not read back its own value.\"}]}",
+  "wall_s": 8.516413688659668,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 956,
+    "cache_read": 1827,
+    "cache_write": 481,
+    "latency_s": 8.516221119003603
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

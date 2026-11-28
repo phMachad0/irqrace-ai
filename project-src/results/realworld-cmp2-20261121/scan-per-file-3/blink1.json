@@ -1,0 +1,48 @@
+{
+  "case": "blink1",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "write",
+        "b_line": 121,
+        "b_kind": "write",
+        "a2_line": 96,
+        "a2_kind": "read",
+        "why": "Timer_Force_isr (priority 3) can preempt Timer_A_isr between the increment and the check. It resets timerCount to 0, so the check sees 0 instead of the incremented value."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 121,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "write",
+        "why": "The increment is a non-atomic read-modify-write. Timer_Force_isr can write timerCount between the read and the write-back, and the stale value then overwrites its update."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 108,
+        "a1_kind": "write",
+        "b_line": 121,
+        "b_kind": "write",
+        "a2_line": 109,
+        "a2_kind": "read",
+        "why": "Timer_Force_isr can preempt Timer_B_isr after it sets timerCount to 1. Force sets it to 0, so the check at line 109 fails, which should be impossible."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":121,\"b_kind\":\"write\",\"a2_line\":96,\"a2_kind\":\"read\",\"why\":\"Timer_Force_isr (priority 3) can preempt Timer_A_isr between the increment and the check. It resets timerCount to 0, so the check sees 0 instead of the incremented value.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":121,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"The increment is a non-atomic read-modify-write. Timer_Force_isr can write timerCount between the read and the write-back, and the stale value then overwrites its update.\"},{\"variable\":\"timerCount\",\"a1_line\":108,\"a1_kind\":\"write\",\"b_line\":121,\"b_kind\":\"write\",\"a2_line\":109,\"a2_kind\":\"read\",\"why\":\"Timer_Force_isr can preempt Timer_B_isr after it sets timerCount to 1. Force sets it to 0, so the check at line 109 fails, which should be impossible.\"}]}",
+  "wall_s": 9.762740135192871,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1033,
+    "cache_read": 3473,
+    "cache_write": 490,
+    "latency_s": 9.761466370982816
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

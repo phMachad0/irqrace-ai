@@ -64,6 +64,15 @@
 \setlength{\@fptop}{5pt}
 \makeatother
 
+% --- Trechos de código -------------------------------------------------------
+\usepackage{listings}
+\renewcommand{\lstlistingname}{Código}
+\lstset{language=C, basicstyle=\ttfamily\small, numbers=left,
+  numberstyle=\tiny, numbersep=6pt, frame=single, breaklines=true,
+  columns=fullflexible, keepspaces=true, showstringspaces=false,
+  xleftmargin=1.5em, framexleftmargin=1.5em, captionpos=t,
+  literate={ã}{{\~a}}1 {ç}{{\c{c}}}1 {é}{{\'e}}1 {á}{{\'a}}1 {í}{{\'i}}1 {õ}{{\~o}}1}
+
 % --- Quadros e lista de quadros (recurso do modelo) -------------------------
 \newcommand{\quadroname}{Quadro}
 \newcommand{\listofquadrosname}{Lista de quadros}

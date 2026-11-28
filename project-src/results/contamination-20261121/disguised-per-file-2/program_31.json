@@ -1,0 +1,58 @@
+{
+  "case": "program_31",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_basalt",
+        "a1_line": 17,
+        "a1_kind": "read",
+        "b_line": 10,
+        "b_kind": "write",
+        "a2_line": 18,
+        "a2_kind": "write",
+        "why": "disable_isr(1) masks only willow; kestrel (priority 2) can still preempt between the check and the reset, so the reset acts on a stale value."
+      },
+      {
+        "variable": "v_basalt",
+        "a1_line": 26,
+        "a1_kind": "write",
+        "b_line": 10,
+        "b_kind": "write",
+        "a2_line": 17,
+        "a2_kind": "read",
+        "why": "Kestrel can run after the write in fn_tundra, during init() or before/after the disable, and change the value before the task reads it."
+      },
+      {
+        "variable": "v_basalt",
+        "a1_line": 26,
+        "a1_kind": "write",
+        "b_line": 6,
+        "b_kind": "write",
+        "a2_line": 17,
+        "a2_kind": "read",
+        "why": "Willow is not yet masked between line 26 and line 16, so it can modify the value before the task reads it."
+      },
+      {
+        "variable": "v_basalt",
+        "a1_line": 6,
+        "a1_kind": "read",
+        "b_line": 10,
+        "b_kind": "write",
+        "a2_line": 6,
+        "a2_kind": "write",
+        "why": "Higher-priority kestrel can preempt willow's non-atomic increment, and the decrement is then lost."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_basalt\",\"a1_line\":17,\"a1_kind\":\"read\",\"b_line\":10,\"b_kind\":\"write\",\"a2_line\":18,\"a2_kind\":\"write\",\"why\":\"disable_isr(1) masks only willow; kestrel (priority 2) can still preempt between the check and the reset, so the reset acts on a stale value.\"},{\"variable\":\"v_basalt\",\"a1_line\":26,\"a1_kind\":\"write\",\"b_line\":10,\"b_kind\":\"write\",\"a2_line\":17,\"a2_kind\":\"read\",\"why\":\"Kestrel can run after the write in fn_tundra, during init() or before/after the disable, and change the value before the task reads it.\"},{\"variable\":\"v_basalt\",\"a1_line\":26,\"a1_kind\":\"write\",\"b_line\":6,\"b_kind\":\"write\",\"a2_line\":17,\"a2_kind\":\"read\",\"why\":\"Willow is not yet masked between line 26 and line 16, so it can modify the value before the task reads it.\"},{\"variable\":\"v_basalt\",\"a1_line\":6,\"a1_kind\":\"read\",\"b_line\":10,\"b_kind\":\"write\",\"a2_line\":6,\"a2_kind\":\"write\",\"why\":\"Higher-priority kestrel can preempt willow's non-atomic increment, and the decrement is then lost.\"}]}",
+  "wall_s": 10.521000623703003,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1088,
+    "cache_read": 1739,
+    "cache_write": 483,
+    "latency_s": 10.520824289997108
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,78 @@
+{
+  "case": "program_15",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_falcon",
+        "a1_line": 56,
+        "a1_kind": "write",
+        "b_line": 61,
+        "b_kind": "write",
+        "a2_line": 57,
+        "a2_kind": "read",
+        "why": "Anchor (prio 6) can preempt summit between its write and read of v_falcon and change the value."
+      },
+      {
+        "variable": "v_falcon",
+        "a1_line": 56,
+        "a1_kind": "write",
+        "b_line": 100,
+        "b_kind": "write",
+        "a2_line": 57,
+        "a2_kind": "read",
+        "why": "Thorn (prio 3) preempts summit (prio 2) between the write and read and writes v_falcon."
+      },
+      {
+        "variable": "v_prism",
+        "a1_line": 51,
+        "a1_kind": "read",
+        "b_line": 62,
+        "b_kind": "write",
+        "a2_line": 52,
+        "a2_kind": "read",
+        "why": "Anchor preempts kelp between the index read and the increment, so the read in v_prism++ sees a different value."
+      },
+      {
+        "variable": "v_prism",
+        "a1_line": 51,
+        "a1_kind": "read",
+        "b_line": 62,
+        "b_kind": "write",
+        "a2_line": 52,
+        "a2_kind": "write",
+        "why": "Anchor's increment can land between kelp's read and its write-back, and the write-back overwrites it."
+      },
+      {
+        "variable": "v_prism",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 62,
+        "b_kind": "write",
+        "a2_line": 101,
+        "a2_kind": "write",
+        "why": "Anchor preempts thorn after it reads v_prism and before it resets v_prism."
+      },
+      {
+        "variable": "v_prism",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 52,
+        "b_kind": "write",
+        "a2_line": 101,
+        "a2_kind": "write",
+        "why": "Kelp (prio 5) preempts thorn after it reads v_prism and before it resets v_prism."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_falcon\",\"a1_line\":56,\"a1_kind\":\"write\",\"b_line\":61,\"b_kind\":\"write\",\"a2_line\":57,\"a2_kind\":\"read\",\"why\":\"Anchor (prio 6) can preempt summit between its write and read of v_falcon and change the value.\"},{\"variable\":\"v_falcon\",\"a1_line\":56,\"a1_kind\":\"write\",\"b_line\":100,\"b_kind\":\"write\",\"a2_line\":57,\"a2_kind\":\"read\",\"why\":\"Thorn (prio 3) preempts summit (prio 2) between the write and read and writes v_falcon.\"},{\"variable\":\"v_prism\",\"a1_line\":51,\"a1_kind\":\"read\",\"b_line\":62,\"b_kind\":\"write\",\"a2_line\":52,\"a2_kind\":\"read\",\"why\":\"Anchor preempts kelp between the index read and the increment, so the read in v_prism++ sees a different value.\"},{\"variable\":\"v_prism\",\"a1_line\":51,\"a1_kind\":\"read\",\"b_line\":62,\"b_kind\":\"write\",\"a2_line\":52,\"a2_kind\":\"write\",\"why\":\"Anchor's increment can land between kelp's read and its write-back, and the write-back overwrites it.\"},{\"variable\":\"v_prism\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":62,\"b_kind\":\"write\",\"a2_line\":101,\"a2_kind\":\"write\",\"why\":\"Anchor preempts thorn after it reads v_prism and before it resets v_prism.\"},{\"variable\":\"v_prism\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":52,\"b_kind\":\"write\",\"a2_line\":101,\"a2_kind\":\"write\",\"why\":\"Kelp (prio 5) preempts thorn after it reads v_prism and before it resets v_prism.\"}]}",
+  "wall_s": 15.424968481063843,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1884,
+    "cache_read": 2898,
+    "cache_write": 485,
+    "latency_s": 15.42477595701348
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

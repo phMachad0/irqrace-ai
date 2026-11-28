@@ -1,0 +1,48 @@
+{
+  "case": "svp_simple_005_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_005_001_global_var",
+        "a1_line": 38,
+        "a1_kind": "write",
+        "b_line": 46,
+        "b_kind": "read",
+        "a2_line": 40,
+        "a2_kind": "write",
+        "why": "The ISR can preempt main between the writes at 38 and 40 and read the intermediate value 0x09, which is never meant to be seen."
+      },
+      {
+        "variable": "svp_simple_005_001_global_var",
+        "a1_line": 32,
+        "a1_kind": "write",
+        "b_line": 46,
+        "b_kind": "read",
+        "a2_line": 40,
+        "a2_kind": "write",
+        "why": "The ISR can read the value 0x01 after the write at 32 and before the final write at 40, and the main flow is not protected by masking."
+      },
+      {
+        "variable": "svp_simple_005_001_global_var",
+        "a1_line": 32,
+        "a1_kind": "write",
+        "b_line": 46,
+        "b_kind": "read",
+        "a2_line": 38,
+        "a2_kind": "write",
+        "why": "The ISR can read the intermediate value between the write at 32 and the conditional write at 38."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_005_001_global_var\",\"a1_line\":38,\"a1_kind\":\"write\",\"b_line\":46,\"b_kind\":\"read\",\"a2_line\":40,\"a2_kind\":\"write\",\"why\":\"The ISR can preempt main between the writes at 38 and 40 and read the intermediate value 0x09, which is never meant to be seen.\"},{\"variable\":\"svp_simple_005_001_global_var\",\"a1_line\":32,\"a1_kind\":\"write\",\"b_line\":46,\"b_kind\":\"read\",\"a2_line\":40,\"a2_kind\":\"write\",\"why\":\"The ISR can read the value 0x01 after the write at 32 and before the final write at 40, and the main flow is not protected by masking.\"},{\"variable\":\"svp_simple_005_001_global_var\",\"a1_line\":32,\"a1_kind\":\"write\",\"b_line\":46,\"b_kind\":\"read\",\"a2_line\":38,\"a2_kind\":\"write\",\"why\":\"The ISR can read the intermediate value between the write at 32 and the conditional write at 38.\"}]}",
+  "wall_s": 6.793931722640991,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 626,
+    "cache_read": 2267,
+    "cache_write": 489,
+    "latency_s": 6.793726888980018
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,17 @@
+{
+  "case": "svp_simple_008_001",
+  "parsed": {
+    "violations": []
+  },
+  "text": "{\"violations\":[]}",
+  "wall_s": 9.924954175949097,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 644,
+    "cache_read": 2322,
+    "cache_write": 489,
+    "latency_s": 9.924812256998848
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

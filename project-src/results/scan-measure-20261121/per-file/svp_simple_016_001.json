@@ -1,0 +1,48 @@
+{
+  "case": "svp_simple_016_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_016_001_global_var1",
+        "a1_line": 24,
+        "a1_kind": "write",
+        "b_line": 33,
+        "b_kind": "write",
+        "a2_line": 25,
+        "a2_kind": "read",
+        "why": "ISR can preempt between main's write of 1 and its read, so the read sees 9 instead of the written value."
+      },
+      {
+        "variable": "svp_simple_016_001_global_var1",
+        "a1_line": 25,
+        "a1_kind": "read",
+        "b_line": 33,
+        "b_kind": "write",
+        "a2_line": 26,
+        "a2_kind": "read",
+        "why": "ISR write between the first and second reads in the sum gives inconsistent values."
+      },
+      {
+        "variable": "svp_simple_016_001_global_var1",
+        "a1_line": 26,
+        "a1_kind": "read",
+        "b_line": 33,
+        "b_kind": "write",
+        "a2_line": 27,
+        "a2_kind": "read",
+        "why": "ISR write between the second and third reads gives inconsistent values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_016_001_global_var1\",\"a1_line\":24,\"a1_kind\":\"write\",\"b_line\":33,\"b_kind\":\"write\",\"a2_line\":25,\"a2_kind\":\"read\",\"why\":\"ISR can preempt between main's write of 1 and its read, so the read sees 9 instead of the written value.\"},{\"variable\":\"svp_simple_016_001_global_var1\",\"a1_line\":25,\"a1_kind\":\"read\",\"b_line\":33,\"b_kind\":\"write\",\"a2_line\":26,\"a2_kind\":\"read\",\"why\":\"ISR write between the first and second reads in the sum gives inconsistent values.\"},{\"variable\":\"svp_simple_016_001_global_var1\",\"a1_line\":26,\"a1_kind\":\"read\",\"b_line\":33,\"b_kind\":\"write\",\"a2_line\":27,\"a2_kind\":\"read\",\"why\":\"ISR write between the second and third reads gives inconsistent values.\"}]}",
+  "wall_s": 6.145142316818237,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 600,
+    "cache_read": 975,
+    "cache_write": 1609,
+    "latency_s": 6.144915446988307
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

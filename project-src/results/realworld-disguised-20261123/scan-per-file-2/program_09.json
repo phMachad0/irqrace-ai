@@ -1,0 +1,68 @@
+{
+  "case": "program_09",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_larch",
+        "a1_line": 150,
+        "a1_kind": "read",
+        "b_line": 170,
+        "b_kind": "write",
+        "a2_line": 151,
+        "a2_kind": "read",
+        "why": "irq_vine can preempt main between the two reads of v_larch in fn_delta and change the value, so the two reads can disagree."
+      },
+      {
+        "variable": "v_loom",
+        "a1_line": 152,
+        "a1_kind": "read",
+        "b_line": 180,
+        "b_kind": "write",
+        "a2_line": 153,
+        "a2_kind": "read",
+        "why": "irq_nectar can preempt main between the two reads of v_loom, once irq_flint has set v_walnut to 0, and change the value."
+      },
+      {
+        "variable": "v_velvet",
+        "a1_line": 158,
+        "a1_kind": "write",
+        "b_line": 120,
+        "b_kind": "write",
+        "a2_line": 159,
+        "a2_kind": "read",
+        "why": "irq_vine has higher priority than irq_lantern. It can preempt after lantern writes 42 and reset v_velvet to 0 in fn_tide, so the check at line 159 sees 0."
+      },
+      {
+        "variable": "v_velvet",
+        "a1_line": 158,
+        "a1_kind": "write",
+        "b_line": 127,
+        "b_kind": "write",
+        "a2_line": 159,
+        "a2_kind": "read",
+        "why": "irq_vine runs fn_wharf(1), which writes v_velvet=0 at line 127. If that happens between lantern's write and its read, the read sees a different value."
+      },
+      {
+        "variable": "v_knoll",
+        "a1_line": 156,
+        "a1_kind": "write",
+        "b_line": 165,
+        "b_kind": "write",
+        "a2_line": 128,
+        "a2_kind": "read",
+        "why": "irq_vine can preempt lantern between its write of v_knoll and the read in fn_wharf. It overwrites v_knoll, though with the same value."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_larch\",\"a1_line\":150,\"a1_kind\":\"read\",\"b_line\":170,\"b_kind\":\"write\",\"a2_line\":151,\"a2_kind\":\"read\",\"why\":\"irq_vine can preempt main between the two reads of v_larch in fn_delta and change the value, so the two reads can disagree.\"},{\"variable\":\"v_loom\",\"a1_line\":152,\"a1_kind\":\"read\",\"b_line\":180,\"b_kind\":\"write\",\"a2_line\":153,\"a2_kind\":\"read\",\"why\":\"irq_nectar can preempt main between the two reads of v_loom, once irq_flint has set v_walnut to 0, and change the value.\"},{\"variable\":\"v_velvet\",\"a1_line\":158,\"a1_kind\":\"write\",\"b_line\":120,\"b_kind\":\"write\",\"a2_line\":159,\"a2_kind\":\"read\",\"why\":\"irq_vine has higher priority than irq_lantern. It can preempt after lantern writes 42 and reset v_velvet to 0 in fn_tide, so the check at line 159 sees 0.\"},{\"variable\":\"v_velvet\",\"a1_line\":158,\"a1_kind\":\"write\",\"b_line\":127,\"b_kind\":\"write\",\"a2_line\":159,\"a2_kind\":\"read\",\"why\":\"irq_vine runs fn_wharf(1), which writes v_velvet=0 at line 127. If that happens between lantern's write and its read, the read sees a different value.\"},{\"variable\":\"v_knoll\",\"a1_line\":156,\"a1_kind\":\"write\",\"b_line\":165,\"b_kind\":\"write\",\"a2_line\":128,\"a2_kind\":\"read\",\"why\":\"irq_vine can preempt lantern between its write of v_knoll and the read in fn_wharf. It overwrites v_knoll, though with the same value.\"}]}",
+  "wall_s": 14.164981365203857,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1647,
+    "cache_read": 5062,
+    "cache_write": 487,
+    "latency_s": 14.164819365018047
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

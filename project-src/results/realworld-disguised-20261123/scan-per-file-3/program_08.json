@@ -1,0 +1,98 @@
+{
+  "case": "program_08",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_saffron",
+        "a1_line": 46,
+        "a1_kind": "write",
+        "b_line": 55,
+        "b_kind": "write",
+        "a2_line": 50,
+        "a2_kind": "read",
+        "why": "irq_pebble (higher priority) can preempt irq_tide between its write and read of v_saffron."
+      },
+      {
+        "variable": "v_saffron",
+        "a1_line": 46,
+        "a1_kind": "write",
+        "b_line": 61,
+        "b_kind": "write",
+        "a2_line": 50,
+        "a2_kind": "read",
+        "why": "irq_husk (higher priority) can preempt irq_tide between its write and read."
+      },
+      {
+        "variable": "v_saffron",
+        "a1_line": 46,
+        "a1_kind": "write",
+        "b_line": 72,
+        "b_kind": "write",
+        "a2_line": 50,
+        "a2_kind": "read",
+        "why": "irq_drift (higher priority) can preempt irq_tide between its write and read."
+      },
+      {
+        "variable": "v_saffron",
+        "a1_line": 61,
+        "a1_kind": "write",
+        "b_line": 72,
+        "b_kind": "write",
+        "a2_line": 65,
+        "a2_kind": "read",
+        "why": "irq_drift (higher priority) can preempt irq_husk between its write and read."
+      },
+      {
+        "variable": "v_jasper",
+        "a1_line": 36,
+        "a1_kind": "read",
+        "b_line": 67,
+        "b_kind": "write",
+        "a2_line": 37,
+        "a2_kind": "read",
+        "why": "irq_husk (higher priority) can preempt irq_nook in fn_oasis between the two reads."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 34,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 35,
+        "a2_kind": "read",
+        "why": "irq_drift (higher priority) can preempt irq_nook in fn_oasis between the two reads."
+      },
+      {
+        "variable": "v_birch",
+        "a1_line": 14,
+        "a1_kind": "write",
+        "b_line": 9,
+        "b_kind": "read",
+        "a2_line": 18,
+        "a2_kind": "write",
+        "why": "irq_drift can preempt a lower-priority ISR between its write in fn_lagoon and its write in fn_shoal, so it reads an intermediate value."
+      },
+      {
+        "variable": "v_meadow",
+        "a1_line": 15,
+        "a1_kind": "write",
+        "b_line": 6,
+        "b_kind": "read",
+        "a2_line": 19,
+        "a2_kind": "write",
+        "why": "irq_drift can preempt a lower-priority ISR between its write in fn_lagoon and its write in fn_shoal, so it reads an intermediate value."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_saffron\",\"a1_line\":46,\"a1_kind\":\"write\",\"b_line\":55,\"b_kind\":\"write\",\"a2_line\":50,\"a2_kind\":\"read\",\"why\":\"irq_pebble (higher priority) can preempt irq_tide between its write and read of v_saffron.\"},{\"variable\":\"v_saffron\",\"a1_line\":46,\"a1_kind\":\"write\",\"b_line\":61,\"b_kind\":\"write\",\"a2_line\":50,\"a2_kind\":\"read\",\"why\":\"irq_husk (higher priority) can preempt irq_tide between its write and read.\"},{\"variable\":\"v_saffron\",\"a1_line\":46,\"a1_kind\":\"write\",\"b_line\":72,\"b_kind\":\"write\",\"a2_line\":50,\"a2_kind\":\"read\",\"why\":\"irq_drift (higher priority) can preempt irq_tide between its write and read.\"},{\"variable\":\"v_saffron\",\"a1_line\":61,\"a1_kind\":\"write\",\"b_line\":72,\"b_kind\":\"write\",\"a2_line\":65,\"a2_kind\":\"read\",\"why\":\"irq_drift (higher priority) can preempt irq_husk between its write and read.\"},{\"variable\":\"v_jasper\",\"a1_line\":36,\"a1_kind\":\"read\",\"b_line\":67,\"b_kind\":\"write\",\"a2_line\":37,\"a2_kind\":\"read\",\"why\":\"irq_husk (higher priority) can preempt irq_nook in fn_oasis between the two reads.\"},{\"variable\":\"v_lantern\",\"a1_line\":34,\"a1_kind\":\"read\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":35,\"a2_kind\":\"read\",\"why\":\"irq_drift (higher priority) can preempt irq_nook in fn_oasis between the two reads.\"},{\"variable\":\"v_birch\",\"a1_line\":14,\"a1_kind\":\"write\",\"b_line\":9,\"b_kind\":\"read\",\"a2_line\":18,\"a2_kind\":\"write\",\"why\":\"irq_drift can preempt a lower-priority ISR between its write in fn_lagoon and its write in fn_shoal, so it reads an intermediate value.\"},{\"variable\":\"v_meadow\",\"a1_line\":15,\"a1_kind\":\"write\",\"b_line\":6,\"b_kind\":\"read\",\"a2_line\":19,\"a2_kind\":\"write\",\"why\":\"irq_drift can preempt a lower-priority ISR between its write in fn_lagoon and its write in fn_shoal, so it reads an intermediate value.\"}]}",
+  "wall_s": 15.129733800888062,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1939,
+    "cache_read": 2635,
+    "cache_write": 488,
+    "latency_s": 15.12951753498055
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

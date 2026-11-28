@@ -1,0 +1,48 @@
+{
+  "case": "program_19",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_hazel",
+        "a1_line": 31,
+        "a1_kind": "read",
+        "b_line": 8,
+        "b_kind": "write",
+        "a2_line": 34,
+        "a2_kind": "read",
+        "why": "After irq_jasper enables interrupt 2, irq_nimbus (v_falcon==1) can preempt the task between the two reads and change v_hazel, so the two comparisons see different values."
+      },
+      {
+        "variable": "v_meadow",
+        "a1_line": 32,
+        "a1_kind": "read",
+        "b_line": 9,
+        "b_kind": "write",
+        "a2_line": 35,
+        "a2_kind": "read",
+        "why": "irq_nimbus can run between the two reads of v_meadow once irq_jasper has enabled it, and it writes v_meadow."
+      },
+      {
+        "variable": "v_meadow",
+        "a1_line": 32,
+        "a1_kind": "read",
+        "b_line": 14,
+        "b_kind": "write",
+        "a2_line": 35,
+        "a2_kind": "read",
+        "why": "irq_jasper is never masked in the task, so it can preempt between the two reads and write v_meadow."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_hazel\",\"a1_line\":31,\"a1_kind\":\"read\",\"b_line\":8,\"b_kind\":\"write\",\"a2_line\":34,\"a2_kind\":\"read\",\"why\":\"After irq_jasper enables interrupt 2, irq_nimbus (v_falcon==1) can preempt the task between the two reads and change v_hazel, so the two comparisons see different values.\"},{\"variable\":\"v_meadow\",\"a1_line\":32,\"a1_kind\":\"read\",\"b_line\":9,\"b_kind\":\"write\",\"a2_line\":35,\"a2_kind\":\"read\",\"why\":\"irq_nimbus can run between the two reads of v_meadow once irq_jasper has enabled it, and it writes v_meadow.\"},{\"variable\":\"v_meadow\",\"a1_line\":32,\"a1_kind\":\"read\",\"b_line\":14,\"b_kind\":\"write\",\"a2_line\":35,\"a2_kind\":\"read\",\"why\":\"irq_jasper is never masked in the task, so it can preempt between the two reads and write v_meadow.\"}]}",
+  "wall_s": 9.0679931640625,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 990,
+    "cache_read": 1870,
+    "cache_write": 488,
+    "latency_s": 9.067811180982972
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

@@ -1,0 +1,48 @@
+{
+  "case": "svp_simple_018_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_018_001_para1",
+        "a1_line": 40,
+        "a1_kind": "read",
+        "b_line": 59,
+        "b_kind": "write",
+        "a2_line": 47,
+        "a2_kind": "read",
+        "why": "isr_1 can preempt main between the para1 read in func1 and the one in func2, so perimeter and area use different para1 values."
+      },
+      {
+        "variable": "svp_simple_018_001_para2",
+        "a1_line": 41,
+        "a1_kind": "read",
+        "b_line": 54,
+        "b_kind": "write",
+        "a2_line": 48,
+        "a2_kind": "read",
+        "why": "isr_2 can write para2 between main's read in func1 and its read in func2, giving inconsistent values."
+      },
+      {
+        "variable": "svp_simple_018_001_para2",
+        "a1_line": 48,
+        "a1_kind": "read",
+        "b_line": 54,
+        "b_kind": "write",
+        "a2_line": 49,
+        "a2_kind": "read",
+        "why": "isr_2 can preempt main between the two para2 reads in the same area expression, so the two reads can see different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_018_001_para1\",\"a1_line\":40,\"a1_kind\":\"read\",\"b_line\":59,\"b_kind\":\"write\",\"a2_line\":47,\"a2_kind\":\"read\",\"why\":\"isr_1 can preempt main between the para1 read in func1 and the one in func2, so perimeter and area use different para1 values.\"},{\"variable\":\"svp_simple_018_001_para2\",\"a1_line\":41,\"a1_kind\":\"read\",\"b_line\":54,\"b_kind\":\"write\",\"a2_line\":48,\"a2_kind\":\"read\",\"why\":\"isr_2 can write para2 between main's read in func1 and its read in func2, giving inconsistent values.\"},{\"variable\":\"svp_simple_018_001_para2\",\"a1_line\":48,\"a1_kind\":\"read\",\"b_line\":54,\"b_kind\":\"write\",\"a2_line\":49,\"a2_kind\":\"read\",\"why\":\"isr_2 can preempt main between the two para2 reads in the same area expression, so the two reads can see different values.\"}]}",
+  "wall_s": 6.158445835113525,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 644,
+    "cache_read": 2529,
+    "cache_write": 487,
+    "latency_s": 6.158254320995184
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

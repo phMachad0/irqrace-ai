@@ -1,0 +1,28 @@
+{
+  "case": "program_13",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_umber",
+        "a1_line": 16,
+        "a1_kind": "write",
+        "b_line": 9,
+        "b_kind": "read",
+        "a2_line": 18,
+        "a2_kind": "write",
+        "why": "The task writes v_umber at line 16 and writes it again through alias p at line 18. Interrupts are never masked, so the ISR can preempt between them and read the intermediate value 0x01 at line 9."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_umber\",\"a1_line\":16,\"a1_kind\":\"write\",\"b_line\":9,\"b_kind\":\"read\",\"a2_line\":18,\"a2_kind\":\"write\",\"why\":\"The task writes v_umber at line 16 and writes it again through alias p at line 18. Interrupts are never masked, so the ISR can preempt between them and read the intermediate value 0x01 at line 9.\"}]}",
+  "wall_s": 5.980990886688232,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 302,
+    "cache_read": 1646,
+    "cache_write": 491,
+    "latency_s": 5.980826925020665
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

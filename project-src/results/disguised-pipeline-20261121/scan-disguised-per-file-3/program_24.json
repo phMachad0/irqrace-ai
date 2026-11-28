@@ -1,0 +1,68 @@
+{
+  "case": "program_24",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_fjord",
+        "a1_line": 26,
+        "a1_kind": "write",
+        "b_line": 22,
+        "b_kind": "write",
+        "a2_line": 12,
+        "a2_kind": "read",
+        "why": "The ISR can zero v_fjord after the task stores rand() and before the task reads it as the argument, so the task sees 0."
+      },
+      {
+        "variable": "v_fjord",
+        "a1_line": 12,
+        "a1_kind": "read",
+        "b_line": 22,
+        "b_kind": "write",
+        "a2_line": 17,
+        "a2_kind": "read",
+        "why": "The range check uses the value read at line 12. The ISR can reset v_fjord before line 17 reads it again, so the check and the increment use different values."
+      },
+      {
+        "variable": "v_fjord",
+        "a1_line": 12,
+        "a1_kind": "read",
+        "b_line": 22,
+        "b_kind": "write",
+        "a2_line": 17,
+        "a2_kind": "write",
+        "why": "The ISR zeroing v_fjord between the check on the line 12 value and the store at line 17 makes the task overwrite 0 with a stale-derived value."
+      },
+      {
+        "variable": "v_fjord",
+        "a1_line": 17,
+        "a1_kind": "read",
+        "b_line": 22,
+        "b_kind": "write",
+        "a2_line": 17,
+        "a2_kind": "write",
+        "why": "The increment is a non-atomic read-modify-write. The ISR's reset can land between its read and write, and the ISR's reset is then lost."
+      },
+      {
+        "variable": "v_fjord",
+        "a1_line": 26,
+        "a1_kind": "write",
+        "b_line": 22,
+        "b_kind": "write",
+        "a2_line": 17,
+        "a2_kind": "read",
+        "why": "The ISR can overwrite the value stored at line 26 before the task reads it at line 17 for the increment."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_fjord\",\"a1_line\":26,\"a1_kind\":\"write\",\"b_line\":22,\"b_kind\":\"write\",\"a2_line\":12,\"a2_kind\":\"read\",\"why\":\"The ISR can zero v_fjord after the task stores rand() and before the task reads it as the argument, so the task sees 0.\"},{\"variable\":\"v_fjord\",\"a1_line\":12,\"a1_kind\":\"read\",\"b_line\":22,\"b_kind\":\"write\",\"a2_line\":17,\"a2_kind\":\"read\",\"why\":\"The range check uses the value read at line 12. The ISR can reset v_fjord before line 17 reads it again, so the check and the increment use different values.\"},{\"variable\":\"v_fjord\",\"a1_line\":12,\"a1_kind\":\"read\",\"b_line\":22,\"b_kind\":\"write\",\"a2_line\":17,\"a2_kind\":\"write\",\"why\":\"The ISR zeroing v_fjord between the check on the line 12 value and the store at line 17 makes the task overwrite 0 with a stale-derived value.\"},{\"variable\":\"v_fjord\",\"a1_line\":17,\"a1_kind\":\"read\",\"b_line\":22,\"b_kind\":\"write\",\"a2_line\":17,\"a2_kind\":\"write\",\"why\":\"The increment is a non-atomic read-modify-write. The ISR's reset can land between its read and write, and the ISR's reset is then lost.\"},{\"variable\":\"v_fjord\",\"a1_line\":26,\"a1_kind\":\"write\",\"b_line\":22,\"b_kind\":\"write\",\"a2_line\":17,\"a2_kind\":\"read\",\"why\":\"The ISR can overwrite the value stored at line 26 before the task reads it at line 17 for the increment.\"}]}",
+  "wall_s": 9.079964637756348,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1065,
+    "cache_read": 1757,
+    "cache_write": 484,
+    "latency_s": 9.07977542799199
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

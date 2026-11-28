@@ -1,0 +1,15 @@
+{
+  "run_id": "+interleaving/1",
+  "row": "+interleaving",
+  "sample": 1,
+  "backend": "claude-cli:sonnet@low",
+  "workers": 1,
+  "case_parallel": 4,
+  "case_timeout_s": 3600.0,
+  "frozen_root": "/home/pedro/Documentos/tcc/worktrees/runs-disguised-20261121/frozen",
+  "triaged_with_commit": "6de9b4c34581f31d3a43b88220f26bbf39d10434",
+  "status": "ok",
+  "started": "2026-11-22T19:58:00Z",
+  "failures": [],
+  "finished": "2026-11-22T20:02:20Z"
+}

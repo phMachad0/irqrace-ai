@@ -15,6 +15,7 @@ from pathlib import Path
 
 from . import TOOL_VERSION, contracts
 from .build import BuildError, build
+from .candidate import access_locations, drop_locations
 from .config import Config, ConfigError
 from .probe import ProbeError, probe
 from .racebench import VENDORED_SUITE
@@ -246,7 +247,7 @@ def cmd_stage2(args: argparse.Namespace) -> int:
           f"({', '.join(f'{k} {v}' for k, v in sorted(s2['reasons'].items())) or 'none'})")
     print(f"  masking fixpoint in {s2['rounds']} round(s), {s2['wall_ms']} ms")
     for d in store.read_drops() if args.verbose else []:
-        print(f"  - {d['candidate_id']} {d['pattern']} {d['lines']} "
+        print(f"  - {d['candidate_id']} {d['pattern']} {drop_locations(d)} "
               f"[{d['reason']}] {d['proof']}")
     print(f"  {store.root}")
     return 0
@@ -274,9 +275,8 @@ def cmd_stage3(args: argparse.Namespace) -> int:
         for line in (store.root / "solver" / "results.jsonl").read_text().splitlines():
             r = json.loads(line)
             c = by_id[r["candidate_id"]]
-            lines = [a["source"]["line"] for a in c["accesses"]]
             print(f"  - {r['candidate_id']} {c.get('pattern', ''):<3} "
-                  f"{lines} {r['verdict']}{' (' + r['reason'] + ')' if r.get('reason') else ''}"
+                  f"{access_locations(c['accesses'])} {r['verdict']}{' (' + r['reason'] + ')' if r.get('reason') else ''}"
                   f"  {r['wall_ms']} ms")
     print(f"  {store.root}")
     return 0
@@ -507,6 +507,34 @@ def cmd_bench_gen(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_realworld_gen(args: argparse.Namespace) -> int:
+    from .realworld import CONFIGS, generate, locate_suite
+
+    suite = locate_suite()
+    if suite is None:
+        return _err("bench/realworld not found (or IRQRACE_REALWORLD is wrong)")
+    written = generate(suite, Path(args.out) if args.out else CONFIGS, corrected=not args.raw)
+    print(f"wrote {len(written)} configuration(s) to {args.out or CONFIGS}")
+    return 0
+
+
+def cmd_realworld_run(args: argparse.Namespace) -> int:
+    from .realworld import CONFIGS, RealWorldError, run
+
+    configs = sorted(Path(args.configs or CONFIGS).glob("*.yaml"))
+    if args.only:
+        configs = [c for c in configs if c.stem in set(args.only)]
+    if not configs:
+        return _err("no configurations; run `irqrace realworld gen-configs`")
+    try:
+        s = run(configs, run_root=args.run_root, through=args.through,
+                corrected=not args.raw, jobs=args.jobs)
+    except RealWorldError as e:
+        return _err(str(e))
+    ok = s["total"] and s["found"] == s["total"] and not s["failures"] and not s["problems"]
+    return 0 if ok else 1
+
+
 def cmd_bench_build_all(args: argparse.Namespace) -> int:
     configs = sorted(Path(args.configs).glob("*.yaml"))
     if not configs:
@@ -681,19 +709,28 @@ def cmd_llm_fixtures(args: argparse.Namespace) -> int:
 def cmd_llm_prompts(args: argparse.Namespace) -> int:
     from .llm.prompts import ABLATION, BY_NAME, DEFERRED, EXPERIMENTAL
 
+    def flags(c) -> list[str]:
+        return [
+            n
+            for n, v in (
+                ("domain", c.domain_rules),
+                ("progressive", c.progressive),
+                ("decomposition", c.decomposition),
+                ("self-validation", c.self_validation),
+            )
+            if v
+        ]
+
     if args.row is None:
         for c in ABLATION:
-            on = [
-                n
-                for n, v in (
-                    ("domain", c.domain_rules),
-                    ("progressive", c.progressive),
-                    ("decomposition", c.decomposition),
-                    ("self-validation", c.self_validation),
-                )
-                if v
-            ]
-            print(f"{c.name:18} {c.hash()}  {', '.join(on) or 'baseline'}")
+            print(f"{c.name:18} {c.hash()}  {', '.join(flags(c)) or 'baseline'}")
+        # Experimental rows are selectable wherever a row is, so they are listed
+        # too -- under their own heading, never as ablation rows.
+        print("\nexperimental (outside the ablation):")
+        for c in EXPERIMENTAL.values():
+            addons = [*c.extra, *(f"{st}: {n}" for st, n in c.stage_extra)]
+            print(f"{c.name:22} {c.hash()}  {', '.join(flags(c))}"
+                  + (f"; add-ons: {', '.join(addons)}" if addons else ""))
         return 0
 
     if args.row in DEFERRED:
@@ -756,8 +793,8 @@ def cmd_llm_backends(args: argparse.Namespace) -> int:
 def cmd_llm_triage(args: argparse.Namespace) -> int:
     """Triage a C3 run directory or a single C2 context record."""
     from .llm.backends import BackendError, RefusalError, from_spec
-    from .llm.cache import Cache
     from .llm.client import TriageClient
+    from .llm.intervals import Budget
     from .llm.pipeline import triage_store
     from .llm.prompts import BY_NAME, DEFERRED, EXPERIMENTAL
     from .llm.resolver import resolver_for
@@ -772,8 +809,10 @@ def cmd_llm_triage(args: argparse.Namespace) -> int:
     except BackendError as e:
         return _err(str(e))
 
-    cache = Cache(enabled=not args.no_cache)
     target = Path(args.target)
+    budget = None
+    if args.max_requests is not None or args.max_tokens is not None or args.max_usd is not None:
+        budget = Budget(args.max_requests, args.max_tokens, args.max_usd)
 
     if target.is_dir():
         store = RunStore(target)
@@ -782,9 +821,12 @@ def cmd_llm_triage(args: argparse.Namespace) -> int:
                 store,
                 config=config,
                 backend=backend,
-                cache=cache,
                 samples=args.samples,
                 resolver_mode=args.resolver,
+                workers=args.workers,
+                by_interval=args.by_interval,
+                budget=budget,
+                by_variable=args.by_variable,
             )
         except (BackendError, RefusalError) as e:
             return _err(str(e))
@@ -811,13 +853,17 @@ def cmd_llm_triage(args: argparse.Namespace) -> int:
                 print(f"  [{t.bucket.value:<17}] {t.candidate_id}  NOT TRIAGED: {t.not_triaged}")
             else:
                 print(f"  [{t.bucket.value:<17}] {t.candidate_id}  conf={t.feasibility.confidence:.2f}")
+        spend = summary.get("spend")
+        if spend is not None:
+            print(spend.report())
+            print(spend.machine_line())
         return 0
 
     if not target.is_file():
         return _err(f"{target} does not exist")
 
     record = json.loads(target.read_text(encoding="utf-8"))
-    client = TriageClient(config, backend=backend, cache=cache)
+    client = TriageClient(config, backend=backend)
     resolver = resolver_for(record, mode=args.resolver)
     try:
         verdict = client.triage(record, resolver=resolver)
@@ -839,7 +885,6 @@ def cmd_llm_triage(args: argparse.Namespace) -> int:
 def cmd_llm_repair(args: argparse.Namespace) -> int:
     """Propose an interrupt-specific fix for a C3 run directory or a C2 record."""
     from .llm.backends import BackendError, RefusalError, from_spec
-    from .llm.cache import Cache
     from .llm.pipeline import repair_store
     from .llm.prompts import BY_NAME, DEFERRED, EXPERIMENTAL
     from .llm.repair import RepairClient, witness_problems
@@ -854,14 +899,13 @@ def cmd_llm_repair(args: argparse.Namespace) -> int:
     except BackendError as e:
         return _err(str(e))
 
-    cache = Cache(enabled=not args.no_cache)
     target = Path(args.target)
 
     if target.is_dir():
         store = RunStore(target)
         try:
             summary = repair_store(
-                store, config=config, backend=backend, cache=cache
+                store, config=config, backend=backend
             )
         except (BackendError, RefusalError, RuntimeError) as e:
             return _err(str(e))
@@ -892,7 +936,7 @@ def cmd_llm_repair(args: argparse.Namespace) -> int:
         return _err(f"{target} does not exist")
 
     record = json.loads(target.read_text(encoding="utf-8"))
-    client = RepairClient(config, backend=backend, cache=cache)
+    client = RepairClient(config, backend=backend)
     try:
         patch = client.repair(record)
     except (BackendError, RefusalError, RuntimeError) as e:
@@ -1022,6 +1066,24 @@ def build_parser() -> argparse.ArgumentParser:
     ba.add_argument("--probe", action="store_true")
     ba.set_defaults(func=cmd_bench_build_all)
 
+    rw = sub.add_parser("realworld", help="the 18 real-world programs (NIChecker's copy)")
+    rws = rw.add_subparsers(dest="sub", required=True)
+    rg = rws.add_parser("gen-configs", help="one C1 per program, plus BMC4AV's priority variants")
+    rg.add_argument("--out", default=None)
+    rg.add_argument("--raw", action="store_true",
+                    help="use every priority.info as shipped, without the priority corrections")
+    rg.set_defaults(func=cmd_realworld_gen)
+    rr = rws.add_parser("run", help="stages 1..N on every program, and the recall gate")
+    rr.add_argument("--configs", default=None)
+    rr.add_argument("--through", choices=("stage1", "stage2", "stage3"), default="stage3")
+    rr.add_argument("--only", nargs="*", help="configuration names to run")
+    rr.add_argument("--run-root", default="runs")
+    rr.add_argument("--jobs", "-j", type=int, default=1,
+                    help="run this many configurations in parallel processes")
+    rr.add_argument("--raw", action="store_true",
+                    help="match against violation.info as shipped, without the line errata")
+    rr.set_defaults(func=cmd_realworld_run)
+
     m = sub.add_parser("llm", help="Track B — the triage and repair stage")
     ms = m.add_subparsers(dest="sub", required=True)
     mf = ms.add_parser("fixtures", help="report the labelled fixture set")
@@ -1039,7 +1101,16 @@ def build_parser() -> argparse.ArgumentParser:
     mt.add_argument("--row", default="+self-validation")
     mt.add_argument("--samples", type=int, default=1)
     mt.add_argument("--resolver", choices=("mock", "source", "auto"), default="auto")
-    mt.add_argument("--no-cache", action="store_true")
+    mt.add_argument("--workers", type=int, default=1, help="conversations at a time")
+    grouping = mt.add_mutually_exclusive_group()
+    grouping.add_argument("--by-interval", action="store_true",
+                          help="one conversation per (variable, A1, A2, pattern); every triple stays in the report")
+    grouping.add_argument("--by-variable", action="store_true",
+                          help="one checklist conversation per shared variable (<= 20 triples); "
+                               "an item it leaves out is asked again on its own")
+    mt.add_argument("--max-requests", type=int, help="budget: what is left out stays uncertain, with the reason")
+    mt.add_argument("--max-tokens", type=int, help="budget, in input plus output tokens")
+    mt.add_argument("--max-usd", type=float, help="budget, in dollars; needs a backend that reports prices")
     mt.add_argument("--json", action="store_true")
     mt.set_defaults(func=cmd_llm_triage)
 
@@ -1047,7 +1118,6 @@ def build_parser() -> argparse.ArgumentParser:
     mr.add_argument("target", help="path to a C3 run directory or C2 .json file")
     mr.add_argument("--backend", default="anthropic:claude-opus-5")
     mr.add_argument("--row", default="+self-validation")
-    mr.add_argument("--no-cache", action="store_true")
     mr.add_argument("--json", action="store_true")
     mr.set_defaults(func=cmd_llm_repair)
 
@@ -1156,7 +1226,7 @@ def cmd_llm_report(args: argparse.Namespace) -> int:
         if r["not_triaged"]:
             feas = f"NOT TRIAGED: {r['not_triaged'][:60]}"
         gt = f"{r['gt']} #{r['gt_index']}" if r["gt"] else "-"
-        print(f"| {r['subject']} | {r['id']} | {r['pattern']} | {tuple(r['lines'])} | {gt} | "
+        print(f"| {r['subject']} | {r['id']} | {r['pattern']} | {access_locations([{'source': {'file': f, 'line': n}} for f, n in zip(r['files'], r['lines'])])} | {gt} | "
               f"{r['fate']} | {short(r['solver'])} | {feas} | {short(r['harmfulness'])} | {short(r['bucket'])} |")
 
     def tally(kind: str) -> str:

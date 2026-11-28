@@ -1,0 +1,28 @@
+{
+  "case": "program_05",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_quartz",
+        "a1_line": 21,
+        "a1_kind": "write",
+        "b_line": 13,
+        "b_kind": "read",
+        "a2_line": 22,
+        "a2_kind": "write",
+        "why": "The ISR can preempt between the two writes to v_quartz, reading the intermediate value and violating atomicity."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_quartz\",\n      \"a1_line\": 21,\n      \"a1_kind\": \"write\",\n      \"b_line\": 13,\n      \"b_kind\": \"read\",\n      \"a2_line\": 22,\n      \"a2_kind\": \"write\",\n      \"why\": \"The ISR can preempt between the two writes to v_quartz, reading the intermediate value and violating atomicity.\"\n    }\n  ]\n}",
+  "wall_s": 18.884063959121704,
+  "usage": {
+    "input_tokens": 855,
+    "output_tokens": 1547,
+    "cache_read": 0,
+    "cache_write": 0,
+    "latency_s": 18.8839119230106
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

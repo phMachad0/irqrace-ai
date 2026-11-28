@@ -1,0 +1,78 @@
+{
+  "case": "brake1",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_var1",
+        "a1_line": 284,
+        "a1_kind": "read",
+        "b_line": 348,
+        "b_kind": "write",
+        "a2_line": 285,
+        "a2_kind": "read",
+        "why": "The compute ISR can preempt main between the two reads in JudgeCondi and write var1, so the reads can see different values."
+      },
+      {
+        "variable": "test_global_array[TRIGGER]",
+        "a1_line": 387,
+        "a1_kind": "write",
+        "b_line": 347,
+        "b_kind": "write",
+        "a2_line": 390,
+        "a2_kind": "read",
+        "why": "The higher-priority compute ISR can preempt the RR ISR after it writes the element and overwrite it before the RR ISR reads it back at line 390."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT_h",
+        "a1_line": 409,
+        "a1_kind": "write",
+        "b_line": 299,
+        "b_kind": "write",
+        "a2_line": 460,
+        "a2_kind": "read",
+        "why": "The compute ISR can overwrite RT_h between the RR ISR's write and its later read."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT_h",
+        "a1_line": 409,
+        "a1_kind": "write",
+        "b_line": 299,
+        "b_kind": "write",
+        "a2_line": 466,
+        "a2_kind": "read",
+        "why": "The compute ISR can overwrite RT_h between the RR ISR's write and its later read in the else branch."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+        "a1_line": 411,
+        "a1_kind": "write",
+        "b_line": 302,
+        "b_kind": "write",
+        "a2_line": 418,
+        "a2_kind": "read",
+        "why": "The compute ISR can overwrite RT4 between the RR ISR's write and its read."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+        "a1_line": 411,
+        "a1_kind": "write",
+        "b_line": 302,
+        "b_kind": "write",
+        "a2_line": 451,
+        "a2_kind": "read",
+        "why": "The compute ISR can overwrite RT4 between the RR ISR's write and the threshold comparison read."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":284,\"a1_kind\":\"read\",\"b_line\":348,\"b_kind\":\"write\",\"a2_line\":285,\"a2_kind\":\"read\",\"why\":\"The compute ISR can preempt main between the two reads in JudgeCondi and write var1, so the reads can see different values.\"},{\"variable\":\"test_global_array[TRIGGER]\",\"a1_line\":387,\"a1_kind\":\"write\",\"b_line\":347,\"b_kind\":\"write\",\"a2_line\":390,\"a2_kind\":\"read\",\"why\":\"The higher-priority compute ISR can preempt the RR ISR after it writes the element and overwrite it before the RR ISR reads it back at line 390.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT_h\",\"a1_line\":409,\"a1_kind\":\"write\",\"b_line\":299,\"b_kind\":\"write\",\"a2_line\":460,\"a2_kind\":\"read\",\"why\":\"The compute ISR can overwrite RT_h between the RR ISR's write and its later read.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT_h\",\"a1_line\":409,\"a1_kind\":\"write\",\"b_line\":299,\"b_kind\":\"write\",\"a2_line\":466,\"a2_kind\":\"read\",\"why\":\"The compute ISR can overwrite RT_h between the RR ISR's write and its later read in the else branch.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":411,\"a1_kind\":\"write\",\"b_line\":302,\"b_kind\":\"write\",\"a2_line\":418,\"a2_kind\":\"read\",\"why\":\"The compute ISR can overwrite RT4 between the RR ISR's write and its read.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":411,\"a1_kind\":\"write\",\"b_line\":302,\"b_kind\":\"write\",\"a2_line\":451,\"a2_kind\":\"read\",\"why\":\"The compute ISR can overwrite RT4 between the RR ISR's write and the threshold comparison read.\"}]}",
+  "wall_s": 14.725317239761353,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1721,
+    "cache_read": 0,
+    "cache_write": 12764,
+    "latency_s": 14.724904116999824
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

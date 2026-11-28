@@ -1,0 +1,28 @@
+{
+  "case": "program_12",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_glacier",
+        "a1_line": 34,
+        "a1_kind": "read",
+        "b_line": 71,
+        "b_kind": "write",
+        "a2_line": 35,
+        "a2_kind": "read",
+        "why": "irq_fjord can preempt main between its two reads of v_glacier in fn_ivory. v_vessel is 1 and v_walnut and v_drift are 1, so the write at line 71 executes and the two reads can see different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_glacier\",\"a1_line\":34,\"a1_kind\":\"read\",\"b_line\":71,\"b_kind\":\"write\",\"a2_line\":35,\"a2_kind\":\"read\",\"why\":\"irq_fjord can preempt main between its two reads of v_glacier in fn_ivory. v_vessel is 1 and v_walnut and v_drift are 1, so the write at line 71 executes and the two reads can see different values.\"}]}",
+  "wall_s": 7.269077301025391,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 713,
+    "cache_read": 2469,
+    "cache_write": 486,
+    "latency_s": 7.268936655018479
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

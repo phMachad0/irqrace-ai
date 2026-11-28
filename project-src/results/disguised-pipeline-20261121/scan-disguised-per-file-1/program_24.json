@@ -1,0 +1,48 @@
+{
+  "case": "program_24",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_fjord",
+        "a1_line": 26,
+        "a1_kind": "write",
+        "b_line": 22,
+        "b_kind": "write",
+        "a2_line": 12,
+        "a2_kind": "read",
+        "why": "The ISR can reset v_fjord to 0 between the task's write in fn_lagoon (during or after init()) and the read that passes it to fn_zenith."
+      },
+      {
+        "variable": "v_fjord",
+        "a1_line": 12,
+        "a1_kind": "read",
+        "b_line": 22,
+        "b_kind": "write",
+        "a2_line": 17,
+        "a2_kind": "read",
+        "why": "The value was range-checked from the read at line 12, but the ISR can zero v_fjord before the read at line 17. The check is then stale."
+      },
+      {
+        "variable": "v_fjord",
+        "a1_line": 17,
+        "a1_kind": "read",
+        "b_line": 22,
+        "b_kind": "write",
+        "a2_line": 17,
+        "a2_kind": "write",
+        "why": "The increment is a non-atomic read-modify-write. If the ISR writes 0 in between, the task overwrites it with the stale value plus 1."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_fjord\",\"a1_line\":26,\"a1_kind\":\"write\",\"b_line\":22,\"b_kind\":\"write\",\"a2_line\":12,\"a2_kind\":\"read\",\"why\":\"The ISR can reset v_fjord to 0 between the task's write in fn_lagoon (during or after init()) and the read that passes it to fn_zenith.\"},{\"variable\":\"v_fjord\",\"a1_line\":12,\"a1_kind\":\"read\",\"b_line\":22,\"b_kind\":\"write\",\"a2_line\":17,\"a2_kind\":\"read\",\"why\":\"The value was range-checked from the read at line 12, but the ISR can zero v_fjord before the read at line 17. The check is then stale.\"},{\"variable\":\"v_fjord\",\"a1_line\":17,\"a1_kind\":\"read\",\"b_line\":22,\"b_kind\":\"write\",\"a2_line\":17,\"a2_kind\":\"write\",\"why\":\"The increment is a non-atomic read-modify-write. If the ISR writes 0 in between, the task overwrites it with the stale value plus 1.\"}]}",
+  "wall_s": 7.082082748413086,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 752,
+    "cache_read": 975,
+    "cache_write": 1276,
+    "latency_s": 7.081883014005143
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

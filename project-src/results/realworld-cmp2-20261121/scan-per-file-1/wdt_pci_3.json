@@ -1,0 +1,158 @@
+{
+  "case": "wdt_pci_3",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_var1",
+        "a1_line": 1140,
+        "a1_kind": "write",
+        "b_line": 987,
+        "b_kind": "write",
+        "a2_line": 1141,
+        "a2_kind": "read",
+        "why": "closer1 (prio 5) can preempt writer1 (prio 2) between its write and read of var1, so the read may not see the value just written."
+      },
+      {
+        "variable": "test_global_var1",
+        "a1_line": 1141,
+        "a1_kind": "read",
+        "b_line": 987,
+        "b_kind": "write",
+        "a2_line": 1142,
+        "a2_kind": "read",
+        "why": "closer1 can preempt writer1 between its two reads, so the reads can return different values."
+      },
+      {
+        "variable": "test_global_var3",
+        "a1_line": 1164,
+        "a1_kind": "read",
+        "b_line": 1193,
+        "b_kind": "write",
+        "a2_line": 1164,
+        "a2_kind": "write",
+        "why": "var3++ in writer2 (prio 2) is a non-atomic read-modify-write. writer4 (prio 4) can preempt it, and its write is then lost."
+      },
+      {
+        "variable": "test_global_var2",
+        "a1_line": 1111,
+        "a1_kind": "write",
+        "b_line": 1048,
+        "b_kind": "read",
+        "a2_line": 1112,
+        "a2_kind": "write",
+        "why": "closer2 (prio 3) can preempt closer4 (prio 1) between its two writes to var2 and read the intermediate state."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1022,
+        "a1_kind": "write",
+        "b_line": 1195,
+        "b_kind": "write",
+        "a2_line": 1038,
+        "a2_kind": "read",
+        "why": "writer4 (prio 4) or closer1 can preempt closer2 (prio 3) and overwrite expect_close, so the later check does not see the 42 that closer2 just wrote."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1058,
+        "a1_kind": "write",
+        "b_line": 1195,
+        "b_kind": "write",
+        "a2_line": 1074,
+        "a2_kind": "read",
+        "why": "A higher-priority ISR can preempt closer3 and overwrite expect_close between its write and its check."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1090,
+        "a1_kind": "write",
+        "b_line": 1195,
+        "b_kind": "write",
+        "a2_line": 1106,
+        "a2_kind": "read",
+        "why": "A higher-priority ISR can preempt closer4 and overwrite expect_close between its write and its check."
+      },
+      {
+        "variable": "count",
+        "a1_line": 1023,
+        "a1_kind": "write",
+        "b_line": 1194,
+        "b_kind": "write",
+        "a2_line": 1025,
+        "a2_kind": "read",
+        "why": "writer4 (prio 4) can preempt closer2 and set count to 0 between closer2's write of 1 and its read."
+      },
+      {
+        "variable": "count",
+        "a1_line": 1058,
+        "a1_kind": "write",
+        "b_line": 1194,
+        "b_kind": "write",
+        "a2_line": 1061,
+        "a2_kind": "read",
+        "why": "writer4 can preempt closer3 and overwrite count between its write and its read."
+      },
+      {
+        "variable": "count",
+        "a1_line": 1091,
+        "a1_kind": "write",
+        "b_line": 1194,
+        "b_kind": "write",
+        "a2_line": 1093,
+        "a2_kind": "read",
+        "why": "writer4 can preempt closer4 and overwrite count between its write and its read."
+      },
+      {
+        "variable": "count",
+        "a1_line": 1122,
+        "a1_kind": "write",
+        "b_line": 990,
+        "b_kind": "write",
+        "a2_line": 1125,
+        "a2_kind": "read",
+        "why": "closer1 (prio 5) can preempt writer1 and set count to 1 between its write of 0 and its read."
+      },
+      {
+        "variable": "count",
+        "a1_line": 1150,
+        "a1_kind": "write",
+        "b_line": 990,
+        "b_kind": "write",
+        "a2_line": 1153,
+        "a2_kind": "read",
+        "why": "closer1 can preempt writer2 and set count to 1 between its write of 0 and its read."
+      },
+      {
+        "variable": "count",
+        "a1_line": 1172,
+        "a1_kind": "write",
+        "b_line": 990,
+        "b_kind": "write",
+        "a2_line": 1175,
+        "a2_kind": "read",
+        "why": "closer1 can preempt writer3 and set count to 1 between its write of 0 and its read."
+      },
+      {
+        "variable": "count",
+        "a1_line": 1194,
+        "a1_kind": "write",
+        "b_line": 990,
+        "b_kind": "write",
+        "a2_line": 1197,
+        "a2_kind": "read",
+        "why": "closer1 can preempt writer4 and set count to 1 between its write of 0 and its read."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":1140,\"a1_kind\":\"write\",\"b_line\":987,\"b_kind\":\"write\",\"a2_line\":1141,\"a2_kind\":\"read\",\"why\":\"closer1 (prio 5) can preempt writer1 (prio 2) between its write and read of var1, so the read may not see the value just written.\"},{\"variable\":\"test_global_var1\",\"a1_line\":1141,\"a1_kind\":\"read\",\"b_line\":987,\"b_kind\":\"write\",\"a2_line\":1142,\"a2_kind\":\"read\",\"why\":\"closer1 can preempt writer1 between its two reads, so the reads can return different values.\"},{\"variable\":\"test_global_var3\",\"a1_line\":1164,\"a1_kind\":\"read\",\"b_line\":1193,\"b_kind\":\"write\",\"a2_line\":1164,\"a2_kind\":\"write\",\"why\":\"var3++ in writer2 (prio 2) is a non-atomic read-modify-write. writer4 (prio 4) can preempt it, and its write is then lost.\"},{\"variable\":\"test_global_var2\",\"a1_line\":1111,\"a1_kind\":\"write\",\"b_line\":1048,\"b_kind\":\"read\",\"a2_line\":1112,\"a2_kind\":\"write\",\"why\":\"closer2 (prio 3) can preempt closer4 (prio 1) between its two writes to var2 and read the intermediate state.\"},{\"variable\":\"expect_close\",\"a1_line\":1022,\"a1_kind\":\"write\",\"b_line\":1195,\"b_kind\":\"write\",\"a2_line\":1038,\"a2_kind\":\"read\",\"why\":\"writer4 (prio 4) or closer1 can preempt closer2 (prio 3) and overwrite expect_close, so the later check does not see the 42 that closer2 just wrote.\"},{\"variable\":\"expect_close\",\"a1_line\":1058,\"a1_kind\":\"write\",\"b_line\":1195,\"b_kind\":\"write\",\"a2_line\":1074,\"a2_kind\":\"read\",\"why\":\"A higher-priority ISR can preempt closer3 and overwrite expect_close between its write and its check.\"},{\"variable\":\"expect_close\",\"a1_line\":1090,\"a1_kind\":\"write\",\"b_line\":1195,\"b_kind\":\"write\",\"a2_line\":1106,\"a2_kind\":\"read\",\"why\":\"A higher-priority ISR can preempt closer4 and overwrite expect_close between its write and its check.\"},{\"variable\":\"count\",\"a1_line\":1023,\"a1_kind\":\"write\",\"b_line\":1194,\"b_kind\":\"write\",\"a2_line\":1025,\"a2_kind\":\"read\",\"why\":\"writer4 (prio 4) can preempt closer2 and set count to 0 between closer2's write of 1 and its read.\"},{\"variable\":\"count\",\"a1_line\":1058,\"a1_kind\":\"write\",\"b_line\":1194,\"b_kind\":\"write\",\"a2_line\":1061,\"a2_kind\":\"read\",\"why\":\"writer4 can preempt closer3 and overwrite count between its write and its read.\"},{\"variable\":\"count\",\"a1_line\":1091,\"a1_kind\":\"write\",\"b_line\":1194,\"b_kind\":\"write\",\"a2_line\":1093,\"a2_kind\":\"read\",\"why\":\"writer4 can preempt closer4 and overwrite count between its write and its read.\"},{\"variable\":\"count\",\"a1_line\":1122,\"a1_kind\":\"write\",\"b_line\":990,\"b_kind\":\"write\",\"a2_line\":1125,\"a2_kind\":\"read\",\"why\":\"closer1 (prio 5) can preempt writer1 and set count to 1 between its write of 0 and its read.\"},{\"variable\":\"count\",\"a1_line\":1150,\"a1_kind\":\"write\",\"b_line\":990,\"b_kind\":\"write\",\"a2_line\":1153,\"a2_kind\":\"read\",\"why\":\"closer1 can preempt writer2 and set count to 1 between its write of 0 and its read.\"},{\"variable\":\"count\",\"a1_line\":1172,\"a1_kind\":\"write\",\"b_line\":990,\"b_kind\":\"write\",\"a2_line\":1175,\"a2_kind\":\"read\",\"why\":\"closer1 can preempt writer3 and set count to 1 between its write of 0 and its read.\"},{\"variable\":\"count\",\"a1_line\":1194,\"a1_kind\":\"write\",\"b_line\":990,\"b_kind\":\"write\",\"a2_line\":1197,\"a2_kind\":\"read\",\"why\":\"closer1 can preempt writer4 and set count to 1 between its write of 0 and its read.\"}]}",
+  "wall_s": 22.329912662506104,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 3087,
+    "cache_read": 1011,
+    "cache_write": 20865,
+    "latency_s": 22.329709478013683
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

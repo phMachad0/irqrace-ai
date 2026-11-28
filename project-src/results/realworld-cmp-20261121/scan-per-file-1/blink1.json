@@ -1,0 +1,78 @@
+{
+  "case": "blink1",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 108,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "write",
+        "why": "Timer_B (equal priority) can preempt Timer_A's timerCount++ between its read and write, so B's update is lost."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 120,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "write",
+        "why": "Timer_Force (higher priority) can preempt the increment between its read and write, and the write-back overwrites Force's value."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "write",
+        "b_line": 121,
+        "b_kind": "write",
+        "a2_line": 96,
+        "a2_kind": "read",
+        "why": "Timer_Force can run between A's increment and its check and set timerCount to 0, so the check at line 96 sees a different value."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "write",
+        "b_line": 108,
+        "b_kind": "write",
+        "a2_line": 96,
+        "a2_kind": "read",
+        "why": "Timer_B can preempt Timer_A after the increment and set timerCount to 1, so the check at line 96 sees B's value."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 108,
+        "a1_kind": "write",
+        "b_line": 121,
+        "b_kind": "write",
+        "a2_line": 109,
+        "a2_kind": "read",
+        "why": "Timer_Force can preempt Timer_B between its write and its check and set timerCount to 0, so the check at line 109 fails."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 108,
+        "a1_kind": "write",
+        "b_line": 95,
+        "b_kind": "write",
+        "a2_line": 109,
+        "a2_kind": "read",
+        "why": "Timer_A (equal priority) can preempt Timer_B and increment timerCount, so the check at line 109 no longer sees 1."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":108,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"Timer_B (equal priority) can preempt Timer_A's timerCount++ between its read and write, so B's update is lost.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":120,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"Timer_Force (higher priority) can preempt the increment between its read and write, and the write-back overwrites Force's value.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":121,\"b_kind\":\"write\",\"a2_line\":96,\"a2_kind\":\"read\",\"why\":\"Timer_Force can run between A's increment and its check and set timerCount to 0, so the check at line 96 sees a different value.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":108,\"b_kind\":\"write\",\"a2_line\":96,\"a2_kind\":\"read\",\"why\":\"Timer_B can preempt Timer_A after the increment and set timerCount to 1, so the check at line 96 sees B's value.\"},{\"variable\":\"timerCount\",\"a1_line\":108,\"a1_kind\":\"write\",\"b_line\":121,\"b_kind\":\"write\",\"a2_line\":109,\"a2_kind\":\"read\",\"why\":\"Timer_Force can preempt Timer_B between its write and its check and set timerCount to 0, so the check at line 109 fails.\"},{\"variable\":\"timerCount\",\"a1_line\":108,\"a1_kind\":\"write\",\"b_line\":95,\"b_kind\":\"write\",\"a2_line\":109,\"a2_kind\":\"read\",\"why\":\"Timer_A (equal priority) can preempt Timer_B and increment timerCount, so the check at line 109 no longer sees 1.\"}]}",
+  "wall_s": 11.406046867370605,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1354,
+    "cache_read": 0,
+    "cache_write": 3919,
+    "latency_s": 11.404362251021666
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

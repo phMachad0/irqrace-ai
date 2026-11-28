@@ -1,0 +1,118 @@
+{
+  "case": "wdt_pci_2",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_var1",
+        "a1_line": 990,
+        "a1_kind": "read",
+        "b_line": 1106,
+        "b_kind": "write",
+        "a2_line": 991,
+        "a2_kind": "read",
+        "why": "closer1 (prio 2) reads var1 twice in JudgeCondi. writer1 (prio 4) can preempt between the reads and write 0x99. Condition3 is 1, so the write happens."
+      },
+      {
+        "variable": "test_global_array[TRIGGER]",
+        "a1_line": 1150,
+        "a1_kind": "write",
+        "b_line": 1085,
+        "b_kind": "write",
+        "a2_line": 1153,
+        "a2_kind": "read",
+        "why": "writer3 (prio 1) writes the element and later reads it back. closer3 (prio 4) can preempt in between and overwrite it with 999."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1000,
+        "a1_kind": "write",
+        "b_line": 1092,
+        "b_kind": "write",
+        "a2_line": 1017,
+        "a2_kind": "read",
+        "why": "closer1 writes 42 and later reads it. writer1 (prio 4) can preempt and reset it to 0 in between."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1017,
+        "a1_kind": "read",
+        "b_line": 1092,
+        "b_kind": "write",
+        "a2_line": 1022,
+        "a2_kind": "write",
+        "why": "closer1 reads expect_close, then writes it. writer1 can preempt in between and change it."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1031,
+        "a1_kind": "write",
+        "b_line": 1092,
+        "b_kind": "write",
+        "a2_line": 1047,
+        "a2_kind": "read",
+        "why": "closer2 writes 42 and later reads it. A higher-priority writer1 can preempt in between and reset it."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1047,
+        "a1_kind": "read",
+        "b_line": 1092,
+        "b_kind": "write",
+        "a2_line": 1052,
+        "a2_kind": "write",
+        "why": "closer2 reads expect_close, then writes it. writer1 can preempt in between and change it."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1061,
+        "a1_kind": "write",
+        "b_line": 1092,
+        "b_kind": "write",
+        "a2_line": 1077,
+        "a2_kind": "read",
+        "why": "closer3 (prio 4) writes 42 and later reads it. writer1 or writer2 (equal priority) can preempt and reset it."
+      },
+      {
+        "variable": "expect_close",
+        "a1_line": 1077,
+        "a1_kind": "read",
+        "b_line": 1114,
+        "b_kind": "write",
+        "a2_line": 1082,
+        "a2_kind": "write",
+        "why": "closer3 reads expect_close, then writes it. writer2 (equal priority) can preempt in between and change it."
+      },
+      {
+        "variable": "count",
+        "a1_line": 1001,
+        "a1_kind": "write",
+        "b_line": 1091,
+        "b_kind": "write",
+        "a2_line": 1003,
+        "a2_kind": "read",
+        "why": "closer1 sets count=1 and then tests it. writer1 (prio 4) can preempt and set it to 0."
+      },
+      {
+        "variable": "count",
+        "a1_line": 1091,
+        "a1_kind": "write",
+        "b_line": 1062,
+        "b_kind": "write",
+        "a2_line": 1094,
+        "a2_kind": "read",
+        "why": "writer1 sets count=0 and then tests it. closer3 (equal priority) can preempt and set it to 1."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":990,\"a1_kind\":\"read\",\"b_line\":1106,\"b_kind\":\"write\",\"a2_line\":991,\"a2_kind\":\"read\",\"why\":\"closer1 (prio 2) reads var1 twice in JudgeCondi. writer1 (prio 4) can preempt between the reads and write 0x99. Condition3 is 1, so the write happens.\"},{\"variable\":\"test_global_array[TRIGGER]\",\"a1_line\":1150,\"a1_kind\":\"write\",\"b_line\":1085,\"b_kind\":\"write\",\"a2_line\":1153,\"a2_kind\":\"read\",\"why\":\"writer3 (prio 1) writes the element and later reads it back. closer3 (prio 4) can preempt in between and overwrite it with 999.\"},{\"variable\":\"expect_close\",\"a1_line\":1000,\"a1_kind\":\"write\",\"b_line\":1092,\"b_kind\":\"write\",\"a2_line\":1017,\"a2_kind\":\"read\",\"why\":\"closer1 writes 42 and later reads it. writer1 (prio 4) can preempt and reset it to 0 in between.\"},{\"variable\":\"expect_close\",\"a1_line\":1017,\"a1_kind\":\"read\",\"b_line\":1092,\"b_kind\":\"write\",\"a2_line\":1022,\"a2_kind\":\"write\",\"why\":\"closer1 reads expect_close, then writes it. writer1 can preempt in between and change it.\"},{\"variable\":\"expect_close\",\"a1_line\":1031,\"a1_kind\":\"write\",\"b_line\":1092,\"b_kind\":\"write\",\"a2_line\":1047,\"a2_kind\":\"read\",\"why\":\"closer2 writes 42 and later reads it. A higher-priority writer1 can preempt in between and reset it.\"},{\"variable\":\"expect_close\",\"a1_line\":1047,\"a1_kind\":\"read\",\"b_line\":1092,\"b_kind\":\"write\",\"a2_line\":1052,\"a2_kind\":\"write\",\"why\":\"closer2 reads expect_close, then writes it. writer1 can preempt in between and change it.\"},{\"variable\":\"expect_close\",\"a1_line\":1061,\"a1_kind\":\"write\",\"b_line\":1092,\"b_kind\":\"write\",\"a2_line\":1077,\"a2_kind\":\"read\",\"why\":\"closer3 (prio 4) writes 42 and later reads it. writer1 or writer2 (equal priority) can preempt and reset it.\"},{\"variable\":\"expect_close\",\"a1_line\":1077,\"a1_kind\":\"read\",\"b_line\":1114,\"b_kind\":\"write\",\"a2_line\":1082,\"a2_kind\":\"write\",\"why\":\"closer3 reads expect_close, then writes it. writer2 (equal priority) can preempt in between and change it.\"},{\"variable\":\"count\",\"a1_line\":1001,\"a1_kind\":\"write\",\"b_line\":1091,\"b_kind\":\"write\",\"a2_line\":1003,\"a2_kind\":\"read\",\"why\":\"closer1 sets count=1 and then tests it. writer1 (prio 4) can preempt and set it to 0.\"},{\"variable\":\"count\",\"a1_line\":1091,\"a1_kind\":\"write\",\"b_line\":1062,\"b_kind\":\"write\",\"a2_line\":1094,\"a2_kind\":\"read\",\"why\":\"writer1 sets count=0 and then tests it. closer3 (equal priority) can preempt and set it to 1.\"}]}",
+  "wall_s": 18.907326698303223,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 2584,
+    "cache_read": 19554,
+    "cache_write": 485,
+    "latency_s": 18.907151478982996
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

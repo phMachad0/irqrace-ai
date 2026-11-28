@@ -1,0 +1,68 @@
+{
+  "case": "program_04",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_cedar",
+        "a1_line": 30,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 32,
+        "a2_kind": "read",
+        "why": "The ISR can change v_cedar between the check (>=16) and the value passed to fn_willow, so the checked value and the used value can differ."
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 30,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 54,
+        "a2_kind": "read",
+        "why": "The ISR can rewrite v_cedar between the check at line 30 and the read in fn_dune, reached via fn_willow when a>=b."
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 32,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 54,
+        "a2_kind": "read",
+        "why": "The ISR can change v_cedar between the argument read and the read in fn_dune, so the two reads can differ."
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 37,
+        "a1_kind": "write",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 69,
+        "a2_kind": "read",
+        "why": "The ISR can overwrite the value the task stored in v_cedar before the task reads it back to copy into v_harbor."
+      },
+      {
+        "variable": "v_cedar",
+        "a1_line": 69,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 30,
+        "a2_kind": "read",
+        "why": "The ISR can change v_cedar between the copy into v_harbor and the later check, so the two reads can differ."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_cedar\",\"a1_line\":30,\"a1_kind\":\"read\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":32,\"a2_kind\":\"read\",\"why\":\"The ISR can change v_cedar between the check (>=16) and the value passed to fn_willow, so the checked value and the used value can differ.\"},{\"variable\":\"v_cedar\",\"a1_line\":30,\"a1_kind\":\"read\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":54,\"a2_kind\":\"read\",\"why\":\"The ISR can rewrite v_cedar between the check at line 30 and the read in fn_dune, reached via fn_willow when a>=b.\"},{\"variable\":\"v_cedar\",\"a1_line\":32,\"a1_kind\":\"read\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":54,\"a2_kind\":\"read\",\"why\":\"The ISR can change v_cedar between the argument read and the read in fn_dune, so the two reads can differ.\"},{\"variable\":\"v_cedar\",\"a1_line\":37,\"a1_kind\":\"write\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":69,\"a2_kind\":\"read\",\"why\":\"The ISR can overwrite the value the task stored in v_cedar before the task reads it back to copy into v_harbor.\"},{\"variable\":\"v_cedar\",\"a1_line\":69,\"a1_kind\":\"read\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":30,\"a2_kind\":\"read\",\"why\":\"The ISR can change v_cedar between the copy into v_harbor and the later check, so the two reads can differ.\"}]}",
+  "wall_s": 9.09928846359253,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1008,
+    "cache_read": 975,
+    "cache_write": 1864,
+    "latency_s": 9.099014918989269
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

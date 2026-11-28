@@ -1,0 +1,58 @@
+{
+  "case": "i8xx_tco_1",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "tco_expect_close",
+        "a1_line": 759,
+        "a1_kind": "write",
+        "b_line": 380,
+        "b_kind": "write",
+        "a2_line": 760,
+        "a2_kind": "read",
+        "why": "closer2_isr writes 42 then checks it. closer1_isr has equal priority, so it can preempt in between and clear the variable in i8xx_tco_release. The check then fails."
+      },
+      {
+        "variable": "tco_expect_close",
+        "a1_line": 777,
+        "a1_kind": "write",
+        "b_line": 760,
+        "b_kind": "read",
+        "a2_line": 380,
+        "a2_kind": "write",
+        "why": "closer1_isr writes tco_expect_close and later clears it. closer2_isr can preempt between the two and read the value in between."
+      },
+      {
+        "variable": "test_global_var1",
+        "a1_line": 747,
+        "a1_kind": "read",
+        "b_line": 771,
+        "b_kind": "write",
+        "a2_line": 748,
+        "a2_kind": "read",
+        "why": "closer2_isr reads test_global_var1 twice in JudgeCondi. closer1_isr can preempt between the reads and write it, because condition3 is 1."
+      },
+      {
+        "variable": "test_global_array",
+        "a1_line": 791,
+        "a1_kind": "write",
+        "b_line": 780,
+        "b_kind": "write",
+        "a2_line": 794,
+        "a2_kind": "read",
+        "why": "writer1_isr writes array[9000] and later reads it. The higher-priority closer1_isr can preempt in between and overwrite it with 999."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"tco_expect_close\",\"a1_line\":759,\"a1_kind\":\"write\",\"b_line\":380,\"b_kind\":\"write\",\"a2_line\":760,\"a2_kind\":\"read\",\"why\":\"closer2_isr writes 42 then checks it. closer1_isr has equal priority, so it can preempt in between and clear the variable in i8xx_tco_release. The check then fails.\"},{\"variable\":\"tco_expect_close\",\"a1_line\":777,\"a1_kind\":\"write\",\"b_line\":760,\"b_kind\":\"read\",\"a2_line\":380,\"a2_kind\":\"write\",\"why\":\"closer1_isr writes tco_expect_close and later clears it. closer2_isr can preempt between the two and read the value in between.\"},{\"variable\":\"test_global_var1\",\"a1_line\":747,\"a1_kind\":\"read\",\"b_line\":771,\"b_kind\":\"write\",\"a2_line\":748,\"a2_kind\":\"read\",\"why\":\"closer2_isr reads test_global_var1 twice in JudgeCondi. closer1_isr can preempt between the reads and write it, because condition3 is 1.\"},{\"variable\":\"test_global_array\",\"a1_line\":791,\"a1_kind\":\"write\",\"b_line\":780,\"b_kind\":\"write\",\"a2_line\":794,\"a2_kind\":\"read\",\"why\":\"writer1_isr writes array[9000] and later reads it. The higher-priority closer1_isr can preempt in between and overwrite it with 999.\"}]}",
+  "wall_s": 14.38288927078247,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1656,
+    "cache_read": 14191,
+    "cache_write": 485,
+    "latency_s": 14.382691603008425
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

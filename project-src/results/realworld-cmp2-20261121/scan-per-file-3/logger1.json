@@ -1,0 +1,78 @@
+{
+  "case": "logger1",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "tickCounter",
+        "a1_line": 76,
+        "a1_kind": "write",
+        "b_line": 136,
+        "b_kind": "write",
+        "a2_line": 77,
+        "a2_kind": "read",
+        "why": "The communicate ISR can preempt measure between the increment and the read-back, so tmp_tickCounter gets the reset value."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 77,
+        "a1_kind": "read",
+        "b_line": 136,
+        "b_kind": "write",
+        "a2_line": 81,
+        "a2_kind": "write",
+        "why": "The communicate ISR resets tickCounter after measure reads it and before measure writes 0, so the reset is lost or the read value is stale."
+      },
+      {
+        "variable": "tickCounter",
+        "a1_line": 76,
+        "a1_kind": "read",
+        "b_line": 136,
+        "b_kind": "write",
+        "a2_line": 76,
+        "a2_kind": "write",
+        "why": "The tickCounter++ read-modify-write can be interrupted by the communicate ISR's write, which then gets overwritten."
+      },
+      {
+        "variable": "intervalCounter",
+        "a1_line": 82,
+        "a1_kind": "read",
+        "b_line": 135,
+        "b_kind": "write",
+        "a2_line": 82,
+        "a2_kind": "write",
+        "why": "The intervalCounter++ read-modify-write is interrupted by the communicate ISR's reset, which the increment then overwrites."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 83,
+        "a1_kind": "read",
+        "b_line": 137,
+        "b_kind": "write",
+        "a2_line": 85,
+        "a2_kind": "read",
+        "why": "numberOfRecords is reset between its use as the records index and the increment, so the record is stored at a stale index."
+      },
+      {
+        "variable": "numberOfRecords",
+        "a1_line": 85,
+        "a1_kind": "read",
+        "b_line": 137,
+        "b_kind": "write",
+        "a2_line": 85,
+        "a2_kind": "write",
+        "why": "The numberOfRecords++ read-modify-write is interrupted by the communicate ISR's reset, which the increment then overwrites."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"tickCounter\",\"a1_line\":76,\"a1_kind\":\"write\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":77,\"a2_kind\":\"read\",\"why\":\"The communicate ISR can preempt measure between the increment and the read-back, so tmp_tickCounter gets the reset value.\"},{\"variable\":\"tickCounter\",\"a1_line\":77,\"a1_kind\":\"read\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":81,\"a2_kind\":\"write\",\"why\":\"The communicate ISR resets tickCounter after measure reads it and before measure writes 0, so the reset is lost or the read value is stale.\"},{\"variable\":\"tickCounter\",\"a1_line\":76,\"a1_kind\":\"read\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":76,\"a2_kind\":\"write\",\"why\":\"The tickCounter++ read-modify-write can be interrupted by the communicate ISR's write, which then gets overwritten.\"},{\"variable\":\"intervalCounter\",\"a1_line\":82,\"a1_kind\":\"read\",\"b_line\":135,\"b_kind\":\"write\",\"a2_line\":82,\"a2_kind\":\"write\",\"why\":\"The intervalCounter++ read-modify-write is interrupted by the communicate ISR's reset, which the increment then overwrites.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":83,\"a1_kind\":\"read\",\"b_line\":137,\"b_kind\":\"write\",\"a2_line\":85,\"a2_kind\":\"read\",\"why\":\"numberOfRecords is reset between its use as the records index and the increment, so the record is stored at a stale index.\"},{\"variable\":\"numberOfRecords\",\"a1_line\":85,\"a1_kind\":\"read\",\"b_line\":137,\"b_kind\":\"write\",\"a2_line\":85,\"a2_kind\":\"write\",\"why\":\"The numberOfRecords++ read-modify-write is interrupted by the communicate ISR's reset, which the increment then overwrites.\"}]}",
+  "wall_s": 10.973918914794922,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1367,
+    "cache_read": 3344,
+    "cache_write": 491,
+    "latency_s": 10.973681055998895
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

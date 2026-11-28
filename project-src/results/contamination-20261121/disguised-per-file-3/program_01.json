@@ -1,0 +1,28 @@
+{
+  "case": "program_01",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_pebble",
+        "a1_line": 19,
+        "a1_kind": "read",
+        "b_line": 7,
+        "b_kind": "write",
+        "a2_line": 20,
+        "a2_kind": "read",
+        "why": "The task reads v_pebble twice in one condition with interrupts enabled. irq_pylon can preempt between the reads and write v_pebble, so the two reads can see different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_pebble\",\"a1_line\":19,\"a1_kind\":\"read\",\"b_line\":7,\"b_kind\":\"write\",\"a2_line\":20,\"a2_kind\":\"read\",\"why\":\"The task reads v_pebble twice in one condition with interrupts enabled. irq_pylon can preempt between the reads and write v_pebble, so the two reads can see different values.\"}]}",
+  "wall_s": 5.34979510307312,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 363,
+    "cache_read": 1703,
+    "cache_write": 485,
+    "latency_s": 5.349457957985578
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

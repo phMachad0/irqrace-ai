@@ -1,0 +1,28 @@
+{
+  "case": "i2c_pca_isa_1",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_var1",
+        "a1_line": 291,
+        "a1_kind": "read",
+        "b_line": 342,
+        "b_kind": "write",
+        "a2_line": 292,
+        "a2_kind": "read",
+        "why": "Main reads test_global_var1 at 291 and again at 292. req4_isr can preempt between them and write 0x11 (condition3 is 1), so the two reads can return different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":291,\"a1_kind\":\"read\",\"b_line\":342,\"b_kind\":\"write\",\"a2_line\":292,\"a2_kind\":\"read\",\"why\":\"Main reads test_global_var1 at 291 and again at 292. req4_isr can preempt between them and write 0x11 (condition3 is 1), so the two reads can return different values.\"}]}",
+  "wall_s": 6.126311540603638,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 506,
+    "cache_read": 1011,
+    "cache_write": 5828,
+    "latency_s": 6.126088019984309
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

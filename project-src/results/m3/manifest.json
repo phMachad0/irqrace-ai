@@ -1,0 +1,36 @@
+{
+  "scorer_version": "bench_metrics/1.0.0",
+  "date": "2026-11-21T14:30:48Z",
+  "tool_git_commit": "a639158640aa1bb3e0eab9d7c0e66b66304bbcc1",
+  "scorer_git_commit": {
+    "commit": "6de9b4c34581f31d3a43b88220f26bbf39d10434",
+    "dirty": true
+  },
+  "backend": [
+    "claude-cli:sonnet"
+  ],
+  "prompt_rows": [
+    "+racebench+effectfree",
+    "+racebench+rubric"
+  ],
+  "label_set": "53/33",
+  "case_subset": {
+    "name": "all",
+    "cases": null,
+    "exclude_patterns": []
+  },
+  "input_run_roots": [
+    {
+      "path": "/home/pedro/Downloads/runs_lucas/m3-20261117/+racebench+rubric/1",
+      "run_id": "+racebench+rubric/1",
+      "status": "ok",
+      "cases": 31
+    },
+    {
+      "path": "/home/pedro/Downloads/runs_lucas/m3-20261117/+racebench+effectfree/1",
+      "run_id": "+racebench+effectfree/1",
+      "status": "ok",
+      "cases": 31
+    }
+  ]
+}

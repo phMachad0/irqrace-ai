@@ -1,0 +1,48 @@
+{
+  "case": "program_16",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_iris",
+        "a1_line": 11,
+        "a1_kind": "read",
+        "b_line": 43,
+        "b_kind": "write",
+        "a2_line": 18,
+        "a2_kind": "read",
+        "why": "irq_indigo can preempt the task between the v_iris reads in fn_saffron and fn_fjord, so the two computations see different values."
+      },
+      {
+        "variable": "v_beacon",
+        "a1_line": 12,
+        "a1_kind": "read",
+        "b_line": 38,
+        "b_kind": "write",
+        "a2_line": 19,
+        "a2_kind": "read",
+        "why": "irq_kestrel (via irq_orchid) can write v_beacon between the read in fn_saffron and the read in fn_fjord."
+      },
+      {
+        "variable": "v_beacon",
+        "a1_line": 19,
+        "a1_kind": "read",
+        "b_line": 38,
+        "b_kind": "write",
+        "a2_line": 20,
+        "a2_kind": "read",
+        "why": "irq_kestrel can write v_beacon between the two reads in the same area expression, so the two reads see different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_iris\",\"a1_line\":11,\"a1_kind\":\"read\",\"b_line\":43,\"b_kind\":\"write\",\"a2_line\":18,\"a2_kind\":\"read\",\"why\":\"irq_indigo can preempt the task between the v_iris reads in fn_saffron and fn_fjord, so the two computations see different values.\"},{\"variable\":\"v_beacon\",\"a1_line\":12,\"a1_kind\":\"read\",\"b_line\":38,\"b_kind\":\"write\",\"a2_line\":19,\"a2_kind\":\"read\",\"why\":\"irq_kestrel (via irq_orchid) can write v_beacon between the read in fn_saffron and the read in fn_fjord.\"},{\"variable\":\"v_beacon\",\"a1_line\":19,\"a1_kind\":\"read\",\"b_line\":38,\"b_kind\":\"write\",\"a2_line\":20,\"a2_kind\":\"read\",\"why\":\"irq_kestrel can write v_beacon between the two reads in the same area expression, so the two reads see different values.\"}]}",
+  "wall_s": 6.946992635726929,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 677,
+    "cache_read": 975,
+    "cache_write": 1426,
+    "latency_s": 6.94679619098315
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

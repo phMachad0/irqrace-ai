@@ -1,0 +1,68 @@
+{
+  "case": "program_21",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_lantern",
+        "a1_line": 23,
+        "a1_kind": "read",
+        "b_line": 37,
+        "b_kind": "write",
+        "a2_line": 24,
+        "a2_kind": "write",
+        "why": "irq_meadow is enabled at line 22 and can increment v_lantern between the task's check and its reset, so the reset overwrites the increment."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 23,
+        "a1_kind": "read",
+        "b_line": 15,
+        "b_kind": "write",
+        "a2_line": 24,
+        "a2_kind": "write",
+        "why": "irq_meadow's enable_isr(2) at line 38 unmasks nectar, which can then preempt the task between the check and the reset and have its update overwritten."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 31,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 23,
+        "a2_kind": "read",
+        "why": "While fn_saffron and init run, interrupts are enabled, so irq_vessel can modify v_lantern after the rand() store and before the task reads it at line 23."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 31,
+        "a1_kind": "write",
+        "b_line": 15,
+        "b_kind": "write",
+        "a2_line": 23,
+        "a2_kind": "read",
+        "why": "irq_nectar can modify v_lantern after the rand() store and before the task reads it at line 23."
+      },
+      {
+        "variable": "v_lantern",
+        "a1_line": 31,
+        "a1_kind": "write",
+        "b_line": 37,
+        "b_kind": "write",
+        "a2_line": 23,
+        "a2_kind": "read",
+        "why": "irq_meadow can modify v_lantern after the rand() store and before the task reads it at line 23."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_lantern\",\"a1_line\":23,\"a1_kind\":\"read\",\"b_line\":37,\"b_kind\":\"write\",\"a2_line\":24,\"a2_kind\":\"write\",\"why\":\"irq_meadow is enabled at line 22 and can increment v_lantern between the task's check and its reset, so the reset overwrites the increment.\"},{\"variable\":\"v_lantern\",\"a1_line\":23,\"a1_kind\":\"read\",\"b_line\":15,\"b_kind\":\"write\",\"a2_line\":24,\"a2_kind\":\"write\",\"why\":\"irq_meadow's enable_isr(2) at line 38 unmasks nectar, which can then preempt the task between the check and the reset and have its update overwritten.\"},{\"variable\":\"v_lantern\",\"a1_line\":31,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"write\",\"a2_line\":23,\"a2_kind\":\"read\",\"why\":\"While fn_saffron and init run, interrupts are enabled, so irq_vessel can modify v_lantern after the rand() store and before the task reads it at line 23.\"},{\"variable\":\"v_lantern\",\"a1_line\":31,\"a1_kind\":\"write\",\"b_line\":15,\"b_kind\":\"write\",\"a2_line\":23,\"a2_kind\":\"read\",\"why\":\"irq_nectar can modify v_lantern after the rand() store and before the task reads it at line 23.\"},{\"variable\":\"v_lantern\",\"a1_line\":31,\"a1_kind\":\"write\",\"b_line\":37,\"b_kind\":\"write\",\"a2_line\":23,\"a2_kind\":\"read\",\"why\":\"irq_meadow can modify v_lantern after the rand() store and before the task reads it at line 23.\"}]}",
+  "wall_s": 16.495309591293335,
+  "usage": {
+    "input_tokens": 4,
+    "output_tokens": 2089,
+    "cache_read": 4209,
+    "cache_write": 2026,
+    "latency_s": 16.495133952004835
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

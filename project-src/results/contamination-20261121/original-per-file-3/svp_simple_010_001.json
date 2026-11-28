@@ -1,0 +1,28 @@
+{
+  "case": "svp_simple_010_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_010_001_global_union",
+        "a1_line": 40,
+        "a1_kind": "write",
+        "b_line": 51,
+        "b_kind": "read",
+        "a2_line": 41,
+        "a2_kind": "write",
+        "why": "header and data overlap in the union. The ISR can preempt main between the two writes and read the intermediate value of header (1). Main's write to data then overwrites that byte, so the ISR's read is not consistent with the final state."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_010_001_global_union\",\"a1_line\":40,\"a1_kind\":\"write\",\"b_line\":51,\"b_kind\":\"read\",\"a2_line\":41,\"a2_kind\":\"write\",\"why\":\"header and data overlap in the union. The ISR can preempt main between the two writes and read the intermediate value of header (1). Main's write to data then overwrites that byte, so the ISR's read is not consistent with the final state.\"}]}",
+  "wall_s": 5.795526742935181,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 471,
+    "cache_read": 2437,
+    "cache_write": 486,
+    "latency_s": 5.795344336016569
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

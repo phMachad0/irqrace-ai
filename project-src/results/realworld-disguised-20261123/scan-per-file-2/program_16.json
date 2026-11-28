@@ -1,0 +1,88 @@
+{
+  "case": "program_16",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_loom",
+        "a1_line": 47,
+        "a1_kind": "write",
+        "b_line": 58,
+        "b_kind": "write",
+        "a2_line": 48,
+        "a2_kind": "read",
+        "why": "irq_amber preempts irq_fern and resets v_loom between the increment and the read."
+      },
+      {
+        "variable": "v_loom",
+        "a1_line": 48,
+        "a1_kind": "read",
+        "b_line": 58,
+        "b_kind": "write",
+        "a2_line": 51,
+        "a2_kind": "write",
+        "why": "irq_amber can write v_loom between fern's read and its later write."
+      },
+      {
+        "variable": "v_loom",
+        "a1_line": 47,
+        "a1_kind": "write",
+        "b_line": 97,
+        "b_kind": "write",
+        "a2_line": 48,
+        "a2_kind": "read",
+        "why": "irq_cobalt preempts irq_fern and clears v_loom between the write and the read."
+      },
+      {
+        "variable": "v_loom",
+        "a1_line": 48,
+        "a1_kind": "read",
+        "b_line": 97,
+        "b_kind": "write",
+        "a2_line": 51,
+        "a2_kind": "write",
+        "why": "irq_cobalt can write v_loom between fern's read and its later write."
+      },
+      {
+        "variable": "v_loom",
+        "a1_line": 58,
+        "a1_kind": "write",
+        "b_line": 97,
+        "b_kind": "write",
+        "a2_line": 59,
+        "a2_kind": "read",
+        "why": "irq_cobalt preempts irq_amber between its write and the check of v_loom."
+      },
+      {
+        "variable": "v_ridge",
+        "a1_line": 53,
+        "a1_kind": "read",
+        "b_line": 98,
+        "b_kind": "write",
+        "a2_line": 54,
+        "a2_kind": "read",
+        "why": "irq_cobalt resets v_ridge between fern's use as an index and its increment."
+      },
+      {
+        "variable": "v_beacon",
+        "a1_line": 52,
+        "a1_kind": "read",
+        "b_line": 96,
+        "b_kind": "write",
+        "a2_line": 52,
+        "a2_kind": "write",
+        "why": "irq_cobalt resets v_beacon in the middle of fern's non-atomic increment, so the update is lost."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_loom\",\"a1_line\":47,\"a1_kind\":\"write\",\"b_line\":58,\"b_kind\":\"write\",\"a2_line\":48,\"a2_kind\":\"read\",\"why\":\"irq_amber preempts irq_fern and resets v_loom between the increment and the read.\"},{\"variable\":\"v_loom\",\"a1_line\":48,\"a1_kind\":\"read\",\"b_line\":58,\"b_kind\":\"write\",\"a2_line\":51,\"a2_kind\":\"write\",\"why\":\"irq_amber can write v_loom between fern's read and its later write.\"},{\"variable\":\"v_loom\",\"a1_line\":47,\"a1_kind\":\"write\",\"b_line\":97,\"b_kind\":\"write\",\"a2_line\":48,\"a2_kind\":\"read\",\"why\":\"irq_cobalt preempts irq_fern and clears v_loom between the write and the read.\"},{\"variable\":\"v_loom\",\"a1_line\":48,\"a1_kind\":\"read\",\"b_line\":97,\"b_kind\":\"write\",\"a2_line\":51,\"a2_kind\":\"write\",\"why\":\"irq_cobalt can write v_loom between fern's read and its later write.\"},{\"variable\":\"v_loom\",\"a1_line\":58,\"a1_kind\":\"write\",\"b_line\":97,\"b_kind\":\"write\",\"a2_line\":59,\"a2_kind\":\"read\",\"why\":\"irq_cobalt preempts irq_amber between its write and the check of v_loom.\"},{\"variable\":\"v_ridge\",\"a1_line\":53,\"a1_kind\":\"read\",\"b_line\":98,\"b_kind\":\"write\",\"a2_line\":54,\"a2_kind\":\"read\",\"why\":\"irq_cobalt resets v_ridge between fern's use as an index and its increment.\"},{\"variable\":\"v_beacon\",\"a1_line\":52,\"a1_kind\":\"read\",\"b_line\":96,\"b_kind\":\"write\",\"a2_line\":52,\"a2_kind\":\"write\",\"why\":\"irq_cobalt resets v_beacon in the middle of fern's non-atomic increment, so the update is lost.\"}]}",
+  "wall_s": 11.628841161727905,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1462,
+    "cache_read": 2812,
+    "cache_write": 484,
+    "latency_s": 11.628645598015282
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

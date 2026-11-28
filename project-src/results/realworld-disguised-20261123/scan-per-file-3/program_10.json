@@ -1,0 +1,68 @@
+{
+  "case": "program_10",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_wharf",
+        "a1_line": 46,
+        "a1_kind": "write",
+        "b_line": 90,
+        "b_kind": "write",
+        "a2_line": 47,
+        "a2_kind": "read",
+        "why": "irq_husk (higher priority) can preempt irq_urchin between v_wharf++ and the read-back, overwriting v_wharf with 1."
+      },
+      {
+        "variable": "v_wharf",
+        "a1_line": 47,
+        "a1_kind": "read",
+        "b_line": 90,
+        "b_kind": "write",
+        "a2_line": 50,
+        "a2_kind": "write",
+        "why": "irq_husk can write v_wharf between urchin's read and its write of 0."
+      },
+      {
+        "variable": "v_lagoon",
+        "a1_line": 51,
+        "a1_kind": "read",
+        "b_line": 89,
+        "b_kind": "write",
+        "a2_line": 51,
+        "a2_kind": "write",
+        "why": "v_lagoon++ is a non-atomic read-modify-write, and irq_husk can preempt it and set v_lagoon=1, so the update is lost."
+      },
+      {
+        "variable": "v_inlet",
+        "a1_line": 52,
+        "a1_kind": "read",
+        "b_line": 91,
+        "b_kind": "write",
+        "a2_line": 53,
+        "a2_kind": "read",
+        "why": "irq_husk can reset v_inlet to 1 between the index use at line 52 and the increment at line 53."
+      },
+      {
+        "variable": "v_inlet",
+        "a1_line": 52,
+        "a1_kind": "read",
+        "b_line": 91,
+        "b_kind": "write",
+        "a2_line": 53,
+        "a2_kind": "write",
+        "why": "irq_husk's write of v_inlet=1 can land between urchin's index read and its increment write, so the increment overwrites it."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_wharf\",\"a1_line\":46,\"a1_kind\":\"write\",\"b_line\":90,\"b_kind\":\"write\",\"a2_line\":47,\"a2_kind\":\"read\",\"why\":\"irq_husk (higher priority) can preempt irq_urchin between v_wharf++ and the read-back, overwriting v_wharf with 1.\"},{\"variable\":\"v_wharf\",\"a1_line\":47,\"a1_kind\":\"read\",\"b_line\":90,\"b_kind\":\"write\",\"a2_line\":50,\"a2_kind\":\"write\",\"why\":\"irq_husk can write v_wharf between urchin's read and its write of 0.\"},{\"variable\":\"v_lagoon\",\"a1_line\":51,\"a1_kind\":\"read\",\"b_line\":89,\"b_kind\":\"write\",\"a2_line\":51,\"a2_kind\":\"write\",\"why\":\"v_lagoon++ is a non-atomic read-modify-write, and irq_husk can preempt it and set v_lagoon=1, so the update is lost.\"},{\"variable\":\"v_inlet\",\"a1_line\":52,\"a1_kind\":\"read\",\"b_line\":91,\"b_kind\":\"write\",\"a2_line\":53,\"a2_kind\":\"read\",\"why\":\"irq_husk can reset v_inlet to 1 between the index use at line 52 and the increment at line 53.\"},{\"variable\":\"v_inlet\",\"a1_line\":52,\"a1_kind\":\"read\",\"b_line\":91,\"b_kind\":\"write\",\"a2_line\":53,\"a2_kind\":\"write\",\"why\":\"irq_husk's write of v_inlet=1 can land between urchin's index read and its increment write, so the increment overwrites it.\"}]}",
+  "wall_s": 11.259634733200073,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1332,
+    "cache_read": 2775,
+    "cache_write": 484,
+    "latency_s": 11.259458425978664
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

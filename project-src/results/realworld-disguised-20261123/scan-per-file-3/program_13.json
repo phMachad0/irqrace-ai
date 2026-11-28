@@ -1,0 +1,48 @@
+{
+  "case": "program_13",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_sable",
+        "a1_line": 174,
+        "a1_kind": "read",
+        "b_line": 196,
+        "b_kind": "write",
+        "a2_line": 174,
+        "a2_kind": "write",
+        "why": "irq_delta's v_sable++ is a read-modify-write. The higher-priority irq_ridge can preempt it and write v_sable at line 196 between the read and the write-back. That write is lost."
+      },
+      {
+        "variable": "v_coral",
+        "a1_line": 149,
+        "a1_kind": "read",
+        "b_line": 183,
+        "b_kind": "write",
+        "a2_line": 150,
+        "a2_kind": "read",
+        "why": "irq_umbra reads v_coral twice, at lines 149 and 150. The higher-priority irq_inlet can preempt it between the reads and write v_coral at line 183, so the two reads can see different values."
+      },
+      {
+        "variable": "v_onyx",
+        "a1_line": 151,
+        "a1_kind": "read",
+        "b_line": 190,
+        "b_kind": "write",
+        "a2_line": 152,
+        "a2_kind": "read",
+        "why": "irq_umbra reads v_onyx twice, at lines 151 and 152. The higher-priority irq_raptor can preempt it between the reads and write v_onyx at line 190, so the two reads can see different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_sable\",\"a1_line\":174,\"a1_kind\":\"read\",\"b_line\":196,\"b_kind\":\"write\",\"a2_line\":174,\"a2_kind\":\"write\",\"why\":\"irq_delta's v_sable++ is a read-modify-write. The higher-priority irq_ridge can preempt it and write v_sable at line 196 between the read and the write-back. That write is lost.\"},{\"variable\":\"v_coral\",\"a1_line\":149,\"a1_kind\":\"read\",\"b_line\":183,\"b_kind\":\"write\",\"a2_line\":150,\"a2_kind\":\"read\",\"why\":\"irq_umbra reads v_coral twice, at lines 149 and 150. The higher-priority irq_inlet can preempt it between the reads and write v_coral at line 183, so the two reads can see different values.\"},{\"variable\":\"v_onyx\",\"a1_line\":151,\"a1_kind\":\"read\",\"b_line\":190,\"b_kind\":\"write\",\"a2_line\":152,\"a2_kind\":\"read\",\"why\":\"irq_umbra reads v_onyx twice, at lines 151 and 152. The higher-priority irq_raptor can preempt it between the reads and write v_onyx at line 190, so the two reads can see different values.\"}]}",
+  "wall_s": 9.990779638290405,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1150,
+    "cache_read": 5192,
+    "cache_write": 490,
+    "latency_s": 9.990503056964371
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

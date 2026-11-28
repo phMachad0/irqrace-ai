@@ -1,0 +1,38 @@
+{
+  "case": "program_11",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_umber",
+        "a1_line": 18,
+        "a1_kind": "read",
+        "b_line": 42,
+        "b_kind": "write",
+        "a2_line": 19,
+        "a2_kind": "write",
+        "why": "After enable_isr(1), irq_quiver can preempt the task between the check at line 18 and the reset at line 19. Its addData() increments v_umber, so the reset can overwrite a value the check never saw."
+      },
+      {
+        "variable": "v_umber",
+        "a1_line": 18,
+        "a1_kind": "read",
+        "b_line": 30,
+        "b_kind": "write",
+        "a2_line": 19,
+        "a2_kind": "write",
+        "why": "irq_quiver runs enable_isr(2) at line 48, and the masking state is global. irq_raptor can then preempt the task between lines 18 and 19 and increment v_umber at line 30, which the write at line 19 then overwrites."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_umber\",\"a1_line\":18,\"a1_kind\":\"read\",\"b_line\":42,\"b_kind\":\"write\",\"a2_line\":19,\"a2_kind\":\"write\",\"why\":\"After enable_isr(1), irq_quiver can preempt the task between the check at line 18 and the reset at line 19. Its addData() increments v_umber, so the reset can overwrite a value the check never saw.\"},{\"variable\":\"v_umber\",\"a1_line\":18,\"a1_kind\":\"read\",\"b_line\":30,\"b_kind\":\"write\",\"a2_line\":19,\"a2_kind\":\"write\",\"why\":\"irq_quiver runs enable_isr(2) at line 48, and the masking state is global. irq_raptor can then preempt the task between lines 18 and 19 and increment v_umber at line 30, which the write at line 19 then overwrites.\"}]}",
+  "wall_s": 10.979562282562256,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1064,
+    "cache_read": 1940,
+    "cache_write": 484,
+    "latency_s": 10.979408519982826
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

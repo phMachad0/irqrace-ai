@@ -83,6 +83,39 @@ def _triage_order(store: RunStore, contexts: list[dict[str, Any]]) -> list[dict[
     return ordered + [c for c in contexts if c["id"] not in seen]
 
 
+def triage_outcome(store: RunStore, *, suite_root: Path | None = None) -> dict[str, Any] | None:
+    """Where the suite's bug points and traps landed after triage, and C4 use.
+
+    :func:`evaluate_run` says what the static stages kept; triage never removes a
+    candidate, so that number cannot show a real bug ranked ``likely_benign``.
+    This is the number that compares prompts. ``None`` before triage has run or
+    without ground truth.
+    """
+    path = store.root / "llm" / "triage.jsonl"
+    subject = store.read_manifest()["subject"]["name"]
+    case = case_ground_truth(subject, suite_root=suite_root)
+    if case is None or not path.exists():
+        return None
+    verdicts = {
+        d["candidate_id"]: d
+        for d in map(json.loads, filter(str.strip, path.read_text(encoding="utf-8").splitlines()))
+    }
+    report = match_subject(case.all, store.read_contexts(), subject=subject)
+    out: dict[str, Any] = {"bugs": 0, "traps": 0, "c4_requests": 0}
+    for group, matches in (("bugs", report.bug_matches), ("traps", report.trap_matches)):
+        for m in matches:
+            verdict = verdicts.get(m.candidate_id)
+            if verdict is None:
+                continue
+            out[group] += 1
+            key = f"{group}_{verdict['bucket']}"
+            out[key] = out.get(key, 0) + 1
+    for turns in (store.root / "llm").glob("*/turns.jsonl"):
+        for line in filter(str.strip, turns.read_text(encoding="utf-8").splitlines()):
+            out["c4_requests"] += len(json.loads(line).get("requests") or [])
+    return out
+
+
 def _sets(store: RunStore) -> list[tuple[str, list[dict[str, Any]]]]:
     status = {s["name"]: s["status"] for s in store.read_manifest().get("stages", [])}
     out: list[tuple[str, list[dict[str, Any]]]] = []
@@ -206,6 +239,7 @@ def candidate_table(store: RunStore, *, suite_root: Path | None = None) -> list[
             "subject": subject,
             "pattern": c.get("pattern"),
             "lines": [a["source"]["line"] for a in c["accesses"]],
+            "files": [a["source"]["file"] for a in c["accesses"]],
             "variable": (c.get("variable") or {}).get("name"),
             "gt": label[0] if label else None,
             "gt_index": label[1] if label else None,

@@ -1,0 +1,48 @@
+{
+  "case": "i8xx_tco_3",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_var1",
+        "a1_line": 741,
+        "a1_kind": "read",
+        "b_line": 791,
+        "b_kind": "write",
+        "a2_line": 742,
+        "a2_kind": "read",
+        "why": "closer2_isr (prio 2) reads var1 twice in JudgeCondi; writer1_isr (prio 3) can preempt between the reads and change it."
+      },
+      {
+        "variable": "test_global_var2",
+        "a1_line": 744,
+        "a1_kind": "read",
+        "b_line": 801,
+        "b_kind": "write",
+        "a2_line": 745,
+        "a2_kind": "read",
+        "why": "writer2_isr (prio 4) can preempt closer2_isr between the two reads of var2 and write a new value."
+      },
+      {
+        "variable": "test_global_var3",
+        "a1_line": 779,
+        "a1_kind": "read",
+        "b_line": 810,
+        "b_kind": "write",
+        "a2_line": 779,
+        "a2_kind": "write",
+        "why": "The var3++ in closer3_isr is a non-atomic read-modify-write; writer3_isr (prio 5) can preempt between the read and the write, and its store is lost."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":741,\"a1_kind\":\"read\",\"b_line\":791,\"b_kind\":\"write\",\"a2_line\":742,\"a2_kind\":\"read\",\"why\":\"closer2_isr (prio 2) reads var1 twice in JudgeCondi; writer1_isr (prio 3) can preempt between the reads and change it.\"},{\"variable\":\"test_global_var2\",\"a1_line\":744,\"a1_kind\":\"read\",\"b_line\":801,\"b_kind\":\"write\",\"a2_line\":745,\"a2_kind\":\"read\",\"why\":\"writer2_isr (prio 4) can preempt closer2_isr between the two reads of var2 and write a new value.\"},{\"variable\":\"test_global_var3\",\"a1_line\":779,\"a1_kind\":\"read\",\"b_line\":810,\"b_kind\":\"write\",\"a2_line\":779,\"a2_kind\":\"write\",\"why\":\"The var3++ in closer3_isr is a non-atomic read-modify-write; writer3_isr (prio 5) can preempt between the read and the write, and its store is lost.\"}]}",
+  "wall_s": 15.011017084121704,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1503,
+    "cache_read": 15577,
+    "cache_write": 487,
+    "latency_s": 15.01084002101561
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

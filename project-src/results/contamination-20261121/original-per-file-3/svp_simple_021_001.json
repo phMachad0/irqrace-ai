@@ -1,0 +1,48 @@
+{
+  "case": "svp_simple_021_001",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "svp_simple_021_001_tc_block_rcvd_bytes_ch1",
+        "a1_line": 44,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 45,
+        "a2_kind": "write",
+        "why": "ISR can overwrite ch1 between the check at line 44 and the reset at line 45, so the reset is based on a stale value."
+      },
+      {
+        "variable": "svp_simple_021_001_tc_block_rcvd_bytes_ch1",
+        "a1_line": 45,
+        "a1_kind": "write",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 65,
+        "a2_kind": "read",
+        "why": "Main resets ch1 to 0, the ISR overwrites it, then main reads at line 65 and gets the ISR value rather than the reset value."
+      },
+      {
+        "variable": "svp_simple_021_001_tc_block_rcvd_bytes_ch1",
+        "a1_line": 44,
+        "a1_kind": "read",
+        "b_line": 79,
+        "b_kind": "write",
+        "a2_line": 65,
+        "a2_kind": "read",
+        "why": "ISR changes ch1 between the check at line 44 and the copy at line 65, so the two reads see inconsistent values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"svp_simple_021_001_tc_block_rcvd_bytes_ch1\",\"a1_line\":44,\"a1_kind\":\"read\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":45,\"a2_kind\":\"write\",\"why\":\"ISR can overwrite ch1 between the check at line 44 and the reset at line 45, so the reset is based on a stale value.\"},{\"variable\":\"svp_simple_021_001_tc_block_rcvd_bytes_ch1\",\"a1_line\":45,\"a1_kind\":\"write\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":65,\"a2_kind\":\"read\",\"why\":\"Main resets ch1 to 0, the ISR overwrites it, then main reads at line 65 and gets the ISR value rather than the reset value.\"},{\"variable\":\"svp_simple_021_001_tc_block_rcvd_bytes_ch1\",\"a1_line\":44,\"a1_kind\":\"read\",\"b_line\":79,\"b_kind\":\"write\",\"a2_line\":65,\"a2_kind\":\"read\",\"why\":\"ISR changes ch1 between the check at line 44 and the copy at line 65, so the two reads see inconsistent values.\"}]}",
+  "wall_s": 4.739887952804565,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 443,
+    "cache_read": 3280,
+    "cache_write": 486,
+    "latency_s": 4.7396919610037
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

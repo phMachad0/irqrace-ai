@@ -3,18 +3,18 @@
 O desenvolvimento é incremental e organiza-se em seis fases. Elas não são
 estanques, já que a revisão bibliográfica prossegue durante a implementação e a
 especificação é revisitada sempre que uma medição contraria uma suposição, mas
-cada uma delas produz um resultado que as fases seguintes consomem. Os
-resultados aparecem nos Capítulos~\ref{cap:especificacao} e
-\ref{cap:desenvolvimento}, e não neste capítulo.
+cada uma delas produz um resultado que as fases seguintes consomem. Este
+capítulo descreve as fases, e seus resultados são apresentados nos
+Capítulos~\ref{cap:especificacao} e \ref{cap:desenvolvimento}.
 
 \section{Revisão da literatura}
 \label{sec:fase-revisao}
 
 A primeira fase produz o Capítulo~\ref{cap:conceitos}. Além de situar o
-trabalho, ela cumpre uma função prática. Como três das quatro ferramentas de
-referência não estão disponíveis, quase todo número publicado precisa ser
-tratado como afirmação do autor, e a revisão serve para separar o que pode ser
-reimplementado daquilo que só pode ser citado.
+trabalho, ela tem uma função prática. Três das quatro ferramentas de
+referência não estão disponíveis, de modo que quase todo número publicado
+precisa ser tratado como afirmação do autor, e a revisão serve para separar o
+que pode ser reimplementado daquilo que só pode ser citado.
 
 \section{Estabelecimento do gabarito}
 \label{sec:fase-gabarito}
@@ -25,8 +25,12 @@ regra que decide se um candidato reportado corresponde a um defeito anotado são
 fixadas por escrito. Medir \textit{recall} exige um denominador, e a
 Seção~\ref{sec:benchmarks-conceito} mostrou que a literatura utiliza
 denominadores diferentes sem justificar a escolha. Esta fase precede a
-implementação precisamente para que nenhuma decisão de contagem possa ser
-tomada após a observação dos resultados.
+implementação para que nenhuma decisão de contagem possa ser
+tomada após a observação dos resultados. A única exceção, a reetiquetagem de
+cinco armadilhas como defeitos, foi feita depois das primeiras execuções
+completas, e por isso é registrada como etapa própria, com a evidência de cada
+caso (Seção~\ref{sec:reetiquetagem}), e todo resultado é reportado também sob
+o gabarito conforme distribuído.
 
 \section{Especificação}
 \label{sec:fase-especificacao}
@@ -48,18 +52,19 @@ denominado portão de \textit{recall}, é executado a cada alteração e trata u
 \section{Implementação da etapa com modelo de linguagem}
 \label{sec:fase-llm}
 
-A quinta fase é desenvolvida sobre um conjunto de registros de contexto
-montados manualmente a partir do Racebench, descrito na
-Seção~\ref{sec:conjunto-triagem}, e não sobre a saída da etapa estática. Essa
-escolha permite que as duas etapas avancem em paralelo e dá ao conjunto um
-segundo uso, o de servir como sonda para verificar se um \llm\ é capaz de
-julgar esse tipo de defeito antes que se invista na construção completa da
-etapa. A integração entre as duas ocorre ao final desta fase, e os números
-medidos sobre o conjunto montado manualmente não são transportados para a
-população real, pelas razões discutidas na Seção~\ref{sec:ameacas}.
+A quinta fase é desenvolvida sobre vinte registros de contexto montados
+manualmente a partir do Racebench, dez defeitos e dez armadilhas, e não sobre a
+saída da etapa estática. Essa escolha permite que as duas etapas avancem em
+paralelo e dá ao conjunto um segundo uso, o de servir como sonda para verificar
+se um \llm\ é capaz de julgar esse tipo de defeito antes que se invista na
+construção completa da etapa. A integração entre as duas ocorre ao final desta
+fase, e os números da avaliação vêm todos da população real, isto é, dos
+registros que a etapa estática emite.
 
 \section{Avaliação}
 \label{sec:fase-avaliacao}
 
-A sexta fase segue o protocolo da Seção~\ref{sec:avaliacao}, aplicado primeiro
-ao Racebench e depois à suíte de 18 programas reais.
+A sexta fase segue o protocolo da Seção~\ref{sec:avaliacao}, aplicado ao
+Racebench e à suíte de 18 programas reais. Além de medir a ferramenta, ela a
+compara com a leitura direta do código pelo mesmo modelo de linguagem, sem
+análise estática (Seção~\ref{sec:protocolo}).

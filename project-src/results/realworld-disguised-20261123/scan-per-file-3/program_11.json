@@ -1,0 +1,108 @@
+{
+  "case": "program_11",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_quiver",
+        "a1_line": 159,
+        "a1_kind": "read",
+        "b_line": 228,
+        "b_kind": "write",
+        "a2_line": 160,
+        "a2_kind": "read",
+        "why": "irq_upland (prio 4) can preempt irq_drift (prio 2) between its two reads of v_quiver and write it, since pylon==1 after main."
+      },
+      {
+        "variable": "v_wisp",
+        "a1_line": 166,
+        "a1_kind": "write",
+        "b_line": 219,
+        "b_kind": "write",
+        "a2_line": 176,
+        "a2_kind": "read",
+        "why": "irq_upland can reset v_wisp to 0 between drift's write of 42 and its check."
+      },
+      {
+        "variable": "v_wisp",
+        "a1_line": 176,
+        "a1_kind": "read",
+        "b_line": 219,
+        "b_kind": "write",
+        "a2_line": 179,
+        "a2_kind": "write",
+        "why": "A higher-priority ISR can write v_wisp between drift's read and its write."
+      },
+      {
+        "variable": "v_wisp",
+        "a1_line": 183,
+        "a1_kind": "write",
+        "b_line": 219,
+        "b_kind": "write",
+        "a2_line": 193,
+        "a2_kind": "read",
+        "why": "irq_upland preempts irq_reef between its write of 42 and the read."
+      },
+      {
+        "variable": "v_wisp",
+        "a1_line": 193,
+        "a1_kind": "read",
+        "b_line": 219,
+        "b_kind": "write",
+        "a2_line": 196,
+        "a2_kind": "write",
+        "why": "irq_upland can write v_wisp between reef's read and write."
+      },
+      {
+        "variable": "v_wisp",
+        "a1_line": 166,
+        "a1_kind": "write",
+        "b_line": 201,
+        "b_kind": "write",
+        "a2_line": 176,
+        "a2_kind": "read",
+        "why": "irq_kestrel (prio 4) can preempt drift and overwrite v_wisp before drift's check."
+      },
+      {
+        "variable": "v_acorn",
+        "a1_line": 167,
+        "a1_kind": "write",
+        "b_line": 218,
+        "b_kind": "write",
+        "a2_line": 168,
+        "a2_kind": "read",
+        "why": "irq_upland can set v_acorn to 0 between drift's write of 1 and its check."
+      },
+      {
+        "variable": "v_acorn",
+        "a1_line": 185,
+        "a1_kind": "write",
+        "b_line": 218,
+        "b_kind": "write",
+        "a2_line": 186,
+        "a2_kind": "read",
+        "why": "irq_upland can set v_acorn to 0 between reef's write of 1 and its check."
+      },
+      {
+        "variable": "v_yew",
+        "a1_line": 256,
+        "a1_kind": "write",
+        "b_line": 215,
+        "b_kind": "write",
+        "a2_line": 259,
+        "a2_kind": "read",
+        "why": "irq_kestrel (prio 4) can preempt irq_ermine (prio 1) and overwrite v_yew[K_CORAL] between ermine's write and its read."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_quiver\",\"a1_line\":159,\"a1_kind\":\"read\",\"b_line\":228,\"b_kind\":\"write\",\"a2_line\":160,\"a2_kind\":\"read\",\"why\":\"irq_upland (prio 4) can preempt irq_drift (prio 2) between its two reads of v_quiver and write it, since pylon==1 after main.\"},{\"variable\":\"v_wisp\",\"a1_line\":166,\"a1_kind\":\"write\",\"b_line\":219,\"b_kind\":\"write\",\"a2_line\":176,\"a2_kind\":\"read\",\"why\":\"irq_upland can reset v_wisp to 0 between drift's write of 42 and its check.\"},{\"variable\":\"v_wisp\",\"a1_line\":176,\"a1_kind\":\"read\",\"b_line\":219,\"b_kind\":\"write\",\"a2_line\":179,\"a2_kind\":\"write\",\"why\":\"A higher-priority ISR can write v_wisp between drift's read and its write.\"},{\"variable\":\"v_wisp\",\"a1_line\":183,\"a1_kind\":\"write\",\"b_line\":219,\"b_kind\":\"write\",\"a2_line\":193,\"a2_kind\":\"read\",\"why\":\"irq_upland preempts irq_reef between its write of 42 and the read.\"},{\"variable\":\"v_wisp\",\"a1_line\":193,\"a1_kind\":\"read\",\"b_line\":219,\"b_kind\":\"write\",\"a2_line\":196,\"a2_kind\":\"write\",\"why\":\"irq_upland can write v_wisp between reef's read and write.\"},{\"variable\":\"v_wisp\",\"a1_line\":166,\"a1_kind\":\"write\",\"b_line\":201,\"b_kind\":\"write\",\"a2_line\":176,\"a2_kind\":\"read\",\"why\":\"irq_kestrel (prio 4) can preempt drift and overwrite v_wisp before drift's check.\"},{\"variable\":\"v_acorn\",\"a1_line\":167,\"a1_kind\":\"write\",\"b_line\":218,\"b_kind\":\"write\",\"a2_line\":168,\"a2_kind\":\"read\",\"why\":\"irq_upland can set v_acorn to 0 between drift's write of 1 and its check.\"},{\"variable\":\"v_acorn\",\"a1_line\":185,\"a1_kind\":\"write\",\"b_line\":218,\"b_kind\":\"write\",\"a2_line\":186,\"a2_kind\":\"read\",\"why\":\"irq_upland can set v_acorn to 0 between reef's write of 1 and its check.\"},{\"variable\":\"v_yew\",\"a1_line\":256,\"a1_kind\":\"write\",\"b_line\":215,\"b_kind\":\"write\",\"a2_line\":259,\"a2_kind\":\"read\",\"why\":\"irq_kestrel (prio 4) can preempt irq_ermine (prio 1) and overwrite v_yew[K_CORAL] between ermine's write and its read.\"}]}",
+  "wall_s": 18.037320613861084,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 2230,
+    "cache_read": 4835,
+    "cache_write": 488,
+    "latency_s": 18.037147704977542
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

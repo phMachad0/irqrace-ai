@@ -1,0 +1,28 @@
+{
+  "case": "program_19",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_falcon",
+        "a1_line": 34,
+        "a1_kind": "read",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 37,
+        "a2_kind": "read",
+        "why": "irq_nimbus (priority 2) can be enabled by irq_jasper and preempt task_juniper between the two reads of v_falcon, causing a stale value to be used."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_falcon\",\n      \"a1_line\": 34,\n      \"a1_kind\": \"read\",\n      \"b_line\": 11,\n      \"b_kind\": \"write\",\n      \"a2_line\": 37,\n      \"a2_kind\": \"read\",\n      \"why\": \"irq_nimbus (priority 2) can be enabled by irq_jasper and preempt task_juniper between the two reads of v_falcon, causing a stale value to be used.\"\n    }\n  ]\n}",
+  "wall_s": 30.887258768081665,
+  "usage": {
+    "input_tokens": 421,
+    "output_tokens": 2310,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 30.887149261980085
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

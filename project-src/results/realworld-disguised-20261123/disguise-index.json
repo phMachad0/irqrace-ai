@@ -1,0 +1,23 @@
+{
+  "seed": 2026,
+  "programs": {
+    "program_06": "blink1",
+    "program_03": "blink2",
+    "program_01": "blink3",
+    "program_02": "brake1",
+    "program_14": "brake2",
+    "program_05": "brake3",
+    "program_12": "i2c_pca_isa_1",
+    "program_08": "i2c_pca_isa_2",
+    "program_17": "i2c_pca_isa_3",
+    "program_07": "i8xx_tco_1",
+    "program_09": "i8xx_tco_2",
+    "program_13": "i8xx_tco_3",
+    "program_10": "logger1",
+    "program_16": "logger2",
+    "program_15": "logger3",
+    "program_18": "wdt_pci_1",
+    "program_11": "wdt_pci_2",
+    "program_04": "wdt_pci_3"
+  }
+}

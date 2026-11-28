@@ -1,0 +1,138 @@
+{
+  "case": "program_01",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_aspen",
+        "a1_line": 20,
+        "a1_kind": "write",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "irq_harbor (higher priority) can preempt irq_prism between the increment and the check, changing v_aspen."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 20,
+        "a1_kind": "write",
+        "b_line": 36,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "irq_wharf can preempt irq_prism between the increment and the check and overwrite v_aspen."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 20,
+        "a1_kind": "write",
+        "b_line": 49,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "irq_loom can preempt irq_prism between the increment and the check and reset v_aspen."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 20,
+        "a1_kind": "read",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 20,
+        "a2_kind": "write",
+        "why": "The v_aspen++ read-modify-write in irq_prism can be interrupted by irq_harbor, which causes a lost update."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 20,
+        "a1_kind": "read",
+        "b_line": 36,
+        "b_kind": "write",
+        "a2_line": 20,
+        "a2_kind": "write",
+        "why": "The v_aspen++ read-modify-write in irq_prism can be interrupted by irq_wharf, which causes a lost update."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 20,
+        "a1_kind": "read",
+        "b_line": 49,
+        "b_kind": "write",
+        "a2_line": 20,
+        "a2_kind": "write",
+        "why": "The v_aspen++ read-modify-write in irq_prism can be interrupted by irq_loom, which causes a lost update."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 28,
+        "a1_kind": "write",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "read",
+        "why": "irq_harbor can preempt irq_flint between the write and the check."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 28,
+        "a1_kind": "write",
+        "b_line": 36,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "read",
+        "why": "irq_wharf can preempt irq_flint between the write and the check."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 28,
+        "a1_kind": "write",
+        "b_line": 49,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "read",
+        "why": "irq_loom can preempt irq_flint between the write and the check."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 36,
+        "a1_kind": "write",
+        "b_line": 49,
+        "b_kind": "write",
+        "a2_line": 37,
+        "a2_kind": "read",
+        "why": "irq_loom has higher priority and can preempt irq_wharf between the write and the check."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 44,
+        "a1_kind": "read",
+        "b_line": 36,
+        "b_kind": "write",
+        "a2_line": 44,
+        "a2_kind": "write",
+        "why": "The v_aspen++ in irq_harbor can be preempted by irq_wharf, which causes a lost update."
+      },
+      {
+        "variable": "v_aspen",
+        "a1_line": 44,
+        "a1_kind": "read",
+        "b_line": 49,
+        "b_kind": "write",
+        "a2_line": 44,
+        "a2_kind": "write",
+        "why": "The v_aspen++ in irq_harbor can be preempted by irq_loom, which causes a lost update."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_aspen\",\"a1_line\":20,\"a1_kind\":\"write\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"irq_harbor (higher priority) can preempt irq_prism between the increment and the check, changing v_aspen.\"},{\"variable\":\"v_aspen\",\"a1_line\":20,\"a1_kind\":\"write\",\"b_line\":36,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"irq_wharf can preempt irq_prism between the increment and the check and overwrite v_aspen.\"},{\"variable\":\"v_aspen\",\"a1_line\":20,\"a1_kind\":\"write\",\"b_line\":49,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"irq_loom can preempt irq_prism between the increment and the check and reset v_aspen.\"},{\"variable\":\"v_aspen\",\"a1_line\":20,\"a1_kind\":\"read\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":20,\"a2_kind\":\"write\",\"why\":\"The v_aspen++ read-modify-write in irq_prism can be interrupted by irq_harbor, which causes a lost update.\"},{\"variable\":\"v_aspen\",\"a1_line\":20,\"a1_kind\":\"read\",\"b_line\":36,\"b_kind\":\"write\",\"a2_line\":20,\"a2_kind\":\"write\",\"why\":\"The v_aspen++ read-modify-write in irq_prism can be interrupted by irq_wharf, which causes a lost update.\"},{\"variable\":\"v_aspen\",\"a1_line\":20,\"a1_kind\":\"read\",\"b_line\":49,\"b_kind\":\"write\",\"a2_line\":20,\"a2_kind\":\"write\",\"why\":\"The v_aspen++ read-modify-write in irq_prism can be interrupted by irq_loom, which causes a lost update.\"},{\"variable\":\"v_aspen\",\"a1_line\":28,\"a1_kind\":\"write\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"read\",\"why\":\"irq_harbor can preempt irq_flint between the write and the check.\"},{\"variable\":\"v_aspen\",\"a1_line\":28,\"a1_kind\":\"write\",\"b_line\":36,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"read\",\"why\":\"irq_wharf can preempt irq_flint between the write and the check.\"},{\"variable\":\"v_aspen\",\"a1_line\":28,\"a1_kind\":\"write\",\"b_line\":49,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"read\",\"why\":\"irq_loom can preempt irq_flint between the write and the check.\"},{\"variable\":\"v_aspen\",\"a1_line\":36,\"a1_kind\":\"write\",\"b_line\":49,\"b_kind\":\"write\",\"a2_line\":37,\"a2_kind\":\"read\",\"why\":\"irq_loom has higher priority and can preempt irq_wharf between the write and the check.\"},{\"variable\":\"v_aspen\",\"a1_line\":44,\"a1_kind\":\"read\",\"b_line\":36,\"b_kind\":\"write\",\"a2_line\":44,\"a2_kind\":\"write\",\"why\":\"The v_aspen++ in irq_harbor can be preempted by irq_wharf, which causes a lost update.\"},{\"variable\":\"v_aspen\",\"a1_line\":44,\"a1_kind\":\"read\",\"b_line\":49,\"b_kind\":\"write\",\"a2_line\":44,\"a2_kind\":\"write\",\"why\":\"The v_aspen++ in irq_harbor can be preempted by irq_loom, which causes a lost update.\"}]}",
+  "wall_s": 14.856120109558105,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 2032,
+    "cache_read": 2200,
+    "cache_write": 482,
+    "latency_s": 14.8549394349684
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

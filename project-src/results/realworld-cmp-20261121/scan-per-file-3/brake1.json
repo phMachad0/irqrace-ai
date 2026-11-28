@@ -1,0 +1,78 @@
+{
+  "case": "brake1",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_var1",
+        "a1_line": 284,
+        "a1_kind": "read",
+        "b_line": 348,
+        "b_kind": "write",
+        "a2_line": 285,
+        "a2_kind": "read",
+        "why": "The ISR can preempt main between its two reads of test_global_var1. Condition3 is 1, so the ISR writes the variable and the two reads can see different values."
+      },
+      {
+        "variable": "test_global_array",
+        "a1_line": 387,
+        "a1_kind": "write",
+        "b_line": 347,
+        "b_kind": "write",
+        "a2_line": 390,
+        "a2_kind": "read",
+        "why": "The higher-priority compute ISR can preempt RR_Wheel_isr between its write to array[TRIGGER] and its read-back. The read then returns 999 instead of 1."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT_h",
+        "a1_line": 409,
+        "a1_kind": "write",
+        "b_line": 299,
+        "b_kind": "write",
+        "a2_line": 460,
+        "a2_kind": "read",
+        "why": "The compute ISR can overwrite RT_h after RR_Wheel_isr writes it and before the value is used at line 460."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT_h",
+        "a1_line": 409,
+        "a1_kind": "write",
+        "b_line": 299,
+        "b_kind": "write",
+        "a2_line": 466,
+        "a2_kind": "read",
+        "why": "The compute ISR can overwrite RT_h after RR_Wheel_isr writes it and before the value is used at line 466."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+        "a1_line": 411,
+        "a1_kind": "write",
+        "b_line": 302,
+        "b_kind": "write",
+        "a2_line": 418,
+        "a2_kind": "read",
+        "why": "The compute ISR can overwrite RT4 between RR_Wheel_isr's write and its read at line 418."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+        "a1_line": 411,
+        "a1_kind": "write",
+        "b_line": 302,
+        "b_kind": "write",
+        "a2_line": 451,
+        "a2_kind": "read",
+        "why": "The compute ISR can overwrite RT4 between RR_Wheel_isr's write and its read at line 451."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_var1\",\"a1_line\":284,\"a1_kind\":\"read\",\"b_line\":348,\"b_kind\":\"write\",\"a2_line\":285,\"a2_kind\":\"read\",\"why\":\"The ISR can preempt main between its two reads of test_global_var1. Condition3 is 1, so the ISR writes the variable and the two reads can see different values.\"},{\"variable\":\"test_global_array\",\"a1_line\":387,\"a1_kind\":\"write\",\"b_line\":347,\"b_kind\":\"write\",\"a2_line\":390,\"a2_kind\":\"read\",\"why\":\"The higher-priority compute ISR can preempt RR_Wheel_isr between its write to array[TRIGGER] and its read-back. The read then returns 999 instead of 1.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT_h\",\"a1_line\":409,\"a1_kind\":\"write\",\"b_line\":299,\"b_kind\":\"write\",\"a2_line\":460,\"a2_kind\":\"read\",\"why\":\"The compute ISR can overwrite RT_h after RR_Wheel_isr writes it and before the value is used at line 460.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT_h\",\"a1_line\":409,\"a1_kind\":\"write\",\"b_line\":299,\"b_kind\":\"write\",\"a2_line\":466,\"a2_kind\":\"read\",\"why\":\"The compute ISR can overwrite RT_h after RR_Wheel_isr writes it and before the value is used at line 466.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":411,\"a1_kind\":\"write\",\"b_line\":302,\"b_kind\":\"write\",\"a2_line\":418,\"a2_kind\":\"read\",\"why\":\"The compute ISR can overwrite RT4 between RR_Wheel_isr's write and its read at line 418.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":411,\"a1_kind\":\"write\",\"b_line\":302,\"b_kind\":\"write\",\"a2_line\":451,\"a2_kind\":\"read\",\"why\":\"The compute ISR can overwrite RT4 between RR_Wheel_isr's write and its read at line 451.\"}]}",
+  "wall_s": 13.044072151184082,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1653,
+    "cache_read": 12276,
+    "cache_write": 495,
+    "latency_s": 13.04388537601335
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

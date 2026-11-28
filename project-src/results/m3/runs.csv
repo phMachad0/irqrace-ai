@@ -1,0 +1,7 @@
+run_id,system,prompt_row,sample,labels,case_subset,view,bug_points_total,bug_points_detected,traps_total,traps_reported,unannotated_reported,uncertain,score,score_max,recall,precision,inspection_ratio_mean,llm_calls,tokens_in,tokens_out,backend_failures,wall_s,static_s,llm_s
++racebench+rubric/1,S2,+racebench+rubric,1,53/33,all,likely_real,53,53,33,2,83,3,100,106,1.0,0.963636,0.654293,307,3736620,383688,0,1171.639,169.7,1153.767
++racebench+rubric/1,S2,+racebench+rubric,1,53/33,all,not_infeasible,53,53,33,3,85,3,97,106,1.0,0.946429,0.654293,307,3736620,383688,0,1171.639,169.7,1153.767
++racebench+rubric/1,S1,+racebench+rubric,1,53/33,all,static_only,53,53,33,11,102,,73,106,1.0,0.828125,0.714752,,,,,,169.7,
++racebench+effectfree/1,S2,+racebench+effectfree,1,53/33,all,likely_real,53,53,33,1,81,1,103,106,1.0,0.981481,0.677419,305,3564564,352526,0,1140.323,169.7,1123.161
++racebench+effectfree/1,S2,+racebench+effectfree,1,53/33,all,not_infeasible,53,53,33,3,83,1,97,106,1.0,0.946429,0.677419,305,3564564,352526,0,1140.323,169.7,1123.161
++racebench+effectfree/1,S1,+racebench+effectfree,1,53/33,all,static_only,53,53,33,11,102,,73,106,1.0,0.828125,0.714752,,,,,,169.7,

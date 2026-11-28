@@ -1,0 +1,28 @@
+{
+  "case": "program_06",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_meadow",
+        "a1_line": 24,
+        "a1_kind": "read",
+        "b_line": 12,
+        "b_kind": "write",
+        "a2_line": 26,
+        "a2_kind": "read",
+        "why": "The task reads v_meadow at i=0 and again at i=4. irq_iris can preempt between the two reads and write 0, so the two reads can see different values."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_meadow\",\"a1_line\":24,\"a1_kind\":\"read\",\"b_line\":12,\"b_kind\":\"write\",\"a2_line\":26,\"a2_kind\":\"read\",\"why\":\"The task reads v_meadow at i=0 and again at i=4. irq_iris can preempt between the two reads and write 0, so the two reads can see different values.\"}]}",
+  "wall_s": 5.783619165420532,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 468,
+    "cache_read": 1885,
+    "cache_write": 484,
+    "latency_s": 5.783482205995824
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

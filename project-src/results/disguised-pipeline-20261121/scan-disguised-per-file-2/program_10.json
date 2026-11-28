@@ -1,0 +1,28 @@
+{
+  "case": "program_10",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_amber",
+        "a1_line": 19,
+        "a1_kind": "read",
+        "b_line": 29,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "irq_upland masks nimbus, but a preempting irq_vessel sets v_jasper=1 and re-enables interrupt 3 globally. irq_nimbus can then run during irq_upland and change v_amber between its two reads."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_amber\",\"a1_line\":19,\"a1_kind\":\"read\",\"b_line\":29,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"irq_upland masks nimbus, but a preempting irq_vessel sets v_jasper=1 and re-enables interrupt 3 globally. irq_nimbus can then run during irq_upland and change v_amber between its two reads.\"}]}",
+  "wall_s": 8.779473066329956,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 950,
+    "cache_read": 2002,
+    "cache_write": 484,
+    "latency_s": 8.779298181005288
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

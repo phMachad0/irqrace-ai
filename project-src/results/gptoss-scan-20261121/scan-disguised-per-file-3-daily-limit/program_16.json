@@ -1,0 +1,48 @@
+{
+  "case": "program_16",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_kestrel",
+        "a1_line": 17,
+        "a1_kind": "read",
+        "b_line": 49,
+        "b_kind": "write",
+        "a2_line": 24,
+        "a2_kind": "read",
+        "why": "Task reads v_kestrel in fn_indigo, irq_fjord can write v_kestrel before fn_saffron reads it, causing a read‑write‑read violation."
+      },
+      {
+        "variable": "v_iris",
+        "a1_line": 18,
+        "a1_kind": "read",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 25,
+        "a2_kind": "read",
+        "why": "Task reads v_iris in fn_indigo, irq_beacon may write v_iris before fn_saffron reads it, creating a read‑write‑read violation."
+      },
+      {
+        "variable": "v_iris",
+        "a1_line": 25,
+        "a1_kind": "read",
+        "b_line": 44,
+        "b_kind": "write",
+        "a2_line": 26,
+        "a2_kind": "read",
+        "why": "fn_saffron reads v_iris, irq_beacon can write v_iris before the second read of v_iris, leading to a read‑write‑read violation."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_kestrel\",\"a1_line\":17,\"a1_kind\":\"read\",\"b_line\":49,\"b_kind\":\"write\",\"a2_line\":24,\"a2_kind\":\"read\",\"why\":\"Task reads v_kestrel in fn_indigo, irq_fjord can write v_kestrel before fn_saffron reads it, causing a read‑write‑read violation.\"},{\"variable\":\"v_iris\",\"a1_line\":18,\"a1_kind\":\"read\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":25,\"a2_kind\":\"read\",\"why\":\"Task reads v_iris in fn_indigo, irq_beacon may write v_iris before fn_saffron reads it, creating a read‑write‑read violation.\"},{\"variable\":\"v_iris\",\"a1_line\":25,\"a1_kind\":\"read\",\"b_line\":44,\"b_kind\":\"write\",\"a2_line\":26,\"a2_kind\":\"read\",\"why\":\"fn_saffron reads v_iris, irq_beacon can write v_iris before the second read of v_iris, leading to a read‑write‑read violation.\"}]}",
+  "wall_s": 231.08580422401428,
+  "usage": {
+    "input_tokens": 483,
+    "output_tokens": 2553,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 231.08566732498002
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

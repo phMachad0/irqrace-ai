@@ -1,0 +1,28 @@
+{
+  "case": "program_02",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_ember",
+        "a1_line": 20,
+        "a1_kind": "read",
+        "b_line": 30,
+        "b_kind": "write",
+        "a2_line": 22,
+        "a2_kind": "read",
+        "why": "Once ridge enables yarrow and yarrow enables 3, hazel can preempt the task between the two reads of v_ember. v_cedar is already 1 by then, so hazel writes v_ember and the two reads can differ."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_ember\",\"a1_line\":20,\"a1_kind\":\"read\",\"b_line\":30,\"b_kind\":\"write\",\"a2_line\":22,\"a2_kind\":\"read\",\"why\":\"Once ridge enables yarrow and yarrow enables 3, hazel can preempt the task between the two reads of v_ember. v_cedar is already 1 by then, so hazel writes v_ember and the two reads can differ.\"}]}",
+  "wall_s": 8.22446584701538,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 844,
+    "cache_read": 2001,
+    "cache_write": 487,
+    "latency_s": 8.224304317001952
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

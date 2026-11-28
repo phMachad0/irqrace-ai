@@ -1,0 +1,138 @@
+{
+  "case": "brake3",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "test_global_var2",
+        "a1_line": 292,
+        "a1_kind": "read",
+        "b_line": 356,
+        "b_kind": "write",
+        "a2_line": 293,
+        "a2_kind": "read",
+        "why": "The compute ISR (priority 6) can preempt JudgeCondi between its two reads of var2, so the two reads can see different values."
+      },
+      {
+        "variable": "test_global_var1",
+        "a1_line": 289,
+        "a1_kind": "read",
+        "b_line": 355,
+        "b_kind": "write",
+        "a2_line": 290,
+        "a2_kind": "read",
+        "why": "The compute ISR can preempt JudgeCondi between its two reads of var1. Main sets condition3 to 1, so the write happens."
+      },
+      {
+        "variable": "test_global_array[TRIGGER]",
+        "a1_line": 589,
+        "a1_kind": "write",
+        "b_line": 354,
+        "b_kind": "write",
+        "a2_line": 592,
+        "a2_kind": "read",
+        "why": "The compute ISR can preempt the FL ISR after its write at 589 and overwrite the element, so the read at 592 sees a different value."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+        "a1_line": 412,
+        "a1_kind": "write",
+        "b_line": 308,
+        "b_kind": "write",
+        "a2_line": 419,
+        "a2_kind": "read",
+        "why": "The compute ISR can preempt the RR ISR after its write at 412 and overwrite RT4 before the RR ISR reads it at 419."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+        "a1_line": 419,
+        "a1_kind": "read",
+        "b_line": 308,
+        "b_kind": "write",
+        "a2_line": 454,
+        "a2_kind": "read",
+        "why": "The compute ISR can preempt the RR ISR between its two reads of RT4, so the reads can differ."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+        "a1_line": 515,
+        "a1_kind": "write",
+        "b_line": 308,
+        "b_kind": "write",
+        "a2_line": 531,
+        "a2_kind": "read",
+        "why": "The compute ISR can preempt the FL ISR after its write at 515 and overwrite RT4 before the read at 531."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+        "a1_line": 531,
+        "a1_kind": "read",
+        "b_line": 308,
+        "b_kind": "write",
+        "a2_line": 567,
+        "a2_kind": "read",
+        "why": "The compute ISR can preempt the FL ISR between its two reads of RT4, so the reads can differ."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+        "a1_line": 651,
+        "a1_kind": "write",
+        "b_line": 308,
+        "b_kind": "write",
+        "a2_line": 670,
+        "a2_kind": "read",
+        "why": "The compute ISR can preempt the FR ISR after its write at 651 and overwrite RT4 before the read at 670."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT4",
+        "a1_line": 670,
+        "a1_kind": "read",
+        "b_line": 308,
+        "b_kind": "write",
+        "a2_line": 706,
+        "a2_kind": "read",
+        "why": "The compute ISR can preempt the FR ISR between its two reads of RT4, so the reads can differ."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT_h",
+        "a1_line": 410,
+        "a1_kind": "write",
+        "b_line": 305,
+        "b_kind": "write",
+        "a2_line": 463,
+        "a2_kind": "read",
+        "why": "The compute ISR can preempt the RR ISR after its write at 410 and overwrite RT_h before the read at 463."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT3",
+        "a1_line": 505,
+        "a1_kind": "write",
+        "b_line": 317,
+        "b_kind": "write",
+        "a2_line": 575,
+        "a2_kind": "read",
+        "why": "The compute ISR can preempt the FL ISR after its write at 505 and overwrite RT3 before the read at 575."
+      },
+      {
+        "variable": "brake_acc_nodiv_ctrl_B_local_RT2",
+        "a1_line": 643,
+        "a1_kind": "write",
+        "b_line": 314,
+        "b_kind": "write",
+        "a2_line": 714,
+        "a2_kind": "read",
+        "why": "The compute ISR can preempt the FR ISR after its write at 643 and overwrite RT2 before the read at 714."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"test_global_var2\",\"a1_line\":292,\"a1_kind\":\"read\",\"b_line\":356,\"b_kind\":\"write\",\"a2_line\":293,\"a2_kind\":\"read\",\"why\":\"The compute ISR (priority 6) can preempt JudgeCondi between its two reads of var2, so the two reads can see different values.\"},{\"variable\":\"test_global_var1\",\"a1_line\":289,\"a1_kind\":\"read\",\"b_line\":355,\"b_kind\":\"write\",\"a2_line\":290,\"a2_kind\":\"read\",\"why\":\"The compute ISR can preempt JudgeCondi between its two reads of var1. Main sets condition3 to 1, so the write happens.\"},{\"variable\":\"test_global_array[TRIGGER]\",\"a1_line\":589,\"a1_kind\":\"write\",\"b_line\":354,\"b_kind\":\"write\",\"a2_line\":592,\"a2_kind\":\"read\",\"why\":\"The compute ISR can preempt the FL ISR after its write at 589 and overwrite the element, so the read at 592 sees a different value.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":412,\"a1_kind\":\"write\",\"b_line\":308,\"b_kind\":\"write\",\"a2_line\":419,\"a2_kind\":\"read\",\"why\":\"The compute ISR can preempt the RR ISR after its write at 412 and overwrite RT4 before the RR ISR reads it at 419.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":419,\"a1_kind\":\"read\",\"b_line\":308,\"b_kind\":\"write\",\"a2_line\":454,\"a2_kind\":\"read\",\"why\":\"The compute ISR can preempt the RR ISR between its two reads of RT4, so the reads can differ.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":515,\"a1_kind\":\"write\",\"b_line\":308,\"b_kind\":\"write\",\"a2_line\":531,\"a2_kind\":\"read\",\"why\":\"The compute ISR can preempt the FL ISR after its write at 515 and overwrite RT4 before the read at 531.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":531,\"a1_kind\":\"read\",\"b_line\":308,\"b_kind\":\"write\",\"a2_line\":567,\"a2_kind\":\"read\",\"why\":\"The compute ISR can preempt the FL ISR between its two reads of RT4, so the reads can differ.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":651,\"a1_kind\":\"write\",\"b_line\":308,\"b_kind\":\"write\",\"a2_line\":670,\"a2_kind\":\"read\",\"why\":\"The compute ISR can preempt the FR ISR after its write at 651 and overwrite RT4 before the read at 670.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT4\",\"a1_line\":670,\"a1_kind\":\"read\",\"b_line\":308,\"b_kind\":\"write\",\"a2_line\":706,\"a2_kind\":\"read\",\"why\":\"The compute ISR can preempt the FR ISR between its two reads of RT4, so the reads can differ.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT_h\",\"a1_line\":410,\"a1_kind\":\"write\",\"b_line\":305,\"b_kind\":\"write\",\"a2_line\":463,\"a2_kind\":\"read\",\"why\":\"The compute ISR can preempt the RR ISR after its write at 410 and overwrite RT_h before the read at 463.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT3\",\"a1_line\":505,\"a1_kind\":\"write\",\"b_line\":317,\"b_kind\":\"write\",\"a2_line\":575,\"a2_kind\":\"read\",\"why\":\"The compute ISR can preempt the FL ISR after its write at 505 and overwrite RT3 before the read at 575.\"},{\"variable\":\"brake_acc_nodiv_ctrl_B_local_RT2\",\"a1_line\":643,\"a1_kind\":\"write\",\"b_line\":314,\"b_kind\":\"write\",\"a2_line\":714,\"a2_kind\":\"read\",\"why\":\"The compute ISR can preempt the FR ISR after its write at 643 and overwrite RT2 before the read at 714.\"}]}",
+  "wall_s": 18.99838423728943,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 2665,
+    "cache_read": 18946,
+    "cache_write": 487,
+    "latency_s": 18.99820507399272
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

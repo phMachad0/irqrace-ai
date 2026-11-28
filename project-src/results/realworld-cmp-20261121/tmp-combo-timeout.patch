@@ -1,0 +1,807 @@
+diff --git a/project-src/contracts/c3-manifest.schema.json b/project-src/contracts/c3-manifest.schema.json
+index e6fc7ac..583657b 100644
+--- a/project-src/contracts/c3-manifest.schema.json
++++ b/project-src/contracts/c3-manifest.schema.json
+@@ -81,6 +81,7 @@
+         "seed": { "type": ["integer", "null"] },
+         "workers": { "type": "integer", "minimum": 1, "description": "Conversations at a time." },
+         "by_interval": { "type": "boolean", "description": "One conversation per (variable, A1, A2, pattern). Changes how much of the ranking a model looked at, so it travels with the numbers." },
++        "by_variable": { "type": "boolean", "description": "Experimental: one checklist conversation per shared variable (irqrace.llm.checklist)." },
+         "budget": {
+           "type": ["object", "null"],
+           "additionalProperties": false,
+diff --git a/project-src/scripts/freeze-and-triage.py b/project-src/scripts/freeze-and-triage.py
+index b9c5c9c..997285e 100644
+--- a/project-src/scripts/freeze-and-triage.py
++++ b/project-src/scripts/freeze-and-triage.py
+@@ -116,7 +116,8 @@ def cmd_triage(args: argparse.Namespace) -> int:
+     try:
+         docs = bb.run_plan(pairs, Path(args.frozen), backend=args.backend, workers=args.workers,
+                            case_timeout=args.case_timeout, python=args.python, resume=args.resume,
+-                           keep_going=args.keep_going, env=env, log=lambda m: print(m, flush=True))
++                           keep_going=args.keep_going, env=env, log=lambda m: print(m, flush=True),
++                           case_parallel=args.case_parallel)
+     except bb.BatchError as e:
+         print(f"error: {e}", file=sys.stderr)
+         return 2
+@@ -148,6 +149,8 @@ def main(argv: list[str] | None = None) -> int:
+     tr.add_argument("--samples", type=int, default=3, help="independent runs per row")
+     tr.add_argument("--backend", required=True, help="provider:model, e.g. claude-cli:sonnet")
+     tr.add_argument("--workers", type=int, default=4, help="conversations at a time inside one case")
++    tr.add_argument("--case-parallel", type=int, default=1,
++                    help="cases at a time; the pool is case-parallel x workers conversations")
+     tr.add_argument("--resume", action="store_true", help="skip pairs whose batch.json says ok")
+     tr.add_argument("--keep-going", action="store_true", help="continue after a failed pair")
+     tr.set_defaults(func=cmd_triage, default_timeout=3600.0)
+diff --git a/project-src/scripts/scan-token-estimate.py b/project-src/scripts/scan-token-estimate.py
+new file mode 100644
+index 0000000..7877ff1
+--- /dev/null
++++ b/project-src/scripts/scan-token-estimate.py
+@@ -0,0 +1,130 @@
++#!/usr/bin/env python3
++"""Input tokens: irqrace's triage prompts against "ask the model to read every file".
++
++    python scripts/scan-token-estimate.py racebench --root FROZEN_ROOT --clean-sources bench/racebench/2.1
++    python scripts/scan-token-estimate.py realworld --root RUN_ROOT
++
++An **estimate**, not a measurement: no model is called. Characters are counted
++exactly and converted with a characters-per-token ratio. The default ratio,
++2.41, is calibrated on M1 (``results/m1``): the 304 prompts of ``+racebench/1``
++(system prompt, JSON schema, task, rendered record) total 8,479,763 characters
++and the CLI reported 3,519,824 input tokens for them. Plain C source usually
++tokenizes at more characters per token than this JSON-heavy mix, so the scan
++side is also given at ``--code-ratio`` (default 3.5, not calibrated here).
++
++The tool side, per candidate, is the feasibility prompt plus, for the share of
++candidates not called infeasible, the harmfulness prompt (``--harm-share``,
++default 138/166 from M1). Three groupings are computed: one conversation per
++triple (today), per interval (``--by-interval``) and per variable (checklist).
++
++The scan side sends each subject's source files once with the same system
++prompt the triage uses for feasibility (so the model gets the same domain
++knowledge), or with no system prompt at all (lower bound). Output tokens are
++not estimated: they depend on how much the model writes per finding.
++"""
++
++from __future__ import annotations
++
++import argparse
++import glob
++import json
++import sys
++from pathlib import Path
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT / "src"))
++
++from irqrace.llm.client import FEASIBILITY_TASK, HARMFULNESS_TASK, render_record  # noqa: E402
++from irqrace.llm.intervals import group_intervals, render_interval  # noqa: E402
++from irqrace.llm.prompts import EXPERIMENTAL, FULL  # noqa: E402
++from irqrace.llm.verdict import FeasibilityAnswer, HarmfulnessAnswer  # noqa: E402
++
++try:  # the checklist lives only in the per-variable experiment
++    from irqrace.llm.checklist import group_variables, render_checklist  # noqa: E402
++except ImportError:  # pragma: no cover
++    group_variables = render_checklist = None
++
++
++def records_of(root: Path) -> dict[str, list[dict]]:
++    out: dict[str, list[dict]] = {}
++    for f in sorted(glob.glob(str(root / "*" / "context" / "*.json"))):
++        rec = json.loads(Path(f).read_text())
++        out.setdefault(Path(f).parents[1].name, []).append(rec)
++    return out
++
++
++def sources_of(run: Path) -> list[tuple[Path, str]]:
++    import yaml
++
++    cfg = yaml.safe_load((run / "config.yaml").read_text())
++    subj = cfg["subject"]
++    base = (run / subj["source_root"]) if not Path(subj["source_root"]).is_absolute() else Path(subj["source_root"])
++    if not base.exists():  # configs keep source_root relative to bench/configs*
++        for cand in (ROOT / "bench" / "configs", ROOT / "bench" / "configs-realworld"):
++            if (cand / subj["source_root"]).exists():
++                base = cand / subj["source_root"]
++                break
++    return [(base, s) for s in subj["sources"]]
++
++
++def main() -> int:
++    ap = argparse.ArgumentParser()
++    ap.add_argument("suite", choices=["racebench", "realworld"])
++    ap.add_argument("--root", required=True, help="frozen root / run root with context/ records")
++    ap.add_argument("--row", default="+racebench")
++    ap.add_argument("--ratio", type=float, default=2.41)
++    ap.add_argument("--code-ratio", type=float, default=3.5)
++    ap.add_argument("--harm-share", type=float, default=138 / 166)
++    ap.add_argument("--clean-sources", help="for Racebench: read sources from this tree instead (2.1 without remarks)")
++    args = ap.parse_args()
++
++    cfg = EXPERIMENTAL.get(args.row) or FULL
++    sys_f, sys_h = cfg.system_prompt("feasibility"), cfg.system_prompt("harmfulness")
++    fixed_f = len(sys_f) + len(json.dumps(FeasibilityAnswer.model_json_schema())) + len(FEASIBILITY_TASK)
++    fixed_h = len(sys_h) + len(json.dumps(HarmfulnessAnswer.model_json_schema())) + len(HARMFULNESS_TASK)
++
++    per_case = records_of(Path(args.root))
++    tool = {"triple": 0.0, "interval": 0.0, "variable": 0.0}
++    calls = {"triple": 0, "interval": 0, "variable": 0}
++    scan_chars = 0
++    for case, recs in per_case.items():
++        for r in recs:
++            body = len(render_record(r))
++            tool["triple"] += fixed_f + body + args.harm_share * (fixed_h + body)
++            calls["triple"] += 1
++        for g in group_intervals(recs):
++            body = len(render_record(g[0])) + (len(render_interval(g[0], g[1:])) if len(g) > 1 else 0)
++            tool["interval"] += fixed_f + body + args.harm_share * (fixed_h + body)
++            calls["interval"] += 1
++        if group_variables is not None:
++            for g in group_variables(recs):
++                body = len(render_checklist(g)) if len(g) > 1 else len(render_record(g[0]))
++                tool["variable"] += fixed_f + body + args.harm_share * (fixed_h + body)
++                calls["variable"] += 1
++        run = Path(args.root) / case
++        srcs = [(Path(args.clean_sources) if args.clean_sources else base) / rel
++                for base, rel in sources_of(run)]
++        scan_chars += sum(len(p.read_text(errors="replace")) for p in srcs)
++    n_cases = len(per_case)
++    scan_with_sys = scan_chars + n_cases * len(sys_f)
++
++    def tok(c: float, ratio: float) -> str:
++        return f"{c / ratio:,.0f}"
++
++    print(f"subjects with candidates: {n_cases}; candidates: {calls['triple']}")
++    print("| | conversations | input tokens (est.) |")
++    print("| --- | --- | --- |")
++    print(f"| irqrace, one per triple | {calls['triple']} | {tok(tool['triple'], args.ratio)} |")
++    print(f"| irqrace, one per interval | {calls['interval']} | {tok(tool['interval'], args.ratio)} |")
++    if group_variables is not None:
++        print(f"| irqrace, one per variable (checklist) | {calls['variable']} | {tok(tool['variable'], args.ratio)} |")
++    print(f"| scan: every source file once + the triage system prompt | {n_cases} | "
++          f"{tok(scan_with_sys, args.ratio)} – {tok(scan_with_sys, args.code_ratio)} |")
++    print(f"| scan: every source file once, no system prompt | {n_cases} | "
++          f"{tok(scan_chars, args.ratio)} – {tok(scan_chars, args.code_ratio)} |")
++    print(f"\nsource characters: {scan_chars:,}; ratios: {args.ratio} (calibrated) / {args.code_ratio} (code, assumed)")
++    return 0
++
++
++if __name__ == "__main__":
++    sys.exit(main())
+diff --git a/project-src/src/irqrace/bench_batch.py b/project-src/src/irqrace/bench_batch.py
+index 94b9474..44ca909 100644
+--- a/project-src/src/irqrace/bench_batch.py
++++ b/project-src/src/irqrace/bench_batch.py
+@@ -259,7 +259,8 @@ def plan(out: Path, rows: Sequence[str], samples: int) -> list[Pair]:
+ def triage_command(python: str, case_dir: Path, row: str, backend: str, workers: int) -> list[str]:
+     """One case's triage. ``--samples 1``: independence comes from the copies, not from voting."""
+     return [python, "-m", "irqrace", "llm", "triage", str(case_dir), "--row", row,
+-            "--backend", backend, "--samples", "1", "--workers", str(workers)]
++            "--backend", backend, "--samples", "1", "--workers", str(workers),
++            *os.environ.get("IRQRACE_TRIAGE_EXTRA", "").split()]
+ 
+ 
+ def copy_frozen(frozen: Path, dest: Path, cases: Sequence[Path]) -> list[Path]:
+@@ -285,28 +286,46 @@ def not_triaged(case_dir: Path) -> int | None:
+                if line.strip() and json.loads(line).get("not_triaged"))
+ 
+ 
++def _records_in(case_dir: Path) -> int:
++    """Context records a case sends to the LLM -- its share of the pool's work."""
++    return sum(1 for _ in (case_dir / "context").glob("*.json"))
++
++
+ def run_pair(pair: Pair, frozen: Path, cases: Sequence[Path], *, backend: str, workers: int,
+              case_timeout: float, python: str = sys.executable, runner: Runner = run_logged,
+-             env: dict[str, str] | None = None, log: Callable[[str], None] = print) -> dict[str, Any]:
+-    """Copy the frozen root to ``pair.dest`` and triage every case there, in series."""
++             env: dict[str, str] | None = None, log: Callable[[str], None] = print,
++             case_parallel: int = 1) -> dict[str, Any]:
++    """Copy the frozen root to ``pair.dest`` and triage every case there.
++
++    ``case_parallel`` cases run at once, each with ``workers`` conversations, so
++    the pool holds ``case_parallel * workers`` conversations across the whole
++    suite. With more than one, cases are started largest first (longest
++    processing time first), so the last case to finish is a small one.
++    """
++    import threading
++    from concurrent.futures import ThreadPoolExecutor
++
+     env = env if env is not None else child_env()
+     copies = copy_frozen(frozen, pair.dest, cases)
+     doc: dict[str, Any] = {
+         "run_id": pair.run_id, "row": pair.row, "sample": pair.sample, "backend": backend,
+-        "workers": workers, "case_timeout_s": case_timeout, "frozen_root": str(Path(frozen).resolve()),
++        "workers": workers, "case_parallel": case_parallel, "case_timeout_s": case_timeout,
++        "frozen_root": str(Path(frozen).resolve()),
+         "triaged_with_commit": _git("rev-parse", "HEAD"), "status": "running", "started": _now(),
+         "failures": [],
+     }
+     _write_json(pair.dest / "batch.json", doc)
+     (pair.dest / "start.txt").write_text(f"{time.time():.3f}")
+-    for n, case_dir in enumerate(copies, 1):
++    lock = threading.Lock()
++    order = (sorted(copies, key=_records_in, reverse=True) if case_parallel > 1 else list(copies))
++
++    def one(n: int, case_dir: Path) -> None:
+         case = subject_of(case_dir)
+         log(f"[{pair.run_id} {n}/{len(copies)}] {case} ...")
+         t0 = time.time()
+         rc = runner(triage_command(python, case_dir, pair.row, backend, workers),
+                     log_path=pair.dest / "logs" / f"{case}.log", timeout=case_timeout, env=env, cwd=REPO_ROOT)
+         t1 = time.time()
+-        _append_timing(pair.dest, case, t0, t1, rc)
+         missing = not_triaged(case_dir)
+         reason = None
+         if rc == TIMEOUT_RC:
+@@ -317,12 +336,23 @@ def run_pair(pair: Pair, frozen: Path, cases: Sequence[Path], *, backend: str, w
+             reason = "no llm/triage.jsonl"
+         elif missing:
+             reason = f"{missing} candidate(s) not triaged"
+-        if reason:
+-            doc["failures"].append({"case": case, "reason": reason})
++        with lock:
++            _append_timing(pair.dest, case, t0, t1, rc)
++            if reason:
++                doc["failures"].append({"case": case, "reason": reason})
++            _write_json(pair.dest / "batch.json", doc)
+         log(f"[{pair.run_id} {n}/{len(copies)}] {case} exit {rc} in {t1 - t0:.0f} s"
+             + (f" -- FAILED: {reason}" if reason else ""))
+-        _write_json(pair.dest / "batch.json", doc)
++
++    if case_parallel <= 1:
++        for n, case_dir in enumerate(order, 1):
++            one(n, case_dir)
++    else:
++        with ThreadPoolExecutor(max_workers=case_parallel) as pool:
++            for future in [pool.submit(one, n, c) for n, c in enumerate(order, 1)]:
++                future.result()
+     (pair.dest / "end.txt").write_text(f"{time.time():.3f}")
++    doc["failures"].sort(key=lambda f: f["case"])
+     doc["status"] = "failed" if doc["failures"] else "ok"
+     doc["finished"] = _now()
+     _write_json(pair.dest / "batch.json", doc)
+@@ -342,7 +372,7 @@ def pair_status(pair: Pair) -> str | None:
+ def run_plan(pairs: Sequence[Pair], frozen: Path, *, backend: str, workers: int, case_timeout: float,
+              python: str = sys.executable, resume: bool = False, keep_going: bool = False,
+              runner: Runner = run_logged, env: dict[str, str] | None = None,
+-             log: Callable[[str], None] = print) -> list[dict[str, Any]]:
++             log: Callable[[str], None] = print, case_parallel: int = 1) -> list[dict[str, Any]]:
+     """Run ``pairs`` in series. An existing pair is skipped only with ``resume`` and
+     only if it finished ``ok``; anything else in the way is an error, never overwritten."""
+     cases = frozen_cases(frozen)
+@@ -357,7 +387,7 @@ def run_plan(pairs: Sequence[Pair], frozen: Path, *, backend: str, workers: int,
+             continue
+         log(f"== pair {i}/{len(pairs)} {pair.run_id} -> {pair.dest}")
+         doc = run_pair(pair, frozen, cases, backend=backend, workers=workers, case_timeout=case_timeout,
+-                       python=python, runner=runner, env=env, log=log)
++                       python=python, runner=runner, env=env, log=log, case_parallel=case_parallel)
+         done.append(doc)
+         log(f"== pair {pair.run_id}: {doc['status']}"
+             + (f" ({len(doc['failures'])} failing case(s))" if doc["failures"] else ""))
+diff --git a/project-src/src/irqrace/cli.py b/project-src/src/irqrace/cli.py
+index ad4f147..8c80d57 100644
+--- a/project-src/src/irqrace/cli.py
++++ b/project-src/src/irqrace/cli.py
+@@ -826,6 +826,7 @@ def cmd_llm_triage(args: argparse.Namespace) -> int:
+                 workers=args.workers,
+                 by_interval=args.by_interval,
+                 budget=budget,
++                by_variable=args.by_variable,
+             )
+         except (BackendError, RefusalError) as e:
+             return _err(str(e))
+@@ -1103,6 +1104,8 @@ def build_parser() -> argparse.ArgumentParser:
+     mt.add_argument("--workers", type=int, default=1, help="conversations at a time")
+     mt.add_argument("--by-interval", action="store_true",
+                     help="one conversation per (variable, A1, A2, pattern); every triple stays in the report")
++    mt.add_argument("--by-variable", action="store_true",
++                    help="experimental: one checklist conversation per shared variable (<= 20 triples)")
+     mt.add_argument("--max-requests", type=int, help="budget: what is left out stays uncertain, with the reason")
+     mt.add_argument("--max-tokens", type=int, help="budget, in input plus output tokens")
+     mt.add_argument("--max-usd", type=float, help="budget, in dollars; needs a backend that reports prices")
+diff --git a/project-src/src/irqrace/llm/backends/claude_cli_backend.py b/project-src/src/irqrace/llm/backends/claude_cli_backend.py
+index 5bdfd52..ad197d3 100644
+--- a/project-src/src/irqrace/llm/backends/claude_cli_backend.py
++++ b/project-src/src/irqrace/llm/backends/claude_cli_backend.py
+@@ -54,6 +54,9 @@ putting it in a cost column would be a claim this run did not incur.
+ * a multi-turn request (only rows with C4 requests send one) is flattened into a
+   single prompt without the model's earlier turns, because ``claude -p`` takes
+   one user turn;
++* ``claude-cli:<model>@<effort>`` (``sonnet@low``) passes ``--effort``; the
++  suffix stays in :attr:`spec`, so the manifest says which effort answered.
++  Without it the CLI's default applies, as in every run before 2026-11-19;
+ * a model alias (``sonnet``, ``opus``) resolves to whatever the CLI maps it to
+   that day. :attr:`ClaudeCLIBackend.resolved_model` records what actually
+   answered; prefer a full model id for any number that goes into the thesis.
+@@ -84,6 +87,7 @@ from irqrace.llm.backends.base import (
+ 
+ DEFAULT_EXECUTABLE = "claude"
+ DEFAULT_TIMEOUT_S = 600.0
++EFFORTS = ("low", "medium", "high", "xhigh", "max")
+ 
+ #: Credentials that would make the CLI bill an API account instead of the plan.
+ _API_AUTH_VARS = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN")
+@@ -105,10 +109,17 @@ class ClaudeCLIBackend(Backend):
+         runner: Runner | None = None,
+     ):
+         super().__init__(model)
++        name, _, effort = model.partition("@")
++        if effort and effort not in EFFORTS:
++            raise BackendError(f"claude-cli: unknown effort {effort!r}; known: {', '.join(EFFORTS)}")
++        #: The ``--model`` argument, without the effort suffix.
++        self.cli_model = name
++        #: ``--effort``, or ``None`` for the CLI's default.
++        self.effort = effort or None
+         self.executable = (
+             executable or os.environ.get("IRQRACE_CLAUDE_CLI") or DEFAULT_EXECUTABLE
+         )
+-        self.timeout_s = timeout_s or DEFAULT_TIMEOUT_S
++        self.timeout_s = timeout_s or float(os.environ.get("IRQRACE_CLAUDE_TIMEOUT") or DEFAULT_TIMEOUT_S)
+         self.stop_checker = stop_checker
+         self._runner = runner or _run
+         #: The model the CLI reported answering with on the last call.
+@@ -160,7 +171,7 @@ class ClaudeCLIBackend(Backend):
+         exe = shutil.which(self.executable) or self.executable
+         argv = [
+             exe, "-p",
+-            "--model", self.model,
++            "--model", self.cli_model,
+             "--output-format", "json",
+             "--system-prompt", request.system,
+             "--tools", "",
+@@ -169,6 +180,8 @@ class ClaudeCLIBackend(Backend):
+             "--setting-sources", "",
+             "--no-session-persistence",
+         ]
++        if self.effort:
++            argv += ["--effort", self.effort]
+         if request.schema is not None:
+             argv += ["--json-schema", json.dumps(request.schema)]
+         return argv
+diff --git a/project-src/src/irqrace/llm/checklist.py b/project-src/src/irqrace/llm/checklist.py
+new file mode 100644
+index 0000000..3112fdb
+--- /dev/null
++++ b/project-src/src/irqrace/llm/checklist.py
+@@ -0,0 +1,260 @@
++"""Triage by variable, with a checklist (temporary experiment, 2026-11-21).
++
++Every candidate on one shared variable goes into one conversation: the facts the
++candidates share are rendered once, each candidate adds only what differs, and
++the model answers one verdict per candidate id. Feasibility and harmfulness stay
++separate calls (D#3), so the experiment changes one thing: how many
++conversations produce the ordering.
++
++Recall is untouched for the same reason as :mod:`irqrace.llm.intervals`: triage
++drops nothing (Soundness Assumptions H3). What the code, not the model, enforces:
++
++* a candidate the answer leaves out is ``uncertain`` with the reason;
++* an answer naming an id twice, or an id it was not asked about, is rejected and
++  the group falls back to one conversation per candidate;
++* ``infeasible`` without a blocking element is checked per candidate exactly as
++  :class:`~irqrace.llm.verdict.Triage` checks it for a single conversation.
++"""
++
++from __future__ import annotations
++
++import json
++from typing import Any
++
++from pydantic import BaseModel, Field
++
++from irqrace.llm.verdict import (
++    Feasibility,
++    FeasibilityAnswer,
++    Harmfulness,
++    HarmfulnessAnswer,
++    Provenance,
++    Triage,
++)
++
++#: Items per conversation. Larger variables are split by interval.
++MAX_ITEMS = 20
++
++CHECKLIST_ASSET = "checklist.md"
++
++
++# -- grouping ----------------------------------------------------------------
++
++
++def _access(record: dict[str, Any], role: str) -> dict[str, Any]:
++    return next(a for a in record["accesses"] if a["role"] == role)
++
++
++def variable_key(record: dict[str, Any]) -> tuple[Any, ...]:
++    """(subject, variable, declaration): the candidates that share one variable."""
++    var = record["variable"]
++    decl = var.get("decl") or {}
++    return (json.dumps(record.get("subject"), sort_keys=True), var.get("name"),
++            decl.get("file"), decl.get("line"))
++
++
++def _interval_key(record: dict[str, Any]) -> tuple[Any, ...]:
++    a1, a2 = _access(record, "A1")["source"], _access(record, "A2")["source"]
++    return (a1.get("file"), a1.get("line"), a2.get("file"), a2.get("line"), record["pattern"])
++
++
++def group_variables(records: list[dict[str, Any]], max_items: int = MAX_ITEMS) -> list[list[dict[str, Any]]]:
++    """Records by variable, in order of first appearance, chunked to ``max_items``.
++
++    A chunk never splits an interval unless the interval alone exceeds the limit,
++    so the Bs of one A1..A2 stretch are judged side by side.
++    """
++    by_var: dict[tuple[Any, ...], list[dict[str, Any]]] = {}
++    for record in records:
++        by_var.setdefault(variable_key(record), []).append(record)
++    groups: list[list[dict[str, Any]]] = []
++    for members in by_var.values():
++        intervals: dict[tuple[Any, ...], list[dict[str, Any]]] = {}
++        for record in members:
++            intervals.setdefault(_interval_key(record), []).append(record)
++        chunk: list[dict[str, Any]] = []
++        for interval in intervals.values():
++            while len(interval) > max_items:
++                if chunk:
++                    groups.append(chunk)
++                    chunk = []
++                groups.append(interval[:max_items])
++                interval = interval[max_items:]
++            if len(chunk) + len(interval) > max_items:
++                groups.append(chunk)
++                chunk = []
++            chunk.extend(interval)
++        if chunk:
++            groups.append(chunk)
++    return groups
++
++
++# -- rendering ----------------------------------------------------------------
++
++
++def _numbered(entry: dict[str, Any]) -> str:
++    first = entry["line_start"]
++    width = len(str(first + entry["code"].count("\n")))
++    numbered = "\n".join(f"{first + k:>{width}}  {text}" for k, text in enumerate(entry["code"].split("\n")))
++    return (f'<source function="{entry["function"]}" '
++            f'location="{entry["file"]}:{entry["line_start"]}-{entry["line_end"]}"'
++            + (' truncated="true"' if entry.get("truncated") else "")
++            + f'>\n{numbered}\n</source>')
++
++
++def render_checklist(group: list[dict[str, Any]]) -> str:
++    """Shared fields once, per-candidate fields per item, every source body once.
++
++    A field is shared when its value is identical in every record of the group;
++    nothing is summarised or dropped, so each item plus the shared part is the
++    whole C2 record the per-candidate prompt would have shown.
++    """
++    keys = [k for k in group[0] if k != "enclosing_source"]
++    shared = {k: group[0][k] for k in keys if all(r.get(k) == group[0][k] for r in group)}
++    parts = ["<shared_context>",
++             json.dumps(shared, indent=2, ensure_ascii=False),
++             "</shared_context>"]
++    seen: set[tuple[Any, ...]] = set()
++    for record in group:
++        for entry in record.get("enclosing_source", []):
++            key = (entry["file"], entry["function"], entry["line_start"], entry["line_end"])
++            if key not in seen:
++                seen.add(key)
++                parts.append(_numbered(entry))
++    parts.append(f'\n<checklist count="{len(group)}">')
++    for record in group:
++        own = {k: v for k, v in record.items() if k != "enclosing_source" and k not in shared}
++        own["id"] = record["id"]
++        parts += [f'<item id="{record["id"]}">',
++                  json.dumps(own, indent=2, ensure_ascii=False),
++                  "</item>"]
++    parts.append("</checklist>")
++    return "\n".join(parts)
++
++
++# -- answer schemas -------------------------------------------------------------
++
++
++class SharedFinding(BaseModel):
++    id: str = Field(description="F1, F2, ...")
++    statement: str = Field(description="A fact about the variable as a whole, with line numbers.")
++
++
++class FeasibilityItem(BaseModel):
++    candidate_id: str
++    reasoning: str = Field(description=(
++        "This item's interleaving, on its own lines: which flow preempts where, the masking "
++        "state there, and which shared findings apply and why they cover this item's accesses."))
++    uses_findings: list[str] = Field(default_factory=list)
++    blocking_element: str | None = Field(default=None, description=(
++        "If and only if the verdict is 'infeasible': the single element that makes it "
++        "impossible, cited with this item's own line numbers. Null otherwise."))
++    verdict: Feasibility
++    confidence: float = Field(ge=0.0, le=1.0)
++
++
++class FeasibilityChecklist(BaseModel):
++    shared_findings: list[SharedFinding]
++    items: list[FeasibilityItem]
++
++
++class HarmfulnessItem(BaseModel):
++    candidate_id: str
++    reasoning: str = Field(description="Apply the stated harmfulness criterion to this item.")
++    criterion_matched: str | None = Field(default=None, description=(
++        "Which clause of the stated criterion fired, or the named reason for benignity. "
++        "A benign verdict with no criterion named is not acceptable."))
++    verdict: Harmfulness
++    confidence: float = Field(ge=0.0, le=1.0)
++
++
++class HarmfulnessChecklist(BaseModel):
++    shared_findings: list[SharedFinding]
++    items: list[HarmfulnessItem]
++
++
++FEASIBILITY_TASK = (
++    "For every item in the checklist, decide whether its interleaving can actually occur in "
++    "this program. First establish the shared findings, then answer each item by its id, "
++    "exactly once."
++)
++
++HARMFULNESS_TASK = (
++    "The interleavings of these items are possible. For every item, decide whether it is "
++    "harmful, applying the stated criterion. Do not revisit feasibility. Answer each item by "
++    "its id, exactly once."
++)
++
++
++class ChecklistRejected(ValueError):
++    """The answer named an id twice or one it was not asked about."""
++
++
++def _index(items: list[Any], asked: set[str], stage: str) -> dict[str, Any]:
++    out: dict[str, Any] = {}
++    for item in items:
++        if item.candidate_id not in asked:
++            raise ChecklistRejected(f"{stage}: answered an id that was not asked: {item.candidate_id}")
++        if item.candidate_id in out:
++            raise ChecklistRejected(f"{stage}: answered {item.candidate_id} twice")
++        out[item.candidate_id] = item
++    return out
++
++
++def triage_checklist(client: Any, group: list[dict[str, Any]], *, run_dir: Any = None) -> dict[str, Triage | str]:
++    """One outcome per candidate of ``group``: a :class:`Triage`, or why there is none.
++
++    ``client`` is a :class:`~irqrace.llm.client.TriageClient`; its turn loop,
++    spend accounting and backend are reused unchanged.
++    """
++    from irqrace import contracts
++    from irqrace.llm.client import Conversation
++    from irqrace.llm.resolver import RecordBackedResolver
++
++    for record in group:
++        contracts.validate("c2", record, what=f"candidate {record.get('id')}")
++    lead = group[0]
++    with client._totals:
++        client.spend.candidates += len(group)
++    convo = Conversation(
++        candidate_id=lead["id"],
++        live_path=run_dir / "llm" / lead["id"] / "turns.jsonl" if run_dir is not None else None,
++    )
++    rendered = render_checklist(group)
++    resolver = RecordBackedResolver(lead)  # unused: the checklist rows send no C4 requests
++    asked = {r["id"] for r in group}
++
++    feas_answer, prov = client._ask(FeasibilityChecklist, FEASIBILITY_TASK, rendered, resolver,
++                                    convo, "feasibility", checklist=True)
++    feas = _index(feas_answer.items, asked, "feasibility")
++
++    harm: dict[str, Any] = {}
++    possible = [r for r in group if r["id"] in feas and feas[r["id"]].verdict is not Feasibility.infeasible]
++    if possible:
++        harm_rendered = rendered if len(possible) == len(group) else render_checklist(possible)
++        harm_answer, prov = client._ask(HarmfulnessChecklist, HARMFULNESS_TASK, harm_rendered, resolver,
++                                        convo, "harmfulness", checklist=True)
++        harm = _index(harm_answer.items, {r["id"] for r in possible}, "harmfulness")
++
++    outcomes: dict[str, Triage | str] = {}
++    for record in group:
++        cid = record["id"]
++        f = feas.get(cid)
++        if f is None:
++            outcomes[cid] = "checklist: the feasibility answer left this candidate out"
++            continue
++        h = harm.get(cid)
++        if f.verdict is not Feasibility.infeasible and h is None:
++            outcomes[cid] = "checklist: the harmfulness answer left this candidate out"
++            continue
++        outcomes[cid] = Triage(
++            candidate_id=cid,
++            fingerprint=record["fingerprint"],
++            feasibility=FeasibilityAnswer(reasoning=f.reasoning, blocking_element=f.blocking_element,
++                                          verdict=f.verdict, confidence=f.confidence),
++            harmfulness=(HarmfulnessAnswer(reasoning=h.reasoning, criterion_matched=h.criterion_matched,
++                                           verdict=h.verdict, confidence=h.confidence) if h else None),
++            produced_by=Provenance(backend=prov.backend, structured_mode=prov.structured_mode),
++            interval_of=lead["id"] if cid != lead["id"] else None,
++        )
++    return outcomes
+diff --git a/project-src/src/irqrace/llm/client.py b/project-src/src/irqrace/llm/client.py
+index 140e960..fdaac63 100644
+--- a/project-src/src/irqrace/llm/client.py
++++ b/project-src/src/irqrace/llm/client.py
+@@ -281,8 +281,14 @@ class TriageClient:
+         resolver: Resolver,
+         convo: Conversation,
+         stage: str,
++        checklist: bool = False,
+     ) -> tuple[Any, Provenance]:
+         system = self.config.system_prompt(stage if self.config.decomposition else None)
++        if checklist:
++            from irqrace.llm.checklist import CHECKLIST_ASSET
++            from irqrace.llm.prompts import _read
++
++            system += "\n\n---\n\n" + _read(CHECKLIST_ASSET)
+         messages: list[dict[str, str]] = [
+             {"role": "user", "content": f"{task}\n\n{rendered}"}
+         ]
+diff --git a/project-src/src/irqrace/llm/pipeline.py b/project-src/src/irqrace/llm/pipeline.py
+index 8711c40..6b185cc 100644
+--- a/project-src/src/irqrace/llm/pipeline.py
++++ b/project-src/src/irqrace/llm/pipeline.py
+@@ -117,6 +117,7 @@ def triage_records(
+     run_dir: Path,
+     workers: int = 1,
+     by_interval: bool = False,
++    by_variable: bool = False,
+     budget: Budget | None = None,
+     should_stop: Callable[[], bool] = lambda: False,
+     on_start: Callable[[dict[str, Any]], None] | None = None,
+@@ -130,7 +131,12 @@ def triage_records(
+     A candidate an interrupted run never reached has no entry. *on_done* runs on
+     the calling thread, one conversation at a time; *on_start* on the worker.
+     """
+-    groups = group_intervals(records) if by_interval else [[r] for r in records]
++    if by_variable:
++        from irqrace.llm.checklist import group_variables
++
++        groups = group_variables(records)
++    else:
++        groups = group_intervals(records) if by_interval else [[r] for r in records]
+     if budget is not None:
+         groups = sorted(groups, key=signal)  # the sort is stable: ties keep their order
+     stop = threading.Event()
+@@ -145,6 +151,36 @@ def triage_records(
+             on_start(lead)
+         interval = {"same_interval": group[1:]} if len(group) > 1 else {}
+         try:
++            if by_variable and len(group) > 1:
++                from irqrace.llm.checklist import ChecklistRejected, triage_checklist
++
++                try:
++                    out = triage_checklist(client, group, run_dir=run_dir)
++                    # An item the checklist answer left out is asked on its own,
++                    # once: an omission says nothing about the candidate, and
++                    # one conversation per candidate is what the baseline does.
++                    for member in group:
++                        reason = out.get(member["id"])
++                        if isinstance(reason, str) and reason.startswith("checklist:"):
++                            try:
++                                out[member["id"]] = client.triage(member, resolver=make_resolver(member), run_dir=run_dir)
++                            except RefusalError as err:
++                                out[member["id"]] = f"the model refused: {err} (after {reason})"
++                            except (BackendError, RuntimeError, ValueError) as err:
++                                out[member["id"]] = f"backend error: {err} (after {reason})"
++                    return out
++                except ChecklistRejected as e:
++                    # Fall back to one conversation per candidate: a rejected
++                    # answer says nothing about any of them.
++                    out: dict[str, Triage | str] = {}
++                    for member in group:
++                        try:
++                            out[member["id"]] = client.triage(member, resolver=make_resolver(member), run_dir=run_dir)
++                        except RefusalError as err:
++                            out[member["id"]] = f"the model refused: {err}"
++                        except (BackendError, RuntimeError, ValueError) as err:
++                            out[member["id"]] = f"backend error: {err} (after checklist rejected: {e})"
++                    return out
+             return client.triage(lead, resolver=make_resolver(lead), run_dir=run_dir, **interval)
+         except InterruptedError:
+             stop.set()
+@@ -156,12 +192,14 @@ def triage_records(
+ 
+     outcomes: dict[str, Triage | str] = {}
+ 
+-    def settle(group: list[dict[str, Any]], result: Triage | str | None) -> None:
++    def settle(group: list[dict[str, Any]], result: Triage | str | dict | None) -> None:
+         if result is None:
+             return
+         settled: dict[str, Triage | str] = {}
+         for member in group:
+-            if isinstance(result, Triage) and len(group) > 1:
++            if isinstance(result, dict):
++                settled[member["id"]] = result.get(member["id"], "checklist: no outcome")
++            elif isinstance(result, Triage) and len(group) > 1:
+                 settled[member["id"]] = result.model_copy(
+                     update={
+                         "candidate_id": member["id"],
+@@ -186,7 +224,8 @@ def triage_records(
+     return outcomes
+ 
+ 
+-def triage_settings(workers: int, by_interval: bool, budget: Budget | None) -> dict[str, Any]:
++def triage_settings(workers: int, by_interval: bool, budget: Budget | None,
++                    by_variable: bool = False) -> dict[str, Any]:
+     """What a run did beyond the prompt, for ``manifest.json["llm"]``.
+ 
+     These change how much of the ranking a model looked at, so they travel with
+@@ -195,6 +234,7 @@ def triage_settings(workers: int, by_interval: bool, budget: Budget | None) -> d
+     return {
+         "workers": workers,
+         "by_interval": by_interval,
++        "by_variable": by_variable,
+         "budget": budget.as_manifest() if budget is not None else None,
+     }
+ 
+@@ -210,6 +250,7 @@ def triage_store(
+     workers: int = 1,
+     by_interval: bool = False,
+     budget: Budget | None = None,
++    by_variable: bool = False,
+ ) -> dict[str, Any]:
+     """Run Track B triage over all candidates in ``store`` and write C3 outputs.
+ 
+@@ -243,7 +284,7 @@ def triage_store(
+         else datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d"),
+         "votes": samples,
+         "seed": None,
+-        **triage_settings(workers, by_interval, budget),
++        **triage_settings(workers, by_interval, budget, by_variable),
+     }
+     store.write_manifest(manifest)
+     store.set_stage("triage", "running", candidates_in=len(records))
+@@ -262,6 +303,7 @@ def triage_store(
+             run_dir=store.root,
+             workers=workers,
+             by_interval=by_interval,
++            by_variable=by_variable,
+             budget=budget,
+         )
+         sample_triages = []
+diff --git a/project-src/src/irqrace/llm/prompts/checklist.md b/project-src/src/irqrace/llm/prompts/checklist.md
+new file mode 100644
+index 0000000..41122a1
+--- /dev/null
++++ b/project-src/src/irqrace/llm/prompts/checklist.md
+@@ -0,0 +1,31 @@
++## This request is a checklist
++
++Earlier sections describe one candidate. This request carries **every candidate on one shared
++variable** of the same program, listed as `<item>` entries inside `<checklist>`. The fields they
++share are in `<shared_context>` and the source bodies are given once; each item carries only the
++fields where it differs (its accesses, call paths, masking state, solver verdict, pattern). An
++item plus the shared context is the whole context record of that candidate. Everything said
++above about one candidate applies to each item.
++
++Work in two parts, in this order.
++
++**1. Shared findings.** Before judging any item, state the facts that hold for the variable as a
++whole, each with an identifier (`F1`, `F2`, ...) and line numbers: which flows access the
++variable and which of them can preempt which; every masking region that covers its accesses and
++which flows may unmask inside it; the values the writers list allows for each guard on it (only
++when the list is `proven`); for arrays and pointers, which accesses can address the same storage.
++A fact you cannot establish is not a finding: leave it out.
++
++**2. One answer per item.** Then answer every item, by its id, exactly once.
++
++- Judge each item on its own lines. A shared finding decides an item only if you say **which of
++  the item's accesses it covers**: an item is blocked by a masking region only if its A1-to-A2
++  interval lies inside that region and its B is in a flow the region masks.
++- Items that look alike are still separate questions. They differ in B, in the path or in the
++  interval; check the difference before reusing an argument.
++- `infeasible` needs the single blocking element, cited with the item's own line numbers.
++- If you cannot settle an item, answer `uncertain` for it. Do not let one hard item lower your
++  care on the others, and do not skip any.
++
++Do not answer an id that is not in the checklist, and do not merge items. The analyzer checks
++that every id is answered once; an item left out is reported as uncertain.

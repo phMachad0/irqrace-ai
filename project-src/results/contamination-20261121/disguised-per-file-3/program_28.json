@@ -1,0 +1,28 @@
+{
+  "case": "program_28",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_glacier[40]",
+        "a1_line": 15,
+        "a1_kind": "write",
+        "b_line": 21,
+        "b_kind": "write",
+        "a2_line": 30,
+        "a2_kind": "read",
+        "why": "The ISR can preempt between the task's write of v_glacier[40] and its later read, overwriting it with 0x05, so the read sees a value the task did not write."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_glacier[40]\",\"a1_line\":15,\"a1_kind\":\"write\",\"b_line\":21,\"b_kind\":\"write\",\"a2_line\":30,\"a2_kind\":\"read\",\"why\":\"The ISR can preempt between the task's write of v_glacier[40] and its later read, overwriting it with 0x05, so the read sees a value the task did not write.\"}]}",
+  "wall_s": 5.675122499465942,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 446,
+    "cache_read": 1829,
+    "cache_write": 489,
+    "latency_s": 5.674940375989536
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

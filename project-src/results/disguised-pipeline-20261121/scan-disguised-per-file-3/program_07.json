@@ -1,0 +1,48 @@
+{
+  "case": "program_07",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_pylon",
+        "a1_line": 23,
+        "a1_kind": "read",
+        "b_line": 13,
+        "b_kind": "write",
+        "a2_line": 25,
+        "a2_kind": "read",
+        "why": "ISR increments v_pylon between the task's two reads, so the task indexes v_vessel with different values."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 23,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 25,
+        "a2_kind": "read",
+        "why": "If v_pylon is 2, the ISR overwrites v_vessel[2] between the task's write and read-back, so the task reads 0x09 instead of 0x01."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 29,
+        "a1_kind": "write",
+        "b_line": 11,
+        "b_kind": "write",
+        "a2_line": 33,
+        "a2_kind": "read",
+        "why": "When i==2 the task writes v_vessel[2]. The ISR overwrites it before the task reads v_vessel[2] at line 33."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_pylon\",\"a1_line\":23,\"a1_kind\":\"read\",\"b_line\":13,\"b_kind\":\"write\",\"a2_line\":25,\"a2_kind\":\"read\",\"why\":\"ISR increments v_pylon between the task's two reads, so the task indexes v_vessel with different values.\"},{\"variable\":\"v_vessel\",\"a1_line\":23,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"write\",\"a2_line\":25,\"a2_kind\":\"read\",\"why\":\"If v_pylon is 2, the ISR overwrites v_vessel[2] between the task's write and read-back, so the task reads 0x09 instead of 0x01.\"},{\"variable\":\"v_vessel\",\"a1_line\":29,\"a1_kind\":\"write\",\"b_line\":11,\"b_kind\":\"write\",\"a2_line\":33,\"a2_kind\":\"read\",\"why\":\"When i==2 the task writes v_vessel[2]. The ISR overwrites it before the task reads v_vessel[2] at line 33.\"}]}",
+  "wall_s": 8.878045082092285,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 991,
+    "cache_read": 1827,
+    "cache_write": 491,
+    "latency_s": 8.877850216988008
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

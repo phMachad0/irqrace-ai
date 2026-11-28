@@ -1,0 +1,38 @@
+{
+  "case": "program_07",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_pylon",
+        "a1_line": 23,
+        "a1_kind": "read",
+        "b_line": 13,
+        "b_kind": "write",
+        "a2_line": 25,
+        "a2_kind": "read",
+        "why": "The ISR increments v_pylon between two reads of it in the task, breaking atomicity."
+      },
+      {
+        "variable": "v_vessel[v_pylon]",
+        "a1_line": 23,
+        "a1_kind": "write",
+        "b_line": 14,
+        "b_kind": "write",
+        "a2_line": 25,
+        "a2_kind": "read",
+        "why": "The ISR writes to the same vessel element that the task writes then reads, allowing the ISR write to occur between the task's write and read."
+      }
+    ]
+  },
+  "text": "{\n  \"violations\": [\n    {\n      \"variable\": \"v_pylon\",\n      \"a1_line\": 23,\n      \"a1_kind\": \"read\",\n      \"b_line\": 13,\n      \"b_kind\": \"write\",\n      \"a2_line\": 25,\n      \"a2_kind\": \"read\",\n      \"why\": \"The ISR increments v_pylon between two reads of it in the task, breaking atomicity.\"\n    },\n    {\n      \"variable\": \"v_vessel[v_pylon]\",\n      \"a1_line\": 23,\n      \"a1_kind\": \"write\",\n      \"b_line\": 14,\n      \"b_kind\": \"write\",\n      \"a2_line\": 25,\n      \"a2_kind\": \"read\",\n      \"why\": \"The ISR writes to the same vessel element that the task writes then reads, allowing the ISR write to occur between the task's write and read.\"\n    }\n  ]\n}",
+  "wall_s": 14.467966794967651,
+  "usage": {
+    "input_tokens": 372,
+    "output_tokens": 1670,
+    "cache_read": 512,
+    "cache_write": 0,
+    "latency_s": 14.467855734023033
+  },
+  "model": null,
+  "backend": "openai:openai/gpt-oss-120b"
+}

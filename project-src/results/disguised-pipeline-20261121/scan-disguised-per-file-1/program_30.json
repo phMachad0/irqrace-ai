@@ -1,0 +1,38 @@
+{
+  "case": "program_30",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_vessel",
+        "a1_line": 30,
+        "a1_kind": "write",
+        "b_line": 23,
+        "b_kind": "read",
+        "a2_line": 31,
+        "a2_kind": "write",
+        "why": "On a later run of irq_zenith, interrupt 2 is already enabled (from the earlier enable_isr(2) at line 33). The higher-priority irq_indigo can then preempt between the two writes and read the intermediate value 0."
+      },
+      {
+        "variable": "v_quartz",
+        "a1_line": 45,
+        "a1_kind": "write",
+        "b_line": 14,
+        "b_kind": "read",
+        "a2_line": 48,
+        "a2_kind": "write",
+        "why": "Once zenith has enabled interrupt 2, irq_indigo can preempt the task between the clearing loop and the v_quartz[TRIGGER]=1 write. It then reads v_quartz[TRIGGER] (when v_willow==1) and sees the cleared value 0 instead of the final 1."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_vessel\",\"a1_line\":30,\"a1_kind\":\"write\",\"b_line\":23,\"b_kind\":\"read\",\"a2_line\":31,\"a2_kind\":\"write\",\"why\":\"On a later run of irq_zenith, interrupt 2 is already enabled (from the earlier enable_isr(2) at line 33). The higher-priority irq_indigo can then preempt between the two writes and read the intermediate value 0.\"},{\"variable\":\"v_quartz\",\"a1_line\":45,\"a1_kind\":\"write\",\"b_line\":14,\"b_kind\":\"read\",\"a2_line\":48,\"a2_kind\":\"write\",\"why\":\"Once zenith has enabled interrupt 2, irq_indigo can preempt the task between the clearing loop and the v_quartz[TRIGGER]=1 write. It then reads v_quartz[TRIGGER] (when v_willow==1) and sees the cleared value 0 instead of the final 1.\"}]}",
+  "wall_s": 10.378799676895142,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1177,
+    "cache_read": 975,
+    "cache_write": 1492,
+    "latency_s": 10.378604151017498
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

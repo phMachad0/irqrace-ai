@@ -1,0 +1,78 @@
+{
+  "case": "program_18",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_vessel",
+        "a1_line": 22,
+        "a1_kind": "write",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 33,
+        "a2_kind": "read",
+        "why": "ISR write can occur between task's write and subsequent read in fn_juniper."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 33,
+        "a1_kind": "read",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 34,
+        "a2_kind": "write",
+        "why": "ISR resets v_vessel after the check, then the task overwrites with 12 based on stale read."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 33,
+        "a1_kind": "read",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 36,
+        "a2_kind": "write",
+        "why": "ISR write between the check and the else-branch write makes the decision stale."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 34,
+        "a1_kind": "write",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 57,
+        "a2_kind": "read",
+        "why": "ISR can overwrite the value written at 34 before fn_nectar reads it."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 36,
+        "a1_kind": "write",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 57,
+        "a2_kind": "read",
+        "why": "ISR can overwrite the value written at 36 before fn_nectar reads it."
+      },
+      {
+        "variable": "v_vessel",
+        "a1_line": 57,
+        "a1_kind": "read",
+        "b_line": 41,
+        "b_kind": "write",
+        "a2_line": 29,
+        "a2_kind": "read",
+        "why": "Two reads of v_vessel in the task can see different values if the ISR writes between them."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_vessel\",\"a1_line\":22,\"a1_kind\":\"write\",\"b_line\":41,\"b_kind\":\"write\",\"a2_line\":33,\"a2_kind\":\"read\",\"why\":\"ISR write can occur between task's write and subsequent read in fn_juniper.\"},{\"variable\":\"v_vessel\",\"a1_line\":33,\"a1_kind\":\"read\",\"b_line\":41,\"b_kind\":\"write\",\"a2_line\":34,\"a2_kind\":\"write\",\"why\":\"ISR resets v_vessel after the check, then the task overwrites with 12 based on stale read.\"},{\"variable\":\"v_vessel\",\"a1_line\":33,\"a1_kind\":\"read\",\"b_line\":41,\"b_kind\":\"write\",\"a2_line\":36,\"a2_kind\":\"write\",\"why\":\"ISR write between the check and the else-branch write makes the decision stale.\"},{\"variable\":\"v_vessel\",\"a1_line\":34,\"a1_kind\":\"write\",\"b_line\":41,\"b_kind\":\"write\",\"a2_line\":57,\"a2_kind\":\"read\",\"why\":\"ISR can overwrite the value written at 34 before fn_nectar reads it.\"},{\"variable\":\"v_vessel\",\"a1_line\":36,\"a1_kind\":\"write\",\"b_line\":41,\"b_kind\":\"write\",\"a2_line\":57,\"a2_kind\":\"read\",\"why\":\"ISR can overwrite the value written at 36 before fn_nectar reads it.\"},{\"variable\":\"v_vessel\",\"a1_line\":57,\"a1_kind\":\"read\",\"b_line\":41,\"b_kind\":\"write\",\"a2_line\":29,\"a2_kind\":\"read\",\"why\":\"Two reads of v_vessel in the task can see different values if the ISR writes between them.\"}]}",
+  "wall_s": 9.803232908248901,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1180,
+    "cache_read": 2047,
+    "cache_write": 483,
+    "latency_s": 9.803044950996991
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

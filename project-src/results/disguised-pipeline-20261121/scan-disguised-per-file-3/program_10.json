@@ -1,0 +1,38 @@
+{
+  "case": "program_10",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_amber",
+        "a1_line": 19,
+        "a1_kind": "read",
+        "b_line": 29,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "irq_vessel can preempt irq_upland and call enable_isr(3), which unmasks irq_nimbus globally. Nimbus can then run between upland's two reads and write v_amber."
+      },
+      {
+        "variable": "v_fjord",
+        "a1_line": 23,
+        "a1_kind": "read",
+        "b_line": 30,
+        "b_kind": "write",
+        "a2_line": 25,
+        "a2_kind": "read",
+        "why": "After irq_vessel unmasks interrupt 3 during irq_upland, irq_nimbus can run between the two reads of v_fjord. It writes 0x09 only if v_delta is still 1."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_amber\",\"a1_line\":19,\"a1_kind\":\"read\",\"b_line\":29,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"irq_vessel can preempt irq_upland and call enable_isr(3), which unmasks irq_nimbus globally. Nimbus can then run between upland's two reads and write v_amber.\"},{\"variable\":\"v_fjord\",\"a1_line\":23,\"a1_kind\":\"read\",\"b_line\":30,\"b_kind\":\"write\",\"a2_line\":25,\"a2_kind\":\"read\",\"why\":\"After irq_vessel unmasks interrupt 3 during irq_upland, irq_nimbus can run between the two reads of v_fjord. It writes 0x09 only if v_delta is still 1.\"}]}",
+  "wall_s": 9.11496615409851,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 857,
+    "cache_read": 2002,
+    "cache_write": 488,
+    "latency_s": 9.114780017989688
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

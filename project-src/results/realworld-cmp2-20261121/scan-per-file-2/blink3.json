@@ -1,0 +1,168 @@
+{
+  "case": "blink3",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 123,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "write",
+        "why": "Timer_C (prio 4) can preempt the increment in Timer_A, and its write is lost."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "write",
+        "b_line": 123,
+        "b_kind": "write",
+        "a2_line": 97,
+        "a2_kind": "read",
+        "why": "Timer_C can overwrite timerCount between A's increment and its check."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 123,
+        "b_kind": "write",
+        "a2_line": 97,
+        "a2_kind": "read",
+        "why": "Timer_C's write can land between A's two reads, so they see different values."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 136,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "write",
+        "why": "Timer_Force (prio 3) can preempt the read-modify-write in Timer_A, and its increment is lost."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "write",
+        "b_line": 136,
+        "b_kind": "write",
+        "a2_line": 97,
+        "a2_kind": "read",
+        "why": "Timer_Force can change timerCount between A's increment and its check."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 136,
+        "b_kind": "write",
+        "a2_line": 97,
+        "a2_kind": "read",
+        "why": "Timer_Force's write can land between A's two reads."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 146,
+        "b_kind": "write",
+        "a2_line": 95,
+        "a2_kind": "write",
+        "why": "Timer_Reset (prio 5) can preempt the increment in Timer_A and its reset is lost."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "write",
+        "b_line": 146,
+        "b_kind": "write",
+        "a2_line": 97,
+        "a2_kind": "read",
+        "why": "Timer_Reset can zero timerCount between A's increment and its check."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 95,
+        "a1_kind": "read",
+        "b_line": 146,
+        "b_kind": "write",
+        "a2_line": 97,
+        "a2_kind": "read",
+        "why": "Timer_Reset's write can land between A's two reads."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 109,
+        "a1_kind": "write",
+        "b_line": 123,
+        "b_kind": "write",
+        "a2_line": 111,
+        "a2_kind": "read",
+        "why": "Timer_C can overwrite the value Timer_B just wrote before Timer_B reads it back."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 109,
+        "a1_kind": "write",
+        "b_line": 136,
+        "b_kind": "write",
+        "a2_line": 111,
+        "a2_kind": "read",
+        "why": "Timer_Force's increment can land between Timer_B's write and its check."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 109,
+        "a1_kind": "write",
+        "b_line": 146,
+        "b_kind": "write",
+        "a2_line": 111,
+        "a2_kind": "read",
+        "why": "Timer_Reset can zero timerCount between Timer_B's write and its check."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 123,
+        "a1_kind": "write",
+        "b_line": 146,
+        "b_kind": "write",
+        "a2_line": 125,
+        "a2_kind": "read",
+        "why": "Timer_Reset can zero timerCount between Timer_C's write and its check."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 136,
+        "a1_kind": "read",
+        "b_line": 123,
+        "b_kind": "write",
+        "a2_line": 136,
+        "a2_kind": "write",
+        "why": "Timer_C (prio 4) can preempt Timer_Force's increment and its write is lost."
+      },
+      {
+        "variable": "timerCount",
+        "a1_line": 136,
+        "a1_kind": "read",
+        "b_line": 146,
+        "b_kind": "write",
+        "a2_line": 136,
+        "a2_kind": "write",
+        "why": "Timer_Reset can preempt Timer_Force's increment and its reset is lost."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":123,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"Timer_C (prio 4) can preempt the increment in Timer_A, and its write is lost.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":123,\"b_kind\":\"write\",\"a2_line\":97,\"a2_kind\":\"read\",\"why\":\"Timer_C can overwrite timerCount between A's increment and its check.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":123,\"b_kind\":\"write\",\"a2_line\":97,\"a2_kind\":\"read\",\"why\":\"Timer_C's write can land between A's two reads, so they see different values.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"Timer_Force (prio 3) can preempt the read-modify-write in Timer_A, and its increment is lost.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":97,\"a2_kind\":\"read\",\"why\":\"Timer_Force can change timerCount between A's increment and its check.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":97,\"a2_kind\":\"read\",\"why\":\"Timer_Force's write can land between A's two reads.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":95,\"a2_kind\":\"write\",\"why\":\"Timer_Reset (prio 5) can preempt the increment in Timer_A and its reset is lost.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"write\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":97,\"a2_kind\":\"read\",\"why\":\"Timer_Reset can zero timerCount between A's increment and its check.\"},{\"variable\":\"timerCount\",\"a1_line\":95,\"a1_kind\":\"read\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":97,\"a2_kind\":\"read\",\"why\":\"Timer_Reset's write can land between A's two reads.\"},{\"variable\":\"timerCount\",\"a1_line\":109,\"a1_kind\":\"write\",\"b_line\":123,\"b_kind\":\"write\",\"a2_line\":111,\"a2_kind\":\"read\",\"why\":\"Timer_C can overwrite the value Timer_B just wrote before Timer_B reads it back.\"},{\"variable\":\"timerCount\",\"a1_line\":109,\"a1_kind\":\"write\",\"b_line\":136,\"b_kind\":\"write\",\"a2_line\":111,\"a2_kind\":\"read\",\"why\":\"Timer_Force's increment can land between Timer_B's write and its check.\"},{\"variable\":\"timerCount\",\"a1_line\":109,\"a1_kind\":\"write\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":111,\"a2_kind\":\"read\",\"why\":\"Timer_Reset can zero timerCount between Timer_B's write and its check.\"},{\"variable\":\"timerCount\",\"a1_line\":123,\"a1_kind\":\"write\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":125,\"a2_kind\":\"read\",\"why\":\"Timer_Reset can zero timerCount between Timer_C's write and its check.\"},{\"variable\":\"timerCount\",\"a1_line\":136,\"a1_kind\":\"read\",\"b_line\":123,\"b_kind\":\"write\",\"a2_line\":136,\"a2_kind\":\"write\",\"why\":\"Timer_C (prio 4) can preempt Timer_Force's increment and its write is lost.\"},{\"variable\":\"timerCount\",\"a1_line\":136,\"a1_kind\":\"read\",\"b_line\":146,\"b_kind\":\"write\",\"a2_line\":136,\"a2_kind\":\"write\",\"why\":\"Timer_Reset can preempt Timer_Force's increment and its reset is lost.\"}]}",
+  "wall_s": 16.794809341430664,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 2320,
+    "cache_read": 3801,
+    "cache_write": 489,
+    "latency_s": 16.794605216011405
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

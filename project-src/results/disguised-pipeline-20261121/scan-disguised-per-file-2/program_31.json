@@ -1,0 +1,58 @@
+{
+  "case": "program_31",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_basalt",
+        "a1_line": 21,
+        "a1_kind": "read",
+        "b_line": 14,
+        "b_kind": "write",
+        "a2_line": 22,
+        "a2_kind": "write",
+        "why": "disable_isr(1) masks only willow; higher-priority kestrel can still run between the check and the reset, so the reset overwrites its decrement."
+      },
+      {
+        "variable": "v_basalt",
+        "a1_line": 30,
+        "a1_kind": "write",
+        "b_line": 14,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "Kestrel can modify v_basalt after the rand() store and before the check at line 21."
+      },
+      {
+        "variable": "v_basalt",
+        "a1_line": 30,
+        "a1_kind": "write",
+        "b_line": 10,
+        "b_kind": "write",
+        "a2_line": 21,
+        "a2_kind": "read",
+        "why": "Willow is not yet masked between line 30 and the disable_isr(1) call, so it can change v_basalt before the check."
+      },
+      {
+        "variable": "v_basalt",
+        "a1_line": 10,
+        "a1_kind": "read",
+        "b_line": 14,
+        "b_kind": "write",
+        "a2_line": 10,
+        "a2_kind": "write",
+        "why": "Kestrel has higher priority and can preempt willow's non-atomic increment, so its decrement is lost."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_basalt\",\"a1_line\":21,\"a1_kind\":\"read\",\"b_line\":14,\"b_kind\":\"write\",\"a2_line\":22,\"a2_kind\":\"write\",\"why\":\"disable_isr(1) masks only willow; higher-priority kestrel can still run between the check and the reset, so the reset overwrites its decrement.\"},{\"variable\":\"v_basalt\",\"a1_line\":30,\"a1_kind\":\"write\",\"b_line\":14,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"Kestrel can modify v_basalt after the rand() store and before the check at line 21.\"},{\"variable\":\"v_basalt\",\"a1_line\":30,\"a1_kind\":\"write\",\"b_line\":10,\"b_kind\":\"write\",\"a2_line\":21,\"a2_kind\":\"read\",\"why\":\"Willow is not yet masked between line 30 and the disable_isr(1) call, so it can change v_basalt before the check.\"},{\"variable\":\"v_basalt\",\"a1_line\":10,\"a1_kind\":\"read\",\"b_line\":14,\"b_kind\":\"write\",\"a2_line\":10,\"a2_kind\":\"write\",\"why\":\"Kestrel has higher priority and can preempt willow's non-atomic increment, so its decrement is lost.\"}]}",
+  "wall_s": 9.307903528213501,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 1043,
+    "cache_read": 1782,
+    "cache_write": 485,
+    "latency_s": 9.307722303987248
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

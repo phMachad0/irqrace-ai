@@ -1,0 +1,28 @@
+{
+  "case": "program_10",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_amber",
+        "a1_line": 15,
+        "a1_kind": "read",
+        "b_line": 25,
+        "b_kind": "write",
+        "a2_line": 17,
+        "a2_kind": "read",
+        "why": "irq_nimbus can preempt irq_upland, set v_jasper=1 and enable ISR 3. irq_vessel can then preempt upland between its two v_amber reads and write v_amber."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_amber\",\"a1_line\":15,\"a1_kind\":\"read\",\"b_line\":25,\"b_kind\":\"write\",\"a2_line\":17,\"a2_kind\":\"read\",\"why\":\"irq_nimbus can preempt irq_upland, set v_jasper=1 and enable ISR 3. irq_vessel can then preempt upland between its two v_amber reads and write v_amber.\"}]}",
+  "wall_s": 8.824909687042236,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 912,
+    "cache_read": 1959,
+    "cache_write": 490,
+    "latency_s": 8.824661144026322
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}

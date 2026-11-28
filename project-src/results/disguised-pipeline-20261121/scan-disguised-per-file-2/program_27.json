@@ -1,0 +1,28 @@
+{
+  "case": "program_27",
+  "parsed": {
+    "violations": [
+      {
+        "variable": "v_fjord[TRIGGER]",
+        "a1_line": 24,
+        "a1_kind": "write",
+        "b_line": 17,
+        "b_kind": "write",
+        "a2_line": 28,
+        "a2_kind": "read",
+        "why": "irq_kelp (priority 2) can preempt irq_lantern between its write of 1 at line 24 and its read at line 28, overwriting the element with 999, so the read does not see the value lantern wrote."
+      }
+    ]
+  },
+  "text": "{\"violations\":[{\"variable\":\"v_fjord[TRIGGER]\",\"a1_line\":24,\"a1_kind\":\"write\",\"b_line\":17,\"b_kind\":\"write\",\"a2_line\":28,\"a2_kind\":\"read\",\"why\":\"irq_kelp (priority 2) can preempt irq_lantern between its write of 1 at line 24 and its read at line 28, overwriting the element with 999, so the read does not see the value lantern wrote.\"}]}",
+  "wall_s": 4.91277003288269,
+  "usage": {
+    "input_tokens": 2,
+    "output_tokens": 391,
+    "cache_read": 1887,
+    "cache_write": 487,
+    "latency_s": 4.912611198000377
+  },
+  "model": "claude-sonnet-5-5",
+  "backend": "claude-cli:sonnet@low"
+}
